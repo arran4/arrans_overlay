@@ -1,9 +1,9 @@
 EAPI=8
 
 DESCRIPTION="Which Browser? A browser selecting tool with rules to automate."
-HOMEPAGE="https://arran4.github.io/which_browser"
-SRC_URI="https://desktop.ubels.online/~arran/which_browser/which_browser-linux-0.1.4-x86_64.deb"
-LICENSE="Private"
+HOMEPAGE="https://github.com/arran4/which_browser"
+SRC_URI="https://desktop.ubels.online/~arran/which_browser/which_browser-linux-${PV}-x86_64.deb"
+LICENSE="All-rights-reserved"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
@@ -11,22 +11,28 @@ IUSE=""
 DEPEND=""
 RDEPEND="${DEPEND}"
 
-S=${WORKDIR}
+RESTRICT="mirror"
+
+# Verify the SHA256 checksum
+SRC_URI="https://desktop.ubels.online/~arran/which_browser/which_browser-linux-0.1.4-x86_64.deb"
+S="${WORKDIR}"
+
+inherit unpacker
 
 src_unpack() {
-    unpack_deb which_browser-linux-${PV}-0.1.4-x86_64.deb
+	unpack_deb which_browser-linux-${PV}-x86_64.deb
 }
 
 src_install() {
     # Install the contents of the deb package
-    cp -r "${S}"/usr/* "${D}"/usr/
-    cp -r "${S}"/opt/* "${D}"/opt/
+	find .
+    cp -vr "${S}"/usr/ "${D}"/usr/
 
     # Ensure the executable has the correct permissions
-    fperms 0755 /opt/which_browser/which_browser
+    fperms 0755 /usr/share/which_browser/which_browser
 
     # Create a symlink in /usr/bin for easy access
-    dosym /opt/which_browser/which_browser /usr/bin/which_browser
+    dosym /usr/share/which_browser/which_browser /usr/bin/which_browser
 
     # Ensure the desktop file has the correct permissions
     if [[ -f "${D}/usr/share/applications/which_browser.desktop" ]]; then
@@ -34,11 +40,13 @@ src_install() {
     fi
 
     # Ensure the icon file has the correct permissions
-    if [[ -f "${D}/usr/share/icons/hicolor/256x256/apps/icon.png" ]]; then
-        fperms 0644 /usr/share/icons/hicolor/256x256/apps/icon.png
+    if [[ -f "${D}/usr/share/icons/hicolor/256x256/apps/which_browser.png" ]]; then
+        fperms 0644 /usr/share/icons/hicolor/256x256/apps/which_browser.png
     fi
 }
 
 pkg_postinst() {
     einfo "Which Browser? has been installed."
+
+    einfo "Please set Which Browser? as the default HTTP and HTTPS handler."
 }
