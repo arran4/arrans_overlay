@@ -2,7 +2,7 @@ EAPI=8
 
 DESCRIPTION="Which Browser? A browser selecting tool with rules to automate."
 HOMEPAGE="https://github.com/arran4/which_browser"
-SRC_URI="https://desktop.ubels.online/~arran/which_browser/which_browser-linux-${PV}-x86_64.deb"
+SRC_URI="http://arran4.sdf.org//which_browser/which_browser-linux-${PV}-x86_64.deb"
 LICENSE="All-rights-reserved"
 SLOT="0"
 KEYWORDS="~amd64"
@@ -12,7 +12,6 @@ RDEPEND="|| ( dev-libs/libappindicator )"
 RESTRICT="mirror"
 
 # Verify the SHA256 checksum
-SRC_URI="https://desktop.ubels.online/~arran/which_browser/which_browser-linux-0.1.4-x86_64.deb"
 S="${WORKDIR}"
 
 inherit unpacker
