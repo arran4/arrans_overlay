@@ -62,6 +62,7 @@ jobs:
               echo "" >> $ebuild_file
               echo "src_install() {" >> $ebuild_file
               echo "    exeinto /usr/bin" >> $ebuild_file
+              echo "    mv \"\${DISTDIR}/\${A}\" 'auth'" >> $ebuild_file
               echo "    doexe auth" >> $ebuild_file
               echo "}" >> $ebuild_file
 
