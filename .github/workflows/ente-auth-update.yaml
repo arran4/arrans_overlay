@@ -46,23 +46,23 @@ jobs:
               wget $appimage_url -O auth
               
               ebuild_content="# Copyright\n
-EAPI=8\n
-DESCRIPTION=\"Ente Auth AppImage\"\n
-SRC_URI=\"${appimage_url} -> auth\"\n
-LICENSE=\"AGPL-3.0\"\n
-SLOT=\"0\"\n
-KEYWORDS=\"~amd64\"\n
-DEPEND=\"\"\n
-RDEPEND=\"\"\n
-S=\"\${WORKDIR}\"\n
-src_unpack() {\n
-  true\n
-}\n
-src_install() {\n
-  exeinto /usr/bin\n
-  doexe auth\n
-}\n"
-              
+          EAPI=8\n
+          DESCRIPTION=\"Ente Auth AppImage\"\n
+          SRC_URI=\"${appimage_url} -> auth\"\n
+          LICENSE=\"AGPL-3.0\"\n
+          SLOT=\"0\"\n
+          KEYWORDS=\"~amd64\"\n
+          DEPEND=\"\"\n
+          RDEPEND=\"\"\n
+          S=\"\${WORKDIR}\"\n
+          src_unpack() {\n
+            true\n
+          }\n
+          src_install() {\n
+            exeinto /usr/bin\n
+            doexe auth\n
+          }\n"
+                        
               echo -e $ebuild_content > $ebuild_file
               
               # Generate the manifest for the new ebuild
@@ -76,4 +76,3 @@ src_install() {\n
           git commit -m "Add ebuilds for new ente-auth releases"
           git push
         if: steps.process_releases.conclusion == 'success'
-        
