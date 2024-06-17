@@ -23,7 +23,7 @@ jobs:
       - name: Install required tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget jq
+          sudo apt-get install -y wget jq coreutils
 
       - name: Check for new releases
         id: check_releases
@@ -62,12 +62,12 @@ jobs:
               echo "  exeinto /usr/bin" >> $ebuild_file
               echo "  doexe auth" >> $ebuild_file
               echo "}" >> $ebuild_file
-                            
+
               # Generate the manifest for the new ebuild
               cd $ebuild_dir
-              cat > Manifest <<EOF
-          DIST auth 0 BLAKE2B $(b2sum auth | cut -d' ' -f1) SHA512 $(sha512sum auth | cut -d' ' -f1)
-          EOF
+              b2sum auth | cut -d' ' -f1 | tee auth.blake2b
+              sha512sum auth | cut -d' ' -f1 | tee auth.sha512
+              echo "DIST auth 0 BLAKE2B $(cat auth.blake2b) SHA512 $(cat auth.sha512)" > Manifest
               cd -
             fi
           done
