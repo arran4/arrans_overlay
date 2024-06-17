@@ -77,7 +77,7 @@ jobs:
       - name: Commit and push changes
         run: |
           git add ./app-misc/ente-auth
-          git commit -m "Add ebuilds for new ente-auth releases"
-          git pull --rebase
-          git push
+          git commit -m "Add ebuilds for new ente-auth releases" && 
+          git pull --rebase &&
+          git push || true
         if: steps.process_releases.conclusion == 'success'
