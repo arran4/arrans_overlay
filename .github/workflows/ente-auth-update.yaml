@@ -43,34 +43,52 @@ jobs:
             ebuild_file="${ebuild_dir}/ente-auth-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               appimage_url="https://github.com/ente-io/ente/releases/download/${release}/ente-auth-v${version}-x86_64.AppImage"
+              deb_url="https://github.com/ente-io/ente/releases/download/${release}/ente-auth-v${version}-x86_64.deb"
+
+              # Download AppImage and Debian package
               wget $appimage_url -O auth
+              wget $deb_url -O auth.deb
               
-              echo "# Copyright" > $ebuild_file
-              echo "EAPI=8" >> $ebuild_file
-              echo "DESCRIPTION=\"Ente Auth AppImage\"" >> $ebuild_file
-              echo "SRC_URI=\"${appimage_url} -> auth\"" >> $ebuild_file
-              echo "LICENSE=\"AGPL-3.0\"" >> $ebuild_file
-              echo "SLOT=\"0\"" >> $ebuild_file
-              echo "KEYWORDS=\"~amd64\"" >> $ebuild_file
-              echo "DEPEND=\"\"" >> $ebuild_file
-              echo "RDEPEND=\"\"" >> $ebuild_file
-              echo "S=\"\${WORKDIR}\"" >> $ebuild_file
-              echo "" >> $ebuild_file
-              echo "src_unpack() {" >> $ebuild_file
-              echo "    true" >> $ebuild_file
-              echo "}" >> $ebuild_file
-              echo "" >> $ebuild_file
-              echo "src_install() {" >> $ebuild_file
-              echo "    exeinto /usr/bin" >> $ebuild_file
-              echo "    mv \"\${DISTDIR}/\${A}\" 'auth'" >> $ebuild_file
-              echo "    doexe auth" >> $ebuild_file
-              echo "}" >> $ebuild_file
+              # Create ebuild script
+              {
+              echo "# Copyright"
+              echo "EAPI=8"
+              echo "DESCRIPTION=\"Ente Auth AppImage\""
+              echo "SRC_URI=\"${appimage_url} -> auth"
+              echo "        ${deb_url} -> auth.deb\""
+              echo "LICENSE=\"AGPL-3.0\""
+              echo "SLOT=\"0\""
+              echo "KEYWORDS=\"~amd64\""
+              echo "DEPEND=\"\""
+              echo "RDEPEND=\"|| ( dev-libs/libappindicator )\""
+              echo "S=\"\${WORKDIR}\""
+              echo ""
+              echo "inherit unpacker"
+              echo "inherit xdg-utils"
+              echo ""
+              echo "src_unpack() {"
+              echo "    unpack_deb auth.deb"
+              echo "}"
+              echo ""
+              echo "src_install() {"
+              echo "    exeinto /usr/bin"
+              echo "    mv \"\${DISTDIR}/auth\" 'auth'"
+              echo "    doexe auth"
+              echo "    insinto /usr/share/applications"
+              echo "    doins usr/share/applications/ente_auth.desktop"
+              echo "    insinto /usr/share/"
+              echo "    doins -r usr/share/icons"
+              echo "}"
+              } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              b2sum auth | cut -d' ' -f1 | tee auth.blake2b
-              sha512sum auth | cut -d' ' -f1 | tee auth.sha512
-              echo "DIST auth 0 BLAKE2B $(cat auth.blake2b) SHA512 $(cat auth.sha512)" > $ebuild_dir/Manifest
-              rm auth auth.blake2b auth.sha512
+              {
+              echo "DIST auth $(stat -c %s auth) BLAKE2B $(b2sum auth | cut -d' ' -f1) SHA512 $(sha512sum auth | cut -d' ' -f1)"
+              echo "DIST auth.deb $(stat -c %s auth.deb) BLAKE2B $(b2sum auth.deb | cut -d' ' -f1) SHA512 $(sha512sum auth.deb | cut -d' ' -f1)"
+              } > $ebuild_dir/Manifest
+
+              # Clean up
+              rm auth auth.deb
             fi
           done
 
