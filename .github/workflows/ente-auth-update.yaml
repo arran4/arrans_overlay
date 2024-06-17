@@ -64,11 +64,10 @@ jobs:
               echo "}" >> $ebuild_file
 
               # Generate the manifest for the new ebuild
-              cd $ebuild_dir
               b2sum auth | cut -d' ' -f1 | tee auth.blake2b
               sha512sum auth | cut -d' ' -f1 | tee auth.sha512
-              echo "DIST auth 0 BLAKE2B $(cat auth.blake2b) SHA512 $(cat auth.sha512)" > Manifest
-              cd -
+              echo "DIST auth 0 BLAKE2B $(cat auth.blake2b) SHA512 $(cat auth.sha512)" > $ebuild_dir/Manifest
+              rm auth auth.blake2d auth.sha512
             fi
           done
 
