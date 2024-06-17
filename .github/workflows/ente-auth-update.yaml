@@ -70,7 +70,8 @@ jobs:
               cat > Manifest <<EOF
           DIST auth 0 BLAKE2B $(b2sum auth | cut -d' ' -f1) SHA512 $(sha512sum auth | cut -d' ' -f1)
           EOF
-              cd -            fi
+              cd -
+            fi
           done
 
       - name: Commit and push changes
