@@ -1,4 +1,4 @@
-name: Check for new version and create ebuild
+name: ente-auth-update-check
 
 permissions:
   contents: write
