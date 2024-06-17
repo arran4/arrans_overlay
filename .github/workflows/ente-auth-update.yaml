@@ -1,0 +1,79 @@
+name: Check for new version and create ebuild
+
+permissions:
+  content: write
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  
+  workflow_dispatch:
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq
+
+      - name: Check for new releases
+        id: check_releases
+        run: |
+          releases=$(curl -s https://api.github.com/repos/ente-io/ente/releases | jq -r '.[].tag_name')
+          auth_releases=$(echo "$releases" | grep "^auth-v")
+          echo "::set-output name=auth_releases::$auth_releases"
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./app-misc/ente-auth"
+          mkdir -p $ebuild_dir
+          
+          for release in ${{ steps.check_releases.outputs.auth_releases }}; do
+            version=${release#auth-v}
+            ebuild_file="${ebuild_dir}/ente-auth-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+              appimage_url="https://github.com/ente-io/ente/releases/download/${release}/ente-auth-v${version}-x86_64.AppImage"
+              wget $appimage_url -O auth
+              
+              ebuild_content="# Copyright\n
+EAPI=8\n
+DESCRIPTION=\"Ente Auth AppImage\"\n
+SRC_URI=\"${appimage_url} -> auth\"\n
+LICENSE=\"AGPL-3.0\"\n
+SLOT=\"0\"\n
+KEYWORDS=\"~amd64\"\n
+DEPEND=\"\"\n
+RDEPEND=\"\"\n
+S=\"\${WORKDIR}\"\n
+src_unpack() {\n
+  true\n
+}\n
+src_install() {\n
+  exeinto /usr/bin\n
+  doexe auth\n
+}\n"
+              
+              echo -e $ebuild_content > $ebuild_file
+              
+              # Generate the manifest for the new ebuild
+              ebuild $ebuild_file manifest
+            fi
+          done
+
+      - name: Commit and push changes
+        run: |
+          git add ./app-misc/ente-auth
+          git commit -m "Add ebuilds for new ente-auth releases"
+          git push
+        if: steps.process_releases.conclusion == 'success'
+        
