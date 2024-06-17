@@ -55,12 +55,14 @@ jobs:
               echo "DEPEND=\"\"" >> $ebuild_file
               echo "RDEPEND=\"\"" >> $ebuild_file
               echo "S=\"\${WORKDIR}\"" >> $ebuild_file
+              echo "" >> $ebuild_file
               echo "src_unpack() {" >> $ebuild_file
-              echo "  true" >> $ebuild_file
+              echo "    true" >> $ebuild_file
               echo "}" >> $ebuild_file
+              echo "" >> $ebuild_file
               echo "src_install() {" >> $ebuild_file
-              echo "  exeinto /usr/bin" >> $ebuild_file
-              echo "  doexe auth" >> $ebuild_file
+              echo "    exeinto /usr/bin" >> $ebuild_file
+              echo "    doexe auth" >> $ebuild_file
               echo "}" >> $ebuild_file
 
               # Generate the manifest for the new ebuild
