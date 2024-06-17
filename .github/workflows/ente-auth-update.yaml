@@ -79,6 +79,11 @@ jobs:
               echo "    insinto /usr/share/"
               echo "    doins -r usr/share/icons"
               echo "}"
+              echo ""
+              echo "pkg_postinst() {"
+              echo "    xdg_desktop_database_update"
+              echo "}"
+              echo ""
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
