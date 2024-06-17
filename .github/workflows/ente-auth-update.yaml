@@ -34,7 +34,7 @@ jobs:
 
       - name: Process each release
         id: process_releases
-        run: |
+        run: |+
           ebuild_dir="./app-misc/ente-auth"
           mkdir -p $ebuild_dir
           
