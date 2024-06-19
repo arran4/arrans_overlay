@@ -25,18 +25,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils
 
-      - name: Check for new releases
-        id: check_releases
-        run: |
-          run_numbers=$(curl -s https://api.github.com/repos/AppImage/AppImageKit/actions/runs | jq -r '.workflow_runs[].run_number')
-          echo "run_numbers=$run_numbers" >> $GITHUB_OUTPUT
-
       - name: Process each release
         id: process_releases
         run: |
           ebuild_dir="./app-misc/appimagetool"
           mkdir -p $ebuild_dir
-          
+          run_numbers=$(curl -s https://api.github.com/repos/AppImage/AppImageKit/actions/runs | jq -r '.workflow_runs[].run_number')
           for run_number in ${{ steps.check_releases.outputs.run_numbers }}; do
             echo "Processing run number: $run_number"
             version="0.0.${run_number}"
