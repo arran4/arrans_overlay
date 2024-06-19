@@ -1,7 +1,7 @@
 # [Arran's overlay](https://github.com/arran4/arrans-overlay)
 
 [![GitHub repo size in bytes](https://img.shields.io/github/repo-size/arran4/arrans-overlay.svg)](https://img.shields.io/github/repo-size/arran4/arrans-overlay.svg)
-[![gentoo overlay](https://img.shields.io/badge/gentoo-overlay-yellow)](https://github.com/gentoo-mirror/nest)
+[![gentoo overlay](https://img.shields.io/badge/gentoo-overlay-yellow)](https://github.com/gentoo-mirror/arrans-overlay)
 
 ## How to use this overlay
 
@@ -21,7 +21,7 @@ layman -fa arrans-overlay
 For manual install, through [local overlay](https://wiki.gentoo.org/wiki/Creating_an_ebuild_repository), you should add this in `/etc/portage/repos.conf/arrans-overlay.conf`:
 
 ```console
-[nest]
+[arrans-overlay]
 location = /var/db/repos/arrans-overlay
 sync-type = git
 sync-uri = https://github.com/gentoo-mirror/arrans-overlay.git
