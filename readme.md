@@ -1,4 +1,4 @@
-# [Arran's overlay](https://github.com/arran4/arrans-overlay)
+# [Arran's overlay](https://github.com/arran4/arrans_overlay)
 
 [![GitHub repo size in bytes](https://img.shields.io/github/repo-size/arran4/arrans-overlay.svg)](https://img.shields.io/github/repo-size/arran4/arrans-overlay.svg)
 [![gentoo overlay](https://img.shields.io/badge/gentoo-overlay-yellow)](https://github.com/gentoo-mirror/arrans-overlay)
