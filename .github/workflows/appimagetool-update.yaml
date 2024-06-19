@@ -29,7 +29,7 @@ jobs:
         id: check_releases
         run: |
           run_numbers=$(curl -s https://api.github.com/repos/AppImage/AppImageKit/actions/runs | jq -r '.workflow_runs[].run_number')
-          echo "::set-output name=run_numbers::run_numbers"
+          echo "run_numbers=$run_numbers" >> $GITHUB_OUTPUT
 
       - name: Process each release
         id: process_releases
