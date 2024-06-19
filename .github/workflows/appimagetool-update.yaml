@@ -1,0 +1,99 @@
+name: ente-auth-update-check
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  
+  workflow_dispatch:
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+
+      - name: Check for new releases
+        id: check_releases
+        run: |
+          run_numbers=$(curl -s https://api.github.com/repos/AppImage/AppImageKit/actions/runs | jq -r '.workflow_runs[].run_number')
+          echo "::set-output name=run_numbers::run_numbers"
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./app-misc/appimagetool"
+          mkdir -p $ebuild_dir
+          
+          for run_number in ${{ steps.check_releases.outputs.run_numbers }}; do
+            echo "Processing run number: $run_number"
+            version="0.0.${run_number}"
+            ebuild_file="${ebuild_dir}/appimagetool-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+              appimage_url="https://github.com/ente-io/ente/releases/download/${release}/ente-auth-v${version}-x86_64.AppImage"
+              deb_url="https://github.com/ente-io/ente/releases/download/${release}/ente-auth-v${version}-x86_64.deb"
+
+              # Download AppImage and Debian package
+              wget $appimage_url -O auth
+              wget $deb_url -O auth.deb
+              
+              # Create ebuild script
+              {
+                echo '# appimagetool ebuild file'
+                echo 'EAPI=8'
+                echo 'DESCRIPTION="AppImage tool to create AppImages (As an AppImage)"'
+                echo 'HOMEPAGE="https://github.com/AppImage/AppImageKit"'
+                echo 'LICENSE="MIT"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="~amd64 ~x86 ~arm ~arm64"'
+                echo 'DEPEND=""'
+                echo 'RDEPEND=""'
+                echo 'S="\${WORKDIR}"'
+                echo 'SRC_URI="  '
+                echo '  amd64? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -> \$P.amd64 )'
+                echo '  x86? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-i686.AppImage -> \$P.x86 )'
+                echo '  arm? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-armhf.AppImage -> \$P.arm )'
+                echo '  arm64? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage -> \$P.arm64 )'
+                echo '" '
+                echo 'src_unpack() {'
+                echo '  true'
+                echo '}'
+                echo 'src_install() {'
+                echo '  mv -v "\${DISTDIR}/\${A}" appimagetool'
+                echo '  exeinto /usr/bin'
+                echo '  doexe "appimagetool"'
+                echo '}'              
+              } > $ebuild_file
+
+              # Generate the manifest for the new ebuild
+              wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /tmp/appimagetool-${version}.amd64
+              wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-i686.AppImage -O /tmp/appimagetool-${version}.x86
+              wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-armhf.AppImage -O /tmp/appimagetool-${version}.arm
+              wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage -O /tmp/appimagetool-${version}.arm64
+              
+              for e in appimagetool-${version}.amd64 appimagetool-${version}.x86 appimagetool-${version}.arm appimagetool-${version}.arm64; do
+                echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)"
+                rm "/tmp/${e}"
+              done >> Manifest
+            fi
+          done
+
+      - name: Commit and push changes
+        run: |
+          git add ./app-misc/appimagetool
+          git commit -m "Add ebuilds for new appimagetool releases" && 
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.conclusion == 'success'
