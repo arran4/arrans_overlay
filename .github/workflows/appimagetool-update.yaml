@@ -76,6 +76,7 @@ jobs:
                 rm "/tmp/${e}"
               done
             fi
+            break; # We actually only need 1...
           done
 
       - name: Commit and push changes
