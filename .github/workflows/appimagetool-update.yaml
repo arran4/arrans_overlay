@@ -42,9 +42,6 @@ jobs:
             version="0.0.${run_number}"
             ebuild_file="${ebuild_dir}/appimagetool-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
-              appimage_url="https://github.com/ente-io/ente/releases/download/${release}/ente-auth-v${version}-x86_64.AppImage"
-              deb_url="https://github.com/ente-io/ente/releases/download/${release}/ente-auth-v${version}-x86_64.deb"
-
               # Download AppImage and Debian package
               wget $appimage_url -O auth
               wget $deb_url -O auth.deb
