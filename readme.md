@@ -1,6 +1,5 @@
-# nest overlay
+# [Arran's overlay](https://github.com/arran4/arrans-overlay)
 
-[![Number of ebuilds: 736](https://img.shields.io/badge/ebuild-736-orange.svg)](https://img.shields.io/badge/ebuild-736-orange.svg)
 [![GitHub repo size in bytes](https://img.shields.io/github/repo-size/arran4/arrans-overlay.svg)](https://img.shields.io/github/repo-size/arran4/arrans-overlay.svg)
 [![gentoo overlay](https://img.shields.io/badge/gentoo-overlay-yellow)](https://github.com/gentoo-mirror/nest)
 
