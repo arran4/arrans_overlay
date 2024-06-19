@@ -1,4 +1,4 @@
-name: ente-auth-update-check
+name: app-misc-appimagetool-update-check
 
 permissions:
   contents: write
