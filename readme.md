@@ -33,3 +33,4 @@ Afterwards, simply run `emerge --sync`, and Portage should seamlessly make all o
 ## Links
 
 * [Merge status](https://gitweb.gentoo.org/report/repos.git/plain/arrans-overlay.txt)
+* [Browse](https://gpo.zugaina.org/Overlays/arrans-overlay)
