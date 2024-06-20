@@ -30,3 +30,6 @@ priority=9999
 
 Afterwards, simply run `emerge --sync`, and Portage should seamlessly make all our ebuilds available.
 
+## Links
+
+* [Merge status](https://gitweb.gentoo.org/report/repos.git/plain/arrans-overlay.txt)
