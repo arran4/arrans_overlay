@@ -35,15 +35,14 @@ jobs:
       - name: Process each release
         id: process_releases
         run: |
-          ebuild_dir="./app-misc/ente-auth"
+          ebuild_dir="./app-misc/ente-auth-appimage"
           mkdir -p $ebuild_dir
           
           for release in ${{ steps.check_releases.outputs.auth_releases }}; do
             version=${release#auth-v}
-            ebuild_file="${ebuild_dir}/ente-auth-${version}.ebuild"
+            ebuild_file="${ebuild_dir}/ente-auth-appimage-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               appimage_url="https://github.com/ente-io/ente/releases/download/${release}/ente-auth-v${version}-x86_64.AppImage"
-              deb_url="https://github.com/ente-io/ente/releases/download/${release}/ente-auth-v${version}-x86_64.deb"
 
               # Download AppImage and Debian package
               wget $appimage_url -O auth
@@ -54,7 +53,7 @@ jobs:
               echo "# Copyright"
               echo "EAPI=8"
               echo "DESCRIPTION=\"Ente Auth AppImage\""
-              echo "SRC_URI=\"${appimage_url} -> auth"
+              echo "SRC_URI=\"${appimage_url} -> \"\${P}\""
               echo "        ${deb_url} -> auth.deb\""
               echo "LICENSE=\"AGPL-3.0\""
               echo "SLOT=\"0\""
@@ -63,21 +62,26 @@ jobs:
               echo "RDEPEND=\"|| ( dev-libs/libappindicator )\""
               echo "S=\"\${WORKDIR}\""
               echo ""
-              echo "inherit unpacker"
               echo "inherit xdg-utils"
               echo ""
               echo "src_unpack() {"
-              echo "    unpack_deb auth.deb"
+              echo "    chmod a+x \${P}"
+              echo "    \${P} --appimage-extract ente_auth.desktop"
+              echo "    \${P} --appimage-extract usr/share/icons"
+              echo "}"
+              echo ""
+              echo "src_prepare() {"
+              echo "    sed -i 's:^Exec=.*:Exec=/usr/bin/ente_auth:' squashfs-root/ente_auth.desktop"
               echo "}"
               echo ""
               echo "src_install() {"
               echo "    exeinto /usr/bin"
-              echo "    mv \"\${DISTDIR}/auth\" 'ente_auth'"
+              echo "    mv \"\${DISTDIR}/\${P}\" 'ente_auth'"
               echo "    doexe ente_auth"
               echo "    insinto /usr/share/applications"
-              echo "    doins usr/share/applications/ente_auth.desktop"
+              echo "    doins squashfs-root/usr/share/applications/ente_auth.desktop"
               echo "    insinto /usr/share/"
-              echo "    doins -r usr/share/icons"
+              echo "    doins -r squashfs-root/usr/share/icons"
               echo "}"
               echo ""
               echo "pkg_postinst() {"
@@ -89,18 +93,17 @@ jobs:
               # Generate the manifest for the new ebuild
               {
               echo "DIST auth $(stat -c %s auth) BLAKE2B $(b2sum auth | cut -d' ' -f1) SHA512 $(sha512sum auth | cut -d' ' -f1)"
-              echo "DIST auth.deb $(stat -c %s auth.deb) BLAKE2B $(b2sum auth.deb | cut -d' ' -f1) SHA512 $(sha512sum auth.deb | cut -d' ' -f1)"
               } > $ebuild_dir/Manifest
 
               # Clean up
-              rm auth auth.deb
+              rm auth 
             fi
           done
 
       - name: Commit and push changes
         run: |
           git add ./app-misc/ente-auth
-          git commit -m "Add ebuilds for new ente-auth releases" && 
+          git commit -m "Add ebuilds for new ente-auth-appimage releases" && 
           git pull --rebase &&
           git push || true
         if: steps.process_releases.conclusion == 'success'
