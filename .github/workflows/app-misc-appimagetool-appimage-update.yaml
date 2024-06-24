@@ -11,6 +11,11 @@ on:
     paths:
       - '.github/workflows/app-misc-appimagetool-appimage-update.yaml'
 
+env:
+  ecn: app-misc
+  epn: appimagetool-appimage
+  description: "AppImage tool to create AppImages (As an AppImage)"
+
 jobs:
   check-and-create-ebuild:
     runs-on: ubuntu-latest
@@ -31,9 +36,6 @@ jobs:
       - name: Process each release
         id: process_releases
         run: |
-          ecn=app-misc
-          epn=appimagetool-appimage
-          description="AppImage tool to create AppImages (As an AppImage)"
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
           run_numbers=$(curl -s https://api.github.com/repos/AppImage/AppImageKit/actions/runs | jq -r '.workflow_runs[].run_number')
@@ -106,8 +108,9 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git add ./app-misc/appimagetool-appimage
-          git commit -m "Add ebuilds for new appimagetool releases" && 
+          ebuild_dir="./${ecn}/${epn}"
+          git add ./${ebuild_dir}
+          git commit -m "Add ebuilds for new ${epn} releases" && 
           git pull --rebase &&
           git push || true
         if: steps.process_releases.conclusion == 'success'

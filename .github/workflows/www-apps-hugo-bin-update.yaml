@@ -11,6 +11,16 @@ on:
     paths:
       - '.github/workflows/www-apps-hugo-bin-update.yaml'
 
+env:
+  ebuild_category: www-apps
+  ebuild_name: hugo-bin
+  repo_owner: gohugoio
+  repo_name: hugo
+  description: "The world’s fastest framework for building websites."
+  PFN: "hugo"
+  EFN: "hugo"
+
+
 jobs:
   check-and-create-ebuild:
     runs-on: ubuntu-latest
@@ -31,16 +41,9 @@ jobs:
       - name: Process each release
         id: process_releases
         run: |
-          ebuild_category=www-apps
-          ebuild_name=hugo-bin
-          repo_owner=gohugoio
-          repo_name=hugo
           ebuild_dir="./${ebuild_category}/${ebuild_name}"
           mkdir -p $ebuild_dir
           releases=$(curl -s https://api.github.com/repos/${repo_owner}/${repo_name}/releases | jq -r '.[].tag_name')
-          description="The world’s fastest framework for building websites."
-          PFN="hugo"
-          EFN="hugo"
           
           for release in ${releases}; do
             version=${release#v}
@@ -94,8 +97,6 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          ebuild_category=www-apps
-          ebuild_name=hugo-bin
           ebuild_dir="./${ebuild_category}/${ebuild_name}"
           git add "./${ebuild_dir}"
           git commit -m "Add ebuilds for new ${ebuild_name} releases" && 

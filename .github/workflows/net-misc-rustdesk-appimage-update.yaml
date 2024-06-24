@@ -11,6 +11,14 @@ on:
     paths:
       - '.github/workflows/net-misc-rustdesk-appimage-update.yaml'
 
+env:
+  ecn: net-misc
+  epn: rustdesk-appimage
+  repo_owner: rustdesk
+  repo_name: rustdesk
+  description: "An open-source remote desktop, and alternative to TeamViewer."
+
+
 jobs:
   check-and-create-ebuild:
     runs-on: ubuntu-latest
@@ -31,12 +39,7 @@ jobs:
       - name: Process each release
         id: process_releases
         run: |
-          ecn=net-misc
-          epn=rustdesk-appimage
-          repo_owner=rustdesk
-          repo_name=rustdesk
           ghrp=${repo_owner}/${repo_name}
-          description="An open-source remote desktop, and alternative to TeamViewer."
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
           releases=$(curl -s https://api.github.com/repos/${repo_owner}/${repo_name}/releases | jq -r '.[].tag_name')
@@ -105,8 +108,9 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git add ./net-misc/rustdesk-appimage
-          git commit -m "Add ebuilds for new rustdesk releases" && 
+          ebuild_dir="./${ecn}/${epn}"
+          git add ./${ebuild_dir}
+          git commit -m "Add ebuilds for new ${epn} releases" && 
           git pull --rebase &&
           git push || true
         if: steps.process_releases.conclusion == 'success'
