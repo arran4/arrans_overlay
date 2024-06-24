@@ -59,8 +59,8 @@ jobs:
                 echo ''
                 echo "src_unpack() {"
                 echo "    chmod a+x \${P}"
-                echo "    \${P} --appimage-extract appimagetool.desktop"
-                echo "    \${P} --appimage-extract usr/share/icons"
+                echo "    ./\${P} --appimage-extract appimagetool.desktop"
+                echo "    ./\${P} --appimage-extract usr/share/icons"
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
