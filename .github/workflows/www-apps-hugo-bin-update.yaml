@@ -44,7 +44,7 @@ jobs:
           
           for release in ${releases}; do
             version=${release#v}
-            ebuild_file="${ebuild_dir}/hugo-bin-${version}.ebuild"
+            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               # Create ebuild script
               {
