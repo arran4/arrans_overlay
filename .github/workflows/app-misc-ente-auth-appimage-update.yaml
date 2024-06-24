@@ -66,6 +66,7 @@ jobs:
                 echo "DEPEND=\"\""
                 echo "RDEPEND=\"|| ( dev-libs/libappindicator )\""
                 echo "S=\"\${WORKDIR}\""
+                echo 'RESTRICT="strip"'
                 echo ""
                 echo "inherit xdg-utils"
                 echo ""
