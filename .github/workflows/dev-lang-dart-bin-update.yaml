@@ -67,7 +67,7 @@ jobs:
                 echo '  mkdir "${ED}/opt" || die'
                 echo '  mv "${S}" "${ED}/opt/" || die'
                 echo "  "
-                echo "  dosym \"\${ED}/opt/dart-sdk/bin/dart\" '/opt/bin/dart'"
+                echo "  dosym \"/opt/dart-sdk/bin/dart\" '/opt/bin/dart'"
                 echo "}"
                 echo ""
               } > $ebuild_file

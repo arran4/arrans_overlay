@@ -20,6 +20,6 @@ src_install() {
   mkdir "${ED}/opt" || die
   mv "${S}" "${ED}/opt/" || die
   
-  dosym "${ED}/opt/dart-sdk/bin/dart" '/opt/bin/dart'
+  dosym "/opt/dart-sdk/bin/dart" '/opt/bin/dart'
 }
 
