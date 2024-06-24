@@ -1,4 +1,4 @@
-name: app-misc/appimagetool-appimage update
+name: net-misc/rustdesk-appimage update
 
 permissions:
   contents: write
@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/app-misc-appimagetool-appimage-update.yaml'
+      - '.github/workflows/net-misc/rustdesk-appimage-update.yaml'
 
 jobs:
   check-and-create-ebuild:
@@ -31,12 +31,13 @@ jobs:
       - name: Process each release
         id: process_releases
         run: |
-          ecn=app-misc
-          epn=appimagetool-appimage
-          description="AppImage tool to create AppImages (As an AppImage)"
+          ecn=net-misc
+          epn=rustdesk-appimage
+          ghrp=Rustdesk/Rustdesk
+          description="An open-source remote desktop, and alternative to TeamViewer."
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
-          run_numbers=$(curl -s https://api.github.com/repos/AppImage/AppImageKit/actions/runs | jq -r '.workflow_runs[].run_number')
+          run_numbers=$(curl -s https://api.github.com/repos/${ghrp}/actions/runs | jq -r '.workflow_runs[].run_number')
           for run_number in ${run_numbers}; do
             echo "Processing run number: $run_number"
             version="0.0.${run_number}"
@@ -45,40 +46,38 @@ jobs:
               
               # Create ebuild script
               {
-                echo '# appimagetool ebuild file'
+                echo '# rustdesk ebuild file'
                 echo 'EAPI=8'
                 echo "DESCRIPTION=\"$description\""
-                echo 'HOMEPAGE="https://github.com/AppImage/AppImageKit"'
+                echo "HOMEPAGE=\"https://github.com/${ghrp}\""
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
-                echo 'KEYWORDS="~amd64 ~x86 ~arm ~arm64"'
+                echo 'KEYWORDS="~amd64 ~arm64"'
                 echo 'DEPEND=""'
                 echo 'RDEPEND=""'
                 echo 'S="${WORKDIR}"'
                 echo ''
                 echo 'SRC_URI="  '
-                echo '  amd64? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -> $P.amd64 )'
-                echo '  x86? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-i686.AppImage -> $P.x86 )'
-                echo '  arm? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-armhf.AppImage -> $P.arm )'
-                echo '  arm64? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage -> $P.arm64 )'
+                echo "  amd64? ( https://github.com/${ghrp}/releases/download/\${release}/rustdesk-x86_64.AppImage -> \$P.amd64 )"
+                echo "  arm64? ( https://github.com/${ghrp}/releases/download/\${release}/rustdesk-aarch64.AppImage -> \$P.arm64 )"
                 echo '" '
                 echo ''
                 echo "src_unpack() {"
                 echo "    chmod a+x \${P}"
-                echo "    ./\${P} --appimage-extract appimagetool.desktop"
+                echo "    ./\${P} --appimage-extract rustdesk.desktop"
                 echo "    ./\${P} --appimage-extract usr/share/icons"
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
-                echo "    sed -i 's:^Exec=.*:Exec=/opt/bin/appimagetool:' squashfs-root/appimagetool.desktop"
+                echo "    sed -i 's:^Exec=.*:Exec=/usr/bin/rustdesk:' squashfs-root/rustdesk.desktop"
                 echo "}"
                 echo ""
                 echo 'src_install() {'
-                echo '    mv -v "${DISTDIR}/${A}" appimagetool'
+                echo '    mv -v "${DISTDIR}/${A}" rustdesk'
                 echo '    exeinto /opt/bin'
-                echo '    doexe "appimagetool"'
+                echo '    doexe "rustdesk"'
                 echo "    insinto /usr/share/applications"
-                echo "    doins squashfs-root/usr/share/applications/appimagetool.desktop"
+                echo "    doins squashfs-root/usr/share/applications/rustdesk.desktop"
                 echo "    insinto /usr/share/"
                 echo "    doins -r squashfs-root/usr/share/icons"
                 echo "}"
@@ -87,15 +86,13 @@ jobs:
                 echo "    xdg_desktop_database_update"
                 echo "}"
                 echo ""
-              } > $ebuild_file
+              } > "$ebuild_file"
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /tmp/${epn}-${version}.amd64
-              wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-i686.AppImage -O /tmp/${epn}-${version}.x86
-              wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-armhf.AppImage -O /tmp/${epn}-${version}.arm
-              wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage -O /tmp/${epn}-${version}.arm64
+              wget "https://github.com/${ghrp}/releases/download/${version}/rustdesk-x86_64.AppImage" -O "/tmp/${epn}-${version}.amd64"
+              wget "https://github.com/${ghrp}/releases/download/${version}/rustdesk-aarch64.AppImage" -O "/tmp/${epn}-${version}.arm64"
               
-              for e in ${epn}-${version}.amd64 ${epn}-${version}.x86 ${epn}-${version}.arm ${epn}-${version}.arm64; do
+              for e in "${epn}-${version}.amd64" "${epn}-${version}.arm64"; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${e}"
               done
@@ -105,8 +102,8 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git add ./app-misc/appimagetool-appimage
-          git commit -m "Add ebuilds for new appimagetool releases" && 
+          git add ./net-misc/rustdesk-appimage
+          git commit -m "Add ebuilds for new rustdesk releases" && 
           git pull --rebase &&
           git push || true
         if: steps.process_releases.conclusion == 'success'
