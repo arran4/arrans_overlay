@@ -15,6 +15,7 @@ env:
   ecn: app-misc
   epn: appimagetool-appimage
   description: "AppImage tool to create AppImages (As an AppImage)"
+  homepage: https://github.com/AppImage/AppImageKit
 
 jobs:
   check-and-create-ebuild:
@@ -50,7 +51,7 @@ jobs:
                 echo '# appimagetool ebuild file'
                 echo 'EAPI=8'
                 echo "DESCRIPTION=\"$description\""
-                echo 'HOMEPAGE="https://github.com/AppImage/AppImageKit"'
+                echo "HOMEPAGE=\"$homepage\"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="~amd64 ~x86 ~arm ~arm64"'
