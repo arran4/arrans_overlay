@@ -63,8 +63,8 @@ jobs:
                 echo 'S="${WORKDIR}"'
                 echo ''
                 echo 'SRC_URI="  '
-                echo "  amd64? ( https://github.com/${ghrp}/releases/download/\${release}/rustdesk-\${PV}-x86_64.AppImage -> \$P.amd64 )"
-                echo "  arm64? ( https://github.com/${ghrp}/releases/download/\${release}/rustdesk-\${PV}-aarch64.AppImage -> \$P.arm64 )"
+                echo "  amd64? ( https://github.com/${ghrp}/releases/download/\${PV}/rustdesk-\${PV}-x86_64.AppImage -> \$P.amd64 )"
+                echo "  arm64? ( https://github.com/${ghrp}/releases/download/\${PV}/rustdesk-\${PV}-aarch64.AppImage -> \$P.arm64 )"
                 echo '" '
                 echo ''
                 echo "src_unpack() {"
