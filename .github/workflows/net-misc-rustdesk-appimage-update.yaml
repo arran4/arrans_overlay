@@ -33,9 +33,9 @@ jobs:
         run: |
           ecn=net-misc
           epn=rustdesk-appimage
-          repo_owner=gohugoio
-          repo_name=hugo
-          ghrp=${gohugoio}/${repo_name}
+          repo_owner=rustdesk
+          repo_name=rustdesk
+          ghrp=${repo_owner}/${repo_name}
           description="An open-source remote desktop, and alternative to TeamViewer."
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
