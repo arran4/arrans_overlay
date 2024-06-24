@@ -65,9 +65,9 @@ jobs:
                 echo '" '
                 echo ''
                 echo "src_unpack() {"
-                echo "    chmod a+x \${A}"
-                echo "    ./\${A} --appimage-extract rustdesk.desktop"
-                echo "    ./\${A} --appimage-extract usr/share/icons"
+                echo "    chmod a+x \"\${DISTDIR}/\${A}\" || die 'Can't find archive file'"
+                echo "    \"\${DISTDIR}/\${A}\" --appimage-extract rustdesk.desktop || die 'Can't extract .desktop from appimage'"
+                echo "    \"\${DISTDIR}/\${A}\" --appimage-extract usr/share/icons || die 'Can't extract icons from app image'"
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
