@@ -28,7 +28,7 @@ jobs:
       - name: Process each release
         id: process_releases
         run: |
-          ebuild_dir="./app-misc/appimagetool"
+          ebuild_dir="./app-misc/appimagetool-appimage"
           mkdir -p $ebuild_dir
           run_numbers=$(curl -s https://api.github.com/repos/AppImage/AppImageKit/actions/runs | jq -r '.workflow_runs[].run_number')
           for run_number in ${run_numbers}; do
@@ -99,7 +99,7 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git add ./app-misc/appimagetool
+          git add ./app-misc/appimagetool-appimage
           git commit -m "Add ebuilds for new appimagetool releases" && 
           git pull --rebase &&
           git push || true
