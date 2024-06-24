@@ -65,23 +65,23 @@ jobs:
                 echo '" '
                 echo ''
                 echo "src_unpack() {"
-                echo "    chmod a+x \${P}"
-                echo "    ./\${P} --appimage-extract rustdesk.desktop"
-                echo "    ./\${P} --appimage-extract usr/share/icons"
+                echo "    chmod a+x \${A}"
+                echo "    ./\${A} --appimage-extract rustdesk.desktop"
+                echo "    ./\${A} --appimage-extract usr/share/icons"
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
-                echo "    sed -i 's:^Exec=.*:Exec=/usr/bin/rustdesk:' squashfs-root/rustdesk.desktop"
+                echo "    sed -i 's:^Exec=.*:Exec=/opt/bin/rustdesk:' squashfs-root/rustdesk.desktop"
                 echo "}"
                 echo ""
                 echo 'src_install() {'
                 echo '    mv -v "${DISTDIR}/${A}" rustdesk'
                 echo '    exeinto /opt/bin'
                 echo '    doexe "rustdesk"'
-                echo "    insinto /usr/share/applications"
-                echo "    doins squashfs-root/usr/share/applications/rustdesk.desktop"
-                echo "    insinto /usr/share/"
-                echo "    doins -r squashfs-root/usr/share/icons"
+                echo '    insinto /usr/share/applications'
+                echo '    doins "${DISTDIR}/squashfs-root/rustdesk.desktop"'
+                echo '    insinto /usr/share/'
+                echo '    doins -r "${DISTDIR}/squashfs-root/usr/share/icons"'
                 echo "}"
                 echo ""
                 echo "pkg_postinst() {"

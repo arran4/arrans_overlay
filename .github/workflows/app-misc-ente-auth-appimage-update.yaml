@@ -66,9 +66,9 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ""
                 echo "src_unpack() {"
-                echo "    chmod a+x \${P}"
-                echo "    ./\${P} --appimage-extract ente_auth.desktop"
-                echo "    ./\${P} --appimage-extract usr/share/icons"
+                echo "    chmod a+x \${A}"
+                echo "    ./\${A} --appimage-extract ente_auth.desktop"
+                echo "    ./\${A} --appimage-extract usr/share/icons"
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
@@ -77,12 +77,12 @@ jobs:
                 echo ""
                 echo "src_install() {"
                 echo "    exeinto /opt/bin"
-                echo "    mv \"\${DISTDIR}/\${P}\" 'ente_auth'"
+                echo '    mv "${DISTDIR}/${P}" "ente_auth"'
                 echo "    doexe ente_auth"
                 echo "    insinto /usr/share/applications"
-                echo "    doins squashfs-root/usr/share/applications/ente_auth.desktop"
+                echo '    doins "${DISTDIR}/squashfs-root/ente_auth.desktop"'
                 echo "    insinto /usr/share/"
-                echo "    doins -r squashfs-root/usr/share/icons"
+                echo '    doins -r "${DISTDIR}/squashfs-root/usr/share/icons"'
                 echo "}"
                 echo ""
                 echo "pkg_postinst() {"
