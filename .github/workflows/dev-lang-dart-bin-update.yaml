@@ -18,8 +18,6 @@ on:
 
 jobs:
   check-and-create-ebuild:
-    env:
-      ebuild_dir: "./${{ebuild_category}}/${{ebuild_name}}"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -38,6 +36,7 @@ jobs:
       - name: Process each release
         id: process_releases
         run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
           mkdir -p $ebuild_dir
           versions=$(curl -s https://storage.googleapis.com/dart-archive/channels/stable/release/latest/VERSION | jq -r '.version')
           
@@ -90,6 +89,7 @@ jobs:
 
       - name: Commit and push changes
         run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
           git add "./${ebuild_dir}"
           git commit -m "Add ebuilds for new ${ebuild_name} releases" && 
           git pull --rebase &&
