@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/net-misc/rustdesk-appimage-update.yaml'
+      - '.github/workflows/net-misc-rustdesk-appimage-update.yaml'
 
 jobs:
   check-and-create-ebuild:
