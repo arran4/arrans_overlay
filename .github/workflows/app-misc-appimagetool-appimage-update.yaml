@@ -58,6 +58,7 @@ jobs:
                 echo 'DEPEND=""'
                 echo 'RDEPEND=""'
                 echo 'S="${WORKDIR}"'
+                echo 'RESTRICT="strip"'
                 echo ''
                 echo "inherit xdg-utils"
                 echo ''
