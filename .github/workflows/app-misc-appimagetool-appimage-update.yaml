@@ -48,7 +48,7 @@ jobs:
               
               # Create ebuild script
               {
-                echo '# appimagetool ebuild file'
+                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/"
                 echo 'EAPI=8'
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""

@@ -55,7 +55,7 @@ jobs:
               
               # Create ebuild script
               {
-                echo "# Copyright"
+                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-ente-auth-appimage-update.yaml"
                 echo "EAPI=8"
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""

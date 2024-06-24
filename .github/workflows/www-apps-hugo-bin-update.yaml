@@ -51,7 +51,7 @@ jobs:
             if [ ! -f "$ebuild_file" ]; then
               # Create ebuild script
               {
-                echo "# Copyright"
+                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/www-apps-hugo-bin-update.yaml"
                 echo "EAPI=8"
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
