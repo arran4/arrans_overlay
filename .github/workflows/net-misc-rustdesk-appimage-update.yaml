@@ -68,28 +68,29 @@ jobs:
                 echo '" '
                 echo ''
                 echo "src_unpack() {"
-                echo "    chmod a+x \"\${DISTDIR}/\${A}\" || die \"Can't find archive file\""
-                echo "    \"\${DISTDIR}/\${A}\" --appimage-extract rustdesk.desktop || die \"Can't extract .desktop from appimage\""
-                echo "    \"\${DISTDIR}/\${A}\" --appimage-extract usr/share/icons || die \"Can't extract icons from app image\""
+                echo "  cp \"\${DISTDIR}/\${A}\" \"\${A}\"  || die \"Can't copy archive file\""
+                echo "  chmod a+x "\${A}\"  || die \"Can't chmod archive file\""
+                echo "  \"./\${A}\" --appimage-extract rustdesk.desktop || die \"Can't extract .desktop from appimage\""
+                echo "  \"./\${A}\" --appimage-extract usr/share/icons || die \"Can't extract icons from app image\""
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
-                echo "    sed -i 's:^Exec=.*:Exec=/opt/bin/rustdesk:' squashfs-root/rustdesk.desktop"
-                echo "    eapply_user"
+                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/rustdesk:' squashfs-root/rustdesk.desktop"
+                echo "  eapply_user"
                 echo "}"
                 echo ""
                 echo 'src_install() {'
-                echo '    mv -v "${DISTDIR}/${A}" rustdesk'
-                echo '    exeinto /opt/bin'
-                echo '    doexe "rustdesk"'
-                echo '    insinto /usr/share/applications'
-                echo '    doins "${DISTDIR}/squashfs-root/rustdesk.desktop"'
-                echo '    insinto /usr/share/'
-                echo '    doins -r "${DISTDIR}/squashfs-root/usr/share/icons"'
+                echo '  mv -v "${DISTDIR}/${A}" rustdesk'
+                echo '  exeinto /opt/bin'
+                echo '  doexe "rustdesk"'
+                echo '  insinto /usr/share/applications'
+                echo '  doins "./squashfs-root/rustdesk.desktop"'
+                echo '  insinto /usr/share/'
+                echo '  doins -r "./squashfs-root/usr/share/icons"'
                 echo "}"
                 echo ""
                 echo "pkg_postinst() {"
-                echo "    xdg_desktop_database_update"
+                echo "  xdg_desktop_database_update"
                 echo "}"
                 echo ""
               } > "$ebuild_file"

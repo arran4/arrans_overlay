@@ -68,24 +68,25 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ""
                 echo "src_unpack() {"
-                echo "    chmod a+x \"\${DISTDIR}/\${A}\" || die \"Can't find archive file\""
-                echo "    \"\${DISTDIR}/\${A}\" --appimage-extract ente_auth.desktop || die \"Can't extract .desktop from appimage\""
-                echo "    \"\${DISTDIR}/\${A}\" --appimage-extract usr/share/icons || die \"Can't extract icons from app image\""
+                echo "  cp \"\${DISTDIR}/\${A}\" \"\${A}\"  || die \"Can't copy archive file\""
+                echo "  chmod a+x "\${A}\"  || die \"Can't chmod archive file\""
+                echo "  \"./\${A}\" --appimage-extract ente_auth.desktop || die \"Can't extract .desktop from appimage\""
+                echo "  \"./\${A}\" --appimage-extract usr/share/icons || die \"Can't extract icons from app image\""
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
-                echo "    sed -i 's:^Exec=.*:Exec=/opt/bin/ente_auth:' squashfs-root/ente_auth.desktop"
-                echo "    eapply_user"
+                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/ente_auth:' squashfs-root/ente_auth.desktop"
+                echo "  eapply_user"
                 echo "}"
                 echo ""
                 echo "src_install() {"
-                echo "    exeinto /opt/bin"
-                echo '    mv "${DISTDIR}/${P}" "ente_auth"'
-                echo "    doexe ente_auth"
-                echo "    insinto /usr/share/applications"
-                echo '    doins "${DISTDIR}/squashfs-root/ente_auth.desktop"'
-                echo "    insinto /usr/share/"
-                echo '    doins -r "${DISTDIR}/squashfs-root/usr/share/icons"'
+                echo "  exeinto /opt/bin"
+                echo '  mv "./${P}" "ente_auth"'
+                echo "  doexe ente_auth"
+                echo "  insinto /usr/share/applications"
+                echo '  doins "./squashfs-root/ente_auth.desktop"'
+                echo "  insinto /usr/share/"
+                echo '  doins -r "./squashfs-root/usr/share/icons"'
                 echo "}"
                 echo ""
                 echo "pkg_postinst() {"
