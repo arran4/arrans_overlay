@@ -7,7 +7,6 @@ env:
   ebuild_category: "dev-lang"
   ebuild_name: "dart-bin"
   description: " The Dart SDK, including the VM, dart2js, core libraries, and more."
-  ebuild_dir: "./${ebuild_category}/${ebuild_name}"
 
 on:
   schedule:
@@ -19,6 +18,8 @@ on:
 
 jobs:
   check-and-create-ebuild:
+    env:
+      ebuild_dir: "./${{env.ebuild_category}}/${{env.ebuild_name}}"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
