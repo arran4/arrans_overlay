@@ -44,7 +44,7 @@ jobs:
             if [ ! -f "$ebuild_file" ]; then
               appimage_url="https://github.com/ente-io/ente/releases/download/${release}/ente-auth-v${version}-x86_64.AppImage"
 
-              # Download AppImage and Debian package
+              # Download AppImage
               wget $appimage_url -O auth
               
               # Create ebuild script
