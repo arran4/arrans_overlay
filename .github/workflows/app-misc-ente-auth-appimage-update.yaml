@@ -15,6 +15,7 @@ env:
   epn: ente-auth-appimage
   ecn: app-misc
   description: "Ente Auth AppImage"
+  homepage: "https://ente.io/blog/auth/"
 
 jobs:
   check-and-create-ebuild:
@@ -57,6 +58,7 @@ jobs:
                 echo "# Copyright"
                 echo "EAPI=8"
                 echo "DESCRIPTION=\"$description\""
+                echo "HOMEPAGE=\"$homepage\"'
                 echo "SRC_URI=\"${appimage_url} -> \${P}\""
                 echo "LICENSE=\"AGPL-3.0\""
                 echo "SLOT=\"0\""

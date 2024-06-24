@@ -17,7 +17,7 @@ env:
   repo_owner: rustdesk
   repo_name: rustdesk
   description: "An open-source remote desktop, and alternative to TeamViewer."
-
+  homepage: "https://rustdesk.com/"
 
 jobs:
   check-and-create-ebuild:

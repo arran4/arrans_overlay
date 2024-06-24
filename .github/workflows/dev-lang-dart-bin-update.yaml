@@ -7,6 +7,7 @@ env:
   ebuild_category: "dev-lang"
   ebuild_name: "dart-bin"
   description: " The Dart SDK, including the VM, dart2js, core libraries, and more."
+  homepage: "https://dart.dev/"
 
 on:
   schedule:
@@ -48,6 +49,7 @@ jobs:
                 echo "# Copyright"
                 echo "EAPI=8"
                 echo "DESCRIPTION=\"$description\""
+                echo "HOMEPAGE=\"$homepage\"'
                 echo 'IUSE=""'
                 echo 'SRC_URI="  '
                 echo "  amd64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-x64-release.zip -> \${P}.amd64.zip )"
