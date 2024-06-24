@@ -1,0 +1,96 @@
+name: dev-lang/dart-bin Update
+
+permissions:
+  contents: write
+
+env:
+  ebuild_category: "dev-lang"
+  ebuild_name: "dart-bin"
+  description: " The Dart SDK, including the VM, dart2js, core libraries, and more."
+  ebuild_dir: "./${{env.ebuild_category}}/${{env.ebuild_name}}"
+
+on:
+  schedule:
+    - cron: '20 0 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/dev-lang-dart-bin-update.yaml'
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          mkdir -p $ebuild_dir
+          versions=$(curl -s https://storage.googleapis.com/dart-archive/channels/stable/release/latest/VERSION | jq -r '.version')
+          
+          for version in ${versions}; do
+            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+              # Create ebuild script
+              {
+                echo "# Copyright"
+                echo "EAPI=8"
+                echo "DESCRIPTION=\"$description\""
+                echo 'IUSE="+extended"'
+                echo 'SRC_URI="  '
+                echo "  amd64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-x64-release.zip -> \${P}.amd64.tar.gz )"
+                echo "  x86? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-ia32-release.zip -> \${P}.x86.tar.gz )"
+                echo "  arm? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-arm-release.zip -> \${P}.arm.tar.gz )"
+                echo "  arm64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-arm64-release.zip -> \${P}.arm64.tar.gz )"
+                echo "  riscv? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-riscv64-release.zip -> \${P}.riscv.tar.gz )"
+                echo '" '
+                echo "LICENSE=\"BSD\""
+                echo "SLOT=\"0\""
+                echo 'KEYWORDS="~amd64 ~x86 ~arm ~arm64 ~riscv"'
+                echo 'RDEPEND="app-arch/unzip"'
+                echo 'DEPEND=""'
+                echo "S=\"\${WORKDIR}/dart-sdk\""
+                echo ""
+                echo "src_install() {"
+                echo '  mkdir "${ED}/opt" || die'
+                echo '  mv "${S}" "${ED}/opt/" || die'
+                echo "  "
+                echo "  dosym \"\${ED}/opt/dart-sdk/bin/dart\" '/opt/bin/dart'"
+                echo "}"
+                echo ""
+              } > $ebuild_file
+
+              # Generate the manifest for the new ebuild
+              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-x64-release.zip" -O "/tmp/${ebuild_name}-${version}.amd64.tar.gz"
+              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-ia32-release.zip" -O "/tmp/${ebuild_name}-${version}.x86.tar.gz"
+              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-arm-release.zip" -O "/tmp/${ebuild_name}-${version}.arm.tar.gz"
+              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-arm64-release.zip" -O "/tmp/${ebuild_name}-${version}.arm64.tar.gz"
+              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-riscv64-release.zip" -O "/tmp/${ebuild_name}-${version}.riscv.tar.gz"
+
+              for e in "${ebuild_name}-${version}.amd64.tar.gz" "${ebuild_name}-${version}.x86.tar.gz" "${ebuild_name}-${version}.arm.tar.gz" "${ebuild_name}-${version}.arm64.tar.gz" "${ebuild_name}-${version}.riscv.tar.gz"; do
+                echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
+                rm "/tmp/${e}"
+              done
+            fi
+            break
+          done
+
+      - name: Commit and push changes
+        run: |
+          git add "./${ebuild_dir}"
+          git commit -m "Add ebuilds for new ${ebuild_name} releases" && 
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.conclusion == 'success'
