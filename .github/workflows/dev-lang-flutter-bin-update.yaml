@@ -1,0 +1,92 @@
+name: dev-lang/flutter-bin Update
+
+permissions:
+  contents: write
+
+env:
+  ebuild_category: "dev-lang"
+  ebuild_name: "flutter-bin"
+  description: "Flutter makes it easy and fast to build beautiful apps for mobile and beyond "
+  homepage: "https://flutter.dev/"
+
+on:
+  schedule:
+    - cron: '25 0 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/dev-lang-flutter-bin-update.yaml'
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          mkdir -p $ebuild_dir
+          versions=$(curl -s https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json | jq -r '.releases[] | select ( .channel == "stable" ) | .version ')
+          
+          for version in ${versions}; do
+            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+
+              wget "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz" -O "/tmp/${ebuild_name}-${version}.amd64.tar.xz"
+          
+              for e in "${ebuild_name}-${version}.amd64.tar.xz" ; do
+                echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
+                rm "/tmp/${e}"
+              done
+
+              # Create ebuild script
+              {
+                echo "# Copyright"
+                echo "EAPI=8"
+                echo "DESCRIPTION=\"$description\""
+                echo "HOMEPAGE=\"$homepage\""
+                echo 'IUSE=""'
+                echo 'SRC_URI="  '
+                echo "  amd64? ( https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_\${PV}-stable.tar.xz -> \${P}.amd64.tar.xz )"
+                echo '" '
+                echo "LICENSE=\"BSD\""
+                echo "SLOT=\"0\""
+                echo 'KEYWORDS="~amd64"'
+                echo 'RDEPEND="app-arch/tar app-arch/xz-utils"'
+                echo 'DEPEND=""'
+                echo "S=\"\${WORKDIR}/flutter-sdk\""
+                echo ""
+                echo "src_install() {"
+                echo '  mkdir "${ED}/opt" || die'
+                echo '  mv "${S}" "${ED}/opt/" || die'
+                echo "  "
+                echo "  dosym \"/opt/flutter-sdk/bin/flutter\" '/opt/bin/flutter'"
+                echo "}"
+                echo ""
+              } > $ebuild_file
+
+            fi
+            break
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          git add "./${ebuild_dir}"
+          git commit -m "Add ebuilds for new ${ebuild_name} releases" && 
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.conclusion == 'success'
