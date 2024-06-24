@@ -37,10 +37,10 @@ jobs:
           description="An open-source remote desktop, and alternative to TeamViewer."
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
-          run_numbers=$(curl -s https://api.github.com/repos/${ghrp}/actions/runs | jq -r '.workflow_runs[].run_number')
-          for run_number in ${run_numbers}; do
+          releases=$(curl -s https://api.github.com/repos/${repo_owner}/${repo_name}/releases | jq -r '.[].tag_name')
+          for release in ${releases}; do
             echo "Processing run number: $run_number"
-            version="0.0.${run_number}"
+            version=${release#auth-v}
             ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               
@@ -89,8 +89,8 @@ jobs:
               } > "$ebuild_file"
 
               # Generate the manifest for the new ebuild
-              wget "https://github.com/${ghrp}/releases/download/${version}/rustdesk-x86_64.AppImage" -O "/tmp/${epn}-${version}.amd64"
-              wget "https://github.com/${ghrp}/releases/download/${version}/rustdesk-aarch64.AppImage" -O "/tmp/${epn}-${version}.arm64"
+              wget "https://github.com/${ghrp}/releases/download/${release}/rustdesk-x86_64.AppImage" -O "/tmp/${epn}-${version}.amd64"
+              wget "https://github.com/${ghrp}/releases/download/${release}/rustdesk-aarch64.AppImage" -O "/tmp/${epn}-${version}.arm64"
               
               for e in "${epn}-${version}.amd64" "${epn}-${version}.arm64"; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
