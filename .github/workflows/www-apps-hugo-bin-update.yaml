@@ -70,7 +70,7 @@ jobs:
                 echo "S=\"\${WORKDIR}\""
                 echo ""
                 echo "src_install() {"
-                echo "    exeinto /usr/bin"
+                echo "    exeinto /opt/bin"
                 echo "    doexe ${EFN}"
                 echo "}"
                 echo ""
