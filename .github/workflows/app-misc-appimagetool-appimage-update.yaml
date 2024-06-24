@@ -7,6 +7,9 @@ on:
   schedule:
     - cron: '5 0 * * *'
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-misc-appimagetool-appimage-update.yaml'
 
 jobs:
   check-and-create-ebuild:

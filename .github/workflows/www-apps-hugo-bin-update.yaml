@@ -7,6 +7,9 @@ on:
   schedule:
     - cron: '10 0 * * *'
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/www-apps-hugo-bin-update.yaml'
 
 jobs:
   check-and-create-ebuild:

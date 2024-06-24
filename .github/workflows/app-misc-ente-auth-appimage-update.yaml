@@ -7,6 +7,9 @@ on:
   schedule:
     - cron: '0 0 * * *'  
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-misc-ente-auth-appimage-update.yaml'
 
 jobs:
   check-and-create-ebuild:
