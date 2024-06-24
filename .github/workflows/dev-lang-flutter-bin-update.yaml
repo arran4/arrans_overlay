@@ -46,21 +46,28 @@ jobs:
             if [ ! -f "$ebuild_file" ]; then
 
               wget "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz" -O "/tmp/${ebuild_name}-${version}.amd64.tar.xz"
+              #engineVersion=$(tar -xJf "/tmp/${ebuild_name}-${version}.amd64.tar.xz" flutter/bin/internal/engine.version -O)
+              #dartSdkUrl="https://storage.googleapis.com/flutter_infra_release/flutter/$engineVersion/dart-sdk-linux-x64.zip"
+              # wget "$dartSdkUrl" -O "/tmp/${ebuild_name}-dartsdk-${version}.amd64.tar.xz"
           
-              for e in "${ebuild_name}-${version}.amd64.tar.xz" ; do
+              # for e in "${ebuild_name}-${version}.amd64.tar.xz" "${ebuild_name}-dartsdk-${version}.amd64.tar.xz"; do
+              for e in "${ebuild_name}-${version}.amd64.tar.xz"; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${e}"
               done
 
               # Create ebuild script
               {
-                echo "# Copyright"
+                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/dev-lang-flutter-bin-update.yaml "
                 echo "EAPI=8"
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
-                echo 'IUSE=""'
+                echo 'IUSE="+dart"'
                 echo 'SRC_URI="  '
-                echo "  amd64? ( https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_\${PV}-stable.tar.xz -> \${P}.amd64.tar.xz )"
+                echo "  amd64? ( "
+                echo "    https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_\${PV}-stable.tar.xz -> \${P}.amd64.tar.xz"
+                #echo "    dart? ( $dartSdkUrl -> \${PN}-dartsdk-\${PV}.amd64.tar.xz )"
+                echo "  )"
                 echo '" '
                 echo "LICENSE=\"BSD\""
                 echo "SLOT=\"0\""
