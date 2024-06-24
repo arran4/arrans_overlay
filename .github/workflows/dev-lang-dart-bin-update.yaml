@@ -49,7 +49,7 @@ jobs:
                 echo "# Copyright"
                 echo "EAPI=8"
                 echo "DESCRIPTION=\"$description\""
-                echo "HOMEPAGE=\"$homepage\"'
+                echo "HOMEPAGE=\"$homepage\""
                 echo 'IUSE=""'
                 echo 'SRC_URI="  '
                 echo "  amd64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-x64-release.zip -> \${P}.amd64.zip )"

@@ -58,7 +58,7 @@ jobs:
                 echo "# Copyright"
                 echo "EAPI=8"
                 echo "DESCRIPTION=\"$description\""
-                echo "HOMEPAGE=\"$homepage\"'
+                echo "HOMEPAGE=\"$homepage\""
                 echo "SRC_URI=\"${appimage_url} -> \${P}\""
                 echo "LICENSE=\"AGPL-3.0\""
                 echo "SLOT=\"0\""
