@@ -1,4 +1,4 @@
-name: app-misc-appimagetool-update-check
+name: app-misc/appimagetool-appimage update
 
 permissions:
   contents: write

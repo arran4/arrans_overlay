@@ -1,4 +1,4 @@
-name: hugo-bin-update-check
+name: www-apps/hugo-bin Update
 
 permissions:
   contents: write
