@@ -19,7 +19,7 @@ on:
 jobs:
   check-and-create-ebuild:
     env:
-      ebuild_dir: "./${{env.ebuild_category}}/${{env.ebuild_name}}"
+      ebuild_dir: "./${{ebuild_category}}/${{ebuild_name}}"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
