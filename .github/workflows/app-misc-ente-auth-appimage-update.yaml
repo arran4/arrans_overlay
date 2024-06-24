@@ -73,6 +73,7 @@ jobs:
                 echo ""
                 echo "src_prepare() {"
                 echo "    sed -i 's:^Exec=.*:Exec=/opt/bin/ente_auth:' squashfs-root/ente_auth.desktop"
+                echo "    eapply_user"
                 echo "}"
                 echo ""
                 echo "src_install() {"

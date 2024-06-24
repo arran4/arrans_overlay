@@ -71,6 +71,7 @@ jobs:
                 echo ""
                 echo "src_prepare() {"
                 echo "    sed -i 's:^Exec=.*:Exec=/opt/bin/appimagetool:' squashfs-root/appimagetool.desktop"
+                echo "    eapply_user"
                 echo "}"
                 echo ""
                 echo 'src_install() {'

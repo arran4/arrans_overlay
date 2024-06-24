@@ -72,6 +72,7 @@ jobs:
                 echo ""
                 echo "src_prepare() {"
                 echo "    sed -i 's:^Exec=.*:Exec=/opt/bin/rustdesk:' squashfs-root/rustdesk.desktop"
+                echo "    eapply_user"
                 echo "}"
                 echo ""
                 echo 'src_install() {'
