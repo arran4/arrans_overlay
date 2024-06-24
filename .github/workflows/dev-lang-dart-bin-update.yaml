@@ -50,11 +50,11 @@ jobs:
                 echo "DESCRIPTION=\"$description\""
                 echo 'IUSE=""'
                 echo 'SRC_URI="  '
-                echo "  amd64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-x64-release.zip -> \${P}.amd64.tar.gz )"
-                echo "  x86? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-ia32-release.zip -> \${P}.x86.tar.gz )"
-                echo "  arm? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-arm-release.zip -> \${P}.arm.tar.gz )"
-                echo "  arm64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-arm64-release.zip -> \${P}.arm64.tar.gz )"
-                echo "  riscv? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-riscv64-release.zip -> \${P}.riscv.tar.gz )"
+                echo "  amd64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-x64-release.zip -> \${P}.amd64.zip )"
+                echo "  x86? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-ia32-release.zip -> \${P}.x86.zip )"
+                echo "  arm? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-arm-release.zip -> \${P}.arm.zip )"
+                echo "  arm64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-arm64-release.zip -> \${P}.arm64.zip )"
+                echo "  riscv? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-riscv64-release.zip -> \${P}.riscv.zip )"
                 echo '" '
                 echo "LICENSE=\"BSD\""
                 echo "SLOT=\"0\""
@@ -73,13 +73,13 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-x64-release.zip" -O "/tmp/${ebuild_name}-${version}.amd64.tar.gz"
-              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-ia32-release.zip" -O "/tmp/${ebuild_name}-${version}.x86.tar.gz"
-              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-arm-release.zip" -O "/tmp/${ebuild_name}-${version}.arm.tar.gz"
-              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-arm64-release.zip" -O "/tmp/${ebuild_name}-${version}.arm64.tar.gz"
-              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-riscv64-release.zip" -O "/tmp/${ebuild_name}-${version}.riscv.tar.gz"
+              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-x64-release.zip" -O "/tmp/${ebuild_name}-${version}.amd64.zip"
+              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-ia32-release.zip" -O "/tmp/${ebuild_name}-${version}.x86.zip"
+              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-arm-release.zip" -O "/tmp/${ebuild_name}-${version}.arm.zip"
+              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-arm64-release.zip" -O "/tmp/${ebuild_name}-${version}.arm64.zip"
+              wget "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-riscv64-release.zip" -O "/tmp/${ebuild_name}-${version}.riscv.zip"
 
-              for e in "${ebuild_name}-${version}.amd64.tar.gz" "${ebuild_name}-${version}.x86.tar.gz" "${ebuild_name}-${version}.arm.tar.gz" "${ebuild_name}-${version}.arm64.tar.gz" "${ebuild_name}-${version}.riscv.tar.gz"; do
+              for e in "${ebuild_name}-${version}.amd64.zip" "${ebuild_name}-${version}.x86.zip" "${ebuild_name}-${version}.arm.zip" "${ebuild_name}-${version}.arm64.zip" "${ebuild_name}-${version}.riscv.zip"; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${e}"
               done
