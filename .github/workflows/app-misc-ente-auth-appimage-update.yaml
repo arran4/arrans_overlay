@@ -100,7 +100,7 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git add ./app-misc/ente-auth
+          git add ./app-misc/ente-auth-appimage
           git commit -m "Add ebuilds for new ente-auth-appimage releases" && 
           git pull --rebase &&
           git push || true
