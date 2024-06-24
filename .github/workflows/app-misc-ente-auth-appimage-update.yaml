@@ -46,7 +46,6 @@ jobs:
 
               # Download AppImage and Debian package
               wget $appimage_url -O auth
-              wget $deb_url -O auth.deb
               
               # Create ebuild script
               {
