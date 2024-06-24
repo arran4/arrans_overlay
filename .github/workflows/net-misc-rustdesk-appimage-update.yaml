@@ -42,7 +42,7 @@ jobs:
           releases=$(curl -s https://api.github.com/repos/${repo_owner}/${repo_name}/releases | jq -r '.[].tag_name')
           for release in ${releases}; do
             echo "Processing run number: $run_number"
-            version=${release#auth-v}
+            version=${release}
             ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               
