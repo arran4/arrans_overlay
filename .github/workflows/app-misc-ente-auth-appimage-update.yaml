@@ -81,7 +81,7 @@ jobs:
                 echo ""
                 echo "src_install() {"
                 echo "  exeinto /opt/bin"
-                echo '  mv "./${P}" "ente_auth"'
+                echo '  mv "./${A}" "ente_auth"'
                 echo "  doexe ente_auth"
                 echo "  insinto /usr/share/applications"
                 echo '  doins "./squashfs-root/ente_auth.desktop"'
