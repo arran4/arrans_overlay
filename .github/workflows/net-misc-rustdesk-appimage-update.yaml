@@ -60,8 +60,8 @@ jobs:
                 echo 'S="${WORKDIR}"'
                 echo ''
                 echo 'SRC_URI="  '
-                echo "  amd64? ( https://github.com/${ghrp}/releases/download/\${release}/rustdesk-\${PV}.x86_64.AppImage -> \$P.amd64 )"
-                echo "  arm64? ( https://github.com/${ghrp}/releases/download/\${release}/rustdesk-\${PV}.aarch64.AppImage -> \$P.arm64 )"
+                echo "  amd64? ( https://github.com/${ghrp}/releases/download/\${release}/rustdesk-\${PV}-x86_64.AppImage -> \$P.amd64 )"
+                echo "  arm64? ( https://github.com/${ghrp}/releases/download/\${release}/rustdesk-\${PV}-aarch64.AppImage -> \$P.arm64 )"
                 echo '" '
                 echo ''
                 echo "src_unpack() {"
@@ -91,8 +91,8 @@ jobs:
               } > "$ebuild_file"
 
               # Generate the manifest for the new ebuild
-              wget "https://github.com/${ghrp}/releases/download/${release}/rustdesk-${version}.x86_64.AppImage" -O "/tmp/${epn}-${version}.amd64"
-              wget "https://github.com/${ghrp}/releases/download/${release}/rustdesk-${version}.aarch64.AppImage" -O "/tmp/${epn}-${version}.arm64"
+              wget "https://github.com/${ghrp}/releases/download/${release}/rustdesk-${version}-x86_64.AppImage" -O "/tmp/${epn}-${version}.amd64"
+              wget "https://github.com/${ghrp}/releases/download/${release}/rustdesk-${version}-aarch64.AppImage" -O "/tmp/${epn}-${version}.arm64"
               
               for e in "${epn}-${version}.amd64" "${epn}-${version}.arm64"; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
