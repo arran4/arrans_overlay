@@ -77,6 +77,12 @@ jobs:
                 echo 'DEPEND=""'
                 echo "S=\"\${WORKDIR}/flutter\""
                 echo ""
+                echo "src_prepare() {"
+                echo "  # disable upgrade_flutter"
+                echo "	sed -i 's/^\\(\\s\\+\\)\\(upgrade_flutter \\)/\\1# \\2/' \"\${S}/bin/internal/shared.sh\""
+                echo "	eapply_user"
+                echo "}"
+                echo ""
                 echo "src_install() {"
                 echo '  mkdir "${ED}/opt" || die'
                 echo '  mv "${S}" "${ED}/opt/" || die'
