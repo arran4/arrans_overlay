@@ -1,0 +1,96 @@
+name: app-text/jbofi'e Update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-text-jbofihe-update.yaml'
+
+env:
+  ebuild_category: app-text
+  ebuild_name: jbofihe
+  repo_owner: lojban
+  repo_name: jbofihe
+  description: "The de facto standard parser and glosser for Lojban."
+  PFN: "jbofihe"
+  EFN: "jbofihe"
+  homepage: "https://github.com/lojban/jbofihe"
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          mkdir -p $ebuild_dir
+          releases=$(curl -s https://api.github.com/repos/${repo_owner}/${repo_name}/releases | jq -r '.[].tag_name')
+
+          for release in ${releases}; do
+            version=${release#v}
+            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+              # Create ebuild script
+              {
+                echo "# Generated via: https://github.com/${{ github.repository }}"
+                echo "EAPI=8"
+                echo "DESCRIPTION=\"$description\""
+                echo "HOMEPAGE=\"$homepage\""
+                echo 'SRC_URI="https://github.com/${repo_owner}/${repo_name}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
+                echo 'LICENSE="GPL-2"'
+                echo "SLOT=\"0\""
+                echo 'KEYWORDS="~x86"'
+                echo 'IUSE=""'
+                echo 'DEPEND="virtual/libc dev-lang/perl sys-devel/bison sys-devel/flex"'
+                echo 'RDEPEND="${DEPEND}"'
+                echo 'S="${WORKDIR}/${P}"'
+                echo ""
+                echo "src_unpack() {"
+                echo "    unpack \${A}"
+                echo "}"
+                echo ""
+                echo "src_compile() {"
+                echo "    econf"
+                echo "    emake"
+                echo "}"
+                echo ""
+                echo "src_install() {"
+                echo "    default"
+                echo "}"
+              } > $ebuild_file
+
+              # Generate the manifest for the new ebuild
+              wget https://github.com/${repo_owner}/${repo_name}/archive/refs/tags/v${version}.tar.gz -O /tmp/${ebuild_name}-${version}.tar.gz
+              echo "DIST ${ebuild_name}-${version}.tar.gz $(stat -c %s "/tmp/${ebuild_name}-${version}.tar.gz") BLAKE2B $(b2sum "/tmp/${ebuild_name}-${version}.tar.gz" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${ebuild_name}-${version}.tar.gz" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
+              rm "/tmp/${ebuild_name}-${version}.tar.gz"
+            fi
+            break
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          git add "./${ebuild_dir}"
+          git commit -m "Add ebuilds for new ${ebuild_name} releases" && 
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.conclusion == 'success'
