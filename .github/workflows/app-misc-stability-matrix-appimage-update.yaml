@@ -60,7 +60,7 @@ jobs:
                 echo ''
                 echo "inherit xdg-utils"
                 echo ''
-                echo 'SRC_URI="https://github.com/LykosAI/StabilityMatrix/releases/download/${latest_release}/StabilityMatrix-linux-x64.zip -> $P.zip"'
+                echo 'SRC_URI="https://github.com/LykosAI/StabilityMatrix/releases/download/v${PV}/StabilityMatrix-linux-x64.zip -> $P.zip"'
                 echo ''
                 echo "src_unpack() {"
                 echo "  unzip \"\${DISTDIR}/\${A}\" -d \${WORKDIR} || die \"Can't unzip archive file\""
