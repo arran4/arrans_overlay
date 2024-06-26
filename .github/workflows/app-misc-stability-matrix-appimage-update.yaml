@@ -1,4 +1,4 @@
-name: app-misc-stability-matrix-appimage-update
+name: app-misc/stability-matrix-appimage Update
 
 permissions:
   contents: write
