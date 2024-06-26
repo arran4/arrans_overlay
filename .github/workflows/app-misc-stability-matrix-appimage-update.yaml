@@ -1,4 +1,4 @@
-name: app-misc-stability-matrix-update
+name: app-misc-stability-matrix-appimage-update
 
 permissions:
   contents: write
@@ -9,11 +9,11 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/app-misc-stability-matrix-update.yaml'
+      - '.github/workflows/app-misc-stability-matrix-appimage-update.yaml'
 
 env:
   ecn: app-misc
-  epn: stability-matrix
+  epn: stability-matrix-appimage
   description: "Multi-Platform Package Manager for Stable Diffusion"
   homepage: "https://lykos.ai"
 
