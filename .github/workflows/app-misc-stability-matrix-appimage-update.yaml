@@ -64,6 +64,7 @@ jobs:
                 echo ''
                 echo "src_unpack() {"
                 echo "  unzip \"\${DISTDIR}/\${A}\" -d \${WORKDIR} || die \"Can't unzip archive file\""
+                echo "  chmox a+x ./StabilityMatrix.AppImage || die \"Can't chmod +x AppImage\""
                 echo "  ./StabilityMatrix.AppImage --appimage-extract \*.desktop || die \"Can't extract .desktop file from AppImage\""
                 echo "  ./StabilityMatrix.AppImage --appimage-extract usr/share/icons || die \"Can't extract icons from AppImage\""
                 echo "}"
