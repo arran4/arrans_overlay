@@ -62,8 +62,8 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="  '
-                echo '  amd64? ( https://github.com/Bin-Huang/chatbox/releases/download/${latest_release}/Chatbox-${version}-x86_64.AppImage -> $P.amd64 )'
-                echo '  arm64? ( https://github.com/Bin-Huang/chatbox/releases/download/${latest_release}/Chatbox-${version}-arm64.AppImage -> $P.arm64 )'
+                echo '  amd64? ( https://github.com/Bin-Huang/chatbox/releases/download/v${PV}/Chatbox-${PV}-x86_64.AppImage -> $P.amd64 )'
+                echo '  arm64? ( https://github.com/Bin-Huang/chatbox/releases/download/v${PV}/Chatbox-${PV}-arm64.AppImage -> $P.arm64 )'
                 echo '" '
                 echo ''
                 echo "src_unpack() {"
