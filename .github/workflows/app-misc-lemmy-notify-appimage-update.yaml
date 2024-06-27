@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/app-misc-lemmy_notify-appimage-update.yaml'
+      - '.github/workflows/app-misc-lemmy-notify-appimage-update.yaml'
 
 env:
   ecn: app-misc
