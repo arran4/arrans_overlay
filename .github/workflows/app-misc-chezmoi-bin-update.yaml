@@ -1,0 +1,110 @@
+name: app-admin/chezmoi-bin Update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '10 1 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-admin-chezmoi-bin-update.yaml'
+
+env:
+  ebuild_category: app-admin
+  ebuild_name: chezmoi-bin
+  repo_owner: twpayne
+  repo_name: chezmoi
+  description: "Manage your dotfiles across multiple diverse machines, securely."
+  PFN: "chezmoi"
+  EFN: "chezmoi"
+  homepage: "https://www.chezmoi.io/"
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          mkdir -p $ebuild_dir
+          releases=$(curl -s https://api.github.com/repos/${repo_owner}/${repo_name}/releases | jq -r '.[].tag_name')
+          
+          for release in ${releases}; do
+            version=${release#v}
+            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+              # Create ebuild script
+              {
+                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-admin-chezmoi-bin-update.yaml"
+                echo "EAPI=8"
+                echo "DESCRIPTION=\"$description\""
+                echo "HOMEPAGE=\"$homepage\""
+                echo 'IUSE="musl"'
+                echo 'SRC_URI="'
+                echo "  !musl? ( amd64? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_\${PV}_linux-amd64.tar.gz -> \${P}.amd64.tar.gz ) )"
+                echo "  musl? ( amd64? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_\${PV}_linux-amd64-musl.tar.gz -> \${P}-musl.amd64.tar.gz ) )"
+                echo "  arm? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_\${PV}_linux-arm.tar.gz -> \${P}.arm.tar.gz )"
+                echo "  arm64? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_\${PV}_linux-arm64.tar.gz -> \${P}.arm64.tar.gz )"
+                echo "  x86? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_\${PV}_linux-i386.tar.gz -> \${P}.x86.tar.gz )"
+                echo '" '
+                echo "LICENSE=\"Unknown\""
+                echo "SLOT=\"0\""
+                echo 'KEYWORDS="~amd64 ~arm ~arm64 ~x86"'
+                echo 'RDEPEND=""'
+                echo 'DEPEND="${RDEPEND}"'
+                echo "S=\"\${WORKDIR}\""
+                echo ""
+                echo "src_install() {"
+                echo "    exeinto /opt/bin"
+                echo "    doexe ${EFN}"
+                echo "    dodoc LICENSE README.md"
+                echo "    insinto /usr/share/bash-completion/completions"
+                echo "    doins completions/chezmoi-completion.bash"
+                echo "    insinto /usr/share/fish/vendor_completions.d"
+                echo "    doins completions/chezmoi.fish"
+                echo "    insinto /usr/share/zsh/site-functions"
+                echo "    doins completions/chezmoi.zsh"
+                echo "    insinto /usr/share/powershell/Modules"
+                echo "    doins completions/chezmoi.ps1"
+                echo "}"
+                echo ""
+              } > $ebuild_file
+
+              # Generate the manifest for the new ebuild
+              wget https://github.com/${repo_owner}/${repo_name}/releases/download/v${version}/${PFN}_${version}_linux-amd64.tar.gz -O /tmp/${ebuild_name}-${version}.amd64.tar.gz
+              wget https://github.com/${repo_owner}/${repo_name}/releases/download/v${version}/${PFN}_${version}_linux-amd64-musl.tar.gz -O /tmp/${ebuild_name}-${version}-musl.amd64.tar.gz
+              wget https://github.com/${repo_owner}/${repo_name}/releases/download/v${version}/${PFN}_${version}_linux-arm.tar.gz -O /tmp/${ebuild_name}-${version}.arm.tar.gz
+              wget https://github.com/${repo_owner}/${repo_name}/releases/download/v${version}/${PFN}_${version}_linux-arm64.tar.gz -O /tmp/${ebuild_name}-${version}.arm64.tar.gz
+              wget https://github.com/${repo_owner}/${repo_name}/releases/download/v${version}/${PFN}_${version}_linux-i386.tar.gz -O /tmp/${ebuild_name}-${version}.x86.tar.gz
+              for e in ${ebuild_name}-${version}.amd64.tar.gz ${ebuild_name}-${version}-musl.amd64.tar.gz ${ebuild_name}-${version}.arm.tar.gz ${ebuild_name}-${version}.arm64.tar.gz ${ebuild_name}-${version}.x86.tar.gz; do
+                echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
+                rm "/tmp/${e}"
+              done
+            fi
+            break
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          git add "./${ebuild_dir}"
+          git commit -m "Add ebuilds for new ${ebuild_name} releases" && 
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.conclusion == 'success'
