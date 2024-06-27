@@ -62,9 +62,9 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="  '
-                echo '  amd64? ( https://github.com/ollama/ollama/releases/download/${latest_release}/ollama-linux-amd64 -> $P.amd64 )'
-                echo '  arm64? ( https://github.com/ollama/ollama/releases/download/${latest_release}/ollama-linux-arm64 -> $P.arm64 )'
-                echo '  rocm? ( https://github.com/ollama/ollama/releases/download/${latest_release}/ollama-linux-amd64-rocm.tgz -> $P.rocm.tgz )'
+                echo '  amd64? ( https://github.com/ollama/ollama/releases/download/${PV}/ollama-linux-amd64 -> $P.amd64 )'
+                echo '  arm64? ( https://github.com/ollama/ollama/releases/download/${PV}/ollama-linux-arm64 -> $P.arm64 )'
+                echo '  rocm? ( https://github.com/ollama/ollama/releases/download/${PV}/ollama-linux-amd64-rocm.tgz -> $P.rocm.tgz )'
                 echo '" '
                 echo ''
                 echo "pkg_setup() {"
