@@ -1,19 +1,19 @@
-name: app-misc/lemmy-notify-appimage update
+name: app-misc/lemmy_notify-appimage update
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '5 0 * * *'
+    - cron: '55 0 * * *'
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/app-misc-lemmy-notify-appimage-update.yaml'
+      - '.github/workflows/app-misc-lemmy_notify-appimage-update.yaml'
 
 env:
   ecn: app-misc
-  epn: lemmy-notify-appimage
+  epn: lemmy_notify-appimage
   description: "Lemmy Notification app - for desktop atm"
   homepage: "https://github.com/arran4/lemmy_notify"
   appimage_name: lemmy_notify.AppImage
@@ -51,23 +51,25 @@ jobs:
                 echo 'EAPI=8'
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
-                echo 'LICENSE="MIT"'
+                echo 'LICENSE="Unknown"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="~amd64"'
                 echo 'DEPEND=""'
-                echo 'RDEPEND=""'
+                echo 'RDEPEND="dev-libs/libappindicator"'
                 echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
                 echo ''
                 echo "inherit xdg-utils"
                 echo ''
-                echo 'SRC_URI="https://github.com/arran4/lemmy_notify/releases/download/${PV}/lemmy_notify-linux-x86_64.AppImage -> $P.AppImage"'
+                echo 'SRC_URI="  '
+                echo '  amd64? ( https://github.com/arran4/lemmy_notify/releases/download/v${PV}/lemmy_notify-${PV}-x86_64.AppImage -> $P.amd64 )'
+                echo '" '
                 echo ''
                 echo "src_unpack() {"
                 echo "  cp \"\${DISTDIR}/\${A}\" \"\${A}\" || die \"Can't copy archive file\""
                 echo "  chmod a+x \"\${A}\" || die \"Can't chmod archive file\""
-                echo "  ./${A} --appimage-extract \*.desktop || die \"Can't extract .desktop file from AppImage\""
-                echo "  ./${A} --appimage-extract usr/share/icons || die \"Can't extract icons from AppImage\""
+                echo "  ./\${A} --appimage-extract \*.desktop || die \"Can't extract .desktop file from AppImage\""
+                echo "  ./\${A} --appimage-extract usr/share/icons || die \"Can't extract icons from AppImage\""
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
@@ -77,10 +79,10 @@ jobs:
                 echo "}"
                 echo ""
                 echo "src_install() {"
-                echo '  mv "${WORKDIR}/${P}.AppImage" "${WORKDIR}/${{ env.appimage_name }}"'
+                echo '  mv "${WORKDIR}/${P}.amd64" "${WORKDIR}/${{ env.appimage_name }}"'
                 echo '  exeinto /opt/bin'
                 echo '  doexe "${WORKDIR}/${{ env.appimage_name }}" || die "Failed to install AppImage"'
-                echo '  dosym /opt/bin/${{ env.appimage_name }} /usr/bin/lemmy-notify'
+                echo '  dosym /opt/bin/${{ env.appimage_name }} /usr/bin/lemmy_notify'
                 echo '  insinto /usr/share/applications'
                 echo '  doins "${WORKDIR}/squashfs-root/*.desktop" || die "Failed to install .desktop file"'
                 echo '  insinto /usr/share/icons/hicolor'
@@ -94,11 +96,12 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/arran4/lemmy_notify/releases/download/${latest_release}/lemmy_notify-linux-x86_64.AppImage -O /tmp/${{ env.epn }}-${version}.AppImage
+              wget https://github.com/arran4/lemmy_notify/releases/download/${latest_release}/lemmy_notify-${version}-x86_64.AppImage -O /tmp/${{ env.epn }}-${version}.amd64
               
-              e="${{ env.epn }}-${version}.AppImage"
-              echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
-              rm "/tmp/${e}"
+              for e in ${{ env.epn }}-${version}.amd64; do
+                echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
+                rm "/tmp/${e}"
+              done
           fi
 
       - name: Commit and push changes
