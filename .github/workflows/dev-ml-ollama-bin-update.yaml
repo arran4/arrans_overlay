@@ -59,6 +59,7 @@ jobs:
                 echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
                 echo ''
+                echo 'inherit user'
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="  '
