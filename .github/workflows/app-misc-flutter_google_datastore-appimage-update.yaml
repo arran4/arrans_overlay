@@ -1,0 +1,113 @@
+name: app-misc/flutter-google-datastore-appimage update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '50 0 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-misc-flutter_google_datastore-appimage-update.yaml'
+
+env:
+  ecn: app-misc
+  epn: flutter-google-datastore-appimage
+  description: "Google Datastore and Datastore emulator client for easy modification of values"
+  homepage: "https://github.com/arran4/flutter_google_datastore"
+  appimage_name: FlutterGoogleDatastore.AppImage
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils unzip
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p $ebuild_dir
+          latest_release=$(curl -s https://api.github.com/repos/arran4/flutter_google_datastore/releases/latest | jq -r '.tag_name')
+          version="${latest_release#v}"
+          ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+          if [ ! -f "$ebuild_file" ]; then
+              
+              # Create ebuild script
+              {
+                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/"
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'LICENSE="MIT"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="~amd64"'
+                echo 'DEPEND=""'
+                echo 'RDEPEND=""'
+                echo 'S="${WORKDIR}"'
+                echo 'RESTRICT="strip"'
+                echo ''
+                echo "inherit xdg-utils"
+                echo ''
+                echo 'SRC_URI="  '
+                echo '  amd64? ( https://github.com/arran4/flutter_google_datastore/releases/download/v${PV}/flutter_google_datastore-linux-x86_64.AppImage -> $P.amd64 )'
+                echo '" '
+                echo ''
+                echo "src_unpack() {"
+                echo "  cp \"\${DISTDIR}/\${A}\" \"\${A}\" || die \"Can't copy archive file\""
+                echo "  chmod a+x \"\${A}\" || die \"Can't chmod archive file\""
+                echo "  ./\${A} --appimage-extract \*.desktop || die \"Can't extract .desktop file from AppImage\""
+                echo "  ./\${A} --appimage-extract usr/share/icons || die \"Can't extract icons from AppImage\""
+                echo "}"
+                echo ""
+                echo "src_prepare() {"
+                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/*.desktop"
+                echo "  sed -i 's:^TryExec=.*:TryExec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/*.desktop"
+                echo "  eapply_user"
+                echo "}"
+                echo ""
+                echo "src_install() {"
+                echo '  mv "${WORKDIR}/${P}.amd64" "${WORKDIR}/${{ env.appimage_name }}"'
+                echo '  exeinto /opt/bin'
+                echo '  doexe "${WORKDIR}/${{ env.appimage_name }}" || die "Failed to install AppImage"'
+                echo '  dosym /opt/bin/${{ env.appimage_name }} /usr/bin/FlutterGoogleDatastore'
+                echo '  insinto /usr/share/applications'
+                echo '  doins "${WORKDIR}/squashfs-root/*.desktop" || die "Failed to install .desktop file"'
+                echo '  insinto /usr/share/icons/hicolor'
+                echo '  doins -r "${WORKDIR}/squashfs-root/usr/share/icons" || die "Failed to install icons"'
+                echo "}"
+                echo ""
+                echo "pkg_postinst() {"
+                echo "  xdg_desktop_database_update"
+                echo "}"
+                echo ""
+              } > $ebuild_file
+
+              # Generate the manifest for the new ebuild
+              wget https://github.com/arran4/flutter_google_datastore/releases/download/${latest_release}/flutter_google_datastore-linux-x86_64.AppImage -O /tmp/${{ env.epn }}-${version}.amd64
+              
+              echo "DIST ${{ env.epn }}-${version}.amd64 $(stat -c %s "/tmp/${{ env.epn }}-${version}.amd64") BLAKE2B $(b2sum "/tmp/${{ env.epn }}-${version}.amd64" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${{ env.epn }}-${version}.amd64" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
+              rm "/tmp/${{ env.epn }}-${version}.amd64"
+          fi
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          git add ./${ebuild_dir}
+          git commit -m "Add ebuilds for new ${{ env.epn }} releases" && 
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.conclusion == 'success'
+
