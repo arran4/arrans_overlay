@@ -62,7 +62,7 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="  '
-                echo '  amd64? ( https://github.com/arran4/lemmy_notify/releases/download/v${PV}/lemmy_notify-${PV}-x86_64.AppImage -> $P.amd64 )'
+                echo '  amd64? ( https://github.com/arran4/lemmy_notify/releases/download/v${PV}/lemmy_notify-x86_64.AppImage -> $P.amd64 )'
                 echo '" '
                 echo ''
                 echo "src_unpack() {"

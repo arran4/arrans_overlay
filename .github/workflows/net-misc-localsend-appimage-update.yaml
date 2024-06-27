@@ -96,7 +96,7 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/localsend/localsend/releases/download/v${latest_release}/LocalSend-${version}-linux-x86-64.AppImage -O /tmp/${{ env.epn }}-${version}.amd64
+              wget https://github.com/localsend/localsend/releases/download/v${version}/LocalSend-${version}-linux-x86-64.AppImage -O /tmp/${{ env.epn }}-${version}.amd64
               
               for e in ${{ env.epn }}-${version}.amd64; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
