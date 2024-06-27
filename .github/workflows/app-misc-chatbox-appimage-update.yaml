@@ -69,7 +69,7 @@ jobs:
                 echo "src_unpack() {"
                 echo "  cp \"\${DISTDIR}/\${A}\" \"\${A}\" || die \"Can't copy archive file\""
                 echo "  chmod a+x \"\${A}\" || die \"Can't chmod archive file\""
-                echo "  ./\${A} --appimage-extract \*.desktop || die \"Can't extract .desktop file from AppImage\""
+                echo "  ./\${A} --appimage-extract xyz.chatboxapp.app.desktop || die \"Can't extract .desktop file from AppImage\""
                 echo "  ./\${A} --appimage-extract usr/share/icons || die \"Can't extract icons from AppImage\""
                 echo "}"
                 echo ""
@@ -85,7 +85,7 @@ jobs:
                 echo '  doexe "${WORKDIR}/${{ env.appimage_name }}" || die "Failed to install AppImage"'
                 echo '  dosym /opt/bin/${{ env.appimage_name }} /usr/bin/ChatBox'
                 echo '  insinto /usr/share/applications'
-                echo '  doins "${WORKDIR}/squashfs-root/*.desktop" || die "Failed to install .desktop file"'
+                echo '  doins "${WORKDIR}/squashfs-root/xyz.chatboxapp.app.desktop" || die "Failed to install .desktop file"'
                 echo '  insinto /usr/share/icons/hicolor'
                 echo '  doins -r "${WORKDIR}/squashfs-root/usr/share/icons" || die "Failed to install icons"'
                 echo "}"
