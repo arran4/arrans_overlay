@@ -25,7 +25,6 @@ For manual install, through [local overlay](https://wiki.gentoo.org/wiki/Creatin
 location = /var/db/repos/arrans-overlay
 sync-type = git
 sync-uri = https://github.com/gentoo-mirror/arrans-overlay.git
-priority=9999
 ```
 
 Afterwards, simply run `emerge --sync`, and Portage should seamlessly make all our ebuilds available.
