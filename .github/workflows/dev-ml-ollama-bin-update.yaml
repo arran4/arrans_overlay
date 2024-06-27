@@ -1,0 +1,143 @@
+name: dev-ml/ollama-bin update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '45 0 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/dev-ml-ollama-bin-update.yaml'
+
+env:
+  ecn: dev-ml
+  epn: ollama-bin
+  description: "Get up and running with Llama 3, Mistral, Gemma, and other large language models."
+  homepage: "https://ollama.com"
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils tar
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p $ebuild_dir
+          latest_release=$(curl -s https://api.github.com/repos/ollama/ollama/releases/latest | jq -r '.tag_name')
+          version="${latest_release#v}"
+          ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+          if [ ! -f "$ebuild_file" ]; then
+              
+              # Create ebuild script
+              {
+                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/"
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'LICENSE="MIT"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="~amd64 ~arm64"'
+                echo 'IUSE="+systemd +rocm"'
+                echo 'DEPEND=""'
+                echo 'RDEPEND=""'
+                echo 'S="${WORKDIR}"'
+                echo 'RESTRICT="strip"'
+                echo ''
+                echo "inherit xdg-utils"
+                echo ''
+                echo 'SRC_URI="  '
+                echo '  amd64? ( https://github.com/ollama/ollama/releases/download/${latest_release}/ollama-linux-amd64 -> $P.amd64 )'
+                echo '  arm64? ( https://github.com/ollama/ollama/releases/download/${latest_release}/ollama-linux-arm64 -> $P.arm64 )'
+                echo '  rocm? ( https://github.com/ollama/ollama/releases/download/${latest_release}/ollama-linux-amd64-rocm.tgz -> $P.rocm.tgz )'
+                echo '" '
+                echo ''
+                echo "pkg_setup() {"
+                echo "  enewgroup ollama"
+                echo "  enewuser ollama -1 -1 /usr/share/ollama ollama"
+                echo "}"
+                echo ""
+                echo "src_unpack() {"
+                echo "  if use rocm; then"
+                echo "    tar -xzvf \${DISTDIR}/\${P}.rocm.tgz -C \${WORKDIR} || die \"Can't extract rocm tgz\""
+                echo "  fi"
+                echo "}"
+                echo ""
+                echo "src_install() {"
+                echo '  if use amd64; then'
+                echo '    cp "${DISTDIR}/${P}.amd64" "${D}/opt/Ollama/ollama"'
+                echo '  elif use arm64; then'
+                echo '    cp "${DISTDIR}/${P}.arm64" "${D}/opt/Ollama/ollama"'
+                echo '  fi'
+                echo '  exeinto /opt/Ollama'
+                echo '  doexe "${D}/opt/Ollama/ollama" || die "Failed to install binary"'
+                echo '  fperms +x /opt/Ollama/ollama'
+                echo '  dosym /opt/Ollama/ollama /usr/bin/ollama'
+                echo "}"
+                echo ""
+                echo "src_prepare() {"
+                echo "  eapply_user"
+                echo "}"
+                echo ""
+                echo "pkg_postinst() {"
+                echo "  einfo \"Quick guide:\""
+                echo "  einfo \"ollama serve\""
+                echo "  einfo \"ollama run llama3:70b\""
+                echo "  einfo \"See available models at https://ollama.com/library\""
+                echo "  if use systemd; then"
+                echo "    einfo \"Creating systemd service file...\""
+                echo '    cat <<EOF > /etc/systemd/system/ollama.service'
+                echo '[Unit]'
+                echo 'Description=Ollama Service'
+                echo 'After=network-online.target'
+                echo ''
+                echo '[Service]'
+                echo 'ExecStart=/opt/Ollama/ollama serve'
+                echo 'User=ollama'
+                echo 'Group=ollama'
+                echo 'Restart=always'
+                echo 'RestartSec=3'
+                echo ''
+                echo '[Install]'
+                echo 'WantedBy=default.target'
+                echo 'EOF'
+                echo "    einfo \"Service file created at /etc/systemd/system/ollama.service\""
+                echo "  fi"
+                echo "}"
+                echo ""
+              } > $ebuild_file
+
+              # Generate the manifest for the new ebuild
+              wget https://github.com/ollama/ollama/releases/download/${latest_release}/ollama-linux-amd64 -O /tmp/${{ env.epn }}-${version}.amd64
+              wget https://github.com/ollama/ollama/releases/download/${latest_release}/ollama-linux-arm64 -O /tmp/${{ env.epn }}-${version}.arm64
+              wget https://github.com/ollama/ollama/releases/download/${latest_release}/ollama-linux-amd64-rocm.tgz -O /tmp/${{ env.epn }}-${version}.rocm.tgz
+              
+              for e in ${{ env.epn }}-${version}.amd64 ${{ env.epn }}-${version}.arm64 ${{ env.epn }}-${version}.rocm.tgz; do
+                echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
+                rm "/tmp/${e}"
+              done
+          fi
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          git add ./${ebuild_dir}
+          git commit -m "Add ebuilds for new ${{ env.epn }} releases" && 
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.conclusion == 'success'
