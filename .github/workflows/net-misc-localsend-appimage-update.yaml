@@ -85,8 +85,8 @@ jobs:
                 echo '  dosym /opt/bin/${{ env.appimage_name }} /usr/bin/LocalSend'
                 echo '  insinto /usr/share/applications'
                 echo '  doins "${WORKDIR}/squashfs-root/*.desktop" || die "Failed to install .desktop file"'
-                echo '  insinto /usr/share/icons/hicolor'
-                echo '  doins -r "${WORKDIR}/squashfs-root/usr/share/icons" || die "Failed to install icons"'
+                echo '  insinto /usr/share/icons'
+                echo '  doins -r "${WORKDIR}/squashfs-root/usr/share/icons/hicolor" || die "Failed to install icons"'
                 echo "}"
                 echo ""
                 echo "pkg_postinst() {"
