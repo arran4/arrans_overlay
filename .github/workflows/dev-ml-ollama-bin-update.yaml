@@ -53,7 +53,7 @@ jobs:
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="~amd64 ~arm64"'
-                echo 'IUSE="+systemd rocm"'
+                echo 'IUSE="+systemd -rocm"'
                 echo 'DEPEND=""'
                 echo 'RDEPEND=""'
                 echo 'S="${WORKDIR}"'
