@@ -60,7 +60,7 @@ jobs:
                 echo 'KEYWORDS="~alpha amd64 hppa ~ia64 ~mips ppc ppc64 ~riscv sparc x86"'
                 echo 'RDEPEND=""'
                 echo 'DEPEND="${RDEPEND}"'
-                echo "S=\"\${DISTDIR}\"/kde-keyboard-shortcuts-\${PV}/"
+                echo "S=\"\${WORKDIR}\"/kde-keyboard-shortcuts-\${PV}/"
                 echo ""
                 echo "src_unpack() {"
                 echo "    unpack \${A}"

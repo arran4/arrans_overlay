@@ -9,7 +9,7 @@ SLOT="0"
 KEYWORDS="~alpha amd64 hppa ~ia64 ~mips ppc ppc64 ~riscv sparc x86"
 RDEPEND=""
 DEPEND="${RDEPEND}"
-S="${DISTDIR}"/kde-keyboard-shortcuts-${PV}/
+S="${WORKDIR}"/kde-keyboard-shortcuts-${PV}/
 
 src_unpack() {
     unpack ${A}
