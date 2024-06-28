@@ -75,6 +75,7 @@ jobs:
                 echo ""
                 echo "src_prepare() {"
                 echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/*.desktop"
+                echo "  sed -i 's:^Icon=.*:Icon=/usr/share/icons/hicolor/512x512/apps/xyz.chatboxapp.app.png:' squashfs-root/*.desktop"
                 echo "  sed -i 's:^TryExec=.*:TryExec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/*.desktop"
                 echo "  eapply_user"
                 echo "}"
