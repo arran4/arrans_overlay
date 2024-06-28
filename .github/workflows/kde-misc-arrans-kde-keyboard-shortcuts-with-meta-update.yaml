@@ -15,7 +15,7 @@ env:
   ebuild_category: kde-misc
   ebuild_name: arrans-kde-keyboard-shortcuts-with-meta
   repo_owner: arran4
-  repo_name: arrans-kde-keyboard-shortcuts-with-meta
+  repo_name: kde-keyboard-shortcuts
   description: "My keyboard bindings fast select."
   homepage: "https://arran4.github.io/"
 
