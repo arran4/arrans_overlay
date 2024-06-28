@@ -96,7 +96,7 @@ jobs:
 
               # Generate the manifest for the new ebuild
               wget https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Caprine-${version}.AppImage -O /tmp/${{ env.epn }}-${version}.AppImage
-              echo "DIST $ebuild_file $(stat -c %s "/tmp/${{ env.epn }}-${version}.AppImage") BLAKE2B $(b2sum "/tmp/${{ env.epn }}-${version}.AppImage" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${{ env.epn }}-${version}.AppImage" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
+              echo "DIST \"${{ env.epn }}-${version}.AppImage\" $(stat -c %s "/tmp/${{ env.epn }}-${version}.AppImage") BLAKE2B $(b2sum "/tmp/${{ env.epn }}-${version}.AppImage" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${{ env.epn }}-${version}.AppImage" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
               rm "/tmp/${{ env.epn }}-${version}.AppImage"
               
               break
