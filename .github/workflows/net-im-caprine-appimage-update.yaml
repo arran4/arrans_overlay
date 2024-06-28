@@ -1,0 +1,113 @@
+name: net-im/caprine-appimage update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '25 1 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/net-im-caprine-appimage-update.yaml'
+
+env:
+  ecn: net-im
+  epn: caprine-appimage
+  description: "Elegant Facebook Messenger desktop app"
+  homepage: "https://sindresorhus.com/caprine"
+  github_owner: "sindresorhus"
+  github_repo: "caprine"
+  desktop_file: "caprine.desktop"
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p $ebuild_dir
+
+          releases=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          
+          for tag in $releases; do
+            version="${tag#v}"
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+
+              # Create ebuild script
+              {
+                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/net-im-caprine-appimage-update.yaml"
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'LICENSE="MIT"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="~amd64"'
+                echo 'IUSE=""'
+                echo 'DEPEND=""'
+                echo 'RDEPEND=""'
+                echo 'S="${WORKDIR}"'
+                echo 'RESTRICT="strip"'
+                echo ''
+                echo 'SRC_URI="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases/download/v${PV}/Caprine-${PV}.AppImage -> ${P}.AppImage"'
+                echo ''
+                echo 'src_unpack() {'
+                echo '  cp "${DISTDIR}/${A}" "${A}" || die "Can't copy archive file"'
+                echo '  chmod a+x "${A}" || die "Can't chmod archive file"'
+                echo '  "./${A}" --appimage-extract ${DESKTOP_FILE} || die "Can't extract .desktop from appimage"'
+                echo '  "./${A}" --appimage-extract usr/share/icons || die "Can't extract icons from app image"'
+                echo '}'
+                echo ''
+                echo 'src_prepare() {'
+                echo '  sed -i 's:^Exec=.*:Exec=/opt/bin/caprine:' squashfs-root/${DESKTOP_FILE}'
+                echo '  eapply_user'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '  exeinto /opt/bin'
+                echo '  doexe squashfs-root/AppRun || die "Failed to install AppRun"'
+                echo '  insinto /usr/share/applications'
+                echo '  doins squashfs-root/${DESKTOP_FILE}'
+                echo '  insinto /usr/share/icons'
+                echo '  doins -r squashfs-root/usr/share/icons/*'
+                echo '}'
+                echo ""
+                echo "pkg_postinst() {"
+                echo "  xdg_desktop_database_update"
+                echo "}"
+                echo ""
+              } > $ebuild_file
+
+              # Generate the manifest for the new ebuild
+              wget https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Caprine-${version}.AppImage -O /tmp/${{ env.epn }}-${version}.AppImage
+              echo "DIST $ebuild_file $(stat -c %s "/tmp/${{ env.epn }}-${version}.AppImage") BLAKE2B $(b2sum "/tmp/${{ env.epn }}-${version}.AppImage" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${{ env.epn }}-${version}.AppImage" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
+              rm "/tmp/${{ env.epn }}-${version}.AppImage"
+              
+              break
+            fi
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          git add ./${ebuild_dir}
+          git commit -m "Add ebuilds for new ${{ env.epn }} releases" && 
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.conclusion == 'success'
