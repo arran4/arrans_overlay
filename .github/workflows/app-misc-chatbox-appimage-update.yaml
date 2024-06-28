@@ -77,6 +77,8 @@ jobs:
                 echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/*.desktop"
                 echo "  sed -i 's:^Icon=.*:Icon=/usr/share/icons/hicolor/512x512/apps/xyz.chatboxapp.app.png:' squashfs-root/*.desktop"
                 echo "  sed -i 's:^TryExec=.*:TryExec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/*.desktop"
+                echo "  find squashfs-root -type d -exec rmdir -p {} \; "
+                echo "  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm -v {} \; "
                 echo "  eapply_user"
                 echo "}"
                 echo ""

@@ -79,6 +79,8 @@ jobs:
                 echo ""
                 echo "src_prepare() {"
                 echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/ente_auth:' squashfs-root/ente_auth.desktop"
+                echo "  find squashfs-root -type d -exec rmdir -p {} \; "
+                echo "  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm -v {} \; "
                 echo "  eapply_user"
                 echo "}"
                 echo ""
