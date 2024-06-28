@@ -54,7 +54,7 @@ jobs:
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
                 echo 'IUSE=""'
-                echo "SRC_URI=\"  https://github.com/${repo_owner}/${repo_name}/archive/refs/tags/v\${PV}.tar.gz -> \${P}.pdf \""
+                echo "SRC_URI=\"  https://github.com/${repo_owner}/${repo_name}/archive/refs/tags/v\${PV}.tar.gz -> \${P}.tar.gz \""
                 echo "LICENSE=\"unlicensed\""
                 echo "SLOT=\"0\""
                 echo 'KEYWORDS="~alpha amd64 hppa ~ia64 ~mips ppc ppc64 ~riscv sparc x86"'
