@@ -54,8 +54,8 @@ jobs:
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="~amd64 ~arm64"'
                 echo 'IUSE="+systemd -rocm"'
-                echo 'DEPEND="acct-user/ollama"'
-                echo 'RDEPEND="acct-user/ollama"'
+                echo 'DEPEND="acct-user/ollama acct-group/ollama"'
+                echo 'RDEPEND="acct-user/ollama acct-group/ollama"'
                 echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
                 echo ''
@@ -75,14 +75,14 @@ jobs:
                 echo ""
                 echo "src_install() {"
                 echo '  if use amd64; then'
-                echo '    cp "${DISTDIR}/${P}.amd64" "${D}/opt/Ollama/ollama"'
+                echo '    cp "${DISTDIR}/${P}.amd64" "${D}/ollama"'
                 echo '  elif use arm64; then'
-                echo '    cp "${DISTDIR}/${P}.arm64" "${D}/opt/Ollama/ollama"'
+                echo '    cp "${DISTDIR}/${P}.arm64" "${D}/ollama"'
                 echo '  fi'
                 echo '  exeinto /opt/Ollama'
-                echo '  doexe "${D}/opt/Ollama/ollama" || die "Failed to install binary"'
+                echo '  doexe "${D}/ollama" || die "Failed to install binary"'
                 echo '  fperms +x /opt/Ollama/ollama'
-                echo '  dosym /opt/Ollama/ollama /usr/bin/ollama'
+                echo '  dosym /opt/Ollama/ollama /opt/bin/ollama'
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
