@@ -10,7 +10,8 @@ LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 
-acct-user_pkg_setup() {
-  enewgroup ollama
-  enewuser ollama -1 -1 /usr/share/ollama ollama
-}
+ACCT_USER_ID="-1"
+ACCT_USER_GROUPS=( "ollama" )
+ACCT_USER_HOME="/opt/Ollama"
+
+acct-user_add_deps
