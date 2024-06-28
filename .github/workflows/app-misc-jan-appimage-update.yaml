@@ -67,8 +67,8 @@ jobs:
                 echo 'src_unpack() {'
                 echo '  cp "${DISTDIR}/${A}" "${A}"  || die "Can'\''t copy archive file"'
                 echo '  chmod a+x "${A}"  || die "Can'\''t chmod archive file"'
-                echo "  ./${A} --appimage-extract ${{env.desktop_file}} || die \"Can't extract .desktop from appimage\""
-                echo "  ./${A} --appimage-extract usr/share/icons || die \"Can't extract icons from app image\""
+                echo "  ./\${A} --appimage-extract ${{env.desktop_file}} || die \"Can't extract .desktop from appimage\""
+                echo "  ./\${A} --appimage-extract usr/share/icons || die \"Can't extract icons from app image\""
                 echo '}'
                 echo ''
                 echo 'src_prepare() {'
