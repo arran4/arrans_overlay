@@ -68,13 +68,13 @@ jobs:
                 echo "src_unpack() {"
                 echo "  cp \"\${DISTDIR}/\${A}\" \"\${A}\" || die \"Can't copy archive file\""
                 echo "  chmod a+x \"\${A}\" || die \"Can't chmod archive file\""
-                echo "  ./\${A} --appimage-extract \*.desktop || die \"Can't extract .desktop file from AppImage\""
+                echo "  ./\${A} --appimage-extract org.localsend.localsend_app.desktop || die \"Can't extract .desktop file from AppImage\""
                 echo "  ./\${A} --appimage-extract usr/share/icons || die \"Can't extract icons from AppImage\""
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
-                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/LocalSend.desktop"
-                echo "  sed -i 's:^TryExec=.*:TryExec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/LocalSend.desktop"
+                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/org.localsend.localsend_app.desktop"
+                echo "  sed -i 's:^TryExec=.*:TryExec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/org.localsend.localsend_app.desktop"
                 echo "  eapply_user"
                 echo "}"
                 echo ""
@@ -84,7 +84,7 @@ jobs:
                 echo '  doexe "${WORKDIR}/${{ env.appimage_name }}" || die "Failed to install AppImage"'
                 echo '  dosym /opt/bin/${{ env.appimage_name }} /usr/bin/LocalSend'
                 echo '  insinto /usr/share/applications'
-                echo '  doins "${WORKDIR}/squashfs-root/LocalSend.desktop" || die "Failed to install .desktop file"'
+                echo '  doins "${WORKDIR}/squashfs-root/org.localsend.localsend_app.desktop" || die "Failed to install .desktop file"'
                 echo '  insinto /usr/share/icons'
                 echo '  doins -r "${WORKDIR}/squashfs-root/usr/share/icons/hicolor" || die "Failed to install icons"'
                 echo "}"
