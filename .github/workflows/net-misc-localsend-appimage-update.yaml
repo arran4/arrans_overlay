@@ -73,8 +73,8 @@ jobs:
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
-                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/*.desktop"
-                echo "  sed -i 's:^TryExec=.*:TryExec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/*.desktop"
+                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/LocalSend.desktop"
+                echo "  sed -i 's:^TryExec=.*:TryExec=/opt/bin/${{ env.appimage_name }}:' squashfs-root/LocalSend.desktop"
                 echo "  eapply_user"
                 echo "}"
                 echo ""
@@ -84,7 +84,7 @@ jobs:
                 echo '  doexe "${WORKDIR}/${{ env.appimage_name }}" || die "Failed to install AppImage"'
                 echo '  dosym /opt/bin/${{ env.appimage_name }} /usr/bin/LocalSend'
                 echo '  insinto /usr/share/applications'
-                echo '  doins "${WORKDIR}/squashfs-root/*.desktop" || die "Failed to install .desktop file"'
+                echo '  doins "${WORKDIR}/squashfs-root/LocalSend.desktop" || die "Failed to install .desktop file"'
                 echo '  insinto /usr/share/icons'
                 echo '  doins -r "${WORKDIR}/squashfs-root/usr/share/icons/hicolor" || die "Failed to install icons"'
                 echo "}"
