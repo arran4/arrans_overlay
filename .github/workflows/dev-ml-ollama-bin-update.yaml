@@ -54,8 +54,8 @@ jobs:
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="~amd64 ~arm64"'
                 echo 'IUSE="+systemd -rocm"'
-                echo 'DEPEND=""'
-                echo 'RDEPEND=""'
+                echo 'DEPEND="acct-user/ollama"'
+                echo 'RDEPEND="acct-user/ollama"'
                 echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
                 echo ''
@@ -68,11 +68,6 @@ jobs:
                 echo '  rocm? ( https://github.com/ollama/ollama/releases/download/v${PV}/ollama-linux-amd64-rocm.tgz -> $P.rocm.tgz )'
                 echo '" '
                 echo ''
-                echo "pkg_setup() {"
-                echo "  enewgroup ollama"
-                echo "  enewuser ollama -1 -1 /usr/share/ollama ollama"
-                echo "}"
-                echo ""
                 echo "src_unpack() {"
                 echo "  if use rocm; then"
                 echo "    tar -xzvf \${DISTDIR}/\${P}.rocm.tgz -C \${WORKDIR} || die \"Can't extract rocm tgz\""
@@ -102,22 +97,25 @@ jobs:
                 echo "  einfo \"See available models at https://ollama.com/library\""
                 echo "  if use systemd; then"
                 echo "    einfo \"Creating systemd service file...\""
-                echo '    cat <<EOF > /etc/systemd/system/ollama.service'
-                echo '[Unit]'
-                echo 'Description=Ollama Service'
-                echo 'After=network-online.target'
-                echo ''
-                echo '[Service]'
-                echo 'ExecStart=/opt/Ollama/ollama serve'
-                echo 'User=ollama'
-                echo 'Group=ollama'
-                echo 'Restart=always'
-                echo 'RestartSec=3'
-                echo ''
-                echo '[Install]'
-                echo 'WantedBy=default.target'
-                echo 'EOF'
+                echo '    {'
+                echo '      echo "[Unit]"'
+                echo '      echo "Description=Ollama Service"'
+                echo '      echo "After=network-online.target"'
+                echo '      echo ""'
+                echo '      echo "[Service]"'
+                echo '      echo "ExecStart=/opt/Ollama/ollama serve"'
+                echo '      echo "User=ollama"'
+                echo '      echo "Group=ollama"'
+                echo '      echo "Restart=always"'
+                echo '      echo "RestartSec=3"'
+                echo '      echo ""'
+                echo '      echo "[Install]"'
+                echo '      echo "WantedBy=default.target"'
+                echo '    } > /etc/systemd/system/ollama.service'
                 echo "    einfo \"Service file created at /etc/systemd/system/ollama.service\""
+                echo "    einfo \"Making service user-startable...\""
+                echo '    mkdir -p /etc/systemd/user'
+                echo '    ln -s /etc/systemd/system/ollama.service /etc/systemd/user/ollama.service'
                 echo "  fi"
                 echo "}"
                 echo ""
