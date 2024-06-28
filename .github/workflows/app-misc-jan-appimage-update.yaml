@@ -79,8 +79,10 @@ jobs:
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
                 echo '  doexe ${A}'
-                echo '  domenu squashfs-root/${{env.desktop_file}}'
-                echo '  doicon squashfs-root/usr/share/icons/*'
+                echo '  insinto /usr/share/applications'
+                echo '  doins squashfs-root/${DESKTOP_FILE}'
+                echo '  insinto /usr/share/icons'
+                echo '  doins -r squashfs-root/usr/share/icons/*'
                 echo '}'
                 echo ''
               } > $ebuild_file
