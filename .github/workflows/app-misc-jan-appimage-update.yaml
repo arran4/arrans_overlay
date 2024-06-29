@@ -49,8 +49,9 @@ jobs:
           mkdir -p $ebuild_dir
           
           releases=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
-          for release in $releases; do
-            version="${release#v}"
+          
+          for tag in $releases; do
+            version="${tag#v}"
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               
@@ -62,7 +63,7 @@ jobs:
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
-                echo 'KEYWORDS="~amd64 ~arm64"'
+                echo 'KEYWORDS="~amd64"'
                 echo 'IUSE=""'
                 echo 'DEPEND=""'
                 echo 'RDEPEND=""'
@@ -92,15 +93,17 @@ jobs:
                 echo '  insinto /usr/share/icons'
                 echo '  doins -r squashfs-root/usr/share/icons/hicolor || die "Failed to install icons"'
                 echo '}'
-                echo ''
+                echo ""
+                echo "pkg_postinst() {"
+                echo "  xdg_desktop_database_update"
+                echo "}"
+                echo ""
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com//${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${release}/jan-linux-x86_64-${version}.AppImage -O /tmp/${{ env.epn }}-${version}.AppImage
-              
-              echo "DIST ${{ env.epn }}-${version}.AppImage $(stat -c %s "/tmp/${{ env.epn }}-${version}.AppImage") BLAKE2B $(b2sum "/tmp/${{ env.epn }}-${version}.AppImage" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${{ env.epn }}-${version}.AppImage" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
-              
-              rm "/tmp/${{ env.epn }}-${version}.AppImage"
+              wget https://github.com//${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${release}/jan-linux-x86_64-${version}.AppImage -O /tmp/${{ env.epn }}-${version}.amd64              
+              echo "DIST ${{ env.epn }}-${version}.amd64 $(stat -c %s "/tmp/${{ env.epn }}-${version}.amd64") BLAKE2B $(b2sum "/tmp/${{ env.epn }}-${version}.amd64" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${{ env.epn }}-${version}.amd64" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
+              rm "/tmp/${{ env.epn }}-${version}.amd64"
 
               break
             fi
