@@ -21,6 +21,9 @@ env:
   description: "Jan is an open source alternative to ChatGPT that runs 100% offline on your computer. Multiple engine support (llama.cpp, TensorRT-LLM)"
   homepage: "https://jan.ai/"
   desktop_file: "jan.desktop"
+  appimage_installed_name: jan
+  github_owner: "janhq"
+  github_repo: "jan"
 
 jobs:
   check-and-create-ebuild:
@@ -45,7 +48,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
           
-          releases=$(curl -s https://api.github.com/repos/janhq/jan/releases | jq -r '.[].tag_name')
+          releases=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
           for release in $releases; do
             version="${release#v}"
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
@@ -66,7 +69,7 @@ jobs:
                 echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
                 echo ''
-                echo 'SRC_URI="https://github.com/janhq/jan/releases/download/v${PV}/jan-linux-x86_64-${PV}.AppImage -> ${P}.AppImage"'
+                echo 'SRC_URI="https://github.com//${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v${PV}/jan-linux-x86_64-${PV}.AppImage -> ${P}.AppImage"'
                 echo ''
                 echo 'src_unpack() {'
                 echo '  cp "${DISTDIR}/${A}" "${A}"  || die "Can'\''t copy archive file"'
@@ -76,23 +79,24 @@ jobs:
                 echo '}'
                 echo ''
                 echo 'src_prepare() {'
-                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/jan:' squashfs-root/${{env.desktop_file}}"
+                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.appimage_installed_name }}:' squashfs-root/${{env.desktop_file}}"
                 echo '  eapply_user'
                 echo '}'
                 echo ''
                 echo 'src_install() {'
+                echo '  mv "${P}.amd64" "${{ env.appimage_installed_name }}"'
                 echo '  exeinto /opt/bin'
-                echo '  doexe ${A}'
+                echo '  doexe "${{ env.appimage_installed_name }}" || die "Failed to install AppImage"'
                 echo '  insinto /usr/share/applications'
                 echo '  doins squashfs-root/${{env.desktop_file}}'
                 echo '  insinto /usr/share/icons'
-                echo '  doins -r squashfs-root/usr/share/icons/*'
+                echo '  doins -r squashfs-root/usr/share/icons/hicolor'
                 echo '}'
                 echo ''
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/janhq/jan/releases/download/${release}/jan-linux-x86_64-${version}.AppImage -O /tmp/${{ env.epn }}-${version}.AppImage
+              wget https://github.com//${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${release}/jan-linux-x86_64-${version}.AppImage -O /tmp/${{ env.epn }}-${version}.AppImage
               
               echo "DIST ${{ env.epn }}-${version}.AppImage $(stat -c %s "/tmp/${{ env.epn }}-${version}.AppImage") BLAKE2B $(b2sum "/tmp/${{ env.epn }}-${version}.AppImage" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${{ env.epn }}-${version}.AppImage" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
               
