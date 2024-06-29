@@ -23,6 +23,7 @@ env:
   github_owner: "sindresorhus"
   github_repo: "caprine"
   desktop_file: "caprine.desktop"
+  appimage_installed_name: jan
 
 jobs:
   check-and-create-ebuild:
@@ -69,7 +70,7 @@ jobs:
                 echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
                 echo ''
-                echo 'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v${PV}/Caprine-${PV}.AppImage -> ${P}.AppImage"'
+                echo 'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v${PV}/Caprine-${PV}.AppImage -> ${P}.amd64"'
                 echo ''
                 echo 'src_unpack() {'
                 echo '  cp "${DISTDIR}/${A}" "${A}" || die "Can'\''t copy archive file"'
@@ -84,12 +85,13 @@ jobs:
                 echo '}'
                 echo ''
                 echo 'src_install() {'
+                echo '  mv "${P}.amd64" "${{ env.appimage_installed_name }}" || die "Failed to rename AppImage"'
                 echo '  exeinto /opt/bin'
-                echo '  doexe squashfs-root/AppRun || die "Failed to install AppRun"'
+                echo '  doexe "${{ env.appimage_installed_name }}" || die "Failed to install AppImage"'
                 echo '  insinto /usr/share/applications'
-                echo '  doins squashfs-root/${{env.desktop_file}}'
+                echo '  doins squashfs-root/${{env.desktop_file}} || die "Failed to install desktop file"'
                 echo '  insinto /usr/share/icons'
-                echo '  doins -r squashfs-root/usr/share/icons/hicolor'
+                echo '  doins -r squashfs-root/usr/share/icons/hicolor' || die "Failed to install icons"'
                 echo '}'
                 echo ""
                 echo "pkg_postinst() {"
