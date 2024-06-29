@@ -101,7 +101,7 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com//${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${release}/jan-linux-x86_64-${version}.AppImage -O /tmp/${{ env.epn }}-${version}.amd64              
+              wget https://github.com//${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jan-linux-x86_64-${version}.AppImage -O /tmp/${{ env.epn }}-${version}.amd64              
               echo "DIST ${{ env.epn }}-${version}.amd64 $(stat -c %s "/tmp/${{ env.epn }}-${version}.amd64") BLAKE2B $(b2sum "/tmp/${{ env.epn }}-${version}.amd64" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${{ env.epn }}-${version}.amd64" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
               rm "/tmp/${{ env.epn }}-${version}.amd64"
 
