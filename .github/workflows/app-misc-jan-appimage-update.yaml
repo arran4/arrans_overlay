@@ -70,6 +70,8 @@ jobs:
                 echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
                 echo ''
+                echo "inherit xdg-utils"
+                echo ''
                 echo 'SRC_URI="https://github.com//${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v${PV}/jan-linux-x86_64-${PV}.AppImage -> ${P}.amd64"'
                 echo ''
                 echo 'src_unpack() {'
