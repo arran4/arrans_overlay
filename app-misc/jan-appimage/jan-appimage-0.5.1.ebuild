@@ -21,14 +21,14 @@ src_unpack() {
 }
 
 src_prepare() {
-  sed -i 's:^Exec=.*:Exec=/opt/bin/jan:' squashfs-root/jan.desktop
+  sed -i 's:^Exec=.*:Exec=/opt/bin/jan.AppImage:' squashfs-root/jan.desktop
   eapply_user
 }
 
 src_install() {
-  mv "${P}.amd64" "jan" || die "Failed to rename AppImage"
+  mv "${P}.amd64" "jan.AppImage" || die "Failed to rename AppImage"
   exeinto /opt/bin
-  doexe "jan" || die "Failed to install AppImage"
+  doexe "jan.AppImage" || die "Failed to install AppImage"
   insinto /usr/share/applications
   doins squashfs-root/jan.desktop || die "Failed to install desktop file"
   insinto /usr/share/icons

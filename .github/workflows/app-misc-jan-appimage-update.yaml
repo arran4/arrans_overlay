@@ -21,7 +21,7 @@ env:
   description: "Jan is an open source alternative to ChatGPT that runs 100% offline on your computer. Multiple engine support (llama.cpp, TensorRT-LLM)"
   homepage: "https://jan.ai/"
   desktop_file: "jan.desktop"
-  appimage_installed_name: jan
+  appimage_installed_name: jan.AppImage
   github_owner: "janhq"
   github_repo: "jan"
 

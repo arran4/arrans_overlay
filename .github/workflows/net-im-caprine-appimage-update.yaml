@@ -23,7 +23,7 @@ env:
   github_owner: "sindresorhus"
   github_repo: "caprine"
   desktop_file: "caprine.desktop"
-  appimage_installed_name: jan
+  appimage_installed_name: caprine.AppImage
 
 jobs:
   check-and-create-ebuild:
@@ -80,7 +80,7 @@ jobs:
                 echo '}'
                 echo ''
                 echo 'src_prepare() {'
-                echo '  sed -i 's:^Exec=.*:Exec=/opt/bin/caprine:' squashfs-root/${{env.desktop_file}}'
+                echo '  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.appimage_installed_name }}:' squashfs-root/${{env.desktop_file}}'
                 echo '  eapply_user'
                 echo '}'
                 echo ''

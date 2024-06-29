@@ -21,14 +21,14 @@ src_unpack() {
 }
 
 src_prepare() {
-  sed -i s:^Exec=.*:Exec=/opt/bin/caprine: squashfs-root/caprine.desktop
+  sed -i s:^Exec=.*:Exec=/opt/bin/caprine.AppImage: squashfs-root/caprine.desktop
   eapply_user
 }
 
 src_install() {
-  mv "${P}.amd64" "jan" || die "Failed to rename AppImage"
+  mv "${P}.amd64" "caprine.AppImage" || die "Failed to rename AppImage"
   exeinto /opt/bin
-  doexe "jan" || die "Failed to install AppImage"
+  doexe "caprine.AppImage" || die "Failed to install AppImage"
   insinto /usr/share/applications
   doins squashfs-root/caprine.desktop || die "Failed to install desktop file"
   insinto /usr/share/icons
