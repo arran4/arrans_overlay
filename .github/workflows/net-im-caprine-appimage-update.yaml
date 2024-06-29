@@ -89,7 +89,7 @@ jobs:
                 echo '  insinto /usr/share/applications'
                 echo '  doins squashfs-root/${{env.desktop_file}}'
                 echo '  insinto /usr/share/icons'
-                echo '  doins -r squashfs-root/usr/share/icons/*'
+                echo '  doins -r squashfs-root/usr/share/icons/hicolor'
                 echo '}'
                 echo ""
                 echo "pkg_postinst() {"

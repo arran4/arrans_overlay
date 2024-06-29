@@ -90,7 +90,6 @@ jobs:
                 echo "src_install() {"
                 echo '  mkdir "${ED}/opt" || die'
                 echo '  mv "${S}" "${ED}/opt/" || die'
-                echo "  # TODO create a dart eselect"
                 echo "  dosym \"/opt/flutter/bin/flutter\" '/opt/bin/flutter'"
                 echo "}"
                 echo ""
