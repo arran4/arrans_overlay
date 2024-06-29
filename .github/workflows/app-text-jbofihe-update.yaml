@@ -11,6 +11,10 @@ on:
     paths:
       - '.github/workflows/app-text-jbofihe-update.yaml'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   ebuild_category: app-text
   ebuild_name: jbofihe

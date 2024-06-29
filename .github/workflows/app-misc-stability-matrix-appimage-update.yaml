@@ -11,6 +11,10 @@ on:
     paths:
       - '.github/workflows/app-misc-stability-matrix-appimage-update.yaml'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   ecn: app-misc
   epn: stability-matrix-appimage

@@ -11,6 +11,10 @@ on:
     paths:
       - '.github/workflows/app-misc-flutter_google_datastore-appimage-update.yaml'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   ecn: app-misc
   epn: flutter-google-datastore-appimage

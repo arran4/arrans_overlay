@@ -11,6 +11,10 @@ on:
     paths:
       - '.github/workflows/app-admin-chezmoi-bin-update.yaml'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   ebuild_category: app-admin
   ebuild_name: chezmoi-bin

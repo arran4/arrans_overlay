@@ -11,6 +11,10 @@ on:
     paths:
       - '.github/workflows/www-apps-hugo-bin-update.yaml'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   ebuild_category: www-apps
   ebuild_name: hugo-bin

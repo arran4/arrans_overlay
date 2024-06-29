@@ -11,6 +11,10 @@ on:
     paths:
       - '.github/workflows/app-misc-ente-auth-appimage-update.yaml'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   epn: ente-auth-appimage
   ecn: app-misc

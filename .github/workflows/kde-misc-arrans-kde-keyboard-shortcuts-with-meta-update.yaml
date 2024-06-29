@@ -11,6 +11,10 @@ on:
     paths:
       - '.github/workflows/kde-misc-arrans-kde-keyboard-shortcuts-with-meta-update.yaml'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   ebuild_category: kde-misc
   ebuild_name: arrans-kde-keyboard-shortcuts-with-meta

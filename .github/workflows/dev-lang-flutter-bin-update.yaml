@@ -3,6 +3,10 @@ name: dev-lang/flutter-bin Update
 permissions:
   contents: write
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   ebuild_category: "dev-lang"
   ebuild_name: "flutter-bin"

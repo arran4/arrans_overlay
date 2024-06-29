@@ -11,6 +11,10 @@ on:
     paths:
       - '.github/workflows/app-misc-lemmy-notify-appimage-update.yaml'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   ecn: app-misc
   epn: lemmy_notify-appimage

@@ -11,6 +11,10 @@ on:
     paths:
       - '.github/workflows/net-misc-localsend-appimage-update.yaml'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   ecn: net-misc
   epn: localsend-appimage
