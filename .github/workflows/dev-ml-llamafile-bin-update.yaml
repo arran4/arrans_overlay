@@ -66,7 +66,7 @@ jobs:
                 echo 'KEYWORDS="~amd64"'
                 echo 'RDEPEND=""'
                 echo 'DEPEND="${RDEPEND}"'
-                echo "S=\"\${WORKDIR}/\${P}\""
+                echo "S=\"\${WORKDIR}/${{env.repo_name}}-\${PV}\""
                 echo ""
                 echo "src_install() {"
                 echo "    exeinto /opt/bin"
