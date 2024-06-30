@@ -18,7 +18,7 @@ concurrency:
 env:
   ebuild_category: net-im
   ebuild_name: slackdump-bin
-  repo_owner: slackdump
+  repo_owner: rusq
   repo_name: slackdump
   description: "Save or export your private and public Slack messages, threads, files, and users locally without admin privileges."
   PFN: "slackdump"
