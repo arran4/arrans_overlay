@@ -75,6 +75,7 @@ jobs:
                 echo 'RDEPEND=""'
                 echo 'DEPEND="${RDEPEND}"'
                 echo "S=\"\${WORKDIR}\""
+                echo 'RESTRICT="strip"'
                 echo ""
                 echo "src_install() {"
                 echo "    exeinto /opt/bin"
@@ -87,7 +88,8 @@ jobs:
                 echo "    insinto /usr/share/zsh/site-functions"
                 echo "    doins completions/goreleaser.zsh"
                 echo "    if use man; then"
-                echo "      doman manpages/goreleaser.1.gz"
+                echo "      gzip -d manpages/goreleaser.1.gz"
+                echo "      doman manpages/goreleaser.1"
                 echo "    fi"
                 echo "}"
                 echo ""
