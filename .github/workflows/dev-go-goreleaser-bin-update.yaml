@@ -51,7 +51,7 @@ jobs:
           
           for tag in ${tags}; do
             version=${tag#v}
-            if [ "${version}" == "${tag}" ]; then
+            if [ "${version}" = "${tag}" ]; then
               echo "$tag == $version So no prefix v";
               continue
             fi
