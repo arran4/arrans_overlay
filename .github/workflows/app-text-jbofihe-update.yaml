@@ -18,8 +18,8 @@ concurrency:
 env:
   ebuild_category: app-text
   ebuild_name: jbofihe
-  repo_owner: lojban
-  repo_name: jbofihe
+  github_owner: lojban
+  github_repo: jbofihe
   description: "The de facto standard parser and glosser for Lojban."
   PFN: "jbofihe"
   EFN: "jbofihe"
@@ -66,7 +66,7 @@ jobs:
                 echo "EAPI=8"
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
-                echo 'SRC_URI="https://github.com/${repo_owner}/${repo_name}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
+                echo 'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
                 echo 'LICENSE="GPL-2"'
                 echo "SLOT=\"0\""
                 echo 'KEYWORDS="~x86"'
@@ -90,7 +90,7 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/${repo_owner}/${repo_name}/archive/refs/tags/v${version}.tar.gz -O /tmp/${ebuild_name}-${version}.tar.gz
+              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${version}.tar.gz -O /tmp/${ebuild_name}-${version}.tar.gz
               echo "DIST ${ebuild_name}-${version}.tar.gz $(stat -c %s "/tmp/${ebuild_name}-${version}.tar.gz") BLAKE2B $(b2sum "/tmp/${ebuild_name}-${version}.tar.gz" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${ebuild_name}-${version}.tar.gz" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
               rm "/tmp/${ebuild_name}-${version}.tar.gz"
             fi
