@@ -18,8 +18,8 @@ concurrency:
 env:
   ebuild_category: dev-ml
   ebuild_name: llamafile-bin
-  repo_owner: Mozilla-Ocho
-  repo_name: llamafile
+  github_owner: Mozilla-Ocho
+  github_repo: llamafile
   description: " Distribute and run LLMs with a single file. "
   homepage: "https:// llamafile.ai/"
   workflowfile: "dev-ml-llamafile-bin-update.yaml"
@@ -47,7 +47,7 @@ jobs:
         run: |
           ebuild_dir="./${{env.ebuild_category}}/${{env.ebuild_name}}"
           mkdir -p $ebuild_dir
-          tags=$(curl -s https://api.github.com/repos/${repo_owner}/${repo_name}/releases | jq -r '.[].tag_name')
+          tags=$(curl -s https://api.github.com/repos/${{env.github_owner}}/${{env.github_repo}}/releases | jq -r '.[].tag_name')
           
           for tag in ${tags}; do
             version=${tag}
@@ -64,13 +64,13 @@ jobs:
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
                 echo 'IUSE="doc man"'
-                echo 'SRC_URI="amd64? ( https://github.com/${{env.repo_owner}}/${{env.repo_name}}/releases/download/${PV}/${{env.repo_name}}-${PV}.zip -> ${P}.amd64.zip )"'
+                echo 'SRC_URI="amd64? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${PV}/${{env.github_repo}}-${PV}.zip -> ${P}.amd64.zip )"'
                 echo "LICENSE=\"${{ env.license }}\""
                 echo "SLOT=\"0\""
                 echo 'KEYWORDS="~amd64"'
                 echo 'RDEPEND=""'
                 echo 'DEPEND="${RDEPEND}"'
-                echo "S=\"\${WORKDIR}/${{env.repo_name}}-\${PV}\""
+                echo "S=\"\${WORKDIR}/${{env.github_repo}}-\${PV}\""
                 echo ""
                 echo "src_install() {"
                 echo "    exeinto /opt/bin"
@@ -87,7 +87,7 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget "https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${{env.repo_name}}-${version}.zip" -O "/tmp/${{env.ebuild_name}}-${version}.amd64.zip"
+              wget "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${{env.github_repo}}-${version}.zip" -O "/tmp/${{env.ebuild_name}}-${version}.amd64.zip"
               for e in "${{env.ebuild_name}}-${version}.amd64.zip"; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${e}"
