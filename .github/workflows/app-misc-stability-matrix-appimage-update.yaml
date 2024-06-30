@@ -20,6 +20,8 @@ env:
   epn: stability-matrix-appimage
   description: "Multi-Platform Package Manager for Stable Diffusion"
   homepage: "https://lykos.ai"
+  github_owner: LykosAI
+  github_repo: StabilityMatrix
 
 jobs:
   check-and-create-ebuild:
@@ -43,12 +45,15 @@ jobs:
         run: |
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
-          latest_release=$(curl -s https://api.github.com/repos/LykosAI/StabilityMatrix/releases/latest | jq -r '.tag_name')
-          version="${latest_release#v}"
-          ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
-          if [ ! -f "$ebuild_file" ]; then
-              
-              # Create ebuild script
+          tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          for tag in tags; do
+            version="${tag#v}"
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
+              echo "$release / $version doesn't match regexp";
+              continue; 
+            fi
+            ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
               {
                 echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-stability-matrix-appimage-update.yaml"
                 echo 'EAPI=8'
@@ -96,11 +101,13 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/LykosAI/StabilityMatrix/releases/download/${latest_release}/StabilityMatrix-linux-x64.zip -O /tmp/${epn}-${version}.zip
+              wget https://github.com/LykosAI/StabilityMatrix/releases/download/${tag}/StabilityMatrix-linux-x64.zip -O /tmp/${epn}-${version}.zip
               
               echo "DIST ${epn}-${version}.zip $(stat -c %s "/tmp/${epn}-${version}.zip") BLAKE2B $(b2sum "/tmp/${epn}-${version}.zip" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${epn}-${version}.zip" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
               rm "/tmp/${epn}-${version}.zip"
-          fi
+              break
+            fi
+          done
 
       - name: Commit and push changes
         run: |
