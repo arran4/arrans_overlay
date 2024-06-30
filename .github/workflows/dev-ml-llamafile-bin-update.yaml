@@ -1,0 +1,104 @@
+name: dev-ml/llamafile-bin Update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '30 1 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/dev-ml-llamafile-bin-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ebuild_category: dev-ml
+  ebuild_name: llamafile-bin
+  repo_owner: Mozilla-Ocho
+  repo_name: llamafile
+  description: " Distribute and run LLMs with a single file. "
+  PFN: "chezmoi"
+  EFN: "chezmoi"
+  homepage: "https:// llamafile.ai/"
+  workflowfile: "dev-ml-llamafile-bin-update.yaml"
+  license: "Apache 2.0"
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          mkdir -p $ebuild_dir
+          tags=$(curl -s https://api.github.com/repos/${repo_owner}/${repo_name}/releases | jq -r '.[].tag_name')
+          
+          for tag in ${tags}; do
+            version=${tag}
+            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+              # Create ebuild script
+              {
+                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflowfile }}"
+                echo "EAPI=8"
+                echo "DESCRIPTION=\"$description\""
+                echo "HOMEPAGE=\"$homepage\""
+                echo 'IUSE="doc man"'
+                echo 'SRC_URI="amd64? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/\${P}.zip -> \${P}.amd64.zip )"'
+                echo "LICENSE=\"${{ env.license }}\""
+                echo "SLOT=\"0\""
+                echo 'KEYWORDS="~amd64"'
+                echo 'RDEPEND=""'
+                echo 'DEPEND="${RDEPEND}"'
+                echo "S=\"\${WORKDIR}/\${P}\""
+                echo ""
+                echo "src_install() {"
+                echo "    exeinto /opt/bin"
+                echo "    doexe bin/*"
+                echo "    if use doc; then"
+                echo "      dodoc README.md"
+                echo "      dodoc share/doc/llamafile/*"
+                echo "    fi"
+                echo "    if use man; then"
+                echo "      doman share/man/man1/*"
+                echo "    fi"
+                echo "}"
+                echo ""
+              } > $ebuild_file
+
+              # Generate the manifest for the new ebuild
+              wget https://github.com/${repo_owner}/${repo_name}/releases/download/\${tag}/\${version}.zip -O /tmp/${ebuild_name}-${version}.amd64.zip
+              for e in ${ebuild_name}-${version}.amd64.zip; do
+                echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
+                rm "/tmp/${e}"
+              done
+            fi
+            break
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          git add "./${ebuild_dir}"
+          git commit -m "Add ebuilds for new ${ebuild_name} releases" && 
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.conclusion == 'success'
