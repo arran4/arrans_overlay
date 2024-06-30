@@ -20,8 +20,8 @@ env:
   ecn: app-misc
   description: "Ente Auth AppImage"
   homepage: "https://ente.io/blog/auth/"
-  repo_owner: ente-io
-  repo_name: ente
+  github_owner: ente-io
+  github_repo: ente
 
 jobs:
   check-and-create-ebuild:
@@ -43,7 +43,7 @@ jobs:
       - name: Check for new releases
         id: check_releases
         run: |
-          tags=$(curl -s https://api.github.com/repos/ente-io/ente/releases | jq -r '.[].tag_name')
+          tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
           release_tags=$(echo "tags" | grep "^auth-v")
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
