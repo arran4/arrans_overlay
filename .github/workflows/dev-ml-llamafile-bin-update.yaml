@@ -47,13 +47,13 @@ jobs:
       - name: Process each release
         id: process_releases
         run: |
-          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          ebuild_dir="./${{env.ebuild_category}}/${{env.ebuild_name}}"
           mkdir -p $ebuild_dir
           tags=$(curl -s https://api.github.com/repos/${repo_owner}/${repo_name}/releases | jq -r '.[].tag_name')
           
           for tag in ${tags}; do
             version=${tag}
-            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            ebuild_file="${ebuild_dir}/${{env.ebuild_name}}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               # Create ebuild script
               {
@@ -85,8 +85,8 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget "https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${version}.zip" -O "/tmp/${ebuild_name}-${version}.amd64.zip"
-              for e in "${ebuild_name}-${version}.amd64.zip"; do
+              wget "https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${{env.ebuild_name}}-${version}.zip" -O "/tmp/${{env.ebuild_name}}-${version}.amd64.zip"
+              for e in "${{env.ebuild_name}}--${version}.amd64.zip"; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${e}"
               done
