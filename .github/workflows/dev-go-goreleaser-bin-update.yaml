@@ -62,7 +62,7 @@ jobs:
                 echo "EAPI=8"
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
-                echo 'IUSE=""'
+                echo 'IUSE="man"'
                 echo 'SRC_URI="'
                 echo "  amd64? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_Linux_x86_64.tar.gz -> \${P}.amd64.tar.gz )"
                 echo "  arm? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_Linux_armv7.tar.gz -> \${P}.arm.tar.gz )"
@@ -76,12 +76,6 @@ jobs:
                 echo 'DEPEND="${RDEPEND}"'
                 echo "S=\"\${WORKDIR}\""
                 echo ""
-                echo "src_unpack() {"
-                echo "  unpack ${A}"
-                echo "  unpack manpages/goreleaser1.gz"
-                echo "  mv manpages/goreleaser1 manpages/goreleaser.1"
-                echo "}"
-                echo ""
                 echo "src_install() {"
                 echo "    exeinto /opt/bin"
                 echo "    doexe ${EFN}"
@@ -92,7 +86,9 @@ jobs:
                 echo "    doins completions/goreleaser.fish"
                 echo "    insinto /usr/share/zsh/site-functions"
                 echo "    doins completions/goreleaser.zsh"
-                echo "    doman manpages/goreleaser1.gz"
+                echo "    if use man; then"
+                echo "      doman manpages/goreleaser.1.gz"
+                echo "    fi"
                 echo "}"
                 echo ""
               } > $ebuild_file
