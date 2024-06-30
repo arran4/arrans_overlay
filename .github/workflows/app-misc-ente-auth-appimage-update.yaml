@@ -48,8 +48,8 @@ jobs:
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
           
-          for tags in $release_tags; do
-            version=${tags#auth-v}
+          for tag in $release_tags; do
+            version=${tag#auth-v}
             if [ "${version}" = "${tag}" ]; then
               echo "$version == $tag so there is no auth-v removed skipping"
               continue
