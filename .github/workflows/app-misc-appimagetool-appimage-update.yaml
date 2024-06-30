@@ -20,8 +20,8 @@ env:
   epn: appimagetool-appimage
   description: "AppImage tool to create AppImages (As an AppImage)"
   homepage: "https://github.com/AppImage/AppImageKit"
-  repo_owner: AppImage
-  repo_name: AppImageKit
+  github_owner: AppImage
+  github_repo: AppImageKit
 
 jobs:
   check-and-create-ebuild:
