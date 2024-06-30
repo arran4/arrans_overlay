@@ -18,8 +18,8 @@ concurrency:
 env:
   ebuild_category: dev-ml
   ebuild_name: whisperfile-bin
-  repo_owner: cjpais
-  repo_name: whisperfile
+  github_owner: cjpais
+  github_repo: whisperfile
   description: "Distribute and run whisper LLMs with a single file."
   homepage: "https://github.com/cjpais/whisperfile"
   workflowfile: "dev-ml-whisperfile-bin-update.yaml"
@@ -47,7 +47,7 @@ jobs:
         run: |
           ebuild_dir="./${{env.ebuild_category}}/${{env.ebuild_name}}"
           mkdir -p $ebuild_dir
-          tags=$(curl -s https://api.github.com/repos/${repo_owner}/${repo_name}/releases | jq -r '.[].tag_name')
+          tags=$(curl -s https://api.github.com/repos/${{env.github_owner}}/${{env.github_repo}}/releases | jq -r '.[].tag_name')
           
           for tag in ${tags}; do
             version=${tag}
@@ -64,7 +64,7 @@ jobs:
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
                 echo 'IUSE=""'
-                echo 'SRC_URI="amd64? ( https://github.com/${{env.repo_owner}}/${{env.repo_name}}/releases/download/${PV}/${{env.repo_name}}-${PV} -> ${P}.amd64 )"'
+                echo 'SRC_URI="amd64? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${PV}/${{env.github_repo}}-${PV} -> ${P}.amd64 )"'
                 echo "LICENSE=\"${{ env.license }}\""
                 echo "SLOT=\"0\""
                 echo 'KEYWORDS="~amd64"'
@@ -73,19 +73,19 @@ jobs:
                 echo "S=\"\${WORKDIR}\""
                 echo ""
                 echo "src_unpack() {"
-                echo "    mv \"\${A}\" '${{env.repo_name}}'"
-                echo "    chmod +x '${{env.repo_name}}' or die 'failed to chmod ${{env.repo_name}}'"
+                echo "    mv \"\${A}\" '${{env.github_repo}}'"
+                echo "    chmod +x '${{env.github_repo}}' or die 'failed to chmod ${{env.github_repo}}'"
                 echo "}"
                 echo ""
                 echo "src_install() {"
                 echo "    exeinto /opt/bin"
-                echo "    doexe \"\${WORKDIR}/${{env.repo_name}}\""
+                echo "    doexe \"\${WORKDIR}/${{env.github_repo}}\""
                 echo "}"
                 echo ""
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget "https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${{env.repo_name}}-${version}" -O "/tmp/${{env.ebuild_name}}-${version}.amd64"
+              wget "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${{env.github_repo}}-${version}" -O "/tmp/${{env.ebuild_name}}-${version}.amd64"
               for e in "${{env.ebuild_name}}-${version}.amd64"; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${e}"
