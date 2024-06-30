@@ -20,6 +20,8 @@ env:
   ecn: app-misc
   description: "Ente Auth AppImage"
   homepage: "https://ente.io/blog/auth/"
+  repo_owner: ente-io
+  repo_name: ente
 
 jobs:
   check-and-create-ebuild:
