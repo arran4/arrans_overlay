@@ -46,10 +46,13 @@ jobs:
           ghrp=${repo_owner}/${repo_name}
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
-          releases=$(curl -s https://api.github.com/repos/${repo_owner}/${repo_name}/releases | jq -r '.[].tag_name')
-          for release in ${releases}; do
-            echo "Processing run number: $run_number"
-            version=${release}
+          tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          for tag in tags; do
+            version="${tag}"
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
+              echo "$tag / $version doesn't match regexp";
+              continue; 
+            fi
             ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               
@@ -105,15 +108,15 @@ jobs:
               } > "$ebuild_file"
 
               # Generate the manifest for the new ebuild
-              wget "https://github.com/${ghrp}/releases/download/${release}/rustdesk-${version}-x86_64.AppImage" -O "/tmp/${epn}-${version}.amd64"
-              wget "https://github.com/${ghrp}/releases/download/${release}/rustdesk-${version}-aarch64.AppImage" -O "/tmp/${epn}-${version}.arm64"
+              wget "https://github.com/${ghrp}/releases/download/${tag}/rustdesk-${version}-x86_64.AppImage" -O "/tmp/${epn}-${version}.amd64"
+              wget "https://github.com/${ghrp}/releases/download/${tag}/rustdesk-${version}-aarch64.AppImage" -O "/tmp/${epn}-${version}.arm64"
               
               for e in "${epn}-${version}.amd64" "${epn}-${version}.arm64"; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${e}"
               done
             fi
-            break; # We actually only need 1...
+            break
           done
 
       - name: Commit and push changes

@@ -48,12 +48,16 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
           
-          releases=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
           
-          for tag in $releases; do
+          for tag in $tags; do
             version="${tag#v}"
+            if [ "${version}" == "${tag}" ]; then
+              echo "$version == $tag so there is no V removed skipping"
+              continue
+            fi
             if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
-              echo "$release / $version doesn't match regexp";
+              echo "tag / $version doesn't match regexp";
               continue; 
             fi
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
@@ -110,9 +114,8 @@ jobs:
               wget https://github.com//${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jan-linux-x86_64-${version}.AppImage -O /tmp/${{ env.epn }}-${version}.amd64              
               echo "DIST ${{ env.epn }}-${version}.amd64 $(stat -c %s "/tmp/${{ env.epn }}-${version}.amd64") BLAKE2B $(b2sum "/tmp/${{ env.epn }}-${version}.amd64" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${{ env.epn }}-${version}.amd64" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
               rm "/tmp/${{ env.epn }}-${version}.amd64"
-
-              break
             fi
+            break
           done
 
       - name: Commit and push changes

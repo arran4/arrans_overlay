@@ -21,6 +21,8 @@ env:
   description: "Google Datastore and Datastore emulator client for easy modification of values"
   homepage: "https://github.com/arran4/flutter_google_datastore"
   appimage_name: FlutterGoogleDatastore.AppImage
+  github_owner: arran4
+  github_repo: flutter_google_datastore
 
 jobs:
   check-and-create-ebuild:
@@ -44,16 +46,19 @@ jobs:
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
-          latest_release=$(curl -s https://api.github.com/repos/arran4/flutter_google_datastore/releases/latest | jq -r '.tag_name')
-          version="${latest_release#v}"
-          if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
-            echo "$release / $version doesn't match regexp";
-            continue; 
-          fi
-          ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-          if [ ! -f "$ebuild_file" ]; then
-              
-              # Create ebuild script
+          tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          for tag in tags; do
+            version="${tag#v}"
+            if [ "${version}" == "${tag}" ]; then
+              echo "$version == $tag so there is no V removed skipping"
+              continue
+            fi
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
+              echo "$tag / $version doesn't match regexp";
+              continue; 
+            fi
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
               {
                 echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/"
                 echo 'EAPI=8'
@@ -106,11 +111,13 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/arran4/flutter_google_datastore/releases/download/${latest_release}/flutter_google_datastore-linux-x86_64.AppImage -O /tmp/${{ env.epn }}-${version}.amd64
+              wget https://github.com/arran4/flutter_google_datastore/releases/download/${tag}/flutter_google_datastore-linux-x86_64.AppImage -O /tmp/${{ env.epn }}-${version}.amd64
               
               echo "DIST ${{ env.epn }}-${version}.amd64 $(stat -c %s "/tmp/${{ env.epn }}-${version}.amd64") BLAKE2B $(b2sum "/tmp/${{ env.epn }}-${version}.amd64" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${{ env.epn }}-${version}.amd64" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
               rm "/tmp/${{ env.epn }}-${version}.amd64"
-          fi
+            fi
+            break
+          done
 
       - name: Commit and push changes
         run: |

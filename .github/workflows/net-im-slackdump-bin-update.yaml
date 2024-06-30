@@ -53,7 +53,12 @@ jobs:
           for tag in ${tags}; do
             version=${tag#v}
             if [ "${version}" == "${tag}" ]; then
+              echo "$version == $tag so there is no V removed"
               continue
+            fi
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
+              echo "$version doesn't match regexp";
+              continue; 
             fi
             ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then

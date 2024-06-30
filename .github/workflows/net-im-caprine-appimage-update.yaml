@@ -48,14 +48,19 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
 
-          releases=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
-          
-          for tag in $releases; do
+          tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          for tag in tags; do
             version="${tag#v}"
+            if [ "${version}" == "${tag}" ]; then
+              echo "$version == $tag so there is no V removed skipping"
+              continue
+            fi
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
+              echo "$tag / $version doesn't match regexp";
+              continue; 
+            fi
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
-
-              # Create ebuild script
               {
                 echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/net-im-caprine-appimage-update.yaml"
                 echo 'EAPI=8'
@@ -100,13 +105,11 @@ jobs:
                 echo ""
               } > $ebuild_file
 
-              # Generate the manifest for the new ebuild
               wget https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Caprine-${version}.AppImage -O /tmp/${{ env.epn }}-${version}.amd64
               echo "DIST ${{ env.epn }}-${version}.amd64 $(stat -c %s "/tmp/${{ env.epn }}-${version}.amd64") BLAKE2B $(b2sum "/tmp/${{ env.epn }}-${version}.amd64" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${{ env.epn }}-${version}.amd64" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
               rm "/tmp/${{ env.epn }}-${version}.amd64"
-              
-              break
             fi
+            break
           done
 
       - name: Commit and push changes

@@ -41,21 +41,24 @@ jobs:
       - name: Check for new releases
         id: check_releases
         run: |
-          releases=$(curl -s https://api.github.com/repos/ente-io/ente/releases | jq -r '.[].tag_name')
-          auth_releases=$(echo "$releases" | grep "^auth-v")
-          echo "::set-output name=auth_releases::$auth_releases"
-
-      - name: Process each release
-        id: process_releases
-        run: |
+          tags=$(curl -s https://api.github.com/repos/ente-io/ente/releases | jq -r '.[].tag_name')
+          release_tags=$(echo "tags" | grep "^auth-v")
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
           
-          for release in ${{ steps.check_releases.outputs.auth_releases }}; do
-            version=${release#auth-v}
+          for tags in $release_tags; do
+            version=${tags#auth-v}
+            if [ "${version}" == "${tag}" ]; then
+              echo "$version == $tag so there is no auth-v removed skipping"
+              continue
+            fi
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
+              echo "$tag / $version doesn't match regexp";
+              continue; 
+            fi
             ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
-              appimage_url="https://github.com/ente-io/ente/releases/download/${release}/ente-auth-v${version}-x86_64.AppImage"
+              appimage_url="https://github.com/ente-io/ente/releases/download/${tag}/ente-auth-v${version}-x86_64.AppImage"
               
               # Create ebuild script
               {
@@ -110,6 +113,7 @@ jobs:
                 rm "/tmp/${e}"
               done
             fi
+            break
           done
 
       - name: Commit and push changes

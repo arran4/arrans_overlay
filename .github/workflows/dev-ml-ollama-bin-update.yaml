@@ -48,8 +48,12 @@ jobs:
           tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
           for tag in tags; do
             version="${tag#v}"
+            if [ "${version}" == "${tag}" ]; then
+              echo "$version == $tag so there is no V removed skipping"
+              continue
+            fi
             if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
-              echo "$release / $version doesn't match regexp";
+              echo "tag / $version doesn't match regexp";
               continue; 
             fi
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
@@ -130,17 +134,18 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/ollama/ollama/releases/download/${latest_release}/ollama-linux-amd64 -O /tmp/${{ env.epn }}-${version}.amd64
-              wget https://github.com/ollama/ollama/releases/download/${latest_release}/ollama-linux-arm64 -O /tmp/${{ env.epn }}-${version}.arm64
-              wget https://github.com/ollama/ollama/releases/download/${latest_release}/ollama-linux-amd64-rocm.tgz -O /tmp/${{ env.epn }}-${version}.rocm.tgz
+              wget https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64 -O /tmp/${{ env.epn }}-${version}.amd64
+              wget https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-arm64 -O /tmp/${{ env.epn }}-${version}.arm64
+              wget https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64-rocm.tgz -O /tmp/${{ env.epn }}-${version}.rocm.tgz
               
               for e in ${{ env.epn }}-${version}.amd64 ${{ env.epn }}-${version}.arm64 ${{ env.epn }}-${version}.rocm.tgz; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${e}"
               done
-              break;
             fi
+            break
           done
+
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
