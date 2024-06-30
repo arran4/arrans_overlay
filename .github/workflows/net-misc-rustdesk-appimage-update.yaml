@@ -18,8 +18,8 @@ concurrency:
 env:
   ecn: net-misc
   epn: rustdesk-appimage
-  repo_owner: rustdesk
-  repo_name: rustdesk
+  github_owner: rustdesk
+  github_repo: rustdesk
   description: "An open-source remote desktop, and alternative to TeamViewer."
   homepage: "https://rustdesk.com/"
 
@@ -43,7 +43,7 @@ jobs:
       - name: Process each release
         id: process_releases
         run: |
-          ghrp=${repo_owner}/${repo_name}
+          ghrp=${{env.github_owner}}/${{env.github_repo}}
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
           tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
