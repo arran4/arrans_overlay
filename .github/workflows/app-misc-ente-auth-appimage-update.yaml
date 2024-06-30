@@ -50,7 +50,7 @@ jobs:
           
           for tags in $release_tags; do
             version=${tags#auth-v}
-            if [ "${version}" == "${tag}" ]; then
+            if [ "${version}" = "${tag}" ]; then
               echo "$version == $tag so there is no auth-v removed skipping"
               continue
             fi
