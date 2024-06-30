@@ -16,8 +16,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  epn: ente-auth-appimage
   ecn: app-misc
+  epn: ente-auth-appimage
   description: "Ente Auth AppImage"
   homepage: "https://ente.io/blog/auth/"
   github_owner: ente-io
@@ -41,13 +41,13 @@ jobs:
           sudo apt-get install -y wget jq coreutils
 
       - name: Check for new releases
-        id: check_releases
+        id: process_releases
         run: |
-          tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
-          release_tags=$(echo "tags" | grep "^auth-v")
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
           
+          tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          release_tags=$(echo "tags" | grep "^auth-v")
           for tag in $release_tags; do
             version=${tag#auth-v}
             if [ "${version}" = "${tag}" ]; then
