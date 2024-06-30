@@ -51,7 +51,7 @@ jobs:
           tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
           for tag in tags; do
             version="${tag#v}"
-            if [ "${version}" == "${tag}" ]; then
+            if [ "${version}" = "${tag}" ]; then
               echo "$version == $tag so there is no V removed skipping"
               continue
             fi
