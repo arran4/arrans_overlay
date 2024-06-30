@@ -21,6 +21,8 @@ env:
   description: "An open-source cross-platform alternative to AirDrop"
   homepage: "https://localsend.org"
   appimage_name: LocalSend.AppImage
+  repo_owner: localsend
+  repo_name: localsend
 
 jobs:
   check-and-create-ebuild:
