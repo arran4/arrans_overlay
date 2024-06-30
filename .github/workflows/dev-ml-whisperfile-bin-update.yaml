@@ -59,7 +59,7 @@ jobs:
                 echo "EAPI=8"
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
-                echo 'IUSE="doc man"'
+                echo 'IUSE=""'
                 echo 'SRC_URI="amd64? ( https://github.com/${{env.repo_owner}}/${{env.repo_name}}/releases/download/${PV}/${{env.repo_name}}-${PV} -> ${P}.amd64 )"'
                 echo "LICENSE=\"${{ env.license }}\""
                 echo "SLOT=\"0\""
