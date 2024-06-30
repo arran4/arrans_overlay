@@ -20,6 +20,8 @@ env:
   epn: ollama-bin
   description: "Get up and running with Llama 3, Mistral, Gemma, and other large language models."
   homepage: "https://ollama.com"
+  github_owner: ollama
+  github_repo: ollama
 
 jobs:
   check-and-create-ebuild:
@@ -43,12 +45,15 @@ jobs:
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
-          latest_release=$(curl -s https://api.github.com/repos/ollama/ollama/releases/latest | jq -r '.tag_name')
-          version="${latest_release#v}"
-          ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-          if [ ! -f "$ebuild_file" ]; then
-              
-              # Create ebuild script
+          tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          for tag in tags; do
+            version="${tag#v}"
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
+              echo "$release / $version doesn't match regexp";
+              continue; 
+            fi
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
               {
                 echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/"
                 echo 'EAPI=8'
@@ -133,8 +138,9 @@ jobs:
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${e}"
               done
-          fi
-
+              break;
+            fi
+          done
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
