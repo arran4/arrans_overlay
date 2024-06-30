@@ -51,6 +51,10 @@ jobs:
           
           for release in ${releases}; do
             version=${release#v}
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
+              echo "$release / $version doesn't match regexp";
+              continue; 
+            fi
             ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               # Create ebuild script
