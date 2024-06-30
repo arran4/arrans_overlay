@@ -18,8 +18,8 @@ concurrency:
 env:
   ebuild_category: www-apps
   ebuild_name: hugo-bin
-  repo_owner: gohugoio
-  repo_name: hugo
+  github_owner: gohugoio
+  github_repo: hugo
   description: "The world’s fastest framework for building websites."
   PFN: "hugo"
   EFN: "hugo"
@@ -50,7 +50,7 @@ jobs:
           tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
           for tag in tags; do
             version="${tag#v}"
-            if [ "${version}" == "${tag}" ]; then
+            if [ "${version}" = "${tag}" ]; then
               echo "$version == $tag so there is no V removed skipping"
               continue
             fi
@@ -68,9 +68,9 @@ jobs:
                 echo "HOMEPAGE=\"$homepage\""
                 echo 'IUSE="+extended"'
                 echo 'SRC_URI="  '
-                echo "  amd64? ( extended? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_extended_\${PV}_Linux-64bit.tar.gz -> \${PN}_extended-\${PV}.amd64.tar.gz ) !extended? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_\${PV}_Linux-64bit.tar.gz -> \${P}.amd64.tar.gz ) )"
-                echo "  arm? ( extended? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_extended_\${PV}_linux-arm.tar.gz -> \${PN}_extended-\${PV}.arm.tar.gz ) !extended? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_\${PV}_linux-arm.tar.gz -> \${P}.arm.tar.gz ) )"
-                echo "  arm64? ( extended? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_extended_\${PV}_linux-arm64.tar.gz -> \${PN}_extended-\${PV}.arm64.tar.gz ) !extended? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_\${PV}_linux-arm64.tar.gz -> \${P}.arm64.tar.gz ) )"
+                echo "  amd64? ( extended? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_extended_\${PV}_Linux-64bit.tar.gz -> \${PN}_extended-\${PV}.amd64.tar.gz ) !extended? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_Linux-64bit.tar.gz -> \${P}.amd64.tar.gz ) )"
+                echo "  arm? ( extended? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_extended_\${PV}_linux-arm.tar.gz -> \${PN}_extended-\${PV}.arm.tar.gz ) !extended? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_linux-arm.tar.gz -> \${P}.arm.tar.gz ) )"
+                echo "  arm64? ( extended? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_extended_\${PV}_linux-arm64.tar.gz -> \${PN}_extended-\${PV}.arm64.tar.gz ) !extended? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_linux-arm64.tar.gz -> \${P}.arm64.tar.gz ) )"
                 echo '" '
                 echo "LICENSE=\"Apache-2.0\""
                 echo "SLOT=\"0\""
@@ -92,12 +92,12 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${PFN}_${version}_Linux-64bit.tar.gz -O /tmp/${ebuild_name}-${version}.amd64.tar.gz
-              wget https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${PFN}_${version}_linux-arm.tar.gz -O /tmp/${ebuild_name}-${version}.arm.tar.gz
-              wget https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${PFN}_${version}_linux-arm64.tar.gz -O /tmp/${ebuild_name}-${version}.arm64.tar.gz
-              wget https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${PFN}_extended_${version}_Linux-64bit.tar.gz -O /tmp/${ebuild_name}_extended-${version}.amd64.tar.gz
-              #wget https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm.tar.gz -O /tmp/${ebuild_name}_extended-${version}.arm.tar.gz
-              wget https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm64.tar.gz -O /tmp/${ebuild_name}_extended-${version}.arm64.tar.gz
+              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_Linux-64bit.tar.gz -O /tmp/${ebuild_name}-${version}.amd64.tar.gz
+              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux-arm.tar.gz -O /tmp/${ebuild_name}-${version}.arm.tar.gz
+              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux-arm64.tar.gz -O /tmp/${ebuild_name}-${version}.arm64.tar.gz
+              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_Linux-64bit.tar.gz -O /tmp/${ebuild_name}_extended-${version}.amd64.tar.gz
+              #wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm.tar.gz -O /tmp/${ebuild_name}_extended-${version}.arm.tar.gz
+              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm64.tar.gz -O /tmp/${ebuild_name}_extended-${version}.arm64.tar.gz
               # Doesn't exist??  ${ebuild_name}_extended-${version}.arm.tar.gz
               for e in ${ebuild_name}-${version}.amd64.tar.gz ${ebuild_name}-${version}.arm.tar.gz ${ebuild_name}-${version}.arm64.tar.gz ${ebuild_name}_extended-${version}.amd64.tar.gz ${ebuild_name}_extended-${version}.arm64.tar.gz; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
