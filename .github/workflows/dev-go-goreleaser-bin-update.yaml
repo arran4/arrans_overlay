@@ -18,8 +18,8 @@ concurrency:
 env:
   ebuild_category: dev-go
   ebuild_name: goreleaser-bin
-  repo_owner: goreleaser
-  repo_name: goreleaser
+  github_owner: goreleaser
+  github_repo: goreleaser
   description: " Deliver Go binaries as fast and easily as possible."
   PFN: "goreleaser"
   EFN: "goreleaser"
@@ -47,7 +47,7 @@ jobs:
         run: |
           ebuild_dir="./${ebuild_category}/${ebuild_name}"
           mkdir -p $ebuild_dir
-          tags=$(curl -s https://api.github.com/repos/${repo_owner}/${repo_name}/releases | jq -r '.[].tag_name')
+          tags=$(curl -s https://api.github.com/repos/${{env.github_owner}}/${{env.github_repo}}/releases | jq -r '.[].tag_name')
           
           for tag in ${tags}; do
             version=${tag#v}
@@ -69,10 +69,10 @@ jobs:
                 echo "HOMEPAGE=\"$homepage\""
                 echo 'IUSE="man"'
                 echo 'SRC_URI="'
-                echo "  amd64? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_Linux_x86_64.tar.gz -> \${P}.amd64.tar.gz )"
-                echo "  arm? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_Linux_armv7.tar.gz -> \${P}.arm.tar.gz )"
-                echo "  arm64? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_Linux_arm64.tar.gz -> \${P}.arm64.tar.gz )"
-                echo "  x86? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${PFN}_Linux_i386.tar.gz -> \${P}.x86.tar.gz )"
+                echo "  amd64? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_Linux_x86_64.tar.gz -> \${P}.amd64.tar.gz )"
+                echo "  arm? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_Linux_armv7.tar.gz -> \${P}.arm.tar.gz )"
+                echo "  arm64? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_Linux_arm64.tar.gz -> \${P}.arm64.tar.gz )"
+                echo "  x86? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_Linux_i386.tar.gz -> \${P}.x86.tar.gz )"
                 echo '" '
                 echo "LICENSE=\"MIT\""
                 echo "SLOT=\"0\""
@@ -101,10 +101,10 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget "https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${PFN}_Linux_x86_64.tar.gz" -O "/tmp/${ebuild_name}-${version}.amd64.tar.gz"
-              wget "https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${PFN}_Linux_armv7.tar.gz" -O "/tmp/${ebuild_name}-${version}.arm.tar.gz"
-              wget "https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${PFN}_Linux_arm64.tar.gz" -O "/tmp/${ebuild_name}-${version}.arm64.tar.gz"
-              wget "https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${PFN}_Linux_i386.tar.gz" -O "/tmp/${ebuild_name}-${version}.x86.tar.gz"
+              wget "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_Linux_x86_64.tar.gz" -O "/tmp/${ebuild_name}-${version}.amd64.tar.gz"
+              wget "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_Linux_armv7.tar.gz" -O "/tmp/${ebuild_name}-${version}.arm.tar.gz"
+              wget "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_Linux_arm64.tar.gz" -O "/tmp/${ebuild_name}-${version}.arm64.tar.gz"
+              wget "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_Linux_i386.tar.gz" -O "/tmp/${ebuild_name}-${version}.x86.tar.gz"
               for e in "${ebuild_name}-${version}.amd64.tar.gz" "${ebuild_name}-${version}.arm.tar.gz" "${ebuild_name}-${version}.arm64.tar.gz" "${ebuild_name}-${version}.x86.tar.gz"; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${e}"
