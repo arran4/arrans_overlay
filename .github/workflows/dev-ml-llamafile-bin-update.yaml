@@ -21,8 +21,6 @@ env:
   repo_owner: Mozilla-Ocho
   repo_name: llamafile
   description: " Distribute and run LLMs with a single file. "
-  PFN: "chezmoi"
-  EFN: "chezmoi"
   homepage: "https:// llamafile.ai/"
   workflowfile: "dev-ml-llamafile-bin-update.yaml"
   license: "Apache 2.0"
@@ -62,7 +60,7 @@ jobs:
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
                 echo 'IUSE="doc man"'
-                echo 'SRC_URI="amd64? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/\${P}.zip -> \${P}.amd64.zip )"'
+                echo 'SRC_URI="amd64? ( https://github.com/${repo_owner}/${repo_name}/releases/download/v\${PV}/${{env.repo_name}}-\${PV}.zip -> \${P}.amd64.zip )"'
                 echo "LICENSE=\"${{ env.license }}\""
                 echo "SLOT=\"0\""
                 echo 'KEYWORDS="~amd64"'
@@ -85,8 +83,8 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget "https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${{env.ebuild_name}}-${version}.zip" -O "/tmp/${{env.ebuild_name}}-${version}.amd64.zip"
-              for e in "${{env.ebuild_name}}--${version}.amd64.zip"; do
+              wget "https://github.com/${repo_owner}/${repo_name}/releases/download/${tag}/${{env.repo_name}}-${version}.zip" -O "/tmp/${{env.ebuild_name}}-${version}.amd64.zip"
+              for e in "${{env.ebuild_name}}-${version}.amd64.zip"; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${e}"
               done
