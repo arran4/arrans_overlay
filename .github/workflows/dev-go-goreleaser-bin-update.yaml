@@ -76,6 +76,12 @@ jobs:
                 echo 'DEPEND="${RDEPEND}"'
                 echo "S=\"\${WORKDIR}\""
                 echo ""
+                echo "src_unpack() {"
+                echo "  unpack ${A}"
+                echo "  unpack manpages/goreleaser1.gz"
+                echo "  mv manpages/goreleaser1 manpages/goreleaser.1"
+                echo "}"
+                echo ""
                 echo "src_install() {"
                 echo "    exeinto /opt/bin"
                 echo "    doexe ${EFN}"
