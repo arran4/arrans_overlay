@@ -60,7 +60,7 @@ jobs:
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
                 echo 'IUSE="doc man"'
-                echo 'SRC_URI="amd64? ( https://github.com/${repo_owner}/${repo_name}/releases/download/${PV}/${{env.repo_name}}-${PV}.zip -> ${P}.amd64.zip )"'
+                echo 'SRC_URI="amd64? ( https://github.com/${{env.repo_owner}}/${{env.repo_name}}/releases/download/${PV}/${{env.repo_name}}-${PV}.zip -> ${P}.amd64.zip )"'
                 echo "LICENSE=\"${{ env.license }}\""
                 echo "SLOT=\"0\""
                 echo 'KEYWORDS="~amd64"'
