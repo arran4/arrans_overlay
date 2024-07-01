@@ -71,7 +71,7 @@ jobs:
                 echo "DESCRIPTION=\"Run whisper speach recognition $model LLM in a single binary executable using llamafile.\""
                 echo "HOMEPAGE=\"$homepage\""
                 echo -n 'IUSE="systemd '
-                for variant in ${grouped[$key]}; do
+                for variant in ${grouped[$model]}; do
                   if [ -z "${variant}" ]; then
                     echo -n "+full ";
                     continue
@@ -80,7 +80,7 @@ jobs:
                 done
                 echo '"'
                 echo 'SRC_URI="amd64? ( '
-                for variant in ${grouped[$key]}; do
+                for variant in ${grouped[$model]}; do
                   if [ -z "${variant}" ]; then
                     echo "  full? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true -> \${P}.amd64 )"
                     continue
@@ -96,7 +96,7 @@ jobs:
                 echo "S=\"\${WORKDIR}\""
                 echo ""
                 echo "src_unpack() {"
-                for variant in ${grouped[$key]}; do
+                for variant in ${grouped[$model]}; do
                   mvfn="whisper.${model}.llamafile"
                   mvafn='${P}.amd64'
                   condition=full
@@ -114,7 +114,7 @@ jobs:
                 echo ""
                 echo "src_install() {"
                 echo "    exeinto /opt/bin"
-                for variant in ${grouped[$key]}; do
+                for variant in ${grouped[$model]}; do
                   mvfn="whisper.${model}.llamafile"
                   condition=full
                   if [ ! -z "${variant}" ]; then
@@ -128,7 +128,7 @@ jobs:
                 echo "}"
                 echo ""
                 echo "pkg_postinst() {"
-                for variant in ${grouped[$key]}; do
+                for variant in ${grouped[$model]}; do
                   mvfn="whisper.${model}.llamafile"
                   condition=full
                   if [ ! -z "${variant}" ]; then
@@ -168,7 +168,7 @@ jobs:
                 echo ""
               } > $ebuild_file
               # Generate the manifest for the new ebuild
-              for variant in ${grouped[$key]}; do
+              for variant in ${grouped[$model]}; do
                 url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true"
                 fn="${ebuild_name}.amd64"
                 if [ ! -z "${variant}" ]; then
