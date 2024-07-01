@@ -46,7 +46,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
           tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
-          for tag in tags; do
+          for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
               echo "$version == $tag so there is no V removed skipping"
