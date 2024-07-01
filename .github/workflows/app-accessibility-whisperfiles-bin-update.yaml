@@ -54,9 +54,9 @@ jobs:
             mn="$(echo "$model" | cut -f 1 -d.)";
             mv="$(echo "$model" | cut -s -f 2 -d.)"; 
             if [[ ! -v grouped[$mn] ]]; then 
-              grouped[$mn]="${mv@Q}"; 
+              grouped[$mn]="${mv:-full}"; 
             else 
-              grouped[$mn]="${grouped[$mn]} ${mv@Q}"; 
+              grouped[$mn]="${grouped[$mn]} ${mv:-full}"; 
             fi;
           done
           for model in "${!grouped[@]}"; do
@@ -72,7 +72,7 @@ jobs:
                 echo "HOMEPAGE=\"$homepage\""
                 echo -n 'IUSE="systemd '
                 for variant in ${grouped[$model]}; do
-                  if [ -z "${variant}" ]; then
+                  if [ "${variant}" = "full" ]; then
                     echo -n "+full ";
                     continue
                   fi
@@ -81,7 +81,7 @@ jobs:
                 echo '"'
                 echo 'SRC_URI="amd64? ( '
                 for variant in ${grouped[$model]}; do
-                  if [ -z "${variant}" ]; then
+                  if [ "${variant}" = "full" ]; then
                     echo "  full? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true -> \${P}.amd64 )"
                     continue
                   fi
@@ -100,7 +100,7 @@ jobs:
                   mvfn="whisper.${model}.llamafile"
                   mvafn='${P}.amd64'
                   condition=full
-                  if [ ! -z "${variant}" ]; then
+                  if [ "${variant}" != "full" ]; then
                     mvfn="whisper.${model}.${variant}.llamafile"
                     mvafn="\${P}.\${variant}.amd64"
                     condition="${variant}"
@@ -117,7 +117,7 @@ jobs:
                 for variant in ${grouped[$model]}; do
                   mvfn="whisper.${model}.llamafile"
                   condition=full
-                  if [ ! -z "${variant}" ]; then
+                  if [ "${variant}" != "full" ]; then
                     mvfn="whisper.${model}.${variant}.llamafile"
                     condition="${variant}"
                   fi
@@ -131,7 +131,7 @@ jobs:
                 for variant in ${grouped[$model]}; do
                   mvfn="whisper.${model}.llamafile"
                   condition=full
-                  if [ ! -z "${variant}" ]; then
+                  if [ "${variant}" != "full" ]; then
                     mvfn="whisper.${model}.${variant}.llamafile"
                     condition="${variant}"
                   fi
@@ -171,7 +171,7 @@ jobs:
               for variant in ${grouped[$model]}; do
                 url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true"
                 fn="${ebuild_name}.amd64"
-                if [ ! -z "${variant}" ]; then
+                if [ "${variant}" != "full" ]; then
                   url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${varaint}.${model}.llamafile?download=true"
                   fn="${ebuild_name}.${varaint}.amd64"
                 fi
