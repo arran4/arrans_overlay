@@ -172,10 +172,10 @@ jobs:
               # Generate the manifest for the new ebuild
               for variant in ${grouped[$model]}; do
                 url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true"
-                fn="${ebuild_name}.amd64"
+                fn="${ebuild_name}-${version}.amd64"
                 if [ "${variant}" != "full" ]; then
                   url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.${variant}.llamafile?download=true"
-                  fn="${ebuild_name}.${variant}.amd64"
+                  fn="${ebuild_name}-${version}.${variant}.amd64"
                 fi
                 wget "${url}" -O "/tmp/${fn}" --no-verbose
                 echo "DIST ${fn} $(stat -c %s "/tmp/${fn}") BLAKE2B $(b2sum "/tmp/${fn}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${fn}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
