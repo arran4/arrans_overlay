@@ -175,7 +175,7 @@ jobs:
                   url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${varaint}.${model}.llamafile?download=true"
                   fn="${ebuild_name}.${varaint}.amd64"
                 fi
-                wget "${url}" -O "/tmp/${fn}"
+                wget "${url}" -O "/tmp/${fn}" --no-verbose
                 echo "DIST ${fn} $(stat -c %s "/tmp/${fn}") BLAKE2B $(b2sum "/tmp/${fn}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${fn}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${fn}"
               done
