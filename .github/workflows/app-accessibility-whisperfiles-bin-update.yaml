@@ -72,19 +72,19 @@ jobs:
                 echo "HOMEPAGE=\"$homepage\""
                 echo -n 'IUSE="systemd '
                 for variant in ${grouped[$key]}; do
-                  if [ -z "${variant}" ]; do
+                  if [ -z "${variant}" ]; then
                     echo -n "+full ";
                     continue
-                  done
+                  fi
                   echo -n "$variant "
                 done
                 echo '"'
                 echo 'SRC_URI="amd64? ( '
                 for variant in ${grouped[$key]}; do
-                  if [ -z "${variant}" ]; do
+                  if [ -z "${variant}" ]; then
                     echo "  full? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true -> \${P}.amd64 )"'
                     continue
-                  done
+                  fi
                   echo "  $variant? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.${varaint}.llamafile?download=true -> \${P}.${variant}.amd64 )"'
                 done
                 echo ')"'
@@ -171,10 +171,10 @@ jobs:
               for variant in ${grouped[$key]}; do
                 url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true"
                 fn="${ebuild_name}.amd64"
-                if [ ! -z "${variant}" ]; do
+                if [ ! -z "${variant}" ]; then
                   url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${varaint}.${model}.llamafile?download=true"
                   fn="${ebuild_name}.${varaint}.amd64"
-                done
+                fi
                 wget "${url}" -O "/tmp/${fn}"
                 echo "DIST ${fn} $(stat -c %s "/tmp/${fn}") BLAKE2B $(b2sum "/tmp/${fn}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${fn}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${fn}"
