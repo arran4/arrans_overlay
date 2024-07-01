@@ -68,7 +68,7 @@ jobs:
                 echo "LICENSE=\"${{ env.license }}\""
                 echo "SLOT=\"0\""
                 echo 'KEYWORDS="~amd64"'
-                echo 'RDEPEND=""'
+                echo 'RDEPEND="acct-group/whisperfile acct-user/whisperfile"'
                 echo 'DEPEND="${RDEPEND}"'
                 echo "S=\"\${WORKDIR}\""
                 echo ""
