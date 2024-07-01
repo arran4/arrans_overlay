@@ -152,6 +152,7 @@ jobs:
                   echo '        echo ""'
                   echo '        echo "[Service]"'
                   echo "        echo \"ExecStart=/bin/bash -c '/opt/bin/${mvfn}  --host 0.0.0.0 --port 51524 --convert'\""
+                  echo '        echo "WorkingDirectory=/var/lib/whisperfile"'
                   echo '        echo "User=whisperfile"'
                   echo '        echo "Group=whisperfile"'
                   echo '        echo "Restart=always"'
