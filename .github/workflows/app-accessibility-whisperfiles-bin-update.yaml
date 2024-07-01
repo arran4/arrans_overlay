@@ -48,7 +48,7 @@ jobs:
       - name: Process each release
         id: process_releases
         run: |
-          models=$(curl https://huggingface.co/api/models/cjpais/whisperfile | jq -r '.siblings.[].rfilename | capture("^whisper.(?<a>.*).llamafile$").a')
+          models="$(curl https://huggingface.co/api/models/${{env.huggingface_owner}}/${{env.huggingface_repo}} | jq -r '.siblings.[].rfilename | capture("^whisper.(?<a>.*).llamafile$").a')"
           declare -A grouped=()
           for model in ${models}; do 
             mn="$(echo "$model" | cut -f 1 -d.)";
