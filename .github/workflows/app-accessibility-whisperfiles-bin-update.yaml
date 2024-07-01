@@ -172,6 +172,7 @@ jobs:
                 echo "}"
                 echo ""
               } > $ebuild_file
+              
               # Generate the manifest for the new ebuild
               for variant in ${grouped[$model]}; do
                 url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true"
