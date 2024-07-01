@@ -164,8 +164,8 @@ jobs:
                   echo "      einfo \"Making service user-startable...\""
                   echo '      mkdir -p /etc/systemd/user'
                   echo "      ln -s /etc/systemd/system/${mvfn}.service /etc/systemd/user/${mvfn}.service"
+                  echo "      fi"
                   echo "    fi"
-                  echo "  fi"
                 done
                 echo "}"
                 echo ""
