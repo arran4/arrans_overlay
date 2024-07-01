@@ -159,11 +159,12 @@ jobs:
                   echo '        echo ""'
                   echo '        echo "[Install]"'
                   echo '        echo "WantedBy=default.target"'
-                  echo "      } > /etc/systemd/system/${mvfn}.service"
+                  echo "      } > /usr/lib/systemd/system/${mvfn}.service"
                   echo "      einfo \"Service file created at /etc/systemd/system/${mvfn}.service\""
                   echo "      einfo \"Making service user-startable...\""
                   echo '      mkdir -p /etc/systemd/user'
-                  echo "      ln -s /etc/systemd/system/${mvfn}.service /etc/systemd/user/${mvfn}.service"
+                  echo "      ln -s /usr/lib/systemd/system/${mvfn}.service /etc/systemd/system/${mvfn}.service
+                  echo "      ln -s /usr/lib/systemd/system/${mvfn}.service /etc/systemd/user/${mvfn}.service"
                   echo "      fi"
                   echo "    fi"
                 done

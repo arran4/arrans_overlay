@@ -123,11 +123,12 @@ jobs:
                 echo '      echo ""'
                 echo '      echo "[Install]"'
                 echo '      echo "WantedBy=default.target"'
-                echo '    } > /etc/systemd/system/ollama.service'
+                echo '    } > /usr/lib/systemd/system/ollama.service'
                 echo "    einfo \"Service file created at /etc/systemd/system/ollama.service\""
                 echo "    einfo \"Making service user-startable...\""
                 echo '    mkdir -p /etc/systemd/user'
-                echo '    ln -s /etc/systemd/system/ollama.service /etc/systemd/user/ollama.service'
+                echo '    ln -s /usr/lib/systemd/system/ollama.service /etc/systemd/user/ollama.service'
+                echo '    ln -s /usr/lib/systemd/system/ollama.service /etc/systemd/system/ollama.service 
                 echo "  fi"
                 echo "}"
                 echo ""
