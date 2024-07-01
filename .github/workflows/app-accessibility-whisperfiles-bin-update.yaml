@@ -151,7 +151,7 @@ jobs:
                   echo '        echo "After=network-online.target"'
                   echo '        echo ""'
                   echo '        echo "[Service]"'
-                  echo "        echo \"ExecStart=/opt/bin/${mvfn}  --host 0.0.0.0 --port 51524 --convert\""
+                  echo "        echo \"ExecStart=/bin/bash -c '/opt/bin/${mvfn}  --host 0.0.0.0 --port 51524 --convert'\""
                   echo '        echo "User=whisperfile"'
                   echo '        echo "Group=whisperfile"'
                   echo '        echo "Restart=always"'
