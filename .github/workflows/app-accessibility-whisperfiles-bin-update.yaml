@@ -60,7 +60,7 @@ jobs:
             fi;
           done
           for model in "${!grouped[@]}"; do
-            ebuild_name="${{env.ebuild_name_prefix}}-${model}-${{env.ebuild_name_suffix}}"
+            ebuild_name="${{env.ebuild_name_prefix}}${model}${{env.ebuild_name_suffix}}"
             ebuild_dir="./${{env.ebuild_category}}/${ebuild_name}"
             echo "Processing model $model"
             mkdir -p $ebuild_dir
