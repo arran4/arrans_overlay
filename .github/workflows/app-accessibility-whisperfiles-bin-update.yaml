@@ -109,7 +109,7 @@ jobs:
                     condition="${variant}"
                   fi
                   echo "    if use $condition; then"
-                  echo "      cp \"${DISTDIR}/${mvafn}\" '$mvfn' || die 'failed to move $mvfn'"
+                  echo "      cp \"\${DISTDIR}/${mvafn}\" '$mvfn' || die 'failed to move $mvfn'"
                   echo "      chmod +x '${mvfn}' || die 'failed to chmod $mvfn'"
                   echo "    fi"
                 done
