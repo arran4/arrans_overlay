@@ -82,10 +82,10 @@ jobs:
                 echo 'SRC_URI="amd64? ( '
                 for variant in ${grouped[$key]}; do
                   if [ -z "${variant}" ]; then
-                    echo "  full? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true -> \${P}.amd64 )"'
+                    echo "  full? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true -> \${P}.amd64 )"
                     continue
                   fi
-                  echo "  $variant? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.${varaint}.llamafile?download=true -> \${P}.${variant}.amd64 )"'
+                  echo "  $variant? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.${varaint}.llamafile?download=true -> \${P}.${variant}.amd64 )"
                 done
                 echo ')"'
                 echo "LICENSE=\"${{ env.license }}\""
@@ -139,7 +139,7 @@ jobs:
                   echo "    if use $condition; then"
                   echo "      doexe \"\${WORKDIR}/${mvfn}\""
                   echo "      einfo \"${mvfn} --host 0.0.0.0 --port 51524 --convert -pc -pr -pp\""
-                  echo "      einfo \"curl 127.0.0.1:51524/inference -H "Content-Type: multipart/form-data" -F file="@<file-path>"  -F temperature="0.0"  -F temperature_inc="0.2"  -F response_format="json" ""
+                  echo '      einfo "curl 127.0.0.1:51524/inference -H \"Content-Type: multipart/form-data\" -F file=\"@<file-path>\"  -F temperature=\"0.0\"  -F temperature_inc=\"0.2\"  -F response_format=\"json\""'
                   echo "      if use systemd; then"
                   echo "      einfo \"Creating systemd service file...\""
                   echo '      {'
