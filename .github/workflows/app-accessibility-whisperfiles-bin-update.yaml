@@ -64,8 +64,9 @@ jobs:
             ebuild_dir="./${{env.ebuild_category}}/${ebuild_name}"
             echo "Processing model $model"
             mkdir -p $ebuild_dir
-            version=0-r1
-            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            version=0
+            revision=-r1
+            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}${revision}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               {
                 echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflowfile }}"
