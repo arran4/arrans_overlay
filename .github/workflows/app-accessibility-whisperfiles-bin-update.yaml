@@ -109,8 +109,8 @@ jobs:
                     condition="${variant}"
                   fi
                   echo "    if use $condition; then"
-                  echo "      mv \"$mvafn\" '$mvfn' or die 'failed to move $mvfn'"
-                  echo "      chmod +x '$mvfn' or die 'failed to chmod $mvfn'"
+                  echo "      mv \"$mvafn\" '$mvfn' || die 'failed to move $mvfn'"
+                  echo "      chmod +x '$mvfn' || die 'failed to chmod $mvfn'"
                   echo "    fi"
                 done
                 echo "}"
