@@ -62,6 +62,7 @@ jobs:
           for model in "${!grouped[@]}"; do
             ebuild_name="${{env.ebuild_name_prefix}}-${model}-${{env.ebuild_name_suffix}}"
             ebuild_dir="./${{env.ebuild_category}}/${ebuild_name}"
+            echo "Processing model $model"
             mkdir -p $ebuild_dir
             ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
@@ -85,7 +86,7 @@ jobs:
                     echo "  full? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true -> \${P}.amd64 )"
                     continue
                   fi
-                  echo "  $variant? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.${varaint}.llamafile?download=true -> \${P}.${variant}.amd64 )"
+                  echo "  $variant? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.${variant}.llamafile?download=true -> \${P}.${variant}.amd64 )"
                 done
                 echo ')"'
                 echo "LICENSE=\"${{ env.license }}\""
@@ -172,7 +173,7 @@ jobs:
                 url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true"
                 fn="${ebuild_name}.amd64"
                 if [ "${variant}" != "full" ]; then
-                  url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${varaint}.${model}.llamafile?download=true"
+                  url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.${variant}.llamafile?download=true"
                   fn="${ebuild_name}.${varaint}.amd64"
                 fi
                 wget "${url}" -O "/tmp/${fn}" --no-verbose
