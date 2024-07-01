@@ -1,0 +1,192 @@
+name: app-accessibility/whisperfiles-*-bin Update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '55 1 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-accessibility-whisperfiles-bin-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ebuild_category: app-accessibility
+  ebuild_name_prefix: whisperfile-
+  ebuild_name_suffix: -bin
+  github_owner: cjpais
+  github_repo: whisperfile
+  huggingface_owner: cjpais
+  huggingface_repo: whisperfile
+  huggingface_repo_branch: main
+  homepage: "https://github.com/cjpais/whisperfile"
+  workflowfile: "app-accessibility-whisperfiles-bin-update.yaml"
+  license: "Apache 2.0"
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          models=$(curl https://huggingface.co/api/models/cjpais/whisperfile | jq -r '.siblings.[].rfilename | capture("^whisper.(?<a>.*).llamafile$").a')
+          declare -A grouped=()
+          for model in ${models}; do 
+            mn="$(echo "$model" | cut -f 1 -d.)";
+            mv="$(echo "$model" | cut -s -f 2 -d.)"; 
+            if [[ ! -v grouped[$mn] ]]; then 
+              grouped[$mn]="${mv@Q}"; 
+            else 
+              grouped[$mn]="${grouped[$mn]} ${mv@Q}"; 
+            fi;
+          done
+          for model in "${!grouped[@]}"; do
+            ebuild_name="${{env.ebuild_name_prefix}}-${model}-${{env.ebuild_name_suffix}}"
+            ebuild_dir="./${{env.ebuild_category}}/${ebuild_name}"
+            mkdir -p $ebuild_dir
+            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+              {
+                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflowfile }}"
+                echo "EAPI=8"
+                echo "DESCRIPTION=\"Run whisper speach recognition $model LLM in a single binary executable using llamafile.\""
+                echo "HOMEPAGE=\"$homepage\""
+                echo -n 'IUSE="systemd '
+                for variant in ${grouped[$key]}; do
+                  if [ -z "${variant}" ]; do
+                    echo -n "+full ";
+                    continue
+                  done
+                  echo -n "$variant "
+                done
+                echo '"'
+                echo 'SRC_URI="amd64? ( '
+                for variant in ${grouped[$key]}; do
+                  if [ -z "${variant}" ]; do
+                    echo "  full? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true -> \${P}.amd64 )"'
+                    continue
+                  done
+                  echo "  $variant? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.${varaint}.llamafile?download=true -> \${P}.${variant}.amd64 )"'
+                done
+                echo ')"'
+                echo "LICENSE=\"${{ env.license }}\""
+                echo "SLOT=\"0\""
+                echo 'KEYWORDS="~amd64"'
+                echo 'RDEPEND=""'
+                echo 'DEPEND="${RDEPEND}"'
+                echo "S=\"\${WORKDIR}\""
+                echo ""
+                echo "src_unpack() {"
+                for variant in ${grouped[$key]}; do
+                  mvfn="whisper.${model}.llamafile"
+                  mvafn='${P}.amd64'
+                  condition=full
+                  if [ ! -z "${variant}" ]; then
+                    mvfn="whisper.${model}.${variant}.llamafile"
+                    mvafn="\${P}.\${variant}.amd64"
+                    condition="${variant}"
+                  fi
+                  echo "    if use $condition; then"
+                  echo "      mv \"$mvafn\" '$mvfn' or die 'failed to move $mvfn'"
+                  echo "      chmod +x '$mvfn' or die 'failed to chmod $mvfn'"
+                  echo "    fi"
+                done
+                echo "}"
+                echo ""
+                echo "src_install() {"
+                echo "    exeinto /opt/bin"
+                for variant in ${grouped[$key]}; do
+                  mvfn="whisper.${model}.llamafile"
+                  condition=full
+                  if [ ! -z "${variant}" ]; then
+                    mvfn="whisper.${model}.${variant}.llamafile"
+                    condition="${variant}"
+                  fi
+                  echo "    if use $condition; then"
+                  echo "      doexe \"\${WORKDIR}/${mvfn}\""
+                  echo "    fi"
+                done
+                echo "}"
+                echo ""
+                echo "pkg_postinst() {"
+                for variant in ${grouped[$key]}; do
+                  mvfn="whisper.${model}.llamafile"
+                  condition=full
+                  if [ ! -z "${variant}" ]; then
+                    mvfn="whisper.${model}.${variant}.llamafile"
+                    condition="${variant}"
+                  fi
+                  echo "    einfo \"Quick guide:\""
+                  echo "    if use $condition; then"
+                  echo "      doexe \"\${WORKDIR}/${mvfn}\""
+                  echo "      einfo \"${mvfn} --host 0.0.0.0 --port 51524 --convert -pc -pr -pp\""
+                  echo "      einfo \"curl 127.0.0.1:51524/inference -H "Content-Type: multipart/form-data" -F file="@<file-path>"  -F temperature="0.0"  -F temperature_inc="0.2"  -F response_format="json" ""
+                  echo "      if use systemd; then"
+                  echo "      einfo \"Creating systemd service file...\""
+                  echo '      {'
+                  echo '        echo "[Unit]"'
+                  echo "        echo \"Description=Whisperfile ${model} ${condition}\""
+                  echo '        echo "After=network-online.target"'
+                  echo '        echo ""'
+                  echo '        echo "[Service]"'
+                  echo "        echo \"ExecStart=/opt/bin/${mvfn}  --host 0.0.0.0 --port 51524 --convert\""
+                  echo '        echo "User=whisperfile"'
+                  echo '        echo "Group=whisperfile"'
+                  echo '        echo "Restart=always"'
+                  echo '        echo "RestartSec=3"'
+                  echo '        echo ""'
+                  echo '        echo "[Install]"'
+                  echo '        echo "WantedBy=default.target"'
+                  echo "      } > /etc/systemd/system/${mvfn}.service"
+                  echo "      einfo \"Service file created at /etc/systemd/system/${mvfn}.service\""
+                  echo "      einfo \"Making service user-startable...\""
+                  echo '      mkdir -p /etc/systemd/user'
+                  echo "      ln -s /etc/systemd/system/${mvfn}.service /etc/systemd/user/${mvfn}.service"
+                  echo "    fi"
+                  echo "  fi"
+                done
+                echo "}"
+                echo ""
+              } > $ebuild_file
+              # Generate the manifest for the new ebuild
+              for variant in ${grouped[$key]}; do
+                url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${model}.llamafile?download=true"
+                fn="${ebuild_name}.amd64"
+                if [ ! -z "${variant}" ]; do
+                  url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/whisper.${varaint}.${model}.llamafile?download=true"
+                  fn="${ebuild_name}.${varaint}.amd64"
+                done
+                wget "${url}" -O "/tmp/${fn}"
+                echo "DIST ${fn} $(stat -c %s "/tmp/${fn}") BLAKE2B $(b2sum "/tmp/${fn}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${fn}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
+                rm "/tmp/${fn}"
+              done
+            fi
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          git add "./${ebuild_dir}"
+          git commit -m "Add ebuilds for new ${ebuild_name} releases" && 
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.conclusion == 'success'
