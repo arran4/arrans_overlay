@@ -131,6 +131,7 @@ jobs:
                 echo "}"
                 echo ""
                 echo "pkg_postinst() {"
+                  echo "    einfo \"Quick guide:\""
                 for variant in ${grouped[$model]}; do
                   mvfn="whisper.${model}.llamafile"
                   condition=full
@@ -138,7 +139,6 @@ jobs:
                     mvfn="whisper.${model}.${variant}.llamafile"
                     condition="${variant}"
                   fi
-                  echo "    einfo \"Quick guide:\""
                   echo "    if use $condition; then"
                   echo "      doexe \"\${WORKDIR}/${mvfn}\""
                   echo "      einfo \"${mvfn} --host 0.0.0.0 --port 51524 --convert -pc -pr -pp\""
