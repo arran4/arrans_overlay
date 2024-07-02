@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/dev-ml-llm-compiler-13b-ftd-llamafile-update.yaml'
+      - '.github/workflows/dev-ml-mozilla-llm-compiler-llamafile-bin-update'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -23,7 +23,7 @@ env:
   huggingface_repo: llm-compiler-13b-ftd-llamafile
   huggingface_repo_branch: main
   homepage: "https://huggingface.co/Mozilla/llm-compiler-13b-ftd-llamafile"
-  workflowfile: "dev-ml-llm-compiler-13b-ftd-llamafile-update.yaml"
+  workflowfile: "dev-ml-mozilla-llm-compiler-llamafile-bin-update.yaml"
   license: "Apache 2.0"
   description: "LLM Compiler $model is a large language model that's been trained to know how to read/write AT&T style assembly, LLVM IR, and C code. It's able to replicate the functionality of the clang compiler."
 
