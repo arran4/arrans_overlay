@@ -18,7 +18,7 @@ concurrency:
 env:
   ebuild_category: dev-ml
   ebuild_name_prefix: ""
-  ebuild_name_suffix: "llamafile-bin"
+  ebuild_name_suffix: "-llamafile-bin"
   huggingface_owner: Mozilla
   huggingface_repo: llm-compiler-13b-ftd-llamafile
   huggingface_repo_branch: main
@@ -83,7 +83,7 @@ jobs:
                     echo -n "+full ";
                     continue
                   fi
-                  echo -n "$variant "
+                  echo -n "${variant@L} "
                 done
                 echo '"'
                 echo 'SRC_URI="amd64? ( '
@@ -92,7 +92,7 @@ jobs:
                     echo "  full? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/${model}.llamafile?download=true -> \${P}.amd64 )"
                     continue
                   fi
-                  echo "  $variant? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/${model}.${variant}.llamafile?download=true -> \${P}.${variant}.amd64 )"
+                  echo "  ${variant@L}? ( https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/${model}.${variant}.llamafile?download=true -> \${P}.${variant}.amd64 )"
                 done
                 echo ')"'
                 echo "LICENSE=\"${{ env.license }}\""
@@ -110,7 +110,7 @@ jobs:
                   if [ "${variant}" != "full" ]; then
                     mvfn="${model}-${variant}.llamafile"
                     mvafn="\${P}.\${variant}.amd64"
-                    condition="${variant}"
+                    condition="${variant@L}"
                   fi
                   echo "    if use $condition; then"
                   echo "      cp \"\${DISTDIR}/${mvafn}\" '$mvfn' || die 'failed to move $mvfn'"
@@ -126,7 +126,7 @@ jobs:
                   condition=full
                   if [ "${variant}" != "full" ]; then
                     mvfn="${model}-${variant}.llamafile"
-                    condition="${variant}"
+                    condition="${variant@L}"
                   fi
                   echo "    if use $condition; then"
                   echo "      doexe \"\${WORKDIR}/${mvfn}\""
@@ -141,7 +141,7 @@ jobs:
                   condition=full
                   if [ "${variant}" != "full" ]; then
                     mvfn="${model}-${variant}.llamafile"
-                    condition="${variant}"
+                    condition="${variant@L}"
                   fi
                   echo "    if use $condition; then"
                   echo "      doexe \"\${WORKDIR}/${mvfn}\""
