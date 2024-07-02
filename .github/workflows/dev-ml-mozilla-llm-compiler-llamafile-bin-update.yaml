@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/dev-ml-mozilla-llm-compiler-llamafile-bin-update'
+      - '.github/workflows/dev-ml-mozilla-llm-compiler-llamafile-bin-update.yaml'
 
 concurrency:
   group: ci-${{ github.ref }}
