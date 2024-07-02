@@ -109,7 +109,7 @@ jobs:
                   condition=full
                   if [ "${variant}" != "full" ]; then
                     mvfn="${model}-${variant}.llamafile"
-                    mvafn="\${P}.\${variant}.amd64"
+                    mvafn="\${P}.${variant}.amd64"
                     condition="${variant@L}"
                   fi
                   echo "    if use $condition; then"
