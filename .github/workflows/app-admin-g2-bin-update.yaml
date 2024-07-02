@@ -72,11 +72,10 @@ jobs:
                 echo "  amd64? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_linux_amd64.tar.gz -> \${P}.amd64.tar.gz )"
                 echo "  arm? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_linux_armv7.tar.gz -> \${P}.arm.tar.gz )"
                 echo "  arm64? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_linux_arm64.tar.gz -> \${P}.arm64.tar.gz )"
-                echo "  x86? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_linux_i386.tar.gz -> \${P}.x86.tar.gz )"
                 echo '" '
                 echo "LICENSE=\"Unknown\""
                 echo "SLOT=\"0\""
-                echo 'KEYWORDS="~amd64 ~arm ~arm64 ~x86"'
+                echo 'KEYWORDS="~amd64 ~arm ~arm64"'
                 echo 'RDEPEND=""'
                 echo 'DEPEND="${RDEPEND}"'
                 echo "S=\"\${WORKDIR}\""
@@ -92,8 +91,7 @@ jobs:
               wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux_amd64.tar.gz -O /tmp/${ebuild_name}-${version}.amd64.tar.gz
               wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux_armv7.tar.gz -O /tmp/${ebuild_name}-${version}.arm.tar.gz
               wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux_arm64.tar.gz -O /tmp/${ebuild_name}-${version}.arm64.tar.gz
-              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux_i386.tar.gz -O /tmp/${ebuild_name}-${version}.x86.tar.gz
-              for e in ${ebuild_name}-${version}.amd64.tar.gz ${ebuild_name}-${version}.arm.tar.gz ${ebuild_name}-${version}.arm64.tar.gz ${ebuild_name}-${version}.x86.tar.gz; do
+              for e in ${ebuild_name}-${version}.amd64.tar.gz ${ebuild_name}-${version}.arm.tar.gz ${ebuild_name}-${version}.arm64.tar.gz; do
                 echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
                 rm "/tmp/${e}"
               done
