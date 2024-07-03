@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/dev-ml-moondream2-llamafile-update.yaml'
+      - '.github/workflows/dev-ml-moondream2-llamafile-bin-update.yaml'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -23,7 +23,7 @@ env:
   huggingface_repo: moondream2-llamafile
   huggingface_repo_branch: main
   homepage: "https://huggingface.co/cjpais/moondream2-llamafile"
-  workflowfile: "dev-ml-moondream2-llamafile-update.yaml"
+  workflowfile: "dev-ml-moondream2-llamafile-bin-update.yaml"
   license: "Apache 2.0"
   description: "Run $model, a small vision language model designed to run efficiently on edge devices, in a single binary executable using llamafile."
 
