@@ -51,7 +51,7 @@ jobs:
           declare -A grouped=()
           for model in ${models}; do 
             mn="$(echo "$model" | cut -f 1 -d-)";
-            mv="$(echo "$model" | cut -s -f 2 -d-)"; 
+            mv="$(echo "$model" | cut -s -f 2- -d-)"; 
             if [[ ! -v grouped[$mn] ]]; then 
               grouped[$mn]="${mv:-full}"; 
             else 
