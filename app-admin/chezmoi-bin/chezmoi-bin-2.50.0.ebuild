@@ -10,7 +10,7 @@ SRC_URI="
   arm64? ( https://github.com/twpayne/chezmoi/releases/download/v${PV}/chezmoi_${PV}_linux_arm64.tar.gz -> ${P}.arm64.tar.gz )
   x86? ( https://github.com/twpayne/chezmoi/releases/download/v${PV}/chezmoi_${PV}_linux_i386.tar.gz -> ${P}.x86.tar.gz )
 " 
-LICENSE="Unknown"
+LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~arm ~arm64 ~x86"
 RDEPEND=""
