@@ -8,7 +8,7 @@ inherit font
 DESCRIPTION=" A legible monospace font... the very typeface you’ve been trained to recognize since childhood."
 HOMEPAGE="https://github.com/dtinth/comic-mono-font/"
 SRC_URI="
-	https://github.com/dtinth/comic-mono-font/archive/refs/heads/master.zip -> ${PV}.zip
+	https://github.com/dtinth/comic-mono-font/archive/refs/heads/master.zip -> ${P}.zip
 "
 S="${DISTDIR}/comic-mono-font-master"
 
