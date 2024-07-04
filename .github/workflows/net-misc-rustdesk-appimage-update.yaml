@@ -49,7 +49,7 @@ jobs:
           tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
           for tag in $tags; do
             version="${tag}"
-            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
               echo "$tag / $version doesn't match regexp";
               continue; 
             fi

@@ -56,7 +56,7 @@ jobs:
               echo "$version == $tag so there is no V removed skipping"
               continue
             fi
-            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((-|_)(alpha|beta|rc|p)[0-9]*)*$'; then
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
               echo "tag / $version doesn't match regexp";
               continue; 
             fi
