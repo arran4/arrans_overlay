@@ -10,7 +10,7 @@ HOMEPAGE="https://github.com/dtinth/comic-mono-font/"
 SRC_URI="
 	https://github.com/dtinth/comic-mono-font/archive/refs/heads/master.zip -> ${P}.zip
 "
-S="${DISTDIR}/comic-mono-font-master"
+S="${WORKDIR}/comic-mono-font-master"
 
 LICENSE="MIT License"
 SLOT="0"
