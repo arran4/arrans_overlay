@@ -41,7 +41,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils
-          url="$(curl https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
           echo "$url"
           wget "${url}" -O /tmp/g2.deb
           sudo dpkg -i /tmp/g2.deb
@@ -52,7 +52,7 @@ jobs:
         run: |
           ebuild_dir="./${ebuild_category}/${ebuild_name}"
           mkdir -p $ebuild_dir
-          tags=$(curl -s https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
