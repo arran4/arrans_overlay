@@ -41,6 +41,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils
+          url="$(curl https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          echo "$url"
+          wget "${url}" -O /tmp/g2.deb
+          sudo dpkg -i /tmp/g2.deb
+          rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
@@ -92,17 +97,13 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_Linux-64bit.tar.gz -O /tmp/${ebuild_name}-${version}.amd64.tar.gz
-              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux-arm.tar.gz -O /tmp/${ebuild_name}-${version}.arm.tar.gz
-              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux-arm64.tar.gz -O /tmp/${ebuild_name}-${version}.arm64.tar.gz
-              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_Linux-64bit.tar.gz -O /tmp/${ebuild_name}_extended-${version}.amd64.tar.gz
-              #wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm.tar.gz -O /tmp/${ebuild_name}_extended-${version}.arm.tar.gz
-              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm64.tar.gz -O /tmp/${ebuild_name}_extended-${version}.arm64.tar.gz
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_Linux-64bit.tar.gz" "/tmp/${ebuild_name}-${version}.amd64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux-arm.tar.gz" "/tmp/${ebuild_name}-${version}.arm.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux-arm64.tar.gz" "/tmp/${ebuild_name}-${version}.arm64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_Linux-64bit.tar.gz" "/tmp/${ebuild_name}_extended-${version}.amd64.tar.gz" "${ebuild_dir}/Manifest"
+              #g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm.tar.gz" "/tmp/${ebuild_name}_extended-${version}.arm.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm64.tar.gz" "/tmp/${ebuild_name}_extended-${version}.arm64.tar.gz" "${ebuild_dir}/Manifest"
               # Doesn't exist??  ${ebuild_name}_extended-${version}.arm.tar.gz
-              for e in ${ebuild_name}-${version}.amd64.tar.gz ${ebuild_name}-${version}.arm.tar.gz ${ebuild_name}-${version}.arm64.tar.gz ${ebuild_name}_extended-${version}.amd64.tar.gz ${ebuild_name}_extended-${version}.arm64.tar.gz; do
-                echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
-                rm "/tmp/${e}"
-              done
             fi
             break
           done

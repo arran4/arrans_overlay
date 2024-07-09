@@ -39,6 +39,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils
+          url="$(curl https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          echo "$url"
+          wget "${url}" -O /tmp/g2.deb
+          sudo dpkg -i /tmp/g2.deb
+          rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
@@ -106,15 +111,11 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /tmp/${epn}-${version}.amd64
-              wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-i686.AppImage -O /tmp/${epn}-${version}.x86
-              wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-armhf.AppImage -O /tmp/${epn}-${version}.arm
-              wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage -O /tmp/${epn}-${version}.arm64
+              g2 manifest upsert-from-url "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" "${epn}-${version}.amd64" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-i686.AppImage" "${epn}-${version}.x86" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-armhf.AppImage" "${epn}-${version}.arm" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage" "${epn}-${version}.arm64" "${ebuild_dir}/Manifest"
               
-              for e in ${epn}-${version}.amd64 ${epn}-${version}.x86 ${epn}-${version}.arm ${epn}-${version}.arm64; do
-                echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
-                rm "/tmp/${e}"
-              done
             fi
             break
           done

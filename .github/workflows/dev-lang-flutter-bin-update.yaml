@@ -37,6 +37,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils
+          url="$(curl https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          echo "$url"
+          wget "${url}" -O /tmp/g2.deb
+          sudo dpkg -i /tmp/g2.deb
+          rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
@@ -53,17 +58,13 @@ jobs:
             ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
 
-              wget "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz" -O "/tmp/${ebuild_name}-${version}.amd64.tar.xz"
+              #wget "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz" -O "/tmp/${ebuild_name}-${version}.amd64.tar.xz"
               #engineVersion=$(tar -xJf "/tmp/${ebuild_name}-${version}.amd64.tar.xz" flutter/bin/internal/engine.version -O)
               #dartSdkUrl="https://storage.googleapis.com/flutter_infra_release/flutter/$engineVersion/dart-sdk-linux-x64.zip"
               # wget "$dartSdkUrl" -O "/tmp/${ebuild_name}-dartsdk-${version}.amd64.tar.xz"
           
-              # for e in "${ebuild_name}-${version}.amd64.tar.xz" "${ebuild_name}-dartsdk-${version}.amd64.tar.xz"; do
-              for e in "${ebuild_name}-${version}.amd64.tar.xz"; do
-                echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
-                rm "/tmp/${e}"
-              done
-
+              g2 manifest upsert-from-url "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz" "/tmp/${ebuild_name}-${version}.amd64.tar.xz" "${ebuild_dir}/Manifest"
+          
               # Create ebuild script
               {
                 echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/dev-lang-flutter-bin-update.yaml "

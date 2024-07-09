@@ -39,6 +39,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils
+          url="$(curl https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          echo "$url"
+          wget "${url}" -O /tmp/g2.deb
+          sudo dpkg -i /tmp/g2.deb
+          rm /tmp/g2.deb
 
       - name: Check for new releases
         id: process_releases
@@ -107,11 +112,7 @@ jobs:
                 echo ""
               } > $ebuild_file
 
-              wget $appimage_url -O "/tmp/${epn}-${version}"
-              for e in "${epn}-${version}"; do
-                echo "DIST ${e} $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" >> $ebuild_dir/Manifest
-                rm "/tmp/${e}"
-              done
+              g2 manifest upsert-from-url "${appimage_url}" "${epn}-${version}" "${ebuild_dir}/Manifest"
             fi
             break
           done

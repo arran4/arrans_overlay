@@ -40,6 +40,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils unzip
+          url="$(curl https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          echo "$url"
+          wget "${url}" -O /tmp/g2.deb
+          sudo dpkg -i /tmp/g2.deb
+          rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
@@ -111,12 +116,7 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/arran4/lemmy_notify/releases/download/${tag}/lemmy_notify-linux-x86_64.AppImage -O /tmp/${{ env.epn }}-${version}.amd64
-              
-              for e in ${{ env.epn }}-${version}.amd64; do
-                echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
-                rm "/tmp/${e}"
-              done
+              g2 manifest upsert-from-url "https://github.com/arran4/lemmy_notify/releases/download/${tag}/lemmy_notify-linux-x86_64.AppImage" "${{ env.epn }}-${version}.amd64" "${ebuild_dir}/Manifest"
             fi
             break
           done

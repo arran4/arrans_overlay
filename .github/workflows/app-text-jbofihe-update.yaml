@@ -41,6 +41,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils
+          url="$(curl https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          echo "$url"
+          wget "${url}" -O /tmp/g2.deb
+          sudo dpkg -i /tmp/g2.deb
+          rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
@@ -90,9 +95,7 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${version}.tar.gz -O /tmp/${ebuild_name}-${version}.tar.gz
-              echo "DIST ${ebuild_name}-${version}.tar.gz $(stat -c %s "/tmp/${ebuild_name}-${version}.tar.gz") BLAKE2B $(b2sum "/tmp/${ebuild_name}-${version}.tar.gz" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${ebuild_name}-${version}.tar.gz" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
-              rm "/tmp/${ebuild_name}-${version}.tar.gz"
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${version}.tar.gz" "/tmp/${ebuild_name}-${version}.tar.gz" "${ebuild_dir}/Manifest"
             fi
             break
           done

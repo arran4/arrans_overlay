@@ -43,6 +43,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils
+          url="$(curl https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          echo "$url"
+          wget "${url}" -O /tmp/g2.deb
+          sudo dpkg -i /tmp/g2.deb
+          rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
@@ -180,9 +185,7 @@ jobs:
                   url="https://huggingface.co/${{env.huggingface_owner}}/${{env.huggingface_repo}}/resolve/${{env.huggingface_repo_branch}}/${model}-${variant}.llamafile?download=true"
                   fn="${ebuild_name}-${version}.${variant}.amd64"
                 fi
-                wget "${url}" -O "/tmp/${fn}" --no-verbose
-                echo "DIST ${fn} $(stat -c %s "/tmp/${fn}") BLAKE2B $(b2sum "/tmp/${fn}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${fn}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
-                rm "/tmp/${fn}"
+                g2 manifest upsert-from-url "${url}" "${fn}" "${ebuild_dir}/Manifest"
               done
             fi
           done

@@ -39,6 +39,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils
+          url="$(curl https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          echo "$url"
+          wget "${url}" -O /tmp/g2.deb
+          sudo dpkg -i /tmp/g2.deb
+          rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
@@ -108,13 +113,9 @@ jobs:
               } > "$ebuild_file"
 
               # Generate the manifest for the new ebuild
-              wget "https://github.com/${ghrp}/releases/download/${tag}/rustdesk-${version}-x86_64.AppImage" -O "/tmp/${epn}-${version}.amd64"
-              wget "https://github.com/${ghrp}/releases/download/${tag}/rustdesk-${version}-aarch64.AppImage" -O "/tmp/${epn}-${version}.arm64"
+              g2 manifest upsert-from-url "https://github.com/${ghrp}/releases/download/${tag}/rustdesk-${version}-x86_64.AppImage" "/tmp/${epn}-${version}.amd64" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${ghrp}/releases/download/${tag}/rustdesk-${version}-aarch64.AppImage" "/tmp/${epn}-${version}.arm64" "${ebuild_dir}/Manifest"
               
-              for e in "${epn}-${version}.amd64" "${epn}-${version}.arm64"; do
-                echo "DIST $e $(stat -c %s "/tmp/${e}") BLAKE2B $(b2sum "/tmp/${e}" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${e}" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
-                rm "/tmp/${e}"
-              done
             fi
             break
           done

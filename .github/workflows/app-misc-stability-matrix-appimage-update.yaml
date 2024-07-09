@@ -39,6 +39,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils unzip
+          url="$(curl https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          echo "$url"
+          wget "${url}" -O /tmp/g2.deb
+          sudo dpkg -i /tmp/g2.deb
+          rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
@@ -105,10 +110,7 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              wget https://github.com/LykosAI/StabilityMatrix/releases/download/${tag}/StabilityMatrix-linux-x64.zip -O /tmp/${epn}-${version}.zip
-              
-              echo "DIST ${epn}-${version}.zip $(stat -c %s "/tmp/${epn}-${version}.zip") BLAKE2B $(b2sum "/tmp/${epn}-${version}.zip" | cut -d' ' -f1) SHA512 $(sha512sum "/tmp/${epn}-${version}.zip" | cut -d' ' -f1)" | tee -a "${ebuild_dir}/Manifest"
-              rm "/tmp/${epn}-${version}.zip"
+              g2 manifest upsert-from-url "https://github.com/LykosAI/StabilityMatrix/releases/download/${tag}/StabilityMatrix-linux-x64.zip" "${epn}-${version}.zip" "${ebuild_dir}/Manifest"
             fi
             break
           done
