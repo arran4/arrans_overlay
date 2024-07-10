@@ -112,16 +112,16 @@ jobs:
 
               # Generate the manifest for the new ebuild
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-aarch64.AppImage" "${epn}-${version}.appimaged.arm64" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-armhf.AppImage" "${epn}-${version}.appimaged.arm"${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-i686.AppImage" "${epn}-${version}.appimaged.x86"${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-armhf.AppImage" "${epn}-${version}.appimaged.arm" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-i686.AppImage" "${epn}-${version}.appimaged.x86" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-x86_64.AppImage " "${epn}-${version}.appimaged.amd64" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-aarch64.AppImage" "${epn}-${version}.appimagetool.arm64" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-armhf.AppImage" "${epn}-${version}.appimagetool.arm"${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-i686.AppImage" "${epn}-${version}.appimagetool.x86"${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-armhf.AppImage" "${epn}-${version}.appimagetool.arm" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-i686.AppImage" "${epn}-${version}.appimagetool.x86" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-x86_64.AppImage " "${epn}-${version}.appimagetool.amd64" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-aarch64.AppImage" "${epn}-${version}.mkappimage.arm64" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-armhf.AppImage" "${epn}-${version}.mkappimage.arm"${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-i686.AppImage" "${epn}-${version}.mkappimage.x86"${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-armhf.AppImage" "${epn}-${version}.mkappimage.arm" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-i686.AppImage" "${epn}-${version}.mkappimage.x86" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-x86_64.AppImage " "${epn}-${version}.mkappimage.amd64" "${ebuild_dir}/Manifest"
               
             fi
