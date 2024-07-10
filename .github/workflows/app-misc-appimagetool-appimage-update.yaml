@@ -50,7 +50,7 @@ jobs:
         run: |
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
-          run_numbers=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/AppImage/AppImageKit/actions/runs | jq -r '.workflow_runs[].run_number')
+          run_numbers=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/actions/runs | jq -r '.workflow_runs[].run_number')
           for run_number in ${run_numbers}; do
             echo "Processing run number: $run_number"
             version="0.0.${run_number}"
@@ -74,10 +74,10 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="  '
-                echo '  amd64? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -> $P.amd64 )'
-                echo '  x86? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-i686.AppImage -> $P.x86 )'
-                echo '  arm? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-armhf.AppImage -> $P.arm )'
-                echo '  arm64? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage -> $P.arm64 )'
+                echo '  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-x86_64.AppImage -> $P.amd64 )'
+                echo '  x86? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-i686.AppImage -> $P.x86 )'
+                echo '  arm? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-armhf.AppImage -> $P.arm )'
+                echo '  arm64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-aarch64.AppImage -> $P.arm64 )'
                 echo '" '
                 echo ''
                 echo "src_unpack() {"
@@ -111,10 +111,10 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              g2 manifest upsert-from-url "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" "${epn}-${version}.amd64" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-i686.AppImage" "${epn}-${version}.x86" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-armhf.AppImage" "${epn}-${version}.arm" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage" "${epn}-${version}.arm64" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-x86_64.AppImage" "${epn}-${version}.amd64" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-i686.AppImage" "${epn}-${version}.x86" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-armhf.AppImage" "${epn}-${version}.arm" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-aarch64.AppImage" "${epn}-${version}.arm64" "${ebuild_dir}/Manifest"
               
             fi
             break
