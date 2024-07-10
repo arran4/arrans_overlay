@@ -1,0 +1,138 @@
+name: app-misc/go-appimage-appimage update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '35 2 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-misc-go-appimage-appimage-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ecn: app-misc
+  epn: go-appimage-appimage
+  description: " Go implementation of AppImage tools "
+  homepage: "https://github.com/probonopd/go-appimage"
+  github_owner: probonopd
+  github_repo: go-appimage
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+          url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          echo "$url"
+          wget "${url}" -O /tmp/g2.deb
+          sudo dpkg -i /tmp/g2.deb
+          rm /tmp/g2.deb
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${ecn}/${epn}"
+          mkdir -p $ebuild_dir
+          run_numbers=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/actions/runs | jq -r '.workflow_runs[].run_number')
+          for run_number in ${run_numbers}; do
+            echo "Processing run number: $run_number"
+            version="0.0.${run_number}"
+            ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+              
+              # Create ebuild script
+              {
+                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-go-appimage-appimage-update.yaml"
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"$description\""
+                echo "HOMEPAGE=\"$homepage\""
+                echo 'LICENSE="MIT"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="~amd64 ~x86 ~arm ~arm64"'
+                echo 'DEPEND=""'
+                echo 'RDEPEND=""'
+                echo 'S="${WORKDIR}"'
+                echo 'RESTRICT="strip"'
+                echo ''
+                echo "inherit xdg-utils"
+                echo ''
+                echo 'SRC_URI="  '
+                echo '  arm64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-aarch64.AppImage -> $P.appimaged.arm64 )'
+                echo '  arm? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-armhf.AppImage -> $P.appimaged.arm )'
+                echo '  x86? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-i686.AppImage -> $P.appimaged.x86 )'
+                echo '  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-x86_64.AppImage  -> $P.appimaged.amd64 )'
+                echo '  arm64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-aarch64.AppImage -> $P.appimagetool.arm64 )'
+                echo '  arm? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-armhf.AppImage -> $P.appimagetool.arm )'
+                echo '  x86? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-i686.AppImage -> $P.appimagetool.x86 )'
+                echo '  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-x86_64.AppImage  -> $P.appimagetool.amd64 )'
+                echo '  arm64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-aarch64.AppImage -> $P.mkappimage.arm64 )'
+                echo '  arm? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-armhf.AppImage -> $P.mkappimage.arm )'
+                echo '  x86? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-i686.AppImage -> $P.mkappimage.x86 )'
+                echo '  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-x86_64.AppImage  -> $P.mkappimage.amd64 )'
+                echo '" '
+                echo ''
+                echo "src_unpack() {"
+                echo "  for oe in \${A}; do"
+                echo '    e="$(echo "$oe" | cut -d. -f 2)"'
+                echo '    efn="${e}.AppImage"'
+                echo "    cp \"\${DISTDIR}/\${oe}\" \"\${efn}\"  || die \"Can't copy archive file\""
+                echo "    chmod a+x \"\${efn}\"  || die \"Can't chmod archive file\""
+                echo '  done'
+                echo "}"
+                echo ""
+                echo "src_prepare() {"
+                echo "  eapply_user"
+                echo "}"
+                echo ""
+                echo 'src_install() {'
+                echo '  exeinto /opt/bin'
+                echo '  doexe "appimaged.AppImage"'
+                echo '  doexe "appimagetool.AppImage"'
+                echo '  doexe "mkappimage.AppImage"'
+                echo "}"
+                echo ""
+              } > $ebuild_file
+
+              # Generate the manifest for the new ebuild
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-aarch64.AppImage" "${epn}-${version}.appimaged.arm64" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-armhf.AppImage" "${epn}-${version}.appimaged.arm"${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-i686.AppImage" "${epn}-${version}.appimaged.x86"${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimaged-838-x86_64.AppImage " "${epn}-${version}.appimaged.amd64" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-aarch64.AppImage" "${epn}-${version}.appimagetool.arm64" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-armhf.AppImage" "${epn}-${version}.appimagetool.arm"${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-i686.AppImage" "${epn}-${version}.appimagetool.x86"${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/appimagetool-838-x86_64.AppImage " "${epn}-${version}.appimagetool.amd64" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-aarch64.AppImage" "${epn}-${version}.mkappimage.arm64" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-armhf.AppImage" "${epn}-${version}.mkappimage.arm"${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-i686.AppImage" "${epn}-${version}.mkappimage.x86"${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/continuous/mkappimage-838-x86_64.AppImage " "${epn}-${version}.mkappimage.amd64" "${ebuild_dir}/Manifest"
+              
+            fi
+            break
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${ecn}/${epn}"
+          git add ./${ebuild_dir}
+          git commit -m "Add ebuilds for new ${epn} releases" && 
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.conclusion == 'success'
