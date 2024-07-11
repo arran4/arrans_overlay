@@ -27,9 +27,9 @@ src_unpack() {
 
 src_install() {
   if use amd64; then
-    cp "${DISTDIR}/${P}.amd64" "${D}/ollama"
+    mv "${DISTDIR}/${P}.amd64" "${D}/ollama"
   elif use arm64; then
-    cp "${DISTDIR}/${P}.arm64" "${D}/ollama"
+    mv "${DISTDIR}/${P}.arm64" "${D}/ollama"
   fi
   exeinto /opt/Ollama
   doexe "${D}/ollama" || die "Failed to install binary"

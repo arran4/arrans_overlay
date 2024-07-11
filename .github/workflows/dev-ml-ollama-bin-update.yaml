@@ -93,9 +93,9 @@ jobs:
                 echo ""
                 echo "src_install() {"
                 echo '  if use amd64; then'
-                echo '    cp "${DISTDIR}/${P}.amd64" "${WORKDIR}/ollama"'
+                echo '    mv "${DISTDIR}/${P}.amd64" "${WORKDIR}/ollama"'
                 echo '  elif use arm64; then'
-                echo '    cp "${DISTDIR}/${P}.arm64" "${WORKDIR}/ollama"'
+                echo '    mv "${DISTDIR}/${P}.arm64" "${WORKDIR}/ollama"'
                 echo '  fi'
                 echo '  exeinto /opt/Ollama'
                 echo '  doexe "${WORKDIR}/ollama" || die "Failed to install binary"'
