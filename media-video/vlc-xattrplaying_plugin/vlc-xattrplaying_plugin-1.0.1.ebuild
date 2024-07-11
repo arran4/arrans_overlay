@@ -31,7 +31,6 @@ src_install() {
 
 	local vlc_plugin_dir="/usr/lib64/vlc/plugins/misc"
 	dodir "${vlc_plugin_dir}"
-	cp "${S}/lib/libxattrplaying_plugin.so" "${WORKDIR}/${vlc_plugin_dir}"
-	doins "${WORKDIR}/${vlc_plugin_dir}/libxattrplaying_plugin.so" || die "Failed to install plugin"
+	doins "${S}/lib/libxattrplaying_plugin.so" || die "Failed to install plugin"
 }
 
