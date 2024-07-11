@@ -28,9 +28,7 @@ src_configure() {
 
 src_install() {
 	# TODO give the cmake an install: cmake_src_install
-
-	local vlc_plugin_dir="/usr/lib64/vlc/plugins/misc"
-	dodir "${vlc_plugin_dir}"
+	insinto "/usr/lib64/vlc/plugins/misc"
 	doins "${S}/lib/libxattrplaying_plugin.so" || die "Failed to install plugin"
 }
 
