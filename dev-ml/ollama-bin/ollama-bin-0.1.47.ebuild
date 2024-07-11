@@ -26,14 +26,12 @@ src_unpack() {
 }
 
 src_install() {
-  if use amd64; then
-    mv "${DISTDIR}/${P}.amd64" "${D}/ollama"
-  elif use arm64; then
-    mv "${DISTDIR}/${P}.arm64" "${D}/ollama"
-  fi
   exeinto /opt/Ollama
-  doexe "${D}/ollama" || die "Failed to install binary"
-  fperms +x /opt/Ollama/ollama
+  if use amd64; then
+    newexe "${DISTDIR}/${P}.amd64" "${D}/ollama" || die "Failed to install binary"
+  elif use arm64; then
+    newexe "${DISTDIR}/${P}.arm64" "${D}/ollama" || die "Failed to install binary"
+  fi
   dosym /opt/Ollama/ollama /opt/bin/ollama
 }
 
