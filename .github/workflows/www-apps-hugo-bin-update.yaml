@@ -97,12 +97,12 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_Linux-64bit.tar.gz" "/tmp/${ebuild_name}-${version}.amd64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux-arm.tar.gz" "/tmp/${ebuild_name}-${version}.arm.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux-arm64.tar.gz" "/tmp/${ebuild_name}-${version}.arm64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_Linux-64bit.tar.gz" "/tmp/${ebuild_name}_extended-${version}.amd64.tar.gz" "${ebuild_dir}/Manifest"
-              #g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm.tar.gz" "/tmp/${ebuild_name}_extended-${version}.arm.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm64.tar.gz" "/tmp/${ebuild_name}_extended-${version}.arm64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_Linux-64bit.tar.gz" "${ebuild_name}-${version}.amd64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux-arm.tar.gz" "${ebuild_name}-${version}.arm.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux-arm64.tar.gz" "${ebuild_name}-${version}.arm64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_Linux-64bit.tar.gz" "${ebuild_name}_extended-${version}.amd64.tar.gz" "${ebuild_dir}/Manifest"
+              #g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm.tar.gz" "${ebuild_name}_extended-${version}.arm.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm64.tar.gz" "${ebuild_name}_extended-${version}.arm64.tar.gz" "${ebuild_dir}/Manifest"
               # Doesn't exist??  ${ebuild_name}_extended-${version}.arm.tar.gz
             fi
             break

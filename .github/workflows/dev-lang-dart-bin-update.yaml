@@ -87,11 +87,11 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-x64-release.zip" "/tmp/${ebuild_name}-${version}.amd64.zip" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-ia32-release.zip" "/tmp/${ebuild_name}-${version}.x86.zip" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-arm-release.zip" "/tmp/${ebuild_name}-${version}.arm.zip" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-arm64-release.zip" "/tmp/${ebuild_name}-${version}.arm64.zip" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-riscv64-release.zip" "/tmp/${ebuild_name}-${version}.riscv.zip" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-x64-release.zip" "${ebuild_name}-${version}.amd64.zip" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-ia32-release.zip" "${ebuild_name}-${version}.x86.zip" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-arm-release.zip" "${ebuild_name}-${version}.arm.zip" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-arm64-release.zip" "${ebuild_name}-${version}.arm64.zip" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-riscv64-release.zip" "${ebuild_name}-${version}.riscv.zip" "${ebuild_dir}/Manifest"
 
             fi
             break

@@ -90,7 +90,7 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/${tag}.tar.gz" "/tmp/${ebuild_name}-${version}.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/${tag}.tar.gz" "${ebuild_name}-${version}.tar.gz" "${ebuild_dir}/Manifest"
             fi
             break
           done

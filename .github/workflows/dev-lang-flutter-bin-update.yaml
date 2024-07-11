@@ -63,7 +63,7 @@ jobs:
               #dartSdkUrl="https://storage.googleapis.com/flutter_infra_release/flutter/$engineVersion/dart-sdk-linux-x64.zip"
               # wget "$dartSdkUrl" -O "/tmp/${ebuild_name}-dartsdk-${version}.amd64.tar.xz"
           
-              g2 manifest upsert-from-url "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz" "/tmp/${ebuild_name}-${version}.amd64.tar.xz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz" "${ebuild_name}-${version}.amd64.tar.xz" "${ebuild_dir}/Manifest"
           
               # Create ebuild script
               {
