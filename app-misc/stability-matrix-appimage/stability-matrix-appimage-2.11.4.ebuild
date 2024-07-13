@@ -16,7 +16,7 @@ SRC_URI="https://github.com/LykosAI/StabilityMatrix/releases/download/v${PV}/Sta
 
 src_unpack() {
   unzip "${DISTDIR}/${A}" -d ${WORKDIR} || die "Can't unzip archive file"
-  chmox a+x ./StabilityMatrix.AppImage || die "Can't chmod +x AppImage"
+  chmod a+x ./StabilityMatrix.AppImage || die "Can't chmod +x AppImage"
   ./StabilityMatrix.AppImage --appimage-extract zone.lykos.stabilitymatrix.desktop || die "Can't extract .desktop file from AppImage"
   ./StabilityMatrix.AppImage --appimage-extract usr/share/icons || die "Can't extract icons from AppImage"
 }
@@ -24,8 +24,8 @@ src_unpack() {
 src_prepare() {
   sed -i 's:^Exec=.*:Exec=/usr/bin/StabilityMatrix.AppImage:' squashfs-root/zone.lykos.stabilitymatrix.desktop
   sed -i 's:^TryExec=.*:TryExec=/usr/bin/StabilityMatrix.AppImage:' squashfs-root/zone.lykos.stabilitymatrix.desktop
-  find squashfs-root -type d -exec rmdir -p {} \; 
-  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm -v {} \; 
+  find squashfs-root -type d -exec rmdir -p {} \;
+  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm -v {} \;
   eapply_user
 }
 

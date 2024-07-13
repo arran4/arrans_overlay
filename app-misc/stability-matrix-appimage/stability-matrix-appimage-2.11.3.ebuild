@@ -16,7 +16,7 @@ SRC_URI="https://github.com/LykosAI/StabilityMatrix/releases/download/v${PV}/Sta
 
 src_unpack() {
   unzip "${DISTDIR}/${A}" -d ${WORKDIR} || die "Can't unzip archive file"
-  chmox a+x ./StabilityMatrix.AppImage || die "Can't chmod +x AppImage"
+  chmod a+x ./StabilityMatrix.AppImage || die "Can't chmod +x AppImage"
   ./StabilityMatrix.AppImage --appimage-extract \*.desktop || die "Can't extract .desktop file from AppImage"
   ./StabilityMatrix.AppImage --appimage-extract usr/share/icons || die "Can't extract icons from AppImage"
 }
