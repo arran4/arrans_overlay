@@ -1,0 +1,141 @@
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage testdata/testinputconfig.config 2024-07-15 17:33:11.635474772 +1000 AEST m=+0.001078815
+
+name: dev-util/im-hex-appimage update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '55 7 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/dev-util-im-hex-appimage-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ecn: dev-util
+  epn: im-hex-appimage
+  description: "🔍 A Hex Editor for Reverse Engineers, Programmers and people who value their retinas when working at 3 AM."
+  homepage: "https://imhex.werwolv.net"
+  github_owner: WerWolv
+  github_repo: ImHex
+  keywords: ~amd64
+  workflow_filename: dev-util-im-hex-appimage-update.yaml
+  ImHex_desktop_file: 'imhex.desktop'
+  ImHex_appimage_installed_name: 'ImHex.AppImage'
+  ImHex_release_name_amd64: 'imhex-\${PV}-x86_64.AppImage'
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y wget jq coreutils
+            url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+            echo "$url"
+            wget "${url}" -O /tmp/g2.deb
+            sudo dpkg -i /tmp/g2.deb
+            rm /tmp/g2.deb
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p $ebuild_dir
+          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          for tag in $tags; do
+            version="${tag#v}"
+            if [ "${version}" = "${tag}" ]; then
+                echo "$version == $tag so there is no V removed skipping"
+                continue
+            fi
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                echo "tag / $version doesn't match regexp";
+                continue; 
+            fi
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+
+              {
+                echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'LICENSE="MIT"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="${{ env.keywords }}"'
+                echo 'IUSE=""'
+                echo 'DEPEND=""'
+                echo 'RDEPEND=""'
+                echo 'S="${WORKDIR}"'
+                echo 'RESTRICT="strip"'
+                echo ''
+                echo "inherit xdg-utils"
+                echo ''
+                echo 'SRC_URI="'
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/imhex-\${PV}-x86_64.AppImage -> \${P}-imhex-\${PV}-x86_64.AppImage )"
+                echo '"'
+                echo ''
+                echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    cp \"\${DISTDIR}/\${P}-${{ env.ImHex_release_name_amd64 }}\" \"${{ env.ImHex_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
+                echo '  fi'
+                echo '  chmod a+x "${{ env.ImHex_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
+                echo '  ./${{ env.ImHex_appimage_installed_name }} --appimage-extract "${{ env.ImHex_desktop_file }}" || die "Failed to extract .desktop from appimage"'
+                echo '  ./${{ env.ImHex_appimage_installed_name }} --appimage-extract "usr/share/pixmaps" || die "Failed to extract pixmaps icons from app image"'
+                echo '  ./${{ env.ImHex_appimage_installed_name }} --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
+                echo '}'
+                echo ''
+                echo 'src_prepare() {'
+                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.ImHex_appimage_installed_name }}:' 'squashfs-root/${{ env.ImHex_desktop_file }}'"
+                echo '  eapply_user'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '  exeinto /opt/bin'
+                echo '  doexe "${{ env.ImHex_appimage_installed_name }}" || die "Failed to install AppImage"'
+                echo '  insinto /usr/share/applications'
+                echo '  doins "squashfs-root/${{ env.ImHex_desktop_file }}" || die "Failed to install desktop file"'
+                echo '  insinto /usr/share/pixmaps'
+                echo '  doins squashfs-root/usr/share/pixmaps/*.png || die "Failed to install icons"'
+                echo '  insinto /usr/share/pixmaps'
+                echo '  doins squashfs-root/*.png || die "Failed to install icons"'
+                echo '}'
+                echo ""
+                echo "pkg_postinst() {"
+                echo "  xdg_desktop_database_update"
+                echo "}"
+                echo ""
+              } > $ebuild_file
+
+              # Manifest generation
+               
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/imhex-${version}-x86_64.AppImage" "${{ env.epn }}-${version}-imhex-${version}-x86_64.AppImage" "${ebuild_dir}/Manifest"
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+            fi
+            break
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          git add ./${ebuild_dir}
+          git commit -m "Add ebuilds for new ${{ env.epn }} releases" &&
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.outputs.generated_tag != 0
