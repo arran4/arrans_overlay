@@ -1,6 +1,6 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage input.config 2024-07-15 17:51:33.361709746 +1000 AEST m=+0.001379661
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage todo.config 2024-07-15 23:12:03.136594409 +1000 AEST m=+0.002637113
 
-name: app-misc/local.ai-appimage update
+name: app-misc/local-ai-appimage update
 
 permissions:
   contents: write
@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/app-misc-local.ai-appimage-update.yaml'
+      - '.github/workflows/app-misc-local-ai-appimage-update.yaml'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -19,13 +19,13 @@ concurrency:
 
 env:
   ecn: app-misc
-  epn: local.ai-appimage
+  epn: local-ai-appimage
   description: "🎒 local.ai - Run AI locally on your PC!"
   homepage: "https://localai.app"
   github_owner: louisgv
   github_repo: local.ai
   keywords: ~amd64
-  workflow_filename: app-misc-local.ai-appimage-update.yaml
+  workflow_filename: app-misc-local-ai-appimage-update.yaml
   local-ai_desktop_file: 'local-ai.desktop'
   local-ai_appimage_installed_name: 'local-ai.AppImage'
   local-ai_release_name_amd64: 'local-ai_\${PV}_amd64.AppImage'
