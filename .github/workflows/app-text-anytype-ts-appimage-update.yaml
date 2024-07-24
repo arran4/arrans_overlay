@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage todo.config 2024-07-24 14:43:17.022586808 +1000 AEST m=+0.001091523
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage todo.config 2024-07-24 14:52:45.022925874 +1000 AEST m=+0.001124151
 
 name: app-text/anytype-ts-appimage update
 
@@ -64,7 +64,7 @@ jobs:
                 echo "$version == $tag so there is no V removed skipping"
                 continue
             fi
-            version="$(echo "${version}" | sed 's/^\([0-9]\+\(\.[0-9]\+\)*\)\(-r[0-9]*\)\?\([-_]\(alpha\|beta\|rc\|p\)[0-9]*\)$/\0/')"
+            version="$(echo "${version}" | sed 's/^\([0-9]\+\(\.[0-9]\+\)*\)\(-r[0-9]*\)\?\([-_]\(alpha\|beta\|rc\|p\)[0-9]*\)$/\1_\5\3/')"
             if ! echo "${version}" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
                 echo "tag / $version doesn't match regexp";
                 continue; 
