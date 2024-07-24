@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage todo.config 2024-07-24 14:52:45.022925874 +1000 AEST m=+0.001124151
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage todo.config 2024-07-24 15:02:03.096537129 +1000 AEST m=+0.001083693
 
 name: app-text/anytype-ts-appimage update
 
@@ -64,6 +64,7 @@ jobs:
                 echo "$version == $tag so there is no V removed skipping"
                 continue
             fi
+            originalVersion="${version}"
             version="$(echo "${version}" | sed 's/^\([0-9]\+\(\.[0-9]\+\)*\)\(-r[0-9]*\)\?\([-_]\(alpha\|beta\|rc\|p\)[0-9]*\)$/\1_\5\3/')"
             if ! echo "${version}" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
                 echo "tag / $version doesn't match regexp";
@@ -89,7 +90,7 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="'
-                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Anytype-\${PV}.AppImage -> \${P}-Anytype-\${PV}.AppImage )"
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Anytype-${originalVersion}.AppImage -> \${P}-Anytype-\${PV}.AppImage )"
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
@@ -128,7 +129,7 @@ jobs:
 
               # Manifest generation
                
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Anytype-${version}.AppImage" "${{ env.epn }}-${version}-Anytype-${version}.AppImage" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Anytype-${version}.AppImage" "${{ env.epn }}-${originalVersion}-Anytype-${version}.AppImage" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
             break
