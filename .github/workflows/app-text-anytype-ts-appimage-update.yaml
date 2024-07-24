@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage todo.config 2024-07-24 15:04:30.33286857 +1000 AEST m=+0.001087270
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage todo.config 2024-07-24 15:30:24.331266292 +1000 AEST m=+0.001115458
 
 name: app-text/anytype-ts-appimage update
 
@@ -129,7 +129,7 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Anytype-${originalVersion}.AppImage" "${{ env.epn }}-${originalVersion}-Anytype-${version}.AppImage" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Anytype-${originalVersion}.AppImage" "${{ env.epn }}-${version}-Anytype-${version}.AppImage" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
             break
