@@ -33,6 +33,6 @@ Afterwards, simply run `emerge --sync`, and Portage should seamlessly make all o
 
 ## Links
 
-* [Merge status](https://gitweb.gentoo.org/report/repos.git/plain/arrans-overlay.txt)
+* [Merge status](https://gitweb.gentoo.org/report/repos.git/tree/arrans-overlay.txt)
 * [Browse](https://gpo.zugaina.org/Overlays/arrans-overlay)
 * [Upstream](https://github.com/gentoo-mirror/arrans-overlay)
