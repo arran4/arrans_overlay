@@ -113,8 +113,8 @@ jobs:
               } > "$ebuild_file"
 
               # Generate the manifest for the new ebuild
-              g2 manifest upsert-from-url "https://github.com/${ghrp}/releases/download/${tag}/rustdesk-${version}-x86_64.AppImage" "/tmp/${epn}-${version}.amd64" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${ghrp}/releases/download/${tag}/rustdesk-${version}-aarch64.AppImage" "/tmp/${epn}-${version}.arm64" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${ghrp}/releases/download/${tag}/rustdesk-${version}-x86_64.AppImage" "${epn}-${version}.amd64" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${ghrp}/releases/download/${tag}/rustdesk-${version}-aarch64.AppImage" "${epn}-${version}.arm64" "${ebuild_dir}/Manifest"
               
             fi
             break
