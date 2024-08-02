@@ -1,11 +1,13 @@
-name: app-misc/ente-auth-appimage Update
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage todo.config 2024-08-02 15:21:43.522781571 +1000 AEST m=+0.001110369
+
+name: app-misc/ente-auth-appimage update
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '0 0 * * *'  
+    - cron: '8 7 * * *'
   workflow_dispatch:
   push:
     paths:
@@ -22,6 +24,11 @@ env:
   homepage: "https://ente.io/blog/auth/"
   github_owner: ente-io
   github_repo: ente
+  keywords: ~amd64
+  workflow_filename: app-misc-ente-auth-appimage-update.yaml
+  auth_desktop_file: 'ente_auth.desktop'
+  auth_appimage_installed_name: 'auth.AppImage'
+  auth_release_name_amd64: 'ente-auth-${tag}-x86_64.AppImage'
 
 jobs:
   check-and-create-ebuild:
@@ -37,91 +44,102 @@ jobs:
 
       - name: Install required tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget jq coreutils
-          url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-          echo "$url"
-          wget "${url}" -O /tmp/g2.deb
-          sudo dpkg -i /tmp/g2.deb
-          rm /tmp/g2.deb
+            sudo apt-get update
+            sudo apt-get install -y wget jq coreutils
+            url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+            echo "$url"
+            wget "${url}" -O /tmp/g2.deb
+            sudo dpkg -i /tmp/g2.deb
+            rm /tmp/g2.deb
 
-      - name: Check for new releases
+      - name: Process each release
         id: process_releases
         run: |
-          ebuild_dir="./${ecn}/${epn}"
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
-          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name | select(startswith("auth-v")) ')
+          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
           for tag in $tags; do
-            version=${tag#auth-v}
+            version="${tag#auth-v}"
             if [ "${version}" = "${tag}" ]; then
-              echo "$version == $tag so there is no auth-v removed skipping"
-              continue
+                echo "$version == $tag so there is noauth-v removed skipping"
+                continue
             fi
-            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
-              echo "$tag / $version doesn't match regexp";
-              continue; 
+            originalVersion="${version}"
+            version="$(echo "${version}" | sed 's/^\([0-9]\+\(\.[0-9]\+\)*\)\(-r[0-9]*\)\?\([-_]\(alpha\|beta\|rc\|p\)[0-9]*\)$/\1_\5\3/')"
+            if ! echo "${version}" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                echo "tag / $version doesn't match regexp";
+                continue; 
             fi
-            ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
-              appimage_url="https://github.com/ente-io/ente/releases/download/${tag}/ente-auth-v${version}-x86_64.AppImage"
-              
-              # Create ebuild script
+
               {
-                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-ente-auth-appimage-update.yaml"
-                echo "EAPI=8"
-                echo "DESCRIPTION=\"$description\""
-                echo "HOMEPAGE=\"$homepage\""
-                echo "SRC_URI=\"${appimage_url} -> \${P}\""
-                echo "LICENSE=\"AGPL-3.0\""
-                echo "SLOT=\"0\""
-                echo "KEYWORDS=\"~amd64\""
-                echo "DEPEND=\"\""
-                echo "RDEPEND=\"|| ( dev-libs/libappindicator )\""
-                echo "S=\"\${WORKDIR}\""
+                echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'LICENSE="MIT"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="${{ env.keywords }}"'
+                echo 'IUSE=""'
+                echo 'DEPEND=""'
+                echo 'RDEPEND="sys-libs/glibc sys-libs/zlib "'
+                echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
-                echo ""
+                echo ''
                 echo "inherit xdg-utils"
-                echo ""
-                echo "src_unpack() {"
-                echo "  cp \"\${DISTDIR}/\${A}\" \"\${A}\"  || die \"Can't copy archive file\""
-                echo "  chmod a+x \"\${A}\"  || die \"Can't chmod archive file\""
-                echo "  \"./\${A}\" --appimage-extract ente_auth.desktop || die \"Can't extract .desktop from appimage\""
-                echo "  \"./\${A}\" --appimage-extract usr/share/icons || die \"Can't extract icons from app image\""
-                echo "}"
-                echo ""
-                echo "src_prepare() {"
-                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/ente_auth:' squashfs-root/ente_auth.desktop"
-                echo "  find squashfs-root -type d -exec rmdir -p {} \; "
-                echo "  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm -v {} \; "
-                echo "  eapply_user"
-                echo "}"
-                echo ""
-                echo "src_install() {"
-                echo "  exeinto /opt/bin"
-                echo '  mv "./${A}" "ente_auth"'
-                echo "  doexe ente_auth"
-                echo "  insinto /usr/share/applications"
-                echo '  doins "./squashfs-root/ente_auth.desktop"'
-                echo "  insinto /usr/share/"
-                echo '  doins -r "./squashfs-root/usr/share/icons"'
-                echo "}"
+                echo ''
+                echo 'SRC_URI="'
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-auth-${tag}-x86_64.AppImage -> \${P}-ente-auth-${tag}-x86_64.AppImage )"
+                echo '"'
+                echo ''
+                echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    cp \"\${DISTDIR}/\${P}-${{ env.auth_release_name_amd64 }}\" \"${{ env.auth_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
+                echo '  fi'
+                echo '  chmod a+x "${{ env.auth_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
+                echo '  ./${{ env.auth_appimage_installed_name }} --appimage-extract "${{ env.auth_desktop_file }}" || die "Failed to extract .desktop from appimage"'
+                echo '  ./${{ env.auth_appimage_installed_name }} --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
+                echo '  ./${{ env.auth_appimage_installed_name }} --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
+                echo '}'
+                echo ''
+                echo 'src_prepare() {'
+                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.auth_appimage_installed_name }}:' 'squashfs-root/${{ env.auth_desktop_file }}'"
+                echo "  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm {} \; "
+                echo "  find squashfs-root -type d -exec rmdir -p --ignore-fail-on-non-empty {} \; "
+                echo '  eapply_user'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '  exeinto /opt/bin'
+                echo '  doexe "${{ env.auth_appimage_installed_name }}" || die "Failed to install AppImage"'
+                echo '  insinto /usr/share/applications'
+                echo '  doins "squashfs-root/${{ env.auth_desktop_file }}" || die "Failed to install desktop file"'
+                echo '  insinto /usr/share/icons'
+                echo '  doins -r squashfs-root/usr/share/icons/hicolor || die "Failed to install icons"'
+                echo '  insinto /usr/share/pixmaps'
+                echo '  doins squashfs-root/*.png || die "Failed to install icons"'
+                echo '}'
                 echo ""
                 echo "pkg_postinst() {"
-                echo "    xdg_desktop_database_update"
+                echo "  xdg_desktop_database_update"
                 echo "}"
                 echo ""
               } > $ebuild_file
 
-              g2 manifest upsert-from-url "${appimage_url}" "${epn}-${version}" "${ebuild_dir}/Manifest"
+              # Manifest generation
+
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-auth-${tag}-x86_64.AppImage" "${{ env.epn }}-${version}-ente-auth-${tag}-x86_64.AppImage" "${ebuild_dir}/Manifest"
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
             break
           done
 
       - name: Commit and push changes
         run: |
-          ebuild_dir="./${ecn}/${epn}"
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           git add ./${ebuild_dir}
-          git commit -m "Add ebuilds for new ${epn} releases" && 
+          git commit -m "Add ebuilds for new ${{ env.epn }} releases" &&
           git pull --rebase &&
           git push || true
-        if: steps.process_releases.conclusion == 'success'
+        if: steps.process_releases.outputs.generated_tag != 0
