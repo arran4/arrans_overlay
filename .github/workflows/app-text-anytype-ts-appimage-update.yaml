@@ -71,7 +71,7 @@ jobs:
                 echo "tag / $version doesn't match regexp";
                 continue; 
             fi
-            releaseType="$(echo "$version" | sed 's/[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*/\1/g')"
+            releaseType="$(echo "$version" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
             if [[ ! -v releaseTypes[$releaseType] ]]; then
               releaseTypes[$releaseType]="$version"    
             else
