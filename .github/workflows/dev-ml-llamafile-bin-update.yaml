@@ -21,7 +21,7 @@ env:
   github_owner: Mozilla-Ocho
   github_repo: llamafile
   description: " Distribute and run LLMs with a single file. "
-  homepage: "https:// llamafile.ai/"
+  homepage: "https://llamafile.ai/"
   workflowfile: "dev-ml-llamafile-bin-update.yaml"
   license: "Apache 2.0"
 

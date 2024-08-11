@@ -1,7 +1,7 @@
 # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/dev-ml-llamafile-bin-update.yaml
 EAPI=8
 DESCRIPTION=" Distribute and run LLMs with a single file. "
-HOMEPAGE="https:// llamafile.ai/"
+HOMEPAGE="https://llamafile.ai/"
 IUSE="doc man"
 SRC_URI="amd64? ( https://github.com/Mozilla-Ocho/llamafile/releases/download/${PV}/llamafile-${PV}.zip -> ${P}.amd64.zip )"
 LICENSE="Apache 2.0"
