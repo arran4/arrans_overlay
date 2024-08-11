@@ -75,7 +75,7 @@ jobs:
             if [[ ! -v releaseTypes[$releaseType] ]]; then
               releaseTypes[$releaseType]="$version"    
             else
-              echo "Already have a newier ${releaseType:=normal} release"
+              echo "Already have a newier ${releaseType:=normal} release: ${releaseTypes[$releaseType]}"
               continue
             fi
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
