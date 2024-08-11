@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage todo.config 2024-07-24 15:30:24.331266292 +1000 AEST m=+0.001115458
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-09 17:52:25.614501782 +1000 AEST m=+0.001349321
 
 name: app-text/anytype-ts-appimage update
 
@@ -61,7 +61,7 @@ jobs:
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
-                echo "$version == $tag so there is no V removed skipping"
+                echo "$version == $tag so there is no v removed skipping"
                 continue
             fi
             originalVersion="${version}"
@@ -98,9 +98,9 @@ jobs:
                 echo "    cp \"\${DISTDIR}/\${P}-${{ env.Anytype_release_name_amd64 }}\" \"${{ env.Anytype_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
                 echo '  fi'
                 echo '  chmod a+x "${{ env.Anytype_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
-                echo '  ./${{ env.Anytype_appimage_installed_name }} --appimage-extract "${{ env.Anytype_desktop_file }}" || die "Failed to extract .desktop from appimage"'
-                echo '  ./${{ env.Anytype_appimage_installed_name }} --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
-                echo '  ./${{ env.Anytype_appimage_installed_name }} --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
+                echo '  "./${{ env.Anytype_appimage_installed_name }}" --appimage-extract "${{ env.Anytype_desktop_file }}" || die "Failed to extract .desktop from appimage"'
+                echo '  "./${{ env.Anytype_appimage_installed_name }}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
+                echo '  "./${{ env.Anytype_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
                 echo '}'
                 echo ''
                 echo 'src_prepare() {'

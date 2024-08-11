@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage todo.config 2024-07-15 23:12:03.136594409 +1000 AEST m=+0.002637113
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-09 17:52:25.614501782 +1000 AEST m=+0.001349321
 
 name: app-misc/local-ai-appimage update
 
@@ -61,10 +61,11 @@ jobs:
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
-                echo "$version == $tag so there is no V removed skipping"
+                echo "$version == $tag so there is no v removed skipping"
                 continue
             fi
-            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+            originalVersion="${version}"
+            if ! echo "${version}" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
                 echo "tag / $version doesn't match regexp";
                 continue; 
             fi
@@ -81,7 +82,7 @@ jobs:
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo 'IUSE=""'
                 echo 'DEPEND=""'
-                echo 'RDEPEND=""'
+                echo 'RDEPEND="sys-libs/glibc sys-libs/zlib "'
                 echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
                 echo ''
@@ -96,9 +97,9 @@ jobs:
                 echo "    cp \"\${DISTDIR}/\${P}-${{ env.local-ai_release_name_amd64 }}\" \"${{ env.local-ai_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
                 echo '  fi'
                 echo '  chmod a+x "${{ env.local-ai_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
-                echo '  ./${{ env.local-ai_appimage_installed_name }} --appimage-extract "${{ env.local-ai_desktop_file }}" || die "Failed to extract .desktop from appimage"'
-                echo '  ./${{ env.local-ai_appimage_installed_name }} --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
-                echo '  ./${{ env.local-ai_appimage_installed_name }} --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
+                echo '  "./${{ env.local-ai_appimage_installed_name }}" --appimage-extract "${{ env.local-ai_desktop_file }}" || die "Failed to extract .desktop from appimage"'
+                echo '  "./${{ env.local-ai_appimage_installed_name }}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
+                echo '  "./${{ env.local-ai_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
                 echo '}'
                 echo ''
                 echo 'src_prepare() {'
@@ -126,7 +127,7 @@ jobs:
               } > $ebuild_file
 
               # Manifest generation
-               
+
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/local-ai_${version}_amd64.AppImage" "${{ env.epn }}-${version}-local-ai_${version}_amd64.AppImage" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi

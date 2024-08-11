@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage todo.config 2024-08-02 15:40:49.426183246 +1000 AEST m=+0.001124903
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-09 17:52:25.614501782 +1000 AEST m=+0.001349321
 
 name: app-misc/jan-appimage update
 
@@ -61,7 +61,7 @@ jobs:
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
-                echo "$version == $tag so there is nov removed skipping"
+                echo "$version == $tag so there is no v removed skipping"
                 continue
             fi
             originalVersion="${version}"
@@ -97,8 +97,8 @@ jobs:
                 echo "    cp \"\${DISTDIR}/\${P}-${{ env.jan_release_name_amd64 }}\" \"${{ env.jan_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
                 echo '  fi'
                 echo '  chmod a+x "${{ env.jan_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
-                echo '  ./${{ env.jan_appimage_installed_name }} --appimage-extract "${{ env.jan_desktop_file }}" || die "Failed to extract .desktop from appimage"'
-                echo '  ./${{ env.jan_appimage_installed_name }} --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
+                echo '  "./${{ env.jan_appimage_installed_name }}" --appimage-extract "${{ env.jan_desktop_file }}" || die "Failed to extract .desktop from appimage"'
+                echo '  "./${{ env.jan_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
                 echo '}'
                 echo ''
                 echo 'src_prepare() {'
