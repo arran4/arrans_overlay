@@ -98,7 +98,7 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="'
-                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-auth-${tag}-x86_64.AppImage -> \${P}-ente-auth-${tag}-x86_64.AppImage )"
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-auth-v${originalVersion}-x86_64.AppImage -> \${P}-ente-auth-${tag}-x86_64.AppImage )"
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
@@ -137,7 +137,7 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-auth-${tag}-x86_64.AppImage" "${{ env.epn }}-${version}-ente-auth-${tag}-x86_64.AppImage" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-auth-v${originalVersion}-x86_64.AppImage" "${{ env.epn }}-${version}-ente-auth-${tag}-x86_64.AppImage" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
