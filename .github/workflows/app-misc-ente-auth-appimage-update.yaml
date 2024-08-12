@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-11 12:55:25.610098914 +1000 AEST m=+0.001301427
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage Release todo.config 2024-08-12 12:57:24.455600283 +1000 AEST m=+0.001317456
 
 name: app-misc/ente-auth-appimage update
 
@@ -20,15 +20,15 @@ concurrency:
 env:
   ecn: app-misc
   epn: ente-auth-appimage
-  description: "Ente Auth AppImage"
-  homepage: "https://ente.io/blog/auth/"
+  description: "Ente's 2FA solution"
+  homepage: "https://ente.io"
   github_owner: ente-io
   github_repo: ente
   keywords: ~amd64
   workflow_filename: app-misc-ente-auth-appimage-update.yaml
-  auth_desktop_file: 'ente_auth.desktop'
-  auth_appimage_installed_name: 'auth.AppImage'
-  auth_release_name_amd64: 'ente-auth-${tag}-x86_64.AppImage'
+  ente_auth_desktop_file: 'ente_auth.desktop'
+  ente_auth_appimage_installed_name: 'ente_auth.AppImage'
+  ente_auth_release_name_amd64: 'ente-${tag}-x86_64.AppImage'
 
 jobs:
   check-and-create-ebuild:
@@ -68,8 +68,8 @@ jobs:
             originalVersion="${version}"
             version="$(echo "${version}" | sed 's/^\([0-9]\+\(\.[0-9]\+\)*\)\(-r[0-9]*\)\?\([-_]\(alpha\|beta\|rc\|p\)\(\|\.\?\([0-9]\+\)\)\)$/\1_\5\3\7/')"
             if ! echo "${version}" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
-                echo "version $version doesn't match regexp";
-                continue; 
+                echo "version: $version doesn't match regexp";
+                continue;
             fi
             releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
             if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
@@ -98,21 +98,21 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="'
-                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-auth-v${originalVersion}-x86_64.AppImage -> \${P}-ente-auth-${tag}-x86_64.AppImage )"
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage -> \${P}-ente-${tag}-x86_64.AppImage )"
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
-                echo "    cp \"\${DISTDIR}/\${P}-${{ env.auth_release_name_amd64 }}\" \"${{ env.auth_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
+                echo "    cp \"\${DISTDIR}/\${P}-${{ env.ente_auth_release_name_amd64 }}\" \"${{ env.ente_auth_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
                 echo '  fi'
-                echo '  chmod a+x "${{ env.auth_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
-                echo '  "./${{ env.auth_appimage_installed_name }}" --appimage-extract "${{ env.auth_desktop_file }}" || die "Failed to extract .desktop from appimage"'
-                echo '  "./${{ env.auth_appimage_installed_name }}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
-                echo '  "./${{ env.auth_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
+                echo '  chmod a+x "${{ env.ente_auth_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
+                echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "${{ env.ente_auth_desktop_file }}" || die "Failed to extract .desktop from appimage"'
+                echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
+                echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
                 echo '}'
                 echo ''
                 echo 'src_prepare() {'
-                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.auth_appimage_installed_name }}:' 'squashfs-root/${{ env.auth_desktop_file }}'"
+                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.ente_auth_appimage_installed_name }}:' 'squashfs-root/${{ env.ente_auth_desktop_file }}'"
                 echo "  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm {} \; "
                 echo "  find squashfs-root -type d -exec rmdir -p --ignore-fail-on-non-empty {} \; "
                 echo '  eapply_user'
@@ -120,9 +120,9 @@ jobs:
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
-                echo '  doexe "${{ env.auth_appimage_installed_name }}" || die "Failed to install AppImage"'
+                echo '  doexe "${{ env.ente_auth_appimage_installed_name }}" || die "Failed to install AppImage"'
                 echo '  insinto /usr/share/applications'
-                echo '  doins "squashfs-root/${{ env.auth_desktop_file }}" || die "Failed to install desktop file"'
+                echo '  doins "squashfs-root/${{ env.ente_auth_desktop_file }}" || die "Failed to install desktop file"'
                 echo '  insinto /usr/share/icons'
                 echo '  doins -r squashfs-root/usr/share/icons/hicolor || die "Failed to install icons"'
                 echo '  insinto /usr/share/pixmaps'
@@ -137,7 +137,7 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-auth-v${originalVersion}-x86_64.AppImage" "${{ env.epn }}-${version}-ente-auth-${tag}-x86_64.AppImage" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage" "${{ env.epn }}-${version}-ente-${tag}-x86_64.AppImage" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
