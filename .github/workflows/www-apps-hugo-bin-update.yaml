@@ -1,11 +1,13 @@
-name: www-apps/hugo-bin Update
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github Binary Release todo.config 2024-08-15 13:49:39.146382751 +1000 AEST m=+0.001627385
+
+name: www-apps/hugo-bin update
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '10 0 * * *'
+    - cron: '15 7 * * *'
   workflow_dispatch:
   push:
     paths:
@@ -16,14 +18,26 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  ebuild_category: www-apps
-  ebuild_name: hugo-bin
+  ecn: www-apps
+  epn: hugo-bin
+  description: "The world’s fastest framework for building websites."
+  homepage: "https://gohugo.io"
   github_owner: gohugoio
   github_repo: hugo
-  description: "The world’s fastest framework for building websites."
-  PFN: "hugo"
-  EFN: "hugo"
-  homepage: "https://gohugo.io/"
+  keywords: ~amd64 ~amd64 ~arm ~arm64 ~arm64
+  workflow_filename: www-apps-hugo-bin-update.yaml
+  binary_installed_name: 'hugo'
+  binary_archived_name_amd64: 'hugo'
+  release_name_amd64: 'hugo_\${PV}_linux-amd64.tar.gz'
+  binary_archived_name_arm: 'hugo'
+  release_name_arm: 'hugo_\${PV}_linux-arm.tar.gz'
+  binary_archived_name_arm64: 'hugo'
+  release_name_arm64: 'hugo_\${PV}_linux-arm64.tar.gz'
+  extended_binary_installed_name: 'hugo'
+  extended_binary_archived_name_amd64: 'hugo'
+  extended_release_name_amd64: 'hugo_extended_\${PV}_Linux-64bit.tar.gz'
+  extended_binary_archived_name_arm64: 'hugo'
+  extended_release_name_arm64: 'hugo_extended_\${PV}_linux-arm64.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -39,80 +53,120 @@ jobs:
 
       - name: Install required tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget jq coreutils
-          url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-          echo "$url"
-          wget "${url}" -O /tmp/g2.deb
-          sudo dpkg -i /tmp/g2.deb
-          rm /tmp/g2.deb
+            sudo apt-get update
+            sudo apt-get install -y wget jq coreutils
+            url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+            echo "$url"
+            wget "${url}" -O /tmp/g2.deb
+            sudo dpkg -i /tmp/g2.deb
+            rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
         run: |
-          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
-          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          declare -A releaseTypes=()
+          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
-              echo "$version == $tag so there is no V removed skipping"
-              continue
+                echo "$version == $tag so there is no v removed skipping"
+                continue
             fi
-            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
-              echo "$tag / $version doesn't match regexp";
-              continue; 
+            originalVersion="${version}"
+            if ! echo "${version}" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                echo "tag / $version doesn't match regexp";
+                continue;
             fi
-            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
+            if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
+                releaseTypes[${releaseType:=release}]="$version"
+            else
+                echo "Already have a newier ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+                continue
+            fi
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
-              # Create ebuild script
+
               {
-                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/www-apps-hugo-bin-update.yaml"
-                echo "EAPI=8"
-                echo "DESCRIPTION=\"$description\""
-                echo "HOMEPAGE=\"$homepage\""
-                echo 'IUSE="+extended"'
-                echo 'SRC_URI="  '
-                echo "  amd64? ( extended? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_extended_\${PV}_Linux-64bit.tar.gz -> \${PN}_extended-\${PV}.amd64.tar.gz ) !extended? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_Linux-64bit.tar.gz -> \${P}.amd64.tar.gz ) )"
-                echo "  arm? ( extended? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_extended_\${PV}_linux-arm.tar.gz -> \${PN}_extended-\${PV}.arm.tar.gz ) !extended? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_linux-arm.tar.gz -> \${P}.arm.tar.gz ) )"
-                echo "  arm64? ( extended? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_extended_\${PV}_linux-arm64.tar.gz -> \${PN}_extended-\${PV}.arm64.tar.gz ) !extended? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_linux-arm64.tar.gz -> \${P}.arm64.tar.gz ) )"
-                echo '" '
-                echo "LICENSE=\"Apache-2.0\""
-                echo "SLOT=\"0\""
-                echo 'KEYWORDS="~amd64 ~arm ~arm64"'
-                echo 'RDEPEND="'
-                echo '	extended? ('
-                echo '		dev-libs/libsass:='
-                echo '		>=media-libs/libwebp-1.3.2:='
-                echo '	)'
+                echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'LICENSE="MIT"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="${{ env.keywords }}"'
+                echo 'IUSE=" extended"'
+                echo 'REQUIRED_USE="extended? (|| ( arm64 amd64  )) "'
+                echo 'DEPEND=""'
+                echo 'RDEPEND="extended? ( sys-devel/gcc sys-libs/glibc  ) "'
+                echo 'S="${WORKDIR}"'
+                echo ''
+                echo ''
+                echo 'SRC_URI="'
+                echo "  amd64? ( !extended? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_\${PV}_linux-amd64.tar.gz -> \${P}-hugo_\${PV}_linux-amd64.tar.gz  )  )  "
+                echo "  amd64? ( extended? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_extended_\${PV}_Linux-64bit.tar.gz -> \${P}-hugo_extended_\${PV}_Linux-64bit.tar.gz  )  )  "
+                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_\${PV}_linux-arm.tar.gz -> \${P}-hugo_\${PV}_linux-arm.tar.gz  )  "
+                echo "  arm64? ( !extended? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_\${PV}_linux-arm64.tar.gz -> \${P}-hugo_\${PV}_linux-arm64.tar.gz  )  )  "
+                echo "  arm64? ( extended? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_extended_\${PV}_linux-arm64.tar.gz -> \${P}-hugo_extended_\${PV}_linux-arm64.tar.gz  )  )  "
                 echo '"'
-                echo 'DEPEND="${RDEPEND}"'
-                echo "S=\"\${WORKDIR}\""
-                echo ""
-                echo "src_install() {"
-                echo "    exeinto /opt/bin"
-                echo "    doexe ${EFN}"
-                echo "}"
+                echo ''
+                echo 'src_unpack() {'
+                echo '  if use amd64 && ! use extended ; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-hugo_\${PV}_linux-amd64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use amd64 && use extended; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-hugo_extended_\${PV}_Linux-64bit.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-hugo_\${PV}_linux-arm.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm64 && ! use extended ; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-hugo_\${PV}_linux-arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm64 && use extended; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-hugo_extended_\${PV}_linux-arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '  exeinto /opt/bin'
+                echo '  if use amd64 && ! use extended ; then'
+                echo '    newexe "${{ env.binary_archived_name_amd64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm; then'
+                echo '    newexe "${{ env.binary_archived_name_arm }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64 && ! use extended ; then'
+                echo '    newexe "${{ env.binary_archived_name_arm64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64 && use extended; then'
+                echo '    newexe "${{ env.extended_binary_archived_name_amd64 }}" "${{ env.extended_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64 && use extended; then'
+                echo '    newexe "${{ env.extended_binary_archived_name_arm64 }}" "${{ env.extended_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '}'
                 echo ""
               } > $ebuild_file
 
-              # Generate the manifest for the new ebuild
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_Linux-64bit.tar.gz" "${ebuild_name}-${version}.amd64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux-arm.tar.gz" "${ebuild_name}-${version}.arm.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux-arm64.tar.gz" "${ebuild_name}-${version}.arm64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_Linux-64bit.tar.gz" "${ebuild_name}_extended-${version}.amd64.tar.gz" "${ebuild_dir}/Manifest"
-              #g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm.tar.gz" "${ebuild_name}_extended-${version}.arm.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_extended_${version}_linux-arm64.tar.gz" "${ebuild_name}_extended-${version}.arm64.tar.gz" "${ebuild_dir}/Manifest"
-              # Doesn't exist??  ${ebuild_name}_extended-${version}.arm.tar.gz
+              # Manifest generation
+
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_${version}_linux-amd64.tar.gz" "${{ env.epn }}-${version}-hugo_${version}_linux-amd64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_extended_${version}_Linux-64bit.tar.gz" "${{ env.epn }}-${version}-hugo_extended_${version}_Linux-64bit.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_${version}_linux-arm.tar.gz" "${{ env.epn }}-${version}-hugo_${version}_linux-arm.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_${version}_linux-arm64.tar.gz" "${{ env.epn }}-${version}-hugo_${version}_linux-arm64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_extended_${version}_linux-arm64.tar.gz" "${{ env.epn }}-${version}-hugo_extended_${version}_linux-arm64.tar.gz" "${ebuild_dir}/Manifest"
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
-            break
           done
 
       - name: Commit and push changes
         run: |
-          ebuild_dir="./${ebuild_category}/${ebuild_name}"
-          git add "./${ebuild_dir}"
-          git commit -m "Add ebuilds for new ${ebuild_name} releases" && 
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          git add ./${ebuild_dir}
+          git commit -m "Add ebuilds for new ${{ env.epn }} releases" &&
           git pull --rebase &&
           git push || true
-        if: steps.process_releases.conclusion == 'success'
+        if: steps.process_releases.outputs.generated_tag
