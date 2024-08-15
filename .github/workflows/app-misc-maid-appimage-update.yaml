@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-11 12:55:25.610098914 +1000 AEST m=+0.001301427
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-15 15:07:49.86305288 +1000 AEST m=+0.002545425
 
 name: app-misc/maid-appimage update
 
@@ -63,8 +63,8 @@ jobs:
             version="${tag}"
             originalVersion="${version}"
             if ! echo "${version}" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
-                echo "tag / $version doesn't match regexp";
-                continue; 
+                echo "version: $version doesn't match regexp";
+                continue;
             fi
             releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
             if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
@@ -97,9 +97,6 @@ jobs:
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
-                echo '  if use amd64; then'
-                echo "    cp \"\${DISTDIR}/\${P}-${{ env.maid_release_name_amd64 }}\" \"${{ env.maid_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
-                echo '  fi'
                 echo '  chmod a+x "${{ env.maid_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
                 echo '  "./${{ env.maid_appimage_installed_name }}" --appimage-extract "${{ env.maid_desktop_file }}" || die "Failed to extract .desktop from appimage"'
                 echo '  "./${{ env.maid_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'

@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage Release todo.config 2024-08-12 12:57:24.455600283 +1000 AEST m=+0.001317456
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github AppImage Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-15 15:07:49.86305288 +1000 AEST m=+0.002545425
 
 name: app-misc/ente-auth-appimage update
 
@@ -21,7 +21,7 @@ env:
   ecn: app-misc
   epn: ente-auth-appimage
   description: "Ente's 2FA solution"
-  homepage: "https://ente.io"
+  homepage: "https://ente.io/blog/auth/"
   github_owner: ente-io
   github_repo: ente
   keywords: ~amd64
@@ -102,9 +102,6 @@ jobs:
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
-                echo '  if use amd64; then'
-                echo "    cp \"\${DISTDIR}/\${P}-${{ env.ente_auth_release_name_amd64 }}\" \"${{ env.ente_auth_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
-                echo '  fi'
                 echo '  chmod a+x "${{ env.ente_auth_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
                 echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "${{ env.ente_auth_desktop_file }}" || die "Failed to extract .desktop from appimage"'
                 echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
