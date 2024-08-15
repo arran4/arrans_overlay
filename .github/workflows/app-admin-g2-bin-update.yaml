@@ -1,11 +1,13 @@
-name: app-admin/g2-bin Update
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github Binary Release todo.config 2024-08-15 13:49:39.146382751 +1000 AEST m=+0.001627385
+
+name: app-admin/g2-bin update
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '5 2 * * *'
+    - cron: '33 2 * * *'
   workflow_dispatch:
   push:
     paths:
@@ -16,14 +18,21 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  ebuild_category: app-admin
-  ebuild_name: g2-bin
+  ecn: app-admin
+  epn: g2-bin
+  description: "g2 Gentoo Tools"
+  homepage: "https://wiki.gentoo.org/wiki/User:Arran4"
   github_owner: arran4
   github_repo: g2
-  description: "Arrans Gentoo specific tools"
-  PFN: "g2"
-  EFN: "g2"
-  homepage: "https://github.com/arran4/g2/"
+  keywords: ~amd64 ~arm ~arm64
+  workflow_filename: app-admin-g2-bin-update.yaml
+  binary_installed_name: 'g2'
+  binary_archived_name_amd64: 'g2'
+  release_name_amd64: 'g2_\${PV}_linux_amd64.tar.gz'
+  binary_archived_name_arm: 'g2'
+  release_name_arm: 'g2_\${PV}_linux_armv6.tar.gz'
+  binary_archived_name_arm64: 'g2'
+  release_name_arm64: 'g2_\${PV}_linux_arm64.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -39,72 +48,104 @@ jobs:
 
       - name: Install required tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget jq coreutils
-          url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-          echo "$url"
-          wget "${url}" -O /tmp/g2.deb
-          sudo dpkg -i /tmp/g2.deb
-          rm /tmp/g2.deb
+            sudo apt-get update
+            sudo apt-get install -y wget jq coreutils
+            url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+            echo "$url"
+            wget "${url}" -O /tmp/g2.deb
+            sudo dpkg -i /tmp/g2.deb
+            rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
         run: |
-          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
-          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{env.github_owner}}/${{env.github_repo}}/releases | jq -r '.[].tag_name')
-          
-          for tag in ${tags}; do
-            version=${tag#v}
+          declare -A releaseTypes=()
+          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          for tag in $tags; do
+            version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
-              echo "$version == $tag so there is no V removed skipping"
-              continue
+                echo "$version == $tag so there is no v removed skipping"
+                continue
             fi
-            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
-              echo "tag / $version doesn't match regexp";
-              continue; 
+            originalVersion="${version}"
+            if ! echo "${version}" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                echo "tag / $version doesn't match regexp";
+                continue;
             fi
-            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
+            if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
+                releaseTypes[${releaseType:=release}]="$version"
+            else
+                echo "Already have a newier ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+                continue
+            fi
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
-              # Create ebuild script
+
               {
-                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-admin-g2-bin-update.yaml"
-                echo "EAPI=8"
-                echo "DESCRIPTION=\"$description\""
-                echo "HOMEPAGE=\"$homepage\""
+                echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'LICENSE="MIT"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="${{ env.keywords }}"'
                 echo 'IUSE=""'
-                echo 'SRC_URI="'
-                echo "  amd64? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_linux_amd64.tar.gz -> \${P}.amd64.tar.gz )"
-                echo "  arm? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_linux_armv7.tar.gz -> \${P}.arm.tar.gz )"
-                echo "  arm64? ( https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/v\${PV}/${PFN}_\${PV}_linux_arm64.tar.gz -> \${P}.arm64.tar.gz )"
-                echo '" '
-                echo "LICENSE=\"Unknown\""
-                echo "SLOT=\"0\""
-                echo 'KEYWORDS="~amd64 ~arm ~arm64"'
+                echo 'REQUIRED_USE=""'
+                echo 'DEPEND=""'
                 echo 'RDEPEND=""'
-                echo 'DEPEND="${RDEPEND}"'
-                echo "S=\"\${WORKDIR}\""
-                echo ""
-                echo "src_install() {"
-                echo "    exeinto /opt/bin"
-                echo "    doexe ${EFN}"
-                echo "}"
+                echo 'S="${WORKDIR}"'
+                echo ''
+                echo ''
+                echo 'SRC_URI="'
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/g2_\${PV}_linux_amd64.tar.gz -> \${P}-g2_\${PV}_linux_amd64.tar.gz  )  "
+                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/g2_\${PV}_linux_armv6.tar.gz -> \${P}-g2_\${PV}_linux_armv6.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/g2_\${PV}_linux_arm64.tar.gz -> \${P}-g2_\${PV}_linux_arm64.tar.gz  )  "
+                echo '"'
+                echo ''
+                echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-g2_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-g2_\${PV}_linux_armv6.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-g2_\${PV}_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '  exeinto /opt/bin'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.binary_archived_name_amd64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm; then'
+                echo '    newexe "${{ env.binary_archived_name_arm }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.binary_archived_name_arm64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '}'
                 echo ""
               } > $ebuild_file
 
-              # Generate the manifest for the new ebuild
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux_amd64.tar.gz" "${ebuild_name}-${version}.amd64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux_armv7.tar.gz" "${ebuild_name}-${version}.arm.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/releases/download/${tag}/${PFN}_${version}_linux_arm64.tar.gz" "${ebuild_name}-${version}.arm64.tar.gz" "${ebuild_dir}/Manifest"
+              # Manifest generation
+
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/g2_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-g2_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/g2_${version}_linux_armv6.tar.gz" "${{ env.epn }}-${version}-g2_${version}_linux_armv6.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/g2_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-g2_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
-            break
           done
 
       - name: Commit and push changes
         run: |
-          ebuild_dir="./${ebuild_category}/${ebuild_name}"
-          git add "./${ebuild_dir}"
-          git commit -m "Add ebuilds for new ${ebuild_name} releases" && 
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          git add ./${ebuild_dir}
+          git commit -m "Add ebuilds for new ${{ env.epn }} releases" &&
           git pull --rebase &&
           git push || true
-        if: steps.process_releases.conclusion == 'success'
+        if: steps.process_releases.outputs.generated_tag
