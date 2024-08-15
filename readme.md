@@ -5,6 +5,11 @@
 
 For more info on this checkout: https://wiki.gentoo.org/wiki/User:Arran4
 
+Please leave a star to show that you're using this repo. If you possible let me know what you're using in case something
+breaks: https://github.com/arran4/arrans_overlay/wiki/I'm-using-register
+
+Issues will be read and considered.
+
 ## How to use this overlay
 
 For automatic install, you must have [`app-eselect/eselect-repository`](https://packages.gentoo.org/packages/app-eselect/eselect-repository)
