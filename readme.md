@@ -10,6 +10,8 @@ breaks: https://github.com/arran4/arrans_overlay/wiki/I'm-using-register
 
 Issues will be read and considered.
 
+Note: Half of the ebuilds are generated using workflows, and half of those workflows are generated using: https://github.com/arran4/arrans_overlay_workflow_builder I have tried to annotate it where.
+
 ## How to use this overlay
 
 For automatic install, you must have [`app-eselect/eselect-repository`](https://packages.gentoo.org/packages/app-eselect/eselect-repository)
