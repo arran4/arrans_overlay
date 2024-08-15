@@ -150,15 +150,15 @@ jobs:
                 echo '    newexe "${{ env.goreleaser_binary_archived_name_x86 }}" "${{ env.goreleaser_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use bash; then'
-                echo '    insinto "/usr/share/bash-completion/completions"
+                echo '    insinto "/usr/share/bash-completion/completions"'
                 echo '    newins "completions/goreleaser.bash" "goreleaser.bash" || die "Failed to bash completion file"'
                 echo '  fi'
                 echo '  if use fish; then'
-                echo '    insinto "/usr/share/fish/vendor_completions.d"
+                echo '    insinto "/usr/share/fish/vendor_completions.d"'
                 echo '    newins "completions/goreleaser.fish" "goreleaser.fish" || die "Failed to bash completion file"'
                 echo '  fi'
                 echo '  if use zsh; then'
-                echo '    insinto "/usr/share/zsh/site-functions"
+                echo '    insinto "/usr/share/zsh/site-functions"'
                 echo '    newins "completions/goreleaser.zsh" "goreleaser.zsh" || die "Failed to bash completion file"'
                 echo '  fi'
                 echo '  if use man; then'
