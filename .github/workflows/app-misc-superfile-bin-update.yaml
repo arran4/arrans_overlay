@@ -75,7 +75,7 @@ jobs:
             fi
             releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
             if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
-                if [[ -v releaseTypes["release"] ]]; then
+                if [[ -v releaseTypes[release] ]]; then
                   echo "Already have a newier main release: ${releaseTypes[${release}]}"
                   continue
                 fi
