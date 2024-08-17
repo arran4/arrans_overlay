@@ -8,7 +8,7 @@ inherit font
 DESCRIPTION="It's Times New Roman but every seventh letter is jarringly sans serif"
 HOMEPAGE="https://github.com/weiweihuanghuang/Times-New-Bastard"
 SRC_URI="
-	https://github.com/weiweihuanghuang/Times-New-Bastard/releases/download/v${PV}/TimesNeBastardv${PV}.zip -> ${P}.zip
+	https://github.com/weiweihuanghuang/Times-New-Bastard/releases/download/v${PV}/TimesNewBastardv${PV}.zip -> ${P}.zip
 "
 S="${WORKDIR}/comic-mono-font-master"
 
