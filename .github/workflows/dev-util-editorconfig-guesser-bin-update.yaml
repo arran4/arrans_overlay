@@ -99,7 +99,7 @@ jobs:
                 echo 'IUSE=" ecguess doc"'
                 echo 'REQUIRED_USE="ecguess? (|| ( arm  )) "'
                 echo 'DEPEND=""'
-                echo 'RDEPEND="ecguess? (  ) "'
+                echo 'RDEPEND=""'
                 echo 'S="${WORKDIR}"'
                 echo ''
                 echo ''

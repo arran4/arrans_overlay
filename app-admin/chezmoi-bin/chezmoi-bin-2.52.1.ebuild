@@ -8,7 +8,7 @@ KEYWORDS="~amd64 ~amd64 ~amd64 ~arm ~arm64 ~arm64 ~ppc64 ~ppc64 ~riscv ~s390 ~x8
 IUSE=" android glibc le loong64"
 REQUIRED_USE="android? (|| ( arm64  )) glibc? (|| ( amd64  )) le? (|| ( ppc64  )) loong64? (|| ( amd64  )) "
 DEPEND=""
-RDEPEND="sys-libs/glibc android? (  ) glibc? ( sys-libs/glibc  ) le? (  ) loong64? (  ) "
+RDEPEND="sys-libs/glibc glibc? ( sys-libs/glibc  )"
 S="${WORKDIR}"
 
 

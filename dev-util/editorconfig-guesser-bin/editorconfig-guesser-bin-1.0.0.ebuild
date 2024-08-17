@@ -8,7 +8,7 @@ KEYWORDS="~amd64 ~arm ~arm64"
 IUSE=" ecguess doc"
 REQUIRED_USE="ecguess? (|| ( arm  )) "
 DEPEND=""
-RDEPEND="ecguess? (  ) "
+RDEPEND=""
 S="${WORKDIR}"
 
 

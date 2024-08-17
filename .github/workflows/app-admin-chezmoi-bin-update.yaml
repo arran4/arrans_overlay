@@ -119,7 +119,7 @@ jobs:
                 echo 'IUSE=" android glibc le loong64"'
                 echo 'REQUIRED_USE="android? (|| ( arm64  )) glibc? (|| ( amd64  )) le? (|| ( ppc64  )) loong64? (|| ( amd64  )) "'
                 echo 'DEPEND=""'
-                echo 'RDEPEND="sys-libs/glibc android? (  ) glibc? ( sys-libs/glibc  ) le? (  ) loong64? (  ) "'
+                echo 'RDEPEND="'
                 echo 'S="${WORKDIR}"'
                 echo ''
                 echo ''
