@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github Binary Release todo.config 2024-08-15 13:49:39.146382751 +1000 AEST m=+0.001627385
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-17 19:18:52.200460126 +1000 AEST m=+0.001585036
 
 name: net-im/slackdump-bin update
 
@@ -77,9 +77,13 @@ jobs:
             fi
             releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
             if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
-                releaseTypes[${releaseType:=release}]="$version"
+                if [[ -v releaseTypes[release] ]]; then
+                  echo "Already have a newer main release: ${releaseTypes[release]}"
+                  continue
+                fi
+                releaseTypes[${releaseType:=release}]="${version}"
             else
-                echo "Already have a newier ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+                echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
                 continue
             fi
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
