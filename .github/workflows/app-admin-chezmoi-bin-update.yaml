@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-17 19:18:52.200460126 +1000 AEST m=+0.001585036
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-17 19:49:36.307935849 +1000 AEST m=+0.001615557
 
 name: app-admin/chezmoi-bin update
 
@@ -117,9 +117,9 @@ jobs:
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo 'IUSE=" android glibc le loong64"'
-                echo 'REQUIRED_USE="android? (|| ( arm64  )) glibc? (|| ( amd64  )) le? (|| ( ppc64  )) loong64? (|| ( amd64  )) "'
+                echo 'REQUIRED_USE="android? ( || ( arm64  ) ) glibc? ( || ( amd64  ) ) le? ( || ( ppc64  ) ) loong64? ( || ( amd64  ) ) "'
                 echo 'DEPEND=""'
-                echo 'RDEPEND="'
+                echo 'RDEPEND="sys-libs/glibc glibc? ( sys-libs/glibc  ) "'
                 echo 'S="${WORKDIR}"'
                 echo ''
                 echo ''
