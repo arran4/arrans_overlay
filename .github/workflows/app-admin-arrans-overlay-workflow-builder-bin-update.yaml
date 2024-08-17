@@ -1,6 +1,6 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder Github Binary Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-15 17:01:17.940436333 +1000 AEST m=+0.001599639
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-17 19:18:52.200460126 +1000 AEST m=+0.001585036
 
-name: app-misc/arrans-overlay-workflow-builder-bin update
+name: app-admin/arrans-overlay-workflow-builder-bin update
 
 permissions:
   contents: write
@@ -11,21 +11,21 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/app-misc-arrans-overlay-workflow-builder-bin-update.yaml'
+      - '.github/workflows/app-admin-arrans-overlay-workflow-builder-bin-update.yaml'
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
 env:
-  ecn: app-misc
+  ecn: app-admin
   epn: arrans-overlay-workflow-builder-bin
   description: "TODO"
   homepage: ""
   github_owner: arran4
   github_repo: arrans_overlay_workflow_builder
   keywords: ~amd64
-  workflow_filename: app-misc-arrans-overlay-workflow-builder-bin-update.yaml
+  workflow_filename: app-admin-arrans-overlay-workflow-builder-bin-update.yaml
   arrans_overlay_workflow_builder_binary_installed_name: 'overlay_workflow_builder_generator'
   arrans_overlay_workflow_builder_binary_archived_name_amd64: 'overlay_workflow_builder_generator'
   arrans_overlay_workflow_builder_release_name_amd64: 'arrans_overlay_workflow_builder_\${PV}_linux_amd64.tar.gz'
