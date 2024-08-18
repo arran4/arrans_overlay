@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-08-17 19:49:36.307935849 +1000 AEST m=+0.001615557
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.10 Github Binary Release current.config 2024-08-19 00:13:48.967470266 +1000 AEST m=+0.001938198
 
 name: dev-go/goreleaser-bin update
 

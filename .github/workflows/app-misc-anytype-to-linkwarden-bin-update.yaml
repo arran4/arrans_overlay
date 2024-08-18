@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.7 Github Binary Release current.config 2024-08-19 00:08:19.752718596 +1000 AEST m=+0.005241334
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.10 Github Binary Release current.config 2024-08-19 00:13:48.967470266 +1000 AEST m=+0.001938198
 
 name: app-misc/anytype-to-linkwarden-bin update
 
@@ -95,7 +95,7 @@ jobs:
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo 'IUSE=" migrate-json-export doc"'
-                echo 'REQUIRED_USE="'
+                echo 'REQUIRED_USE="migrate-json-export? ( || ( amd64  ) ) "'
                 echo 'DEPEND=""'
                 echo 'RDEPEND=""'
                 echo 'S="${WORKDIR}"'
