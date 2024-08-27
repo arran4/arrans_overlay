@@ -144,8 +144,8 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64 ${{ env.epn }}-${version}.amd64 "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-arm64 ${{ env.epn }}-${version}.arm64 "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64.tgz ${{ env.epn }}-${version}.amd64.tgz "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-arm64.tgz ${{ env.epn }}-${version}.arm64.tgz "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64-rocm.tgz ${{ env.epn }}-${version}.rocm.tgz "${ebuild_dir}/Manifest"
               
             fi
