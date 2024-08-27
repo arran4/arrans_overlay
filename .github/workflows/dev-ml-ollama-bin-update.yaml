@@ -81,15 +81,20 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="  '
-                echo '  amd64? ( https://github.com/ollama/ollama/releases/download/v${PV}/ollama-linux-amd64 -> $P.amd64 )'
-                echo '  arm64? ( https://github.com/ollama/ollama/releases/download/v${PV}/ollama-linux-arm64 -> $P.arm64 )'
+                echo '  amd64? ( https://github.com/ollama/ollama/releases/download/v${PV}/ollama-linux-amd64.tgz  -> $P.amd64.tgz  )'
+                echo '  arm64? ( https://github.com/ollama/ollama/releases/download/v${PV}/ollama-linux-arm64.tgz  -> $P.arm64.tgz  )'
                 echo '  rocm? ( https://github.com/ollama/ollama/releases/download/v${PV}/ollama-linux-amd64-rocm.tgz -> $P.rocm.tgz )'
                 echo '" '
                 echo ''
                 echo "src_unpack() {"
                 echo "  if use rocm; then"
-                echo "    tar -xzvf \${DISTDIR}/\${P}.rocm.tgz -C \${WORKDIR} || die \"Can't extract rocm tgz\""
+                echo "    tar -xzvf \${DISTDIR}/\${P}.rocm.tgz -C '\${WORKDIR}' || die \"Can't extract rocm tgz\""
                 echo "  fi"
+                echo '  if use amd64; then'
+                echo '    tar -xzvf "${DISTDIR}/${P}.amd64.tgz" -C '\${WORKDIR}' || die "Failed to extract binary"'
+                echo '  elif use arm64; then'
+                echo '    tar -xzvf "${DISTDIR}/${P}.arm64.tgz" -C '\${WORKDIR}' || die "Failed to extract binary"'
+                echo '  fi'
                 echo "}"
                 echo ""
                 echo "src_install() {"
