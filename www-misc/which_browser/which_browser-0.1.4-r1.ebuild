@@ -8,7 +8,7 @@ SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
 
-RDEPEND="|| ( dev-libs/libappindicator )"
+RDEPEND="|| ( dev-libs/libindicator )"
 RESTRICT="mirror"
 
 # Verify the SHA256 checksum

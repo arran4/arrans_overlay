@@ -6,7 +6,7 @@ LICENSE="Unknown"
 SLOT="0"
 KEYWORDS="~amd64"
 DEPEND=""
-RDEPEND="dev-libs/libappindicator"
+RDEPEND="dev-libs/libindicator"
 S="${WORKDIR}"
 RESTRICT="strip"
 

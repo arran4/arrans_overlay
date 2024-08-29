@@ -1,13 +1,13 @@
-# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-ente-auth-appimage-update.yaml
+# Copyright
 EAPI=8
 DESCRIPTION="Ente Auth AppImage"
 HOMEPAGE="https://ente.io/blog/auth/"
-SRC_URI="https://github.com/ente-io/ente/releases/download/auth-v3.0.18-beta.1/ente-auth-v3.0.18-beta.1-x86_64.AppImage -> ${P}"
+SRC_URI="https://github.com/ente-io/ente/releases/download/auth-v3.0.17/ente-auth-v3.0.17-x86_64.AppImage -> ${P}"
 LICENSE="AGPL-3.0"
 SLOT="0"
 KEYWORDS="~amd64"
 DEPEND=""
-RDEPEND="|| ( dev-libs/libappindicator )"
+RDEPEND="|| ( dev-libs/libindicator )"
 S="${WORKDIR}"
 RESTRICT="strip"
 
