@@ -14,18 +14,22 @@ RESTRICT="strip"
 inherit xdg-utils
 
 SRC_URI="
-  arm64? ( https://github.com/rustdesk/rustdesk/releases/download/1.3.0/rustdesk-1.3.0-aarch64.AppImage -> ${P}-rustdesk-1.3.0-aarch64.AppImage )
-  amd64? ( https://github.com/rustdesk/rustdesk/releases/download/1.3.0/rustdesk-1.3.0-x86_64.AppImage -> ${P}-rustdesk-1.3.0-x86_64.AppImage )
+  arm64? ( https://github.com/rustdesk/rustdesk/releases/download/1.3.0/rustdesk-1.3.0-aarch64.AppImage -> ${P}-aarch64.AppImage )
+  amd64? ( https://github.com/rustdesk/rustdesk/releases/download/1.3.0/rustdesk-1.3.0-x86_64.AppImage -> ${P}-x86_64.AppImage )
 "
 
 src_unpack() {
-  chmod a+x "rustdesk.AppImage"  || die "Can't chmod archive file"
-  "./rustdesk.AppImage" --appimage-extract "rustdesk.desktop" || die "Failed to extract .desktop from appimage"
-  "./rustdesk.AppImage" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"
+	case ${ARCH} in
+        amd64) cp ${DISTDIR}/${P}-x86_64.AppImage ${PN} ;;
+        arm64) cp ${DISTDIR}/${P}-aarch64.AppImage ${PN} ;;
+  esac
+  chmod a+x "${PN}"  || die "Can't chmod archive file"
+  "./${PN}" --appimage-extract "rustdesk.desktop" || die "Failed to extract .desktop from appimage"
+  "./${PN}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"
 }
 
 src_prepare() {
-  sed -i 's:^Exec=.*:Exec=/opt/bin/rustdesk.AppImage:' 'squashfs-root/rustdesk.desktop'
+  sed -i 's:^Exec=.*:Exec=/opt/bin/rustdesk-appimage:' 'squashfs-root/rustdesk.desktop'
   find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm {} \; 
   find squashfs-root -type d -exec rmdir -p --ignore-fail-on-non-empty {} \; 
   eapply_user
@@ -33,7 +37,7 @@ src_prepare() {
 
 src_install() {
   exeinto /opt/bin
-  doexe "rustdesk.AppImage" || die "Failed to install AppImage"
+  doexe "${PN}" || die "Failed to install AppImage"
   insinto /usr/share/applications
   doins "squashfs-root/rustdesk.desktop" || die "Failed to install desktop file"
   insinto /usr/share/icons
