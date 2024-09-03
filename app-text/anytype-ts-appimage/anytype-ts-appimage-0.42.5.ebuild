@@ -18,6 +18,7 @@ SRC_URI="
 "
 
 src_unpack() {
+	cp '${DISTDIR}/${P}-Anytype-${PV}.AppImage' "Anytype.AppImage"
   chmod a+x "Anytype.AppImage"  || die "Can't chmod archive file"
   "./Anytype.AppImage" --appimage-extract "anytype.desktop" || die "Failed to extract .desktop from appimage"
   "./Anytype.AppImage" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"
