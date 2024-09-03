@@ -42,8 +42,8 @@ src_prepare() {
 
 src_install() {
   exeinto /opt/bin
-  doexe "appimaged.AppImage"
-  doexe "appimagetool.AppImage"
-  doexe "mkappimage.AppImage"
+  doexe "${WORKDIR}/appimaged.AppImage"
+  doexe "${WORKDIR}/appimagetool.AppImage"
+  doexe "${WORKDIR}/mkappimage.AppImage"
 }
 
