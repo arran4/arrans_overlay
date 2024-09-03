@@ -98,13 +98,11 @@ jobs:
                 echo "}"
                 echo ""
                 echo "src_install() {"
-                echo '  exeinto /opt/Ollama'
-                echo '  if use amd64; then'
-                echo '    newexe "${DISTDIR}/${P}.amd64" "ollama" || die "Failed to install binary"'
-                echo '  elif use arm64; then'
-                echo '    newexe "${DISTDIR}/${P}.arm64" "ollama" || die "Failed to install binary"'
-                echo '  fi'
-                echo '  dosym /opt/Ollama/ollama /opt/bin/ollama'
+                echo '  exeinto /opt/Ollama/bin'
+                echo '  doexe "${WORKDIR}/bin/ollama" || die "Failed to install binary"'
+                echo '  libinto /opt/Ollama/lib/ollama/'
+                echo '  doexe -r "${WORKDIR}/lib/" || die "Failed to install binary"'
+                echo '  dosym /opt/Ollama/bin/ollama /opt/bin/ollama'
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
@@ -124,7 +122,7 @@ jobs:
                 echo '      echo "After=network-online.target"'
                 echo '      echo ""'
                 echo '      echo "[Service]"'
-                echo '      echo "ExecStart=/opt/Ollama/ollama serve"'
+                echo '      echo "ExecStart=/opt/Ollama/bin/ollama serve"'
                 echo '      echo "User=ollama"'
                 echo '      echo "Group=ollama"'
                 echo '      echo "Restart=always"'
