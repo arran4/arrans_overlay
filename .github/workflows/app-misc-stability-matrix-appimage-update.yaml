@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.10 Github AppImage Release current.config 2024-08-19 00:13:48.967470266 +1000 AEST m=+0.001938198
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github AppImage Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-09-03 18:00:24.938898761 +1000 AEST m=+0.001953322
 
 name: app-misc/stability-matrix-appimage update
 
@@ -104,6 +104,9 @@ jobs:
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
                 echo "    unpack \"\${DISTDIR}/\${P}-StabilityMatrix-linux-x64.zip\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo "    mv \"${{ env.StabilityMatrix_appimage_archived_name_amd64 }}\" \"${{ env.StabilityMatrix_appimage_installed_name }}\"  || die \"Can't move archived file\""
                 echo '  fi'
                 echo '  chmod a+x "${{ env.StabilityMatrix_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
                 echo '  "./${{ env.StabilityMatrix_appimage_installed_name }}" --appimage-extract "${{ env.StabilityMatrix_desktop_file }}" || die "Failed to extract .desktop from appimage"'

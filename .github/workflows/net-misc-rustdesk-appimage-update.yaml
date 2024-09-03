@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.10 Github AppImage Release current.config 2024-08-19 00:13:48.967470266 +1000 AEST m=+0.001938198
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github AppImage Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-09-03 18:00:24.938898761 +1000 AEST m=+0.001953322
 
 name: net-misc/rustdesk-appimage update
 
@@ -27,7 +27,7 @@ env:
   keywords: ~amd64 ~arm64
   workflow_filename: net-misc-rustdesk-appimage-update.yaml
   rustdesk_desktop_file: 'rustdesk.desktop'
-  rustdesk_appimage_installed_name: 'rustdesk-appimage'
+  rustdesk_appimage_installed_name: 'rustdesk.AppImage'
   rustdesk_release_name_amd64: 'rustdesk-${tag}-x86_64.AppImage'
   rustdesk_release_name_arm64: 'rustdesk-${tag}-aarch64.AppImage'
 
@@ -95,15 +95,17 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="'
-                echo "  arm64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rustdesk-${tag}-aarch64.AppImage -> \${P}-aarch64.AppImage )"
-                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rustdesk-${tag}-x86_64.AppImage -> \${P}-x86_64.AppImage )"
+                echo "  arm64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rustdesk-${tag}-aarch64.AppImage -> \${P}-rustdesk-${tag}-aarch64.AppImage )"
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rustdesk-${tag}-x86_64.AppImage -> \${P}-rustdesk-${tag}-x86_64.AppImage )"
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
-                echo 'case \${ARCH} in'
-                echo '    amd64) cp ${DISTDIR}/\${P}-x86_64.AppImage ${{ env.rustdesk_appimage_installed_name }} ;;'
-                echo '    arm64) cp ${DISTDIR}/\${P}-aarch64.AppImage ${{ env.rustdesk_appimage_installed_name }} ;;'
-                echo 'esac'
+                echo '  if use amd64; then'
+                echo "    cp \"\${DISTDIR}/\${P}-${{ env.rustdesk_release_name_amd64 }}\" \"${{ env.rustdesk_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo "    cp \"\${DISTDIR}/\${P}-${{ env.rustdesk_release_name_arm64 }}\" \"${{ env.rustdesk_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
+                echo '  fi'
                 echo '  chmod a+x "${{ env.rustdesk_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
                 echo '  "./${{ env.rustdesk_appimage_installed_name }}" --appimage-extract "${{ env.rustdesk_desktop_file }}" || die "Failed to extract .desktop from appimage"'
                 echo '  "./${{ env.rustdesk_appimage_installed_name }}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
