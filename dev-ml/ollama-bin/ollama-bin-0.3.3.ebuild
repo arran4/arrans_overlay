@@ -26,13 +26,11 @@ src_unpack() {
 }
 
 src_install() {
-  exeinto /opt/Ollama
-  if use amd64; then
-    newexe "${DISTDIR}/${P}.amd64" "ollama" || die "Failed to install binary"
-  elif use arm64; then
-    newexe "${DISTDIR}/${P}.arm64" "ollama" || die "Failed to install binary"
-  fi
-  dosym /opt/Ollama/ollama /opt/bin/ollama
+  exeinto /opt/Ollama/bin
+	doexe "${WORKDIR}/bin/ollama" || die "Failed to install binary"
+	libinto /opt/Ollama/lib/ollama/
+	doexe -r "${WORKDIR}/lib/" || die "Failed to install binary"
+  dosym /opt/Ollama/bin/ollama /opt/bin/ollama
 }
 
 src_prepare() {
@@ -52,7 +50,7 @@ pkg_postinst() {
       echo "After=network-online.target"
       echo ""
       echo "[Service]"
-      echo "ExecStart=/opt/Ollama/ollama serve"
+      echo "ExecStart=/opt/Ollama/bin/ollama serve"
       echo "User=ollama"
       echo "Group=ollama"
       echo "Restart=always"
