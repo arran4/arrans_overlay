@@ -29,7 +29,8 @@ SRC_URI="
 
 src_unpack() {
   for oe in ${A}; do
-    e="$(echo "$oe" | cut -d. -f 1)"
+    e="$(echo "${oe#$P}" | cut -d. -f 2)"
+    echo "$oe: ${oe#$P}: $e"
     efn="${e}.AppImage"
     cp "${DISTDIR}/${oe}" "${efn}"  || die "Can't copy archive file"
     chmod a+x "${efn}"  || die "Can't chmod archive file"

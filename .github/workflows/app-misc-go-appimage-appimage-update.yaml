@@ -91,10 +91,11 @@ jobs:
                 echo ''
                 echo "src_unpack() {"
                 echo "  for oe in \${A}; do"
-                echo '    e="$(echo "$oe" | cut -d. -f 1)"'
+                echo '    e="$(echo "${oe#$P}" | cut -d. -f 2)"'
+                echo '    echo "$oe: ${oe#$P}: $e"'
                 echo '    efn="${e}.AppImage"'
-                echo "    cp \"\${DISTDIR}/\${oe}\" \"\${efn}\"  || die \"Can't copy archive file\""
-                echo "    chmod a+x \"\${efn}\"  || die \"Can't chmod archive file\""
+                echo "    cp \"\${DISTDIR}/\${oe}\" \"\${efn}\"  || die \"Can't copy \${e}\""
+                echo "    chmod a+x \"\${efn}\"  || die \"Can't chmod \${e} file\""
                 echo '  done'
                 echo "}"
                 echo ""
