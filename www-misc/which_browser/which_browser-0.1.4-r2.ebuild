@@ -8,7 +8,7 @@ SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
 
-RDEPEND="|| ( dev-libs/libayatana )"
+RDEPEND="|| ( dev-libs/libayatana-appindicator )"
 RESTRICT="mirror"
 
 # Verify the SHA256 checksum
