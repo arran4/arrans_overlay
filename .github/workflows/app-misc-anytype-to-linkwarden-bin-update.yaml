@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.10 Github Binary Release current.config 2024-08-19 00:13:48.967470266 +1000 AEST m=+0.001938198
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-09-04 16:50:31.674939388 +1000 AEST m=+0.002314554
 
 name: app-misc/anytype-to-linkwarden-bin update
 
@@ -26,11 +26,11 @@ env:
   github_repo: anytype-to-linkwarden
   keywords: ~amd64 ~arm64
   workflow_filename: app-misc-anytype-to-linkwarden-bin-update.yaml
-  migrate-json-export_binary_installed_name: 'migrate-json-export'
-  migrate-json-export_binary_archived_name_amd64: 'migrate-json-export'
-  migrate-json-export_release_name_amd64: 'migrate-json-export_\${PV}_linux_amd64.tar.gz'
-  migrate-json-export_binary_archived_name_arm64: 'migrate-json-export'
-  migrate-json-export_release_name_arm64: 'migrate-json-export_\${PV}_linux_arm64.tar.gz'
+  anytype-to-linkwarden_binary_installed_name: 'anytype-to-linkwarden'
+  anytype-to-linkwarden_binary_archived_name_amd64: 'anytype-to-linkwarden'
+  anytype-to-linkwarden_release_name_amd64: 'anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz'
+  anytype-to-linkwarden_binary_archived_name_arm64: 'anytype-to-linkwarden'
+  anytype-to-linkwarden_release_name_arm64: 'anytype-to-linkwarden_\${PV}_linux_arm64.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -94,34 +94,34 @@ jobs:
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
-                echo 'IUSE=" migrate-json-export doc"'
-                echo 'REQUIRED_USE="migrate-json-export? ( || ( amd64  ) ) "'
+                echo 'IUSE=" anytype-to-linkwarden doc"'
+                echo 'REQUIRED_USE="anytype-to-linkwarden? ( || ( amd64  ) ) "'
                 echo 'DEPEND=""'
                 echo 'RDEPEND=""'
                 echo 'S="${WORKDIR}"'
                 echo ''
                 echo ''
                 echo 'SRC_URI="'
-                echo "  amd64? ( migrate-json-export? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/migrate-json-export_\${PV}_linux_amd64.tar.gz -> \${P}-migrate-json-export_\${PV}_linux_amd64.tar.gz  )  )  "
-                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/migrate-json-export_\${PV}_linux_arm64.tar.gz -> \${P}-migrate-json-export_\${PV}_linux_arm64.tar.gz  )  "
+                echo "  amd64? ( anytype-to-linkwarden? ( !anytype-to-linkwarden? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz -> \${P}-anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz  )  )  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/anytype-to-linkwarden_\${PV}_linux_arm64.tar.gz -> \${P}-anytype-to-linkwarden_\${PV}_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
-                echo '  if use amd64 && use migrate-json-export; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-migrate-json-export_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  if use amd64 && use anytype-to-linkwarden && ! use anytype-to-linkwarden ; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-migrate-json-export_\${PV}_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-anytype-to-linkwarden_\${PV}_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '}'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
-                echo '  if use amd64 && use migrate-json-export; then'
-                echo '    newexe "${{ env.migrate-json-export_binary_archived_name_amd64 }}" "${{ env.migrate-json-export_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  if use amd64 && use anytype-to-linkwarden && ! use anytype-to-linkwarden ; then'
+                echo '    newexe "${{ env.anytype-to-linkwarden_binary_archived_name_amd64 }}" "${{ env.anytype-to-linkwarden_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo '    newexe "${{ env.migrate-json-export_binary_archived_name_arm64 }}" "${{ env.migrate-json-export_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.anytype-to-linkwarden_binary_archived_name_arm64 }}" "${{ env.anytype-to-linkwarden_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use doc; then'
                 echo '    if use amd64; then'
@@ -138,8 +138,8 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/migrate-json-export_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-migrate-json-export_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/migrate-json-export_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-migrate-json-export_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/anytype-to-linkwarden_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-anytype-to-linkwarden_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/anytype-to-linkwarden_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-anytype-to-linkwarden_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
