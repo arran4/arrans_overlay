@@ -103,7 +103,7 @@ jobs:
                 echo '  exeinto /opt/Ollama/bin'
                 echo '  doexe "${WORKDIR}/bin/ollama" || die "Failed to install binary"'
                 echo '  libinto /opt/Ollama/lib/ollama/'
-                echo '  doexe -r "${WORKDIR}/lib/" || die "Failed to install binary"'
+                echo '  newlib -r "${WORKDIR}/lib/ollama/" || die "Failed to install libraries"'
                 echo '  dosym /opt/Ollama/bin/ollama /opt/bin/ollama'
                 echo "}"
                 echo ""
