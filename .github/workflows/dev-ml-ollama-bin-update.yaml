@@ -1,5 +1,4 @@
 # Manually built - TODO make automated
-
 name: dev-ml/ollama-bin update
 
 permissions:
