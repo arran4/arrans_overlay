@@ -166,7 +166,7 @@ jobs:
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           git add ./${ebuild_dir}
-          git commit -m "Add ebuilds for new ${{ env.epn }} releases" &&
+          git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}" &&
           git pull --rebase &&
           git push || true
         if: steps.process_releases.outputs.generated_tag

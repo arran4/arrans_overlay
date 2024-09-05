@@ -146,6 +146,7 @@ jobs:
               g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64.tgz ${{ env.epn }}-${version}.amd64.tgz "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-arm64.tgz ${{ env.epn }}-${version}.arm64.tgz "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64-rocm.tgz ${{ env.epn }}-${version}.rocm.tgz "${ebuild_dir}/Manifest"
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
               
             fi
             break
@@ -155,7 +156,7 @@ jobs:
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           git add ./${ebuild_dir}
-          git commit -m "Add ebuilds for new ${{ env.epn }} releases" && 
+          git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}" && 
           git pull --rebase &&
           git push || true
         if: steps.process_releases.conclusion == 'success'
