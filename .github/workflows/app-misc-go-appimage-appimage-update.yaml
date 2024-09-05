@@ -55,7 +55,7 @@ jobs:
             echo "Processing run number: $run_number"
             version="0.0.${run_number}"
             ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
-            build_number=$((run_number + 646))
+            build_number=$((run_number + 646 - 1))
             if [ ! -f "$ebuild_file" ]; then
               
               # Create ebuild script
