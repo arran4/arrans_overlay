@@ -94,20 +94,20 @@ jobs:
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
-                echo 'IUSE=" anytype-to-linkwarden doc"'
-                echo 'REQUIRED_USE="anytype-to-linkwarden? ( || ( amd64  ) ) "'
+                echo 'IUSE=" anytype_to_linkwarden doc"'
+                echo 'REQUIRED_USE="anytype_to_linkwarden? ( || ( amd64  ) ) "'
                 echo 'DEPEND=""'
                 echo 'RDEPEND=""'
                 echo 'S="${WORKDIR}"'
                 echo ''
                 echo ''
                 echo 'SRC_URI="'
-                echo "  amd64? ( anytype-to-linkwarden? ( !anytype-to-linkwarden? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz -> \${P}-anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz  )  )  )  "
+                echo "  amd64? ( anytype_to_linkwarden? ( !anytype_to_linkwarden? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz -> \${P}-anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz  )  )  )  "
                 echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/anytype-to-linkwarden_\${PV}_linux_arm64.tar.gz -> \${P}-anytype-to-linkwarden_\${PV}_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
-                echo '  if use amd64 && use anytype-to-linkwarden && ! use anytype-to-linkwarden ; then'
+                echo '  if use amd64 && use anytype_to_linkwarden && ! use anytype_to_linkwarden ; then'
                 echo "    unpack \"\${DISTDIR}/\${P}-anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm64; then'
@@ -117,7 +117,7 @@ jobs:
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
-                echo '  if use amd64 && use anytype-to-linkwarden && ! use anytype-to-linkwarden ; then'
+                echo '  if use amd64 && use anytype_to_linkwarden && ! use anytype_to_linkwarden ; then'
                 echo '    newexe "${{ env.anytype-to-linkwarden_binary_archived_name_amd64 }}" "${{ env.anytype-to-linkwarden_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use arm64; then'
