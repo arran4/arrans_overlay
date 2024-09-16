@@ -2,11 +2,11 @@
 EAPI=8
 DESCRIPTION="Run moondream2, a small vision language model designed to run efficiently on edge devices, in a single binary executable using llamafile."
 HOMEPAGE="https://huggingface.co/cjpais/moondream2-llamafile"
-IUSE="systemd q5_k q5km-050824 q8-050824 q8 +full "
+IUSE="systemd q5_k q5km_050824 q8_050824 q8 +full "
 SRC_URI="amd64? ( 
   q5_k? ( https://huggingface.co/cjpais/moondream2-llamafile/resolve/main/moondream2-q5_k.llamafile?download=true -> ${P}.q5_k.amd64 )
-  q5km-050824? ( https://huggingface.co/cjpais/moondream2-llamafile/resolve/main/moondream2-q5km-050824.llamafile?download=true -> ${P}.q5km-050824.amd64 )
-  q8-050824? ( https://huggingface.co/cjpais/moondream2-llamafile/resolve/main/moondream2-q8-050824.llamafile?download=true -> ${P}.q8-050824.amd64 )
+  q5km_050824? ( https://huggingface.co/cjpais/moondream2-llamafile/resolve/main/moondream2-q5km-050824.llamafile?download=true -> ${P}.q5km-050824.amd64 )
+  q8_050824? ( https://huggingface.co/cjpais/moondream2-llamafile/resolve/main/moondream2-q8-050824.llamafile?download=true -> ${P}.q8-050824.amd64 )
   q8? ( https://huggingface.co/cjpais/moondream2-llamafile/resolve/main/moondream2-q8.llamafile?download=true -> ${P}.q8.amd64 )
   full? ( https://huggingface.co/cjpais/moondream2-llamafile/resolve/main/moondream2.llamafile?download=true -> ${P}.amd64 )
 )"
@@ -22,11 +22,11 @@ src_unpack() {
       cp "${DISTDIR}/${P}.${variant}.amd64" 'moondream2-q5_k.llamafile' || die 'failed to move moondream2-q5_k.llamafile'
       chmod +x 'moondream2-q5_k.llamafile' || die 'failed to chmod moondream2-q5_k.llamafile'
     fi
-    if use q5km-050824; then
+    if use q5km_050824; then
       cp "${DISTDIR}/${P}.${variant}.amd64" 'moondream2-q5km-050824.llamafile' || die 'failed to move moondream2-q5km-050824.llamafile'
       chmod +x 'moondream2-q5km-050824.llamafile' || die 'failed to chmod moondream2-q5km-050824.llamafile'
     fi
-    if use q8-050824; then
+    if use q8_050824; then
       cp "${DISTDIR}/${P}.${variant}.amd64" 'moondream2-q8-050824.llamafile' || die 'failed to move moondream2-q8-050824.llamafile'
       chmod +x 'moondream2-q8-050824.llamafile' || die 'failed to chmod moondream2-q8-050824.llamafile'
     fi
@@ -45,10 +45,10 @@ src_install() {
     if use q5_k; then
       doexe "${WORKDIR}/moondream2-q5_k.llamafile"
     fi
-    if use q5km-050824; then
+    if use q5km_050824; then
       doexe "${WORKDIR}/moondream2-q5km-050824.llamafile"
     fi
-    if use q8-050824; then
+    if use q8_050824; then
       doexe "${WORKDIR}/moondream2-q8-050824.llamafile"
     fi
     if use q8; then
@@ -90,7 +90,7 @@ pkg_postinst() {
       ln -s /usr/lib/systemd/system/moondream2-q5_k.llamafile.service /etc/systemd/user/moondream2-q5_k.llamafile.service
       fi
     fi
-    if use q5km-050824; then
+    if use q5km_050824; then
       doexe "${WORKDIR}/moondream2-q5km-050824.llamafile"
       einfo "moondream2-q5km-050824.llamafile --host 0.0.0.0 --port 51524 --convert -pc -pr -pp"
       einfo "curl 127.0.0.1:51524/inference -H \"Content-Type: multipart/form-data\" -F file=\"@<file-path>\"  -F temperature=\"0.0\"  -F temperature_inc=\"0.2\"  -F response_format=\"json\""
@@ -119,7 +119,7 @@ pkg_postinst() {
       ln -s /usr/lib/systemd/system/moondream2-q5km-050824.llamafile.service /etc/systemd/user/moondream2-q5km-050824.llamafile.service
       fi
     fi
-    if use q8-050824; then
+    if use q8_050824; then
       doexe "${WORKDIR}/moondream2-q8-050824.llamafile"
       einfo "moondream2-q8-050824.llamafile --host 0.0.0.0 --port 51524 --convert -pc -pr -pp"
       einfo "curl 127.0.0.1:51524/inference -H \"Content-Type: multipart/form-data\" -F file=\"@<file-path>\"  -F temperature=\"0.0\"  -F temperature_inc=\"0.2\"  -F response_format=\"json\""
