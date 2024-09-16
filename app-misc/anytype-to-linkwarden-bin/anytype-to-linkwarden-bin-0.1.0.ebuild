@@ -5,7 +5,7 @@ HOMEPAGE=""
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
-IUSE=" migrate-json-export doc"
+IUSE=" migrate_json_export doc"
 REQUIRED_USE="
 DEPEND=""
 RDEPEND=""
@@ -13,12 +13,12 @@ S="${WORKDIR}"
 
 
 SRC_URI="
-  amd64? ( migrate-json-export? (  https://github.com/arran4/anytype-to-linkwarden/releases/download/v0.1.0/migrate-json-export_${PV}_linux_amd64.tar.gz -> ${P}-migrate-json-export_${PV}_linux_amd64.tar.gz  )  )  
+  amd64? ( migrate_json_export? (  https://github.com/arran4/anytype-to-linkwarden/releases/download/v0.1.0/migrate-json-export_${PV}_linux_amd64.tar.gz -> ${P}-migrate-json-export_${PV}_linux_amd64.tar.gz  )  )
   arm64? (  https://github.com/arran4/anytype-to-linkwarden/releases/download/v0.1.0/migrate-json-export_${PV}_linux_arm64.tar.gz -> ${P}-migrate-json-export_${PV}_linux_arm64.tar.gz  )  
 "
 
 src_unpack() {
-  if use amd64 && use migrate-json-export; then
+  if use amd64 && use migrate_json_export; then
     unpack "${DISTDIR}/${P}-migrate-json-export_${PV}_linux_amd64.tar.gz" || die "Can't unpack archive file"
   fi
   if use arm64; then
@@ -28,7 +28,7 @@ src_unpack() {
 
 src_install() {
   exeinto /opt/bin
-  if use amd64 && use migrate-json-export; then
+  if use amd64 && use migrate_json_export; then
     newexe "migrate-json-export" "migrate-json-export" || die "Failed to install Binary"
   fi
   if use arm64; then
