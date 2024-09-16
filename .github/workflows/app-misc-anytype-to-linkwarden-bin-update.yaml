@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-09-04 16:50:31.674939388 +1000 AEST m=+0.002314554
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release ./test.config 2024-09-16 15:37:53.070959999 +1000 AEST m=+0.002689582
 
 name: app-misc/anytype-to-linkwarden-bin update
 
@@ -46,13 +46,13 @@ jobs:
 
       - name: Install required tools
         run: |
-            sudo apt-get update
-            sudo apt-get install -y wget jq coreutils
-            url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-            echo "$url"
-            wget "${url}" -O /tmp/g2.deb
-            sudo dpkg -i /tmp/g2.deb
-            rm /tmp/g2.deb
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+          url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          echo "$url"
+          wget "${url}" -O /tmp/g2.deb
+          sudo dpkg -i /tmp/g2.deb
+          rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
