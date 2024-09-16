@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release ./test.config 2024-09-16 15:37:53.070959999 +1000 AEST m=+0.002689582
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release ./current.config 2024-09-16 16:13:17.812633979 +1000 AEST m=+0.010287434
 
 name: app-misc/anytype-to-linkwarden-bin update
 
@@ -46,13 +46,13 @@ jobs:
 
       - name: Install required tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget jq coreutils
-          url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-          echo "$url"
-          wget "${url}" -O /tmp/g2.deb
-          sudo dpkg -i /tmp/g2.deb
-          rm /tmp/g2.deb
+            sudo apt-get update
+            sudo apt-get install -y wget jq coreutils
+            url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+            echo "$url"
+            wget "${url}" -O /tmp/g2.deb
+            sudo dpkg -i /tmp/g2.deb
+            rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
@@ -102,12 +102,12 @@ jobs:
                 echo ''
                 echo ''
                 echo 'SRC_URI="'
-                echo "  amd64? ( anytype_to_linkwarden? ( !anytype_to_linkwarden? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz -> \${P}-anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz  )  )  )  "
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz -> \${P}-anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz  )  "
                 echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/anytype-to-linkwarden_\${PV}_linux_arm64.tar.gz -> \${P}-anytype-to-linkwarden_\${PV}_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
-                echo '  if use amd64 && use anytype_to_linkwarden && ! use anytype_to_linkwarden ; then'
+                echo '  if use amd64; then'
                 echo "    unpack \"\${DISTDIR}/\${P}-anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm64; then'
@@ -117,7 +117,7 @@ jobs:
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
-                echo '  if use amd64 && use anytype_to_linkwarden && ! use anytype_to_linkwarden ; then'
+                echo '  if use amd64; then'
                 echo '    newexe "${{ env.anytype-to-linkwarden_binary_archived_name_amd64 }}" "${{ env.anytype-to-linkwarden_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use arm64; then'
