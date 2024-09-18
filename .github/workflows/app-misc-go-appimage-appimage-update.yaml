@@ -50,10 +50,9 @@ jobs:
         run: |
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
-          run_numbers=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/actions/runs | jq -r '(.workflow_runs[] | select(.path == ".github/workflows/build.yaml") ).run_number' )
-          for run_number in ${run_numbers}; do
-            echo "Processing run number: $run_number"
-            build_number=$((run_number + 646 - 1))
+          build_numbers=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases| jq -r '.[0].assets.[0].name|split("-").[1]' )
+          for build_number in ${build_numbers}; do
+            echo "Processing build number: $build_number"
             version="0.0.${build_number}"
             ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
