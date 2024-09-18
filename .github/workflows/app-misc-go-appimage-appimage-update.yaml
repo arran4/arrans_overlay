@@ -50,7 +50,7 @@ jobs:
         run: |
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p $ebuild_dir
-          build_numbers=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases| jq -r '(.[0].assets.[0].name|split("-")).[1]' )
+          build_numbers=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases| jq -r '(.[0].assets[0].name|split("-"))[1]' )
           for build_number in ${build_numbers}; do
             echo "Processing build number: $build_number"
             version="0.0.${build_number}"
