@@ -1,5 +1,5 @@
 # Manually built - TODO make automated
-name: dev-ml/ollama-bin update
+name: app-misc/ollama-bin update
 
 permissions:
   contents: write
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/dev-ml-ollama-bin-update.yaml'
+      - '.github/workflows/app-misc-ollama-bin-update.yaml'
 
 
 concurrency:
@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  ecn: dev-ml
+  ecn: app-misc
   epn: ollama-bin
   description: "Get up and running with Llama 3, Mistral, Gemma, and other large language models."
   homepage: "https://ollama.com"

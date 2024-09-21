@@ -1,4 +1,4 @@
-name: dev-ml/whisperfile-bin Update
+name: app-misc/whisperfile-bin Update
 
 permissions:
   contents: write
@@ -9,20 +9,20 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/dev-ml-whisperfile-bin-update.yaml'
+      - '.github/workflows/app-misc-whisperfile-bin-update.yaml'
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
 env:
-  ebuild_category: dev-ml
+  ebuild_category: app-misc
   ebuild_name: whisperfile-bin
   github_owner: cjpais
   github_repo: whisperfile
   description: "Distribute and run whisper LLMs with a single file."
   homepage: "https://github.com/cjpais/whisperfile"
-  workflowfile: "dev-ml-whisperfile-bin-update.yaml"
+  workflowfile: "app-misc-whisperfile-bin-update.yaml"
   license: "Apache 2.0"
 
 jobs:

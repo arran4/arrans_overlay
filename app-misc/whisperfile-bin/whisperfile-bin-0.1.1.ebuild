@@ -1,4 +1,4 @@
-# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/dev-ml-whisperfile-bin-update.yaml
+# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-whisperfile-bin-update.yaml
 EAPI=8
 DESCRIPTION="Distribute and run whisper LLMs with a single file."
 HOMEPAGE="https://github.com/cjpais/whisperfile"

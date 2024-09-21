@@ -1,4 +1,4 @@
-name: dev-ml/moondream2-llamafile Update
+name: app-misc/moondream2-llamafile Update
 
 permissions:
   contents: write
@@ -9,21 +9,21 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/dev-ml-moondream2-llamafile-bin-update.yaml'
+      - '.github/workflows/app-misc-moondream2-llamafile-bin-update.yaml'
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
 env:
-  ebuild_category: dev-ml
+  ebuild_category: app-misc
   ebuild_name_prefix: ""
   ebuild_name_suffix: "llamafile-bin"
   huggingface_owner: cjpais
   huggingface_repo: moondream2-llamafile
   huggingface_repo_branch: main
   homepage: "https://huggingface.co/cjpais/moondream2-llamafile"
-  workflowfile: "dev-ml-moondream2-llamafile-bin-update.yaml"
+  workflowfile: "app-misc-moondream2-llamafile-bin-update.yaml"
   license: "Apache 2.0"
   description: "Run $model, a small vision language model designed to run efficiently on edge devices, in a single binary executable using llamafile."
 

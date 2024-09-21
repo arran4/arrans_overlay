@@ -1,4 +1,4 @@
-name: dev-ml/llamafile-bin Update
+name: app-misc/llamafile-bin Update
 
 permissions:
   contents: write
@@ -9,20 +9,20 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/dev-ml-llamafile-bin-update.yaml'
+      - '.github/workflows/app-misc-llamafile-bin-update.yaml'
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
 env:
-  ebuild_category: dev-ml
+  ebuild_category: app-misc
   ebuild_name: llamafile-bin
   github_owner: Mozilla-Ocho
   github_repo: llamafile
   description: " Distribute and run LLMs with a single file. "
   homepage: "https://llamafile.ai/"
-  workflowfile: "dev-ml-llamafile-bin-update.yaml"
+  workflowfile: "app-misc-llamafile-bin-update.yaml"
   license: "Apache 2.0"
 
 jobs:

@@ -1,4 +1,4 @@
-# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/dev-ml-mozilla-llm-compiler-llamafile-bin-update.yaml
+# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-mozilla-llm-compiler-llamafile-bin-update.yaml
 EAPI=8
 DESCRIPTION="LLM Compiler llm-compiler-13b-ftd is a large language model that's been trained to know how to read/write AT&T style assembly, LLVM IR, and C code. It's able to replicate the functionality of the clang compiler."
 HOMEPAGE="https://huggingface.co/Mozilla/llm-compiler-13b-ftd-llamafile"

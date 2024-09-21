@@ -1,4 +1,4 @@
-# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/dev-ml-moondream2-llamafile-bin-update.yaml
+# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-moondream2-llamafile-bin-update.yaml
 EAPI=8
 DESCRIPTION="Run moondream2, a small vision language model designed to run efficiently on edge devices, in a single binary executable using llamafile."
 HOMEPAGE="https://huggingface.co/cjpais/moondream2-llamafile"

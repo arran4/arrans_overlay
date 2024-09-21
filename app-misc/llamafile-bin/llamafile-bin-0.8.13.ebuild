@@ -1,4 +1,4 @@
-# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/dev-ml-llamafile-bin-update.yaml
+# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-llamafile-bin-update.yaml
 EAPI=8
 DESCRIPTION=" Distribute and run LLMs with a single file. "
 HOMEPAGE="https://llamafile.ai/"
