@@ -28,8 +28,8 @@ env:
   workflow_filename: app-misc-chatbox-appimage-update.yaml
   chatbox_desktop_file: 'xyz.chatboxapp.app.desktop'
   chatbox_appimage_installed_name: 'chatbox.AppImage'
-  chatbox_release_name_amd64: 'Chatbox-\${PV}-x86_64.AppImage'
-  chatbox_release_name_arm64: 'Chatbox-\${PV}-arm64.AppImage'
+  chatbox_release_name_amd64: 'Chatbox-CE-\${PV}-x86_64.AppImage'
+  chatbox_release_name_arm64: 'Chatbox-CE-\${PV}-arm64.AppImage'
 
 jobs:
   check-and-create-ebuild:
@@ -98,8 +98,8 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="'
-                echo "  arm64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Chatbox-\${PV}-arm64.AppImage -> \${P}-Chatbox-\${PV}-arm64.AppImage )"
-                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Chatbox-\${PV}-x86_64.AppImage -> \${P}-Chatbox-\${PV}-x86_64.AppImage )"
+                echo "  arm64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Chatbox-CE-\${PV}-arm64.AppImage -> \${P}-Chatbox-\${PV}-arm64.AppImage )"
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Chatbox-CE-\${PV}-x86_64.AppImage -> \${P}-Chatbox-\${PV}-x86_64.AppImage )"
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
@@ -141,8 +141,8 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Chatbox-${version}-arm64.AppImage" "${{ env.epn }}-${version}-Chatbox-${version}-arm64.AppImage" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Chatbox-${version}-x86_64.AppImage" "${{ env.epn }}-${version}-Chatbox-${version}-x86_64.AppImage" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Chatbox-CE-${version}-arm64.AppImage" "${{ env.epn }}-${version}-Chatbox-${version}-arm64.AppImage" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/Chatbox-CE-${version}-x86_64.AppImage" "${{ env.epn }}-${version}-Chatbox-${version}-x86_64.AppImage" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
