@@ -1,0 +1,22 @@
+name: Ebuild Tests
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: "0 0 * * *"   # <=== Change this value
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    container: gentoo/stage3
+    steps:
+      # Check out the repository
+      - uses: actions/checkout@master
+
+      - name: Run tests
+        run: |
+          for e in $(find . -type f -name \*.ebuild); do sudo ebuild "./$e" test; done
+
+
+          
