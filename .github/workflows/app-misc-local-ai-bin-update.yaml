@@ -24,7 +24,7 @@ env:
   homepage: "https://localai.io"
   github_owner: mudler
   github_repo: LocalAI
-  keywords: ~amd64 ~amd64 ~arm64
+  keywords: ~amd64 ~arm64
   workflow_filename: app-misc-local-ai-bin-update.yaml
   local-ai_binary_installed_name: 'local-ai'
   local-ai_release_name_amd64: 'local-ai-Linux-x86_64'

@@ -24,7 +24,7 @@ env:
   homepage: "https://pagefind.app"
   github_owner: CloudCannon
   github_repo: pagefind
-  keywords: ~amd64 ~amd64 ~arm64 ~arm64
+  keywords: ~amd64 ~arm64
   workflow_filename: www-apps-pagefind-bin-update.yaml
   binary_installed_name: 'pagefind'
   binary_archived_name_amd64: 'pagefind'
