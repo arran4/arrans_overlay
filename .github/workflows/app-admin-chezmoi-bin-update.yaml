@@ -24,7 +24,7 @@ env:
   homepage: "https://www.chezmoi.io/"
   github_owner: twpayne
   github_repo: chezmoi
-  keywords: ~amd64 ~amd64 ~amd64 ~arm ~arm64 ~arm64 ~ppc64 ~ppc64 ~riscv ~s390 ~x86
+  keywords: ~amd64 ~arm ~arm64 ~ppc64 ~riscv ~s390 ~x86
   workflow_filename: app-admin-chezmoi-bin-update.yaml
   android_binary_installed_name: 'chezmoi'
   android_binary_archived_name_arm64: 'chezmoi'
