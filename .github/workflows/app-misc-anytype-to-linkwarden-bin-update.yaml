@@ -21,7 +21,7 @@ env:
   ecn: app-misc
   epn: anytype-to-linkwarden-bin
   description: "TODO"
-  homepage: ""
+  homepage: "https://github.com/arran4/anytype-to-linkwarden-bin"
   github_owner: arran4
   github_repo: anytype-to-linkwarden
   keywords: ~amd64 ~arm64
