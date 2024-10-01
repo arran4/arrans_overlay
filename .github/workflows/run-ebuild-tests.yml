@@ -27,7 +27,7 @@ jobs:
 
       - name: Run tests
         run: |
-          emerge --sync
+          emerge-webrsync >> sync.txt
           for e in $(find . -type f -name \*.ebuild); do
             echo "Testing $e";
             ebuild "./$e" test; 
