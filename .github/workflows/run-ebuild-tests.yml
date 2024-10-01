@@ -6,6 +6,9 @@ on:
   schedule:
     - cron: "0 0 * * *"   # <=== Change this value
   workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/run-ebuild-tests.yml'
 
 jobs:
   tests:
