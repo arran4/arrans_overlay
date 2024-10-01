@@ -10,11 +10,18 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    container: gentoo/stage3
+    container:
+      image: gentoo/stage3
+      volumes:
+        - ./:/var/db/repos/arrans-overlay
     steps:
       # Check out the repository
       - uses: actions/checkout@master
 
       - name: Run tests
         run: |
-          for e in $(find . -type f -name \*.ebuild); do ebuild "./$e" test; done
+          cd /var/db/repos/arrans-overlay
+          for e in $(find . -type f -name \*.ebuild); do
+            echo "Testing $e";
+            ebuild "./$e" test; 
+          done
