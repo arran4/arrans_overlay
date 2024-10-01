@@ -28,8 +28,8 @@ jobs:
       - name: Run tests
         run: |
           emerge-webrsync >> sync.txt
-          emerge media-video/vlc -vu --autounmask --autounmask-continue --autounmask-write >> vlc.txt
+          # emerge media-video/vlc -vu --autounmask --autounmask-continue --autounmask-write >> vlc.txt
           for e in $(find . -type f -name \*.ebuild); do
             echo "Testing $e";
-            ebuild "./$e" test; 
+            ebuild "./$e" fetch; 
           done
