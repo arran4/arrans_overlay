@@ -14,13 +14,13 @@ jobs:
       image: gentoo/stage3
       volumes:
         - ./:/var/db/repos/arrans-overlay
+      working-directory: /var/db/repos/arrans-overlay
     steps:
       # Check out the repository
       - uses: actions/checkout@master
 
       - name: Run tests
         run: |
-          cd /var/db/repos/arrans-overlay
           for e in $(find . -type f -name \*.ebuild); do
             echo "Testing $e";
             ebuild "./$e" test; 
