@@ -13,8 +13,10 @@ jobs:
     container:
       image: gentoo/stage3
       volumes:
-        - ./:/var/db/repos/arrans-overlay
-      working-directory: /var/db/repos/arrans-overlay
+        - ${{github.workspace}}:/var/db/repos/arrans-overlay
+    defaults:
+      run:
+        working-directory: /var/db/repos/arrans-overlay
     steps:
       # Check out the repository
       - uses: actions/checkout@master
