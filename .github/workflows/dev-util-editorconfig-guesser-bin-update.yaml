@@ -97,7 +97,6 @@ jobs:
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo 'IUSE=" ecguess doc"'
-                echo 'REQUIRED_USE="ecguess? ( || ( arm  ) ) "'
                 echo 'DEPEND=""'
                 echo 'RDEPEND=""'
                 echo 'S="${WORKDIR}"'
