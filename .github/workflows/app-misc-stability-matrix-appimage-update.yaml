@@ -105,9 +105,6 @@ jobs:
                 echo '  if use amd64; then'
                 echo "    unpack \"\${DISTDIR}/\${P}-StabilityMatrix-linux-x64.zip\" || die \"Can't unpack archive file\""
                 echo '  fi'
-                echo '  if use amd64; then'
-                echo "    mv \"${{ env.StabilityMatrix_appimage_archived_name_amd64 }}\" \"${{ env.StabilityMatrix_appimage_installed_name }}\"  || die \"Can't move archived file\""
-                echo '  fi'
                 echo '  chmod a+x "${{ env.StabilityMatrix_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
                 echo '  "./${{ env.StabilityMatrix_appimage_installed_name }}" --appimage-extract "${{ env.StabilityMatrix_desktop_file }}" || die "Failed to extract .desktop from appimage"'
                 echo '  "./${{ env.StabilityMatrix_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
