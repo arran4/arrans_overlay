@@ -22,13 +22,13 @@ src_unpack() {
     cp "${DISTDIR}/${P}-ente-auth-v4.0.3-beta.3-x86_64.AppImage" "ente_auth.AppImage"  || die "Can't copy downloaded file"
   fi
   chmod a+x "ente_auth.AppImage"  || die "Can't chmod archive file"
-  "./ente_auth.AppImage" --appimage-extract "ente_auth.desktop" || die "Failed to extract .desktop from appimage"
+  "./ente_auth.AppImage" --appimage-extract "enteauth.desktop" || die "Failed to extract .desktop from appimage"
   "./ente_auth.AppImage" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"
   "./ente_auth.AppImage" --appimage-extract "*.png" || die "Failed to extract root icons from app image"
 }
 
 src_prepare() {
-  sed -i 's:^Exec=.*:Exec=/opt/bin/ente_auth.AppImage:' 'squashfs-root/ente_auth.desktop'
+  sed -i 's:^Exec=.*:Exec=/opt/bin/ente_auth.AppImage:' 'squashfs-root/enteauth.desktop'
   find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm {} \; 
   find squashfs-root -type d -exec rmdir -p --ignore-fail-on-non-empty {} \; 
   eapply_user
@@ -38,7 +38,7 @@ src_install() {
   exeinto /opt/bin
   doexe "ente_auth.AppImage" || die "Failed to install AppImage"
   insinto /usr/share/applications
-  doins "squashfs-root/ente_auth.desktop" || die "Failed to install desktop file"
+  doins "squashfs-root/enteauth.desktop" || die "Failed to install desktop file"
   insinto /usr/share/icons
   doins -r squashfs-root/usr/share/icons/hicolor || die "Failed to install icons"
   insinto /usr/share/pixmaps
