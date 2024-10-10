@@ -98,7 +98,7 @@ jobs:
                 echo "LICENSE=\"${{ env.license }}\""
                 echo "SLOT=\"0\""
                 echo 'KEYWORDS="~amd64"'
-                echo 'RDEPEND="systemd? (acct-group/llamafile acct-user/llamafile)"'
+                echo 'RDEPEND="systemd? ( acct-group/llamafile acct-user/llamafile )"'
                 echo 'DEPEND="${RDEPEND}"'
                 echo "S=\"\${WORKDIR}\""
                 echo ""

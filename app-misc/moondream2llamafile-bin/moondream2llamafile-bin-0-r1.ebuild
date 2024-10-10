@@ -13,7 +13,7 @@ SRC_URI="amd64? (
 LICENSE="Apache 2.0"
 SLOT="0"
 KEYWORDS="~amd64"
-RDEPEND="systemd? (acct-group/llamafile acct-user/llamafile)"
+RDEPEND="systemd? ( acct-group/llamafile acct-user/llamafile )"
 DEPEND="${RDEPEND}"
 S="${WORKDIR}"
 
