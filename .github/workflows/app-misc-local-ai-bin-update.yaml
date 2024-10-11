@@ -107,9 +107,6 @@ jobs:
                 echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/local-ai-Linux-arm64 -> \${P}-local-ai-Linux-arm64  )  "
                 echo '"'
                 echo ''
-                echo 'src_unpack() {'
-                echo '}'
-                echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'

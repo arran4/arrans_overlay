@@ -18,9 +18,6 @@ SRC_URI="
   arm64? (  https://github.com/mudler/LocalAI/releases/download/v2.21.1/local-ai-Linux-arm64 -> ${P}-local-ai-Linux-arm64  )  
 "
 
-src_unpack() {
-}
-
 src_install() {
   exeinto /opt/bin
   if use amd64; then

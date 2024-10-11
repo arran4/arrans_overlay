@@ -16,9 +16,6 @@ SRC_URI="
   amd64? (  https://github.com/Picocrypt/Picocrypt/releases/download/1.43/Picocrypt -> ${P}-Picocrypt  )  
 "
 
-src_unpack() {
-}
-
 src_install() {
   exeinto /opt/bin
   if use amd64; then
