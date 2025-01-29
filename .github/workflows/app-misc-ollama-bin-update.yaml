@@ -89,12 +89,12 @@ jobs:
                 echo ''
                 echo "src_unpack() {"
                 echo "  if use rocm; then"
-                echo "    tar -xzvf \${DISTDIR}/\${P}.rocm.tgz -C '\${WORKDIR}' || die \"Can't extract rocm tgz\""
+                echo "    tar -xzvf \${DISTDIR}/\${P}.rocm.tgz -C \"\${WORKDIR}\" || die \"Can't extract rocm tgz\""
                 echo "  fi"
                 echo '  if use amd64; then'
-                echo '    tar -xzvf "${DISTDIR}/${P}.amd64.tgz" -C '\${WORKDIR}' || die "Failed to extract binary"'
+                echo '    tar -xzvf "${DISTDIR}/${P}.amd64.tgz" -C \"\${WORKDIR}\" || die "Failed to extract binary"'
                 echo '  elif use arm64; then'
-                echo '    tar -xzvf "${DISTDIR}/${P}.arm64.tgz" -C '\${WORKDIR}' || die "Failed to extract binary"'
+                echo '    tar -xzvf "${DISTDIR}/${P}.arm64.tgz" -C \"\${WORKDIR}\" || die "Failed to extract binary"'
                 echo '  fi'
                 echo "}"
                 echo ""
