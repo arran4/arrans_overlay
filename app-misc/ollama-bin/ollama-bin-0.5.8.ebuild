@@ -24,9 +24,9 @@ src_unpack() {
     tar -xzvf "${DISTDIR}/${P}.rocm.tgz" -C "${WORKDIR}" || die "Can't extract rocm tgz"
   fi
   if use amd64; then
-    tar -xzvf "/.amd64.tgz" -C "${WORKDIR}" || die "Failed to extract binary"
+    tar -xzvf "${DISTDIR}/${P}.amd64.tgz" -C "${WORKDIR}" || die "Failed to extract binary"
   elif use arm64; then
-    tar -xzvf "/.arm64.tgz" -C "${WORKDIR}" || die "Failed to extract binary"
+    tar -xzvf "${DISTDIR}/${P}.arm64.tgz" -C "${WORKDIR}" || die "Failed to extract binary"
   fi
 }
 
