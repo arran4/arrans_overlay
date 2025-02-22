@@ -29,8 +29,6 @@ env:
   local-ai_binary_installed_name: 'local-ai'
   local-ai_release_name_amd64: 'local-ai-Linux-x86_64'
   local-ai_release_name_arm64: 'local-ai-Linux-arm64'
-  stablediffusion_binary_installed_name: 'stablediffusion'
-  stablediffusion_release_name_amd64: 'stablediffusion'
 
 jobs:
   check-and-create-ebuild:
@@ -103,7 +101,6 @@ jobs:
                 echo ''
                 echo 'SRC_URI="'
                 echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/local-ai-Linux-x86_64 -> \${P}-local-ai-Linux-x86_64  )  "
-                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/stablediffusion -> \${P}-stablediffusion  )  "
                 echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/local-ai-Linux-arm64 -> \${P}-local-ai-Linux-arm64  )  "
                 echo '"'
                 echo ''
@@ -115,9 +112,6 @@ jobs:
                 echo '  if use arm64; then'
                 echo '    newexe "${DISTDIR}/${P}-${{ env.local-ai_release_name_arm64 }}" "${{ env.local-ai_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
-                echo '  if use amd64; then'
-                echo '    newexe "${DISTDIR}/${P}-${{ env.stablediffusion_release_name_amd64 }}" "${{ env.stablediffusion_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
                 echo '}'
                 echo ""
               } > $ebuild_file
@@ -125,7 +119,6 @@ jobs:
               # Manifest generation
 
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/local-ai-Linux-x86_64" "${{ env.epn }}-${version}-local-ai-Linux-x86_64" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/stablediffusion" "${{ env.epn }}-${version}-stablediffusion" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/local-ai-Linux-arm64" "${{ env.epn }}-${version}-local-ai-Linux-arm64" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
