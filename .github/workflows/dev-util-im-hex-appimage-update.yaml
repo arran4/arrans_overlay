@@ -107,7 +107,7 @@ jobs:
                 echo '  chmod a+x "${{ env.ImHex_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
                 echo '  "./${{ env.ImHex_appimage_installed_name }}" --appimage-extract "${{ env.ImHex_desktop_file }}" || die "Failed to extract .desktop from appimage"'
                 echo '  "./${{ env.ImHex_appimage_installed_name }}" --appimage-extract "usr/share/pixmaps" || die "Failed to extract pixmaps icons from app image"'
-                echo '  "./${{ env.ImHex_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
+                echo '  "./${{ env.ImHex_appimage_installed_name }}" --appimage-extract "*.svg" || die "Failed to extract root icons from app image"'
                 echo '}'
                 echo ''
                 echo 'src_prepare() {'
@@ -121,9 +121,9 @@ jobs:
                 echo '  insinto /usr/share/applications'
                 echo '  doins "squashfs-root/${{ env.ImHex_desktop_file }}" || die "Failed to install desktop file"'
                 echo '  insinto /usr/share/pixmaps'
-                echo '  doins squashfs-root/usr/share/pixmaps/*.png || die "Failed to install icons"'
+                echo '  doins squashfs-root/usr/share/pixmaps/*.svg || die "Failed to install icons"'
                 echo '  insinto /usr/share/pixmaps'
-                echo '  doins squashfs-root/*.png || die "Failed to install icons"'
+                echo '  doins squashfs-root/*.svg || die "Failed to install icons"'
                 echo '}'
                 echo ""
                 echo "pkg_postinst() {"

@@ -24,7 +24,7 @@ src_unpack() {
   chmod a+x "ImHex.AppImage"  || die "Can't chmod archive file"
   "./ImHex.AppImage" --appimage-extract "imhex.desktop" || die "Failed to extract .desktop from appimage"
   "./ImHex.AppImage" --appimage-extract "usr/share/pixmaps" || die "Failed to extract pixmaps icons from app image"
-  "./ImHex.AppImage" --appimage-extract "*.png" || die "Failed to extract root icons from app image"
+  "./ImHex.AppImage" --appimage-extract "*.svg" || die "Failed to extract root icons from app image"
 }
 
 src_prepare() {
@@ -38,9 +38,9 @@ src_install() {
   insinto /usr/share/applications
   doins "squashfs-root/imhex.desktop" || die "Failed to install desktop file"
   insinto /usr/share/pixmaps
-  doins squashfs-root/usr/share/pixmaps/*.png || die "Failed to install icons"
+  doins squashfs-root/usr/share/pixmaps/*.svg || die "Failed to install icons"
   insinto /usr/share/pixmaps
-  doins squashfs-root/*.png || die "Failed to install icons"
+  doins squashfs-root/*.svg || die "Failed to install icons"
 }
 
 pkg_postinst() {
