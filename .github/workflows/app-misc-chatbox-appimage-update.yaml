@@ -6,9 +6,9 @@ permissions:
   contents: write
 
 on:
-  schedule:
-    - cron: '25 12 * * *'
-  workflow_dispatch:
+#  schedule:
+#    - cron: '25 12 * * *'
+#  workflow_dispatch:
   push:
     paths:
       - '.github/workflows/app-misc-chatbox-appimage-update.yaml'
