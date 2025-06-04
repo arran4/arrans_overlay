@@ -52,9 +52,15 @@ jobs:
           for version in ${versions}; do
             if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
               echo "$version doesn't match regexp";
-              continue; 
+              continue;
             fi
             ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            x86_url="https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-ia32-release.zip"
+            if wget -q --spider "${x86_url}"; then
+              has_x86=1
+            else
+              has_x86=0
+            fi
             if [ ! -f "$ebuild_file" ]; then
               # Create ebuild script
               {
@@ -65,14 +71,20 @@ jobs:
                 echo 'IUSE=""'
                 echo 'SRC_URI="  '
                 echo "  amd64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-x64-release.zip -> \${P}.amd64.zip )"
-                echo "  x86? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-ia32-release.zip -> \${P}.x86.zip )"
+                if [ "${has_x86}" = "1" ]; then
+                  echo "  x86? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-ia32-release.zip -> \${P}.x86.zip )"
+                fi
                 echo "  arm? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-arm-release.zip -> \${P}.arm.zip )"
                 echo "  arm64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-arm64-release.zip -> \${P}.arm64.zip )"
                 echo "  riscv? ( https://storage.googleapis.com/dart-archive/channels/stable/release/\${PV}/sdk/dartsdk-linux-riscv64-release.zip -> \${P}.riscv.zip )"
                 echo '" '
                 echo "LICENSE=\"BSD\""
                 echo "SLOT=\"0\""
-                echo 'KEYWORDS="~amd64 ~x86 ~arm ~arm64 ~riscv"'
+                if [ "${has_x86}" = "1" ]; then
+                  echo 'KEYWORDS="~amd64 ~x86 ~arm ~arm64 ~riscv"'
+                else
+                  echo 'KEYWORDS="~amd64 ~arm ~arm64 ~riscv"'
+                fi
                 echo 'RDEPEND="app-arch/unzip"'
                 echo 'DEPEND=""'
                 echo "S=\"\${WORKDIR}/dart-sdk\""
@@ -88,7 +100,9 @@ jobs:
 
               # Generate the manifest for the new ebuild
               g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-x64-release.zip" "${ebuild_name}-${version}.amd64.zip" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-ia32-release.zip" "${ebuild_name}-${version}.x86.zip" "${ebuild_dir}/Manifest"
+              if [ "${has_x86}" = "1" ]; then
+                g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-ia32-release.zip" "${ebuild_name}-${version}.x86.zip" "${ebuild_dir}/Manifest"
+              fi
               g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-arm-release.zip" "${ebuild_name}-${version}.arm.zip" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-arm64-release.zip" "${ebuild_name}-${version}.arm64.zip" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-riscv64-release.zip" "${ebuild_name}-${version}.riscv.zip" "${ebuild_dir}/Manifest"
