@@ -13,10 +13,10 @@ S="${WORKDIR}"
 
 
 SRC_URI="
-  amd64? (  https://github.com/CloudCannon/pagefind/releases/download/v1.3.0/pagefind-v1.3.0-x86_64-unknown-linux-musl.tar.gz -> ${P}-pagefind-v1.3.0-x86_64-unknown-linux-musl.tar.gz  )  
-  amd64? (  https://github.com/CloudCannon/pagefind/releases/download/v1.3.0/pagefind_extended-v1.3.0-x86_64-unknown-linux-musl.tar.gz -> ${P}-pagefind_extended-v1.3.0-x86_64-unknown-linux-musl.tar.gz  )  
-  arm64? (  https://github.com/CloudCannon/pagefind/releases/download/v1.3.0/pagefind-v1.3.0-aarch64-unknown-linux-musl.tar.gz -> ${P}-pagefind-v1.3.0-aarch64-unknown-linux-musl.tar.gz  )  
-  arm64? (  https://github.com/CloudCannon/pagefind/releases/download/v1.3.0/pagefind_extended-v1.3.0-aarch64-unknown-linux-musl.tar.gz -> ${P}-pagefind_extended-v1.3.0-aarch64-unknown-linux-musl.tar.gz  )  
+  amd64? (  https://github.com/Pagefind/pagefind/releases/download/v1.3.0/pagefind-v1.3.0-x86_64-unknown-linux-musl.tar.gz -> ${P}-pagefind-v1.3.0-x86_64-unknown-linux-musl.tar.gz  )
+  amd64? (  https://github.com/Pagefind/pagefind/releases/download/v1.3.0/pagefind_extended-v1.3.0-x86_64-unknown-linux-musl.tar.gz -> ${P}-pagefind_extended-v1.3.0-x86_64-unknown-linux-musl.tar.gz  )
+  arm64? (  https://github.com/Pagefind/pagefind/releases/download/v1.3.0/pagefind-v1.3.0-aarch64-unknown-linux-musl.tar.gz -> ${P}-pagefind-v1.3.0-aarch64-unknown-linux-musl.tar.gz  )
+  arm64? (  https://github.com/Pagefind/pagefind/releases/download/v1.3.0/pagefind_extended-v1.3.0-aarch64-unknown-linux-musl.tar.gz -> ${P}-pagefind_extended-v1.3.0-aarch64-unknown-linux-musl.tar.gz  )
 "
 
 src_unpack() {
