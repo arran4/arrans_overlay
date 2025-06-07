@@ -27,7 +27,7 @@ env:
   keywords: ~amd64
   workflow_filename: app-misc-flutter-google-datastore-appimage-update.yaml
   flutter_google_datastore_desktop_file: 'flutter_google_datastore.desktop'
-  flutter_google_datastore_appimage_installed_name: 'flutter_google_datastore.AppImage'
+  flutter_google_datastore_appimage_installed_name: 'FlutterGoogleDatastore.AppImage'
   flutter_google_datastore_release_name_amd64: 'flutter_google_datastore-linux-x86_64.AppImage'
 
 jobs:
@@ -81,6 +81,8 @@ jobs:
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
 
+              release_name="${{ env.github_repo }}-${originalVersion}-linux.AppImage"
+
               {
                 echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
                 echo 'EAPI=8'
@@ -98,12 +100,12 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="'
-                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/flutter_google_datastore-linux-x86_64.AppImage -> \${P}-flutter_google_datastore-linux-x86_64.AppImage )"
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${release_name} -> \${P}-${release_name} )"
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
-                echo "    cp \"\${DISTDIR}/\${P}-${{ env.flutter_google_datastore_release_name_amd64 }}\" \"${{ env.flutter_google_datastore_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
+                echo "    cp \"\${DISTDIR}/\${P}-${release_name}\" \"${{ env.flutter_google_datastore_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
                 echo '  fi'
                 echo '  chmod a+x "${{ env.flutter_google_datastore_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
                 echo '  "./${{ env.flutter_google_datastore_appimage_installed_name }}" --appimage-extract "${{ env.flutter_google_datastore_desktop_file }}" || die "Failed to extract .desktop from appimage"'
@@ -137,7 +139,7 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/flutter_google_datastore-linux-x86_64.AppImage" "${{ env.epn }}-${version}-flutter_google_datastore-linux-x86_64.AppImage" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${release_name}" "${{ env.epn }}-${version}-${release_name}" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
