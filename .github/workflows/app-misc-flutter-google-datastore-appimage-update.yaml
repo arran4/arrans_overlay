@@ -58,7 +58,8 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
           declare -A releaseTypes=()
-          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          releases_json=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases)
+          tags=$(echo "$releases_json" | jq -r '.[].tag_name')
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
@@ -81,7 +82,10 @@ jobs:
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
 
-              release_name="${{ env.github_repo }}-${originalVersion}-linux.AppImage"
+              release_name="$(echo "$releases_json" | jq -r --arg tag "$tag" '.[] | select(.tag_name==$tag) | .assets[].name | select(test("(?i)linux.*appimage$"))' | head -n 1)"
+              if [ -z "$release_name" ]; then
+                release_name="${{ env.github_repo }}-${originalVersion}-linux.AppImage"
+              fi
 
               {
                 echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
