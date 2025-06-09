@@ -3,12 +3,6 @@ name: Ebuild Tests
 on:
   pull_request:
     branches: [ "main" ]
-  #schedule:
-  #  - cron: "0 0 * * *"   # <=== Change this value
-  workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/run-ebuild-tests.yml'
 
 jobs:
   tests:
@@ -24,13 +18,20 @@ jobs:
     steps:
       # Check out the repository
       - uses: actions/checkout@master
+        with:
+          fetch-depth: 0
 
       - name: Run tests
         run: |
           emerge-webrsync >> sync.txt
-          # emerge media-video/vlc -vu --autounmask --autounmask-continue --autounmask-write >> vlc.txt
-          for e in $(find . -type f -name \*.ebuild); do
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          CHANGED_EBUILDS=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD | grep '\.ebuild$' || true)
+          if [ -z "$CHANGED_EBUILDS" ]; then
+            echo "No ebuilds changed";
+            exit 0
+          fi
+          for e in $CHANGED_EBUILDS; do
             rm /var/cache/distfiles/* || true;
             echo "Testing $e";
-            ebuild "./$e" fetch; 
+            ebuild "./$e" fetch;
           done
