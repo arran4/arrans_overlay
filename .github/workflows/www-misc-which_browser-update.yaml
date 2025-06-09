@@ -1,0 +1,108 @@
+name: www-misc/which_browser update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '15 12 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/www-misc-which_browser-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ebuild_category: www-misc
+  ebuild_name: which_browser
+  base_url: https://which-browser-site.pages.dev/which_browser/releases
+  workflow_filename: www-misc-which_browser-update.yaml
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+          url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+          echo "$url"
+          wget "${url}" -O /tmp/g2.deb
+          sudo dpkg -i /tmp/g2.deb
+          rm /tmp/g2.deb
+
+      - name: Process releases
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
+          mkdir -p "$ebuild_dir"
+          versions=$(curl -s "${{ env.base_url }}/index.xml" | grep -o 'Which Browser v[^<]*' | awk '{print $3}' | sort -Vr)
+          for version in $versions; do
+            version="${version#v}"
+            ebuild_file="${ebuild_dir}/${{ env.ebuild_name }}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+              cat <<'EOT' > "$ebuild_file"
+EAPI=8
+
+DESCRIPTION="Which Browser? A browser selecting tool with rules to automate."
+HOMEPAGE="https://github.com/arran4/which_browser"
+SRC_URI="${BASE_URL}/v${PV}/which_browser-${PV}+27-linux.deb"
+LICENSE="All-rights-reserved"
+SLOT="0"
+KEYWORDS="~amd64"
+IUSE=""
+
+RDEPEND="|| ( dev-libs/libayatana-appindicator )"
+RESTRICT="mirror"
+
+S="${WORKDIR}"
+
+inherit unpacker
+
+src_unpack() {
+    unpack_deb which_browser-${PV}+27-linux.deb
+}
+
+src_install() {
+    cp -vr "${S}"/usr/ "${D}"/usr/
+    fperms 0755 /usr/share/which_browser/which_browser
+    dosym /usr/share/which_browser/which_browser /usr/bin/which_browser
+    if [[ -f "${D}/usr/share/applications/which_browser.desktop" ]]; then
+        fperms 0644 /usr/share/applications/which_browser.desktop
+    fi
+    if [[ -f "${D}/usr/share/icons/hicolor/256x256/apps/which_browser.png" ]]; then
+        fperms 0644 /usr/share/icons/hicolor/256x256/apps/which_browser.png
+    fi
+}
+
+pkg_postinst() {
+    einfo "Which Browser? has been installed."
+    einfo "Please set Which Browser? as the default HTTP and HTTPS handler."
+}
+EOT
+              BASE_URL="${{ env.base_url }}" g2 manifest upsert-from-url "${{ env.base_url }}/v${version}/which_browser-${version}+27-linux.deb" "which_browser-${version}+27-linux.deb" "${ebuild_dir}/Manifest"
+              echo "generated_version=${version}" >> $GITHUB_OUTPUT
+            fi
+            break
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
+          git add "$ebuild_dir"
+          git commit -m "Add ebuild for which_browser ${generated_version}" &&
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.outputs.generated_version

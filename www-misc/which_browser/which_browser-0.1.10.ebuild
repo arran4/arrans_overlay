@@ -1,8 +1,11 @@
 EAPI=8
 
+# Upstream changed their download host from arran4.sdf.org to
+# https://which-browser-site.pages.dev, update SRC_URI accordingly.
+
 DESCRIPTION="Which Browser? A browser selecting tool with rules to automate."
 HOMEPAGE="https://github.com/arran4/which_browser"
-SRC_URI="http://arran4.sdf.org/which_browser/v0.1.10/which_browser-0.1.10+27-linux.deb"
+SRC_URI="https://which-browser-site.pages.dev/which_browser/releases/v0.1.10/which_browser-0.1.10+27-linux.deb"
 LICENSE="All-rights-reserved"
 SLOT="0"
 KEYWORDS="~amd64"
