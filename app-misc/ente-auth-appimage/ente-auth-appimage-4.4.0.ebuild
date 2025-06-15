@@ -2,7 +2,7 @@
 EAPI=8
 DESCRIPTION="Ente's 2FA solution"
 HOMEPAGE="https://ente.io/blog/auth/"
-LICENSE="MIT"
+LICENSE="AGPL-3.0"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""

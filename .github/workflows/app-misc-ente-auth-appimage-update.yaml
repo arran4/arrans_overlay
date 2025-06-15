@@ -26,6 +26,7 @@ env:
   github_repo: ente
   keywords: ~amd64
   workflow_filename: app-misc-ente-auth-appimage-update.yaml
+  license: "AGPL-3.0"
   ente_auth_desktop_file: 'enteauth.desktop'
   ente_auth_appimage_installed_name: 'ente_auth.AppImage'
   ente_auth_release_name_amd64: 'ente-${tag}-x86_64.AppImage'
@@ -86,7 +87,7 @@ jobs:
                 echo 'EAPI=8'
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
-                echo 'LICENSE="MIT"'
+                echo 'LICENSE="${{ env.license }}"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo 'IUSE=""'
