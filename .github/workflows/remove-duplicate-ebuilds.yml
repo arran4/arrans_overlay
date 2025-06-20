@@ -1,0 +1,40 @@
+name: Remove duplicate ebuilds
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  schedule:
+    - cron: '0 4 * * 0'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install packaging
+
+      - name: Remove duplicate ebuilds
+        run: |
+          chmod +x ./scripts/remove_duplicate_ebuilds.py
+          ./scripts/remove_duplicate_ebuilds.py
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          branch: duplicate-ebuilds-cleanup
+          title: "Remove duplicate ebuilds"
+          commit-message: "Remove duplicate ebuilds"
+          body: |
+            This automated PR removes duplicated ebuilds that share identical content within the same slot. It keeps the newest version for each duplicate set.
+          delete-branch: true
