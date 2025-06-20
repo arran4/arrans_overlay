@@ -21,14 +21,14 @@ env:
   ecn: app-misc
   epn: flutter-google-datastore-appimage
   description: "Google Datastore and Datastore emulator client for \"easy\" modification of values"
-  homepage: ""
+  homepage: "https://github.com/arran4/flutter_google_datastore"
   github_owner: arran4
   github_repo: flutter_google_datastore
   keywords: ~amd64
   workflow_filename: app-misc-flutter-google-datastore-appimage-update.yaml
   flutter_google_datastore_desktop_file: 'flutter_google_datastore.desktop'
   flutter_google_datastore_appimage_installed_name: 'flutter_google_datastore.AppImage'
-  flutter_google_datastore_release_name_amd64: 'flutter_google_datastore-linux-x86_64.AppImage'
+  flutter_google_datastore_release_name_amd64: 'flutter_google_datastore-${version}-linux.AppImage'
 
 jobs:
   check-and-create-ebuild:
@@ -98,7 +98,7 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="'
-                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/flutter_google_datastore-linux-x86_64.AppImage -> \${P}-flutter_google_datastore-linux-x86_64.AppImage )"
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/flutter_google_datastore-${version}-linux.AppImage -> \${P}-flutter_google_datastore-${version}-linux.AppImage )"
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
@@ -137,7 +137,7 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/flutter_google_datastore-linux-x86_64.AppImage" "${{ env.epn }}-${version}-flutter_google_datastore-linux-x86_64.AppImage" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/flutter_google_datastore-${version}-linux.AppImage" "${{ env.epn }}-${version}-flutter_google_datastore-${version}-linux.AppImage" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
