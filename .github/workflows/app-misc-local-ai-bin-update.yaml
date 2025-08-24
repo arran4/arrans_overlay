@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.10 Github Binary Release current.config 2024-08-19 00:13:48.967470266 +1000 AEST m=+0.001938198
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.18 Github Binary Release current.config 2025-08-24 12:02:36.738002164 +0000 UTC m=+0.012028373
 
 name: app-misc/local-ai-bin update
 
@@ -29,6 +29,8 @@ env:
   local-ai_binary_installed_name: 'local-ai'
   local-ai_release_name_amd64: 'local-ai-Linux-x86_64'
   local-ai_release_name_arm64: 'local-ai-Linux-arm64'
+  stablediffusion_binary_installed_name: 'stablediffusion'
+  stablediffusion_release_name_amd64: 'stablediffusion'
 
 jobs:
   check-and-create-ebuild:
@@ -58,7 +60,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
           declare -A releaseTypes=()
-          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
@@ -101,8 +103,11 @@ jobs:
                 echo ''
                 echo 'SRC_URI="'
                 echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/local-ai-Linux-x86_64 -> \${P}-local-ai-Linux-x86_64  )  "
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/stablediffusion -> \${P}-stablediffusion  )  "
                 echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/local-ai-Linux-arm64 -> \${P}-local-ai-Linux-arm64  )  "
                 echo '"'
+                echo ''
+                echo 'src_unpack() { : }'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
@@ -112,6 +117,9 @@ jobs:
                 echo '  if use arm64; then'
                 echo '    newexe "${DISTDIR}/${P}-${{ env.local-ai_release_name_arm64 }}" "${{ env.local-ai_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${DISTDIR}/${P}-${{ env.stablediffusion_release_name_amd64 }}" "${{ env.stablediffusion_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
                 echo '}'
                 echo ""
               } > $ebuild_file
@@ -119,6 +127,7 @@ jobs:
               # Manifest generation
 
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/local-ai-Linux-x86_64" "${{ env.epn }}-${version}-local-ai-Linux-x86_64" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/stablediffusion" "${{ env.epn }}-${version}-stablediffusion" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/local-ai-Linux-arm64" "${{ env.epn }}-${version}-local-ai-Linux-arm64" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi

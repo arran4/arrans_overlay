@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github AppImage Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-09-04 16:50:31.674939388 +1000 AEST m=+0.002314554
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.18 Github AppImage Release current.config 2025-08-24 12:02:36.738002164 +0000 UTC m=+0.012028373
 
 name: app-text/anytype-ts-appimage update
 
@@ -58,7 +58,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
           declare -A releaseTypes=()
-          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+            tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then

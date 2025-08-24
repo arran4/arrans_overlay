@@ -1,34 +1,34 @@
 # Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.18 Github AppImage Release current.config 2025-08-24 12:02:36.738002164 +0000 UTC m=+0.012028373
 
-name: app-misc/ente-auth-appimage update
+name: net-im/lemmy-notify-appimage update
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '8 7 * * *'
+    - cron: '48 21 * * *'
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/app-misc-ente-auth-appimage-update.yaml'
+      - '.github/workflows/net-im-lemmy-notify-appimage-update.yaml'
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
 env:
-  ecn: app-misc
-  epn: ente-auth-appimage
-  description: "Ente's 2FA solution"
-  homepage: "https://ente.io/blog/auth/"
-  github_owner: ente-io
-  github_repo: ente
+  ecn: net-im
+  epn: lemmy-notify-appimage
+  description: "Lemmy Notification app - for desktop atm"
+  homepage: ""
+  github_owner: arran4
+  github_repo: lemmy_notify
   keywords: ~amd64
-  workflow_filename: app-misc-ente-auth-appimage-update.yaml
-  ente_auth_desktop_file: 'ente_auth.desktop'
-  ente_auth_appimage_installed_name: 'ente_auth.AppImage'
-  ente_auth_release_name_amd64: 'ente-${tag}-x86_64.AppImage'
+  workflow_filename: net-im-lemmy-notify-appimage-update.yaml
+  lemmy_notify_desktop_file: 'lemmy_notify.desktop'
+  lemmy_notify_appimage_installed_name: 'lemmy_notify.AppImage'
+  lemmy_notify_release_name_amd64: 'lemmy_notify-linux-x86_64.AppImage'
 
 jobs:
   check-and-create-ebuild:
@@ -60,13 +60,12 @@ jobs:
           declare -A releaseTypes=()
             tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           for tag in $tags; do
-            version="${tag#auth-v}"
+            version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
-                echo "$version == $tag so there is no auth-v removed skipping"
+                echo "$version == $tag so there is no v removed skipping"
                 continue
             fi
             originalVersion="${version}"
-            version="$(echo "${version}" | sed 's/^\([0-9]\+\(\.[0-9]\+\)*\)\(-r[0-9]*\)\?\([-_]\(alpha\|beta\|rc\|p\)\(\|\.\?\([0-9]\+\)\)\)$/\1_\5\3\7/')"
             if ! echo "${version}" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
                 echo "version: $version doesn't match regexp";
                 continue;
@@ -98,21 +97,21 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="'
-                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage -> \${P}-ente-${tag}-x86_64.AppImage )"
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/lemmy_notify-linux-x86_64.AppImage -> \${P}-lemmy_notify-linux-x86_64.AppImage )"
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
-                echo "    cp \"\${DISTDIR}/\${P}-${{ env.ente_auth_release_name_amd64 }}\" \"${{ env.ente_auth_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
+                echo "    cp \"\${DISTDIR}/\${P}-${{ env.lemmy_notify_release_name_amd64 }}\" \"${{ env.lemmy_notify_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
                 echo '  fi'
-                echo '  chmod a+x "${{ env.ente_auth_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
-                echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "${{ env.ente_auth_desktop_file }}" || die "Failed to extract .desktop from appimage"'
-                echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
-                echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
+                echo '  chmod a+x "${{ env.lemmy_notify_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
+                echo '  "./${{ env.lemmy_notify_appimage_installed_name }}" --appimage-extract "${{ env.lemmy_notify_desktop_file }}" || die "Failed to extract .desktop from appimage"'
+                echo '  "./${{ env.lemmy_notify_appimage_installed_name }}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
+                echo '  "./${{ env.lemmy_notify_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
                 echo '}'
                 echo ''
                 echo 'src_prepare() {'
-                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.ente_auth_appimage_installed_name }}:' 'squashfs-root/${{ env.ente_auth_desktop_file }}'"
+                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.lemmy_notify_appimage_installed_name }}:' 'squashfs-root/${{ env.lemmy_notify_desktop_file }}'"
                 echo "  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm {} \; "
                 echo "  find squashfs-root -type d -exec rmdir -p --ignore-fail-on-non-empty {} \; "
                 echo '  eapply_user'
@@ -120,9 +119,9 @@ jobs:
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
-                echo '  doexe "${{ env.ente_auth_appimage_installed_name }}" || die "Failed to install AppImage"'
+                echo '  doexe "${{ env.lemmy_notify_appimage_installed_name }}" || die "Failed to install AppImage"'
                 echo '  insinto /usr/share/applications'
-                echo '  doins "squashfs-root/${{ env.ente_auth_desktop_file }}" || die "Failed to install desktop file"'
+                echo '  doins "squashfs-root/${{ env.lemmy_notify_desktop_file }}" || die "Failed to install desktop file"'
                 echo '  insinto /usr/share/icons'
                 echo '  doins -r squashfs-root/usr/share/icons/hicolor || die "Failed to install icons"'
                 echo '  insinto /usr/share/pixmaps'
@@ -137,7 +136,7 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage" "${{ env.epn }}-${version}-ente-${tag}-x86_64.AppImage" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/lemmy_notify-linux-x86_64.AppImage" "${{ env.epn }}-${version}-lemmy_notify-linux-x86_64.AppImage" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
