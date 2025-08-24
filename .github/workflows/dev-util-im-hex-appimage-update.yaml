@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github AppImage Release /home/arran/Documents/Projects/arrans_overlay/current.config 2024-09-03 18:00:24.938898761 +1000 AEST m=+0.001953322
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.18 Github AppImage Release current.config 2025-08-24 12:02:36.738002164 +0000 UTC m=+0.012028373
 
 name: dev-util/im-hex-appimage update
 
@@ -58,7 +58,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
           declare -A releaseTypes=()
-          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+            tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
@@ -107,7 +107,7 @@ jobs:
                 echo '  chmod a+x "${{ env.ImHex_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
                 echo '  "./${{ env.ImHex_appimage_installed_name }}" --appimage-extract "${{ env.ImHex_desktop_file }}" || die "Failed to extract .desktop from appimage"'
                 echo '  "./${{ env.ImHex_appimage_installed_name }}" --appimage-extract "usr/share/pixmaps" || die "Failed to extract pixmaps icons from app image"'
-                echo '  "./${{ env.ImHex_appimage_installed_name }}" --appimage-extract "*.svg" || die "Failed to extract root icons from app image"'
+                echo '  "./${{ env.ImHex_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
                 echo '}'
                 echo ''
                 echo 'src_prepare() {'
@@ -121,9 +121,9 @@ jobs:
                 echo '  insinto /usr/share/applications'
                 echo '  doins "squashfs-root/${{ env.ImHex_desktop_file }}" || die "Failed to install desktop file"'
                 echo '  insinto /usr/share/pixmaps'
-                echo '  doins squashfs-root/usr/share/pixmaps/*.svg || die "Failed to install icons"'
+                echo '  doins squashfs-root/usr/share/pixmaps/*.png || die "Failed to install icons"'
                 echo '  insinto /usr/share/pixmaps'
-                echo '  doins squashfs-root/*.svg || die "Failed to install icons"'
+                echo '  doins squashfs-root/*.png || die "Failed to install icons"'
                 echo '}'
                 echo ""
                 echo "pkg_postinst() {"

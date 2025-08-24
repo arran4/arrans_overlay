@@ -1,38 +1,38 @@
 # Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.18 Github Binary Release current.config 2025-08-24 12:02:36.738002164 +0000 UTC m=+0.012028373
 
-name: net-im/slackdump-bin update
+name: net-misc/podcast-cdr-manager-bin update
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '4 16 * * *'
+    - cron: '24 7 * * *'
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/net-im-slackdump-bin-update.yaml'
+      - '.github/workflows/net-misc-podcast-cdr-manager-bin-update.yaml'
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
 env:
-  ecn: net-im
-  epn: slackdump-bin
-  description: "Save or export your private and public Slack messages, threads, files, and users locally without admin privileges."
+  ecn: net-misc
+  epn: podcast-cdr-manager-bin
+  description: "CLI tool to help manage podcast subscriptions for burning to CDROMs / CDR / CDRW"
   homepage: ""
-  github_owner: rusq
-  github_repo: slackdump
-  keywords: ~amd64 ~arm64 ~x86
-  workflow_filename: net-im-slackdump-bin-update.yaml
-  binary_installed_name: 'slackdump'
-  binary_archived_name_amd64: 'slackdump'
-  release_name_amd64: 'slackdump_Linux_x86_64.tar.gz'
-  binary_archived_name_arm64: 'slackdump'
-  release_name_arm64: 'slackdump_Linux_arm64.tar.gz'
-  binary_archived_name_x86: 'slackdump'
-  release_name_x86: 'slackdump_Linux_i386.tar.gz'
+  github_owner: arran4
+  github_repo: podcast-cdr-manager
+  keywords: ~amd64 ~arm ~arm64
+  workflow_filename: net-misc-podcast-cdr-manager-bin-update.yaml
+  podcastcdrmanager_binary_installed_name: 'podcastcdrmanager'
+  podcastcdrmanager_binary_archived_name_amd64: 'podcastcdrmanager'
+  podcastcdrmanager_release_name_amd64: 'podcastcdrmanager_Linux_x86_64.tar.gz'
+  podcastcdrmanager_binary_archived_name_arm: 'podcastcdrmanager'
+  podcastcdrmanager_release_name_arm: 'podcastcdrmanager_Linux_armv6.tar.gz'
+  podcastcdrmanager_binary_archived_name_arm64: 'podcastcdrmanager'
+  podcastcdrmanager_release_name_arm64: 'podcastcdrmanager_Linux_arm64.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -70,7 +70,6 @@ jobs:
                 continue
             fi
             originalVersion="${version}"
-            version="$(echo "${version}" | sed 's/^\([0-9]\+\(\.[0-9]\+\)*\)\(-r[0-9]*\)\?\([-_]\(alpha\|beta\|rc\|p\)[0-9]*\)$/\1_\5\3/')"
             if ! echo "${version}" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
                 echo "tag / $version doesn't match regexp";
                 continue;
@@ -97,7 +96,7 @@ jobs:
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
-                echo 'IUSE=""'
+                echo 'IUSE=" doc"'
                 echo 'REQUIRED_USE=""'
                 echo 'DEPEND=""'
                 echo 'RDEPEND=""'
@@ -105,33 +104,36 @@ jobs:
                 echo ''
                 echo ''
                 echo 'SRC_URI="'
-                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/slackdump_Linux_x86_64.tar.gz -> \${P}-slackdump_Linux_x86_64.tar.gz  )  "
-                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/slackdump_Linux_arm64.tar.gz -> \${P}-slackdump_Linux_arm64.tar.gz  )  "
-                echo "  x86? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/slackdump_Linux_i386.tar.gz -> \${P}-slackdump_Linux_i386.tar.gz  )  "
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/podcastcdrmanager_Linux_x86_64.tar.gz -> \${P}-podcastcdrmanager_Linux_x86_64.tar.gz  )  "
+                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/podcastcdrmanager_Linux_armv6.tar.gz -> \${P}-podcastcdrmanager_Linux_armv6.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/podcastcdrmanager_Linux_arm64.tar.gz -> \${P}-podcastcdrmanager_Linux_arm64.tar.gz  )  "
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-slackdump_Linux_x86_64.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-podcastcdrmanager_Linux_x86_64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-podcastcdrmanager_Linux_armv6.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-slackdump_Linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use x86; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-slackdump_Linux_i386.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-podcastcdrmanager_Linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '}'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'
-                echo '    newexe "${{ env.binary_archived_name_amd64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.podcastcdrmanager_binary_archived_name_amd64 }}" "${{ env.podcastcdrmanager_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm; then'
+                echo '    newexe "${{ env.podcastcdrmanager_binary_archived_name_arm }}" "${{ env.podcastcdrmanager_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo '    newexe "${{ env.binary_archived_name_arm64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.podcastcdrmanager_binary_archived_name_arm64 }}" "${{ env.podcastcdrmanager_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
-                echo '  if use x86; then'
-                echo '    newexe "${{ env.binary_archived_name_x86 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  if use doc; then'
+                echo '    newdoc "readme.md" "readme.md" || die "Failed to install document readme.md"'
                 echo '  fi'
                 echo '}'
                 echo ""
@@ -139,9 +141,9 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/slackdump_Linux_x86_64.tar.gz" "${{ env.epn }}-${version}-slackdump_Linux_x86_64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/slackdump_Linux_arm64.tar.gz" "${{ env.epn }}-${version}-slackdump_Linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/slackdump_Linux_i386.tar.gz" "${{ env.epn }}-${version}-slackdump_Linux_i386.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/podcastcdrmanager_Linux_x86_64.tar.gz" "${{ env.epn }}-${version}-podcastcdrmanager_Linux_x86_64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/podcastcdrmanager_Linux_armv6.tar.gz" "${{ env.epn }}-${version}-podcastcdrmanager_Linux_armv6.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/podcastcdrmanager_Linux_arm64.tar.gz" "${{ env.epn }}-${version}-podcastcdrmanager_Linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done

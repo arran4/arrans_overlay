@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release ./test.config 2024-09-16 16:39:43.946039544 +1000 AEST m=+0.001777926
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.18 Github Binary Release current.config 2025-08-24 12:02:36.738002164 +0000 UTC m=+0.012028373
 
 name: dev-util/editorconfig-guesser-bin update
 
@@ -26,13 +26,13 @@ env:
   github_repo: editorconfig-guesser
   keywords: ~amd64 ~arm ~arm64
   workflow_filename: dev-util-editorconfig-guesser-bin-update.yaml
-  ecguess_binary_installed_name: 'ecguess'
-  ecguess_binary_archived_name_amd64: 'ecguess'
-  ecguess_release_name_amd64: 'cards_\${PV}_linux_amd64.tar.gz'
-  ecguess_binary_archived_name_arm: 'ecguess'
-  ecguess_release_name_arm: 'cards_\${PV}_linux_armv7.tar.gz'
-  ecguess_binary_archived_name_arm64: 'ecguess'
-  ecguess_release_name_arm64: 'cards_\${PV}_linux_arm64.tar.gz'
+  binary_installed_name: 'ecguess'
+  binary_archived_name_amd64: 'ecguess'
+  release_name_amd64: 'cards_\${PV}_linux_amd64.tar.gz'
+  binary_archived_name_arm: 'ecguess'
+  release_name_arm: 'cards_\${PV}_linux_armv7.tar.gz'
+  binary_archived_name_arm64: 'ecguess'
+  release_name_arm64: 'cards_\${PV}_linux_arm64.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -48,13 +48,13 @@ jobs:
 
       - name: Install required tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y wget jq coreutils
-          url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-          echo "$url"
-          wget "${url}" -O /tmp/g2.deb
-          sudo dpkg -i /tmp/g2.deb
-          rm /tmp/g2.deb
+            sudo apt-get update
+            sudo apt-get install -y wget jq coreutils
+            url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+            echo "$url"
+            wget "${url}" -O /tmp/g2.deb
+            sudo dpkg -i /tmp/g2.deb
+            rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
@@ -62,7 +62,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
           declare -A releaseTypes=()
-          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
@@ -96,7 +96,8 @@ jobs:
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
-                echo 'IUSE=" ecguess doc"'
+                echo 'IUSE=" doc"'
+                echo 'REQUIRED_USE=""'
                 echo 'DEPEND=""'
                 echo 'RDEPEND=""'
                 echo 'S="${WORKDIR}"'
@@ -104,7 +105,7 @@ jobs:
                 echo ''
                 echo 'SRC_URI="'
                 echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/cards_\${PV}_linux_amd64.tar.gz -> \${P}-cards_\${PV}_linux_amd64.tar.gz  )  "
-                echo "  arm? ( ecguess? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/cards_\${PV}_linux_armv7.tar.gz -> \${P}-cards_\${PV}_linux_armv7.tar.gz  )  )  "
+                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/cards_\${PV}_linux_armv7.tar.gz -> \${P}-cards_\${PV}_linux_armv7.tar.gz  )  "
                 echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/cards_\${PV}_linux_arm64.tar.gz -> \${P}-cards_\${PV}_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo ''
@@ -112,7 +113,7 @@ jobs:
                 echo '  if use amd64; then'
                 echo "    unpack \"\${DISTDIR}/\${P}-cards_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
-                echo '  if use arm && use ecguess; then'
+                echo '  if use arm; then'
                 echo "    unpack \"\${DISTDIR}/\${P}-cards_\${PV}_linux_armv7.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm64; then'
@@ -123,13 +124,13 @@ jobs:
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'
-                echo '    newexe "${{ env.ecguess_binary_archived_name_amd64 }}" "${{ env.ecguess_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.binary_archived_name_amd64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
-                echo '  if use arm && use ecguess; then'
-                echo '    newexe "${{ env.ecguess_binary_archived_name_arm }}" "${{ env.ecguess_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  if use arm; then'
+                echo '    newexe "${{ env.binary_archived_name_arm }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo '    newexe "${{ env.ecguess_binary_archived_name_arm64 }}" "${{ env.ecguess_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.binary_archived_name_arm64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use doc; then'
                 echo '    if use amd64; then'
