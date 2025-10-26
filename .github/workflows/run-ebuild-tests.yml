@@ -24,6 +24,9 @@ jobs:
       - name: Run tests
         run: |
           emerge-webrsync >> sync.txt
+          if ! command -v git >/dev/null 2>&1; then
+            emerge --quiet --oneshot dev-vcs/git
+          fi
           git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
           CHANGED_EBUILDS=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD | grep '\.ebuild$' || true)
           if [ -z "$CHANGED_EBUILDS" ]; then
