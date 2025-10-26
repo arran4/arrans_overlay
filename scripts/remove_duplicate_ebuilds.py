@@ -3,8 +3,38 @@ import os
 import re
 import hashlib
 from collections import defaultdict
-from functools import cmp_to_key
-from portage.versions import pkgsplit, vercmp
+
+
+_VERSION_PART_RE = re.compile(r"(\d+|[a-zA-Z]+|[^a-zA-Z\d]+)")
+
+
+def split_ebuild_name(filename):
+    stem = filename[:-7]
+    match = re.match(r"^(?P<name>.+)-(?P<ver>[0-9].*)$", stem)
+    if not match:
+        raise ValueError(f"Unable to parse ebuild name: {filename}")
+    ver_rev = match.group("ver")
+    revision = "r0"
+    version = ver_rev
+    if "-r" in ver_rev:
+        ver_candidate, rev_candidate = ver_rev.rsplit("-r", 1)
+        if rev_candidate.isdigit():
+            version = ver_candidate
+            revision = f"r{rev_candidate}"
+    return version, revision
+
+
+def version_key(version):
+    parts = []
+    for segment in re.split(r"[._-]", version):
+        if not segment:
+            continue
+        for token in _VERSION_PART_RE.findall(segment):
+            if token.isdigit():
+                parts.append((0, int(token)))
+            else:
+                parts.append((1, token))
+    return tuple(parts)
 
 def parse_slot(path):
     slot = "0"
@@ -43,7 +73,10 @@ def main(repo_root):
             if not m:
                 continue
             slot = parse_slot(path)
-            name, ver, rev = pkgsplit(file[:-7])
+            try:
+                ver, rev = split_ebuild_name(file)
+            except ValueError:
+                continue
             full_ver = ver if rev == "r0" else f"{ver}-{rev}"
             grade = "release"
             v_lower = ver.lower()
@@ -67,7 +100,7 @@ def main(repo_root):
             for dg_items in digest_groups.values():
                 if len(dg_items) <= 1:
                     continue
-                dg_items.sort(key=lambda x: cmp_to_key(vercmp)(x["version"]))
+                dg_items.sort(key=lambda x: version_key(x["version"]))
                 for itm in dg_items[:-1]:
                     os.remove(itm["path"])
                     removed.append(itm["path"])
@@ -78,7 +111,7 @@ def main(repo_root):
         for grade, items in grades.items():
             if len(items) <= 1:
                 continue
-            items.sort(key=lambda x: cmp_to_key(vercmp)(x["version"]))
+            items.sort(key=lambda x: version_key(x["version"]))
             for itm in items[:-1]:
                 if itm["path"] not in removed:
                     os.remove(itm["path"])
