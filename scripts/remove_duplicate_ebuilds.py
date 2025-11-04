@@ -117,27 +117,46 @@ def main(repo_root):
                     os.remove(itm["path"])
                     removed.append(itm["path"])
 
-    def cleanup(path):
-        pkg_dir = os.path.dirname(path)
+    def cleanup(pkg_dir):
+        try:
+            entries = os.listdir(pkg_dir)
+        except FileNotFoundError:
+            return
+
         manifest = os.path.join(pkg_dir, "Manifest")
-        basename = os.path.basename(path)
+        ebuilds = {entry for entry in entries if entry.endswith(".ebuild")}
+
         if os.path.exists(manifest):
             with open(manifest, "r") as f:
                 lines = f.readlines()
-            new_lines = [l for l in lines if basename not in l]
+
+            def should_keep(line):
+                stripped = line.strip()
+                if stripped.startswith("EBUILD "):
+                    parts = stripped.split()
+                    if len(parts) >= 2:
+                        return parts[1] in ebuilds
+                    return False
+                return True
+
+            new_lines = [l for l in lines if should_keep(l)]
             if new_lines:
                 with open(manifest, "w") as f:
                     f.writelines(new_lines)
             else:
                 os.remove(manifest)
-        if not any(f.endswith(".ebuild") for f in os.listdir(pkg_dir)):
+
+        if not ebuilds:
             if os.path.exists(manifest):
                 os.remove(manifest)
-            os.rmdir(pkg_dir)
+            try:
+                os.rmdir(pkg_dir)
+            except OSError:
+                pass
 
     if removed:
-        for p in removed:
-            cleanup(p)
+        for pkg_dir in {os.path.dirname(p) for p in removed}:
+            cleanup(pkg_dir)
         print("Removed duplicated ebuilds:")
         for p in removed:
             print(" -", p)
