@@ -91,7 +91,7 @@ jobs:
                 einfo "Which Browser? has been installed."
                 einfo "Please set Which Browser? as the default HTTP and HTTPS handler."
             }
-            EOT
+          EOT
               sed -i 's/^            //' "$ebuild_file"
               BASE_URL="${{ env.base_url }}" g2 manifest upsert-from-url "${{ env.base_url }}/v${version}/which_browser-${version}+27-linux.deb" "which_browser-${version}+27-linux.deb" "${ebuild_dir}/Manifest"
               echo "generated_version=${version}" >> $GITHUB_OUTPUT
