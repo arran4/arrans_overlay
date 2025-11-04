@@ -54,44 +54,45 @@ jobs:
             ebuild_file="${ebuild_dir}/${{ env.ebuild_name }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               cat <<'EOT' > "$ebuild_file"
-EAPI=8
+            EAPI=8
 
-DESCRIPTION="Which Browser? A browser selecting tool with rules to automate."
-HOMEPAGE="https://github.com/arran4/which_browser"
-SRC_URI="${BASE_URL}/v${PV}/which_browser-${PV}+27-linux.deb"
-LICENSE="All-rights-reserved"
-SLOT="0"
-KEYWORDS="~amd64"
-IUSE=""
+            DESCRIPTION="Which Browser? A browser selecting tool with rules to automate."
+            HOMEPAGE="https://github.com/arran4/which_browser"
+            SRC_URI="${BASE_URL}/v${PV}/which_browser-${PV}+27-linux.deb"
+            LICENSE="All-rights-reserved"
+            SLOT="0"
+            KEYWORDS="~amd64"
+            IUSE=""
 
-RDEPEND="|| ( dev-libs/libayatana-appindicator )"
-RESTRICT="mirror"
+            RDEPEND="|| ( dev-libs/libayatana-appindicator )"
+            RESTRICT="mirror"
 
-S="${WORKDIR}"
+            S="${WORKDIR}"
 
-inherit unpacker
+            inherit unpacker
 
-src_unpack() {
-    unpack_deb which_browser-${PV}+27-linux.deb
-}
+            src_unpack() {
+                unpack_deb which_browser-${PV}+27-linux.deb
+            }
 
-src_install() {
-    cp -vr "${S}"/usr/ "${D}"/usr/
-    fperms 0755 /usr/share/which_browser/which_browser
-    dosym /usr/share/which_browser/which_browser /usr/bin/which_browser
-    if [[ -f "${D}/usr/share/applications/which_browser.desktop" ]]; then
-        fperms 0644 /usr/share/applications/which_browser.desktop
-    fi
-    if [[ -f "${D}/usr/share/icons/hicolor/256x256/apps/which_browser.png" ]]; then
-        fperms 0644 /usr/share/icons/hicolor/256x256/apps/which_browser.png
-    fi
-}
+            src_install() {
+                cp -vr "${S}"/usr/ "${D}"/usr/
+                fperms 0755 /usr/share/which_browser/which_browser
+                dosym /usr/share/which_browser/which_browser /usr/bin/which_browser
+                if [[ -f "${D}/usr/share/applications/which_browser.desktop" ]]; then
+                    fperms 0644 /usr/share/applications/which_browser.desktop
+                fi
+                if [[ -f "${D}/usr/share/icons/hicolor/256x256/apps/which_browser.png" ]]; then
+                    fperms 0644 /usr/share/icons/hicolor/256x256/apps/which_browser.png
+                fi
+            }
 
-pkg_postinst() {
-    einfo "Which Browser? has been installed."
-    einfo "Please set Which Browser? as the default HTTP and HTTPS handler."
-}
-EOT
+            pkg_postinst() {
+                einfo "Which Browser? has been installed."
+                einfo "Please set Which Browser? as the default HTTP and HTTPS handler."
+            }
+            EOT
+              sed -i 's/^            //' "$ebuild_file"
               BASE_URL="${{ env.base_url }}" g2 manifest upsert-from-url "${{ env.base_url }}/v${version}/which_browser-${version}+27-linux.deb" "which_browser-${version}+27-linux.deb" "${ebuild_dir}/Manifest"
               echo "generated_version=${version}" >> $GITHUB_OUTPUT
             fi
