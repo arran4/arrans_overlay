@@ -27,12 +27,14 @@ jobs:
           if ! command -v git >/dev/null 2>&1; then
             emerge --quiet --oneshot dev-vcs/git
           fi
-          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          CHANGED_EBUILDS=$(git diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD | grep '\.ebuild$' || true)
+          REPO_DIR="/var/db/repos/arrans-overlay"
+          git -C "$REPO_DIR" fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+          CHANGED_EBUILDS=$(git -C "$REPO_DIR" diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD | grep '\.ebuild$' || true)
           if [ -z "$CHANGED_EBUILDS" ]; then
             echo "No ebuilds changed";
             exit 0
           fi
+          cd "$REPO_DIR"
           for e in $CHANGED_EBUILDS; do
             rm /var/cache/distfiles/* || true;
             echo "Testing $e";
