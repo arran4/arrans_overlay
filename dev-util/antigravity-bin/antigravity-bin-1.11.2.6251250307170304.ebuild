@@ -16,7 +16,6 @@ RESTRICT="bindist mirror strip"
 RDEPEND="
   app-accessibility/at-spi2-core
   app-crypt/libsecret
-  app-misc/shared-mime-info
   dev-libs/glib
   dev-libs/nss
   media-libs/alsa-lib
