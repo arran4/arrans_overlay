@@ -68,6 +68,7 @@ Icon=antigravity
 Terminal=false
 Type=Application
 Categories=Development;IDE;
+MimeType=x-scheme-handler/antigravity;
 StartupWMClass=antigravity
 EOF
 
