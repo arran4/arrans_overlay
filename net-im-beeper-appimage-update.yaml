@@ -1,0 +1,118 @@
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.19 Web AppImage current.config 2025-11-21 06:30:23.566911489 +0000 UTC m=+0.005379640
+
+name: net-im/beeper-appimage update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '8 1 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/net-im-beeper-appimage-update.yaml'
+
+env:
+  ecn: net-im
+  epn: beeper-appimage
+  description: "Unified chat client bridging multiple networks"
+  homepage: "https://www.beeper.com"
+  keywords: ~amd64
+  workflow_filename: net-im-beeper-appimage-update.yaml
+  beeper_appimage_installed_name: 'beeper.AppImage'
+
+jobs:
+  fetch-latest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils htmlq
+
+      - name: Determine latest AppImage
+        id: find_appimage
+        run: |
+          set -euo pipefail
+          source_url="$(curl -sL 'https://www.beeper.com/download' | htmlq -a href 'a' | grep -iE 'Beeper-.*\.desktop$' | sort -V | tail -n1)"
+          if [ -z "$source_url" ]; then
+            echo "failed to find AppImage link" >&2
+            exit 1
+          fi
+          appimage_url="$(curl -sIL -o /dev/null -w '%{url_effective}' "$source_url")"
+          if [ -z "$appimage_url" ]; then
+            echo "failed to resolve AppImage redirect" >&2
+            exit 1
+          fi
+          fname="$(basename "$appimage_url")"
+          artifact_ext="${fname##*.}"
+          if [ -z "$artifact_ext" ] || [ "$artifact_ext" = "$fname" ]; then
+            echo "unable to determine artifact extension from $fname" >&2
+            exit 1
+          fi
+          base_name="${fname%.*}"
+          version="${base_name##*-}"
+          echo "appimage_url=$appimage_url" >> "$GITHUB_ENV"
+          echo "appimage_extension=$artifact_ext" >> "$GITHUB_ENV"
+          echo "version=$version" >> "$GITHUB_ENV"
+
+      - name: Update ebuild
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p "$ebuild_dir"
+          ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+          if [ ! -f "$ebuild_file" ]; then
+            {
+              echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
+              echo 'EAPI=8'
+              echo "DESCRIPTION=\"${{ env.description }}\""
+              echo "HOMEPAGE=\"${{ env.homepage }}\""
+              echo 'LICENSE="MIT"'
+              echo 'SLOT="0"'
+              echo 'KEYWORDS="${{ env.keywords }}"'
+              echo 'IUSE=""'
+              echo 'DEPEND=""'
+              echo 'RDEPEND=""'
+              echo 'S="${WORKDIR}"'
+              echo 'RESTRICT="strip"'
+              echo "SRC_URI=\"${appimage_url} -> \\${P}.${appimage_extension}\""
+
+              echo ''
+              echo 'src_install() {'
+              echo '  cp "${DISTDIR}/${P}.${appimage_extension}" "${P}.${appimage_extension}" || die "Failed to copy AppImage"'
+              echo '  chmod a+x "${P}.${appimage_extension}" || die "Can'"'"'t chmod archive file"'
+
+
+
+
+              echo '  exeinto /opt/bin'
+
+              echo '  newexe "${P}.${appimage_extension}" "${{ env.beeper_appimage_installed_name }}" || die "Failed to install AppImage"'
+
+
+
+
+
+              echo '}'
+
+            } > "$ebuild_file"
+
+            g2 manifest upsert-from-url "$appimage_url" "${{ env.epn }}-${version}.${appimage_extension}" "${ebuild_dir}/Manifest"
+            echo "generated_tag=${version}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          git add "${ebuild_dir}"
+          git commit -m "Add ebuild for version ${version}" && git pull --rebase && git push || true
+        if: steps.find_appimage.outputs.version

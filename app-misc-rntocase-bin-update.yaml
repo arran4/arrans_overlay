@@ -1,0 +1,295 @@
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.19 Github Binary Release current.config 2025-11-21 06:30:23.566911489 +0000 UTC m=+0.005379640
+
+name: app-misc/rntocase-bin update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '23 14 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-misc-rntocase-bin-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ecn: app-misc
+  epn: rntocase-bin
+  description: "Some utilities to rename files, to upper, lower, title, camel, kebab, darwin case and many more"
+  homepage: ""
+  github_owner: arran4
+  github_repo: rntocase
+  keywords: ~amd64 ~arm64
+  workflow_filename: app-misc-rntocase-bin-update.yaml
+  rnacronym_binary_installed_name: 'rnacronym'
+  rnacronym_binary_archived_name_amd64: 'rnacronym'
+  rnacronym_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rnacronym_binary_archived_name_arm64: 'rnacronym'
+  rnacronym_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rnreverse_binary_installed_name: 'rnreverse'
+  rnreverse_binary_archived_name_amd64: 'rnreverse'
+  rnreverse_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rnreverse_binary_archived_name_arm64: 'rnreverse'
+  rnreverse_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rntocamel_binary_installed_name: 'rntocamel'
+  rntocamel_binary_archived_name_amd64: 'rntocamel'
+  rntocamel_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rntocamel_binary_archived_name_arm64: 'rntocamel'
+  rntocamel_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rntocase_binary_installed_name: ''
+  rntodarwin_binary_installed_name: 'rntodarwin'
+  rntodarwin_binary_archived_name_amd64: 'rntodarwin'
+  rntodarwin_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rntodarwin_binary_archived_name_arm64: 'rntodarwin'
+  rntodarwin_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rntodelimited_binary_installed_name: 'rntodelimited'
+  rntodelimited_binary_archived_name_amd64: 'rntodelimited'
+  rntodelimited_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rntodelimited_binary_archived_name_arm64: 'rntodelimited'
+  rntodelimited_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rntokebab_binary_installed_name: 'rntokebab'
+  rntokebab_binary_archived_name_amd64: 'rntokebab'
+  rntokebab_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rntokebab_binary_archived_name_arm64: 'rntokebab'
+  rntokebab_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rntolower_binary_installed_name: 'rntolower'
+  rntolower_binary_archived_name_amd64: 'rntolower'
+  rntolower_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rntolower_binary_archived_name_arm64: 'rntolower'
+  rntolower_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rntolowerleading_binary_installed_name: 'rntolowerleading'
+  rntolowerleading_binary_archived_name_amd64: 'rntolowerleading'
+  rntolowerleading_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rntolowerleading_binary_archived_name_arm64: 'rntolowerleading'
+  rntolowerleading_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rntopascal_binary_installed_name: 'rntopascal'
+  rntopascal_binary_archived_name_amd64: 'rntopascal'
+  rntopascal_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rntopascal_binary_archived_name_arm64: 'rntopascal'
+  rntopascal_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rntosnake_binary_installed_name: 'rntosnake'
+  rntosnake_binary_archived_name_amd64: 'rntosnake'
+  rntosnake_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rntosnake_binary_archived_name_arm64: 'rntosnake'
+  rntosnake_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rntotitle_binary_installed_name: 'rntotitle'
+  rntotitle_binary_archived_name_amd64: 'rntotitle'
+  rntotitle_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rntotitle_binary_archived_name_arm64: 'rntotitle'
+  rntotitle_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rntoupper_binary_installed_name: 'rntoupper'
+  rntoupper_binary_archived_name_amd64: 'rntoupper'
+  rntoupper_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rntoupper_binary_archived_name_arm64: 'rntoupper'
+  rntoupper_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rntoupperleading_binary_installed_name: 'rntoupperleading'
+  rntoupperleading_binary_archived_name_amd64: 'rntoupperleading'
+  rntoupperleading_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rntoupperleading_binary_archived_name_arm64: 'rntoupperleading'
+  rntoupperleading_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  rntrim_binary_installed_name: 'rntrim'
+  rntrim_binary_archived_name_amd64: 'rntrim'
+  rntrim_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
+  rntrim_binary_archived_name_arm64: 'rntrim'
+  rntrim_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y wget jq coreutils
+            url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+            echo "$url"
+            wget "${url}" -O /tmp/g2.deb
+            sudo dpkg -i /tmp/g2.deb
+            rm /tmp/g2.deb
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p $ebuild_dir
+          declare -A releaseTypes=()
+          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          for tag in $tags; do
+            version="${tag#v}"
+            if [ "${version}" = "${tag}" ]; then
+                echo "$version == $tag so there is no v removed skipping"
+                continue
+            fi
+            originalVersion="${version}"
+            if ! echo "${version}" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                echo "tag / $version doesn't match regexp";
+                continue;
+            fi
+            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
+            if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
+                if [[ -v releaseTypes[release] ]]; then
+                  echo "Already have a newer main release: ${releaseTypes[release]}"
+                  continue
+                fi
+                releaseTypes[${releaseType:=release}]="${version}"
+            else
+                echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+                continue
+            fi
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+
+              {
+                echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'LICENSE="MIT"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="${{ env.keywords }}"'
+                echo 'IUSE=" doc"'
+                echo 'REQUIRED_USE=""'
+                echo 'DEPEND=""'
+                echo 'RDEPEND=""'
+                echo 'S="${WORKDIR}"'
+                echo ''
+                echo ''
+                echo 'SRC_URI="'
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rntocase_\${PV}_linux_amd64.tar.gz -> \${P}-rntocase_\${PV}_linux_amd64.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rntocase_\${PV}_linux_arm64.tar.gz -> \${P}-rntocase_\${PV}_linux_arm64.tar.gz  )  "
+                echo '"'
+                echo ''
+                echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-rntocase_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-rntocase_\${PV}_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '  exeinto /opt/bin'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rnacronym_binary_archived_name_amd64 }}" "${{ env.rnacronym_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rnacronym_binary_archived_name_arm64 }}" "${{ env.rnacronym_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rnreverse_binary_archived_name_amd64 }}" "${{ env.rnreverse_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rnreverse_binary_archived_name_arm64 }}" "${{ env.rnreverse_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rntocamel_binary_archived_name_amd64 }}" "${{ env.rntocamel_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rntocamel_binary_archived_name_arm64 }}" "${{ env.rntocamel_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rntodarwin_binary_archived_name_amd64 }}" "${{ env.rntodarwin_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rntodarwin_binary_archived_name_arm64 }}" "${{ env.rntodarwin_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rntodelimited_binary_archived_name_amd64 }}" "${{ env.rntodelimited_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rntodelimited_binary_archived_name_arm64 }}" "${{ env.rntodelimited_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rntokebab_binary_archived_name_amd64 }}" "${{ env.rntokebab_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rntokebab_binary_archived_name_arm64 }}" "${{ env.rntokebab_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rntolower_binary_archived_name_amd64 }}" "${{ env.rntolower_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rntolower_binary_archived_name_arm64 }}" "${{ env.rntolower_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rntolowerleading_binary_archived_name_amd64 }}" "${{ env.rntolowerleading_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rntolowerleading_binary_archived_name_arm64 }}" "${{ env.rntolowerleading_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rntopascal_binary_archived_name_amd64 }}" "${{ env.rntopascal_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rntopascal_binary_archived_name_arm64 }}" "${{ env.rntopascal_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rntosnake_binary_archived_name_amd64 }}" "${{ env.rntosnake_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rntosnake_binary_archived_name_arm64 }}" "${{ env.rntosnake_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rntotitle_binary_archived_name_amd64 }}" "${{ env.rntotitle_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rntotitle_binary_archived_name_arm64 }}" "${{ env.rntotitle_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rntoupper_binary_archived_name_amd64 }}" "${{ env.rntoupper_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rntoupper_binary_archived_name_arm64 }}" "${{ env.rntoupper_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rntoupperleading_binary_archived_name_amd64 }}" "${{ env.rntoupperleading_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rntoupperleading_binary_archived_name_arm64 }}" "${{ env.rntoupperleading_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.rntrim_binary_archived_name_amd64 }}" "${{ env.rntrim_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.rntrim_binary_archived_name_arm64 }}" "${{ env.rntrim_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use doc; then'
+                echo '    if use amd64; then'
+                echo '      newdoc "LICENSE" "LICENSE" || die "Failed to install document LICENSE"'
+                echo '      newdoc "LICENSE" "LICENSE" || die "Failed to install document LICENSE"'
+                echo '    fi'
+                echo '  fi'
+                echo '}'
+                echo ""
+              } > $ebuild_file
+
+              # Manifest generation
+
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rntocase_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-rntocase_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rntocase_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-rntocase_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+            fi
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          git add ./${ebuild_dir}
+          git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}" &&
+          git pull --rebase &&
+          git push || true
+        if: steps.process_releases.outputs.generated_tag
