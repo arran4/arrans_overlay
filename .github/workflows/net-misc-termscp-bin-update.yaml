@@ -30,7 +30,7 @@ env:
   termscp_binary_archived_name_amd64: 'termscp'
   termscp_release_name_amd64: 'termscp-v\\${PV}-x86_64-unknown-linux-gnu.tar.gz'
   termscp_binary_archived_name_arm64: 'termscp'
-  termscp_release_name_arm64: 'termscp-\\${PV}-aarch64-unknown-linux-gnu.tar.gz'
+  termscp_release_name_arm64: 'termscp-v\\${PV}-aarch64-unknown-linux-gnu.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -103,7 +103,7 @@ jobs:
                 echo ''
                 echo 'SRC_URI="'
                 echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/termscp-v\\${PV}-x86_64-unknown-linux-gnu.tar.gz -> \${P}-termscp-v\\${PV}-x86_64-unknown-linux-gnu.tar.gz  )  "
-                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/termscp-\\${PV}-aarch64-unknown-linux-gnu.tar.gz -> \${P}-termscp-\\${PV}-aarch64-unknown-linux-gnu.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/termscp-v\\${PV}-aarch64-unknown-linux-gnu.tar.gz -> \${P}-termscp-v\\${PV}-aarch64-unknown-linux-gnu.tar.gz  )  "
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
@@ -111,7 +111,7 @@ jobs:
                 echo "    unpack \"\${DISTDIR}/\${P}-termscp-v\\${PV}-x86_64-unknown-linux-gnu.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-termscp-\\${PV}-aarch64-unknown-linux-gnu.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-termscp-v\\${PV}-aarch64-unknown-linux-gnu.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '}'
                 echo ''
@@ -129,8 +129,8 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/termscp-v\${version}-x86_64-unknown-linux-gnu.tar.gz" "${{ env.epn }}-${version}-termscp-v\${version}-x86_64-unknown-linux-gnu.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/termscp-\${version}-aarch64-unknown-linux-gnu.tar.gz" "${{ env.epn }}-${version}-termscp-\${version}-aarch64-unknown-linux-gnu.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/termscp-v${version}-x86_64-unknown-linux-gnu.tar.gz" "${{ env.epn }}-${version}-termscp-v${version}-x86_64-unknown-linux-gnu.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/termscp-v${version}-aarch64-unknown-linux-gnu.tar.gz" "${{ env.epn }}-${version}-termscp-v${version}-aarch64-unknown-linux-gnu.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
