@@ -23,12 +23,12 @@ S="${WORKDIR}"
 RDEPEND="media-sound/piper"
 
 src_install() {
-	local voicedir="/usr/share/piper/voices/hal-9000"
-	
-	insinto "${voicedir}"
-	newins ${PN}-${PV}.onnx hal.onnx || die
-	newins ${PN}-${PV}.onnx.json hal.onnx.json || die
-	newins ${PN}-${PV}.wav model_sample.wav || die
-	
-	dodoc ${PN}-${PV}.README.md
+local voicedir="/usr/share/piper/voices/hal-9000"
+
+insinto "${voicedir}"
+newins "${DISTDIR}/${PN}-${PV}.onnx" hal.onnx || die
+newins "${DISTDIR}/${PN}-${PV}.onnx.json" hal.onnx.json || die
+newins "${DISTDIR}/${PN}-${PV}.wav" model_sample.wav || die
+
+dodoc "${DISTDIR}/${PN}-${PV}.README.md"
 }
