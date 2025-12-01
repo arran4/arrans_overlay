@@ -26,8 +26,8 @@ src_install() {
 local voicedir="/usr/share/piper/voices/hal-9000"
 
 insinto "${voicedir}"
-newins "${DISTDIR}/${PN}-${PV}.onnx" hal.onnx || die
-newins "${DISTDIR}/${PN}-${PV}.onnx.json" hal.onnx.json || die
+newins "${DISTDIR}/${PN}-${PV}.onnx" hal-9000.onnx || die
+newins "${DISTDIR}/${PN}-${PV}.onnx.json" hal-9000.onnx.json || die
 newins "${DISTDIR}/${PN}-${PV}.wav" model_sample.wav || die
 
 dodoc "${DISTDIR}/${PN}-${PV}.README.md"
