@@ -20,7 +20,7 @@ RESTRICT="mirror strip test"
 
 S="${WORKDIR}"
 
-RDEPEND="media-video/piper"
+RDEPEND="media-sound/piper"
 
 src_install() {
 	local voicedir="/usr/share/piper/voices/hal-9000"
