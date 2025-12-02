@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Antigravity
+Comment=Google Antigravity IDE
+Exec=/usr/bin/antigravity %F
+Icon=antigravity
+Terminal=false
+Type=Application
+Categories=Development;IDE;
+MimeType=x-scheme-handler/antigravity;
+StartupWMClass=antigravity

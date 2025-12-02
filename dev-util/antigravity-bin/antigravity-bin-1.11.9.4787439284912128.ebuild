@@ -59,21 +59,8 @@ src_install() {
 
   newicon resources/app/resources/linux/code.png antigravity.png
 
-  cat > "${T}/${PN}.desktop" <<EOF || die "Failed to write desktop file"
-[Desktop Entry]
-Name=Antigravity
-Comment=Google Antigravity IDE
-Exec=/usr/bin/antigravity %F
-Icon=antigravity
-Terminal=false
-Type=Application
-Categories=Development;IDE;
-MimeType=x-scheme-handler/antigravity;
-StartupWMClass=antigravity
-EOF
-
   insinto /usr/share/applications
-  doins "${T}/${PN}.desktop"
+  doins "${FILESDIR}/${PN}.desktop"
 
   dodoc resources/app/LICENSE.txt resources/app/ThirdPartyNotices.txt
   }
