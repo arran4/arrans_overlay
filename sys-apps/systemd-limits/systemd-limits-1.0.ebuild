@@ -18,11 +18,7 @@ src_install() {
     insinto /etc/systemd/system.conf.d
 
     # Install the config file
-    cat > "${T}/limits.conf" <<'EOL'
-[Manager]
-DefaultLimitNOFILE=524288
-EOL
-    newins "${T}/limits.conf" limits.conf
+    newins "${FILESDIR}/limits.conf" limits.conf
 }
 
 pkg_postinst() {
