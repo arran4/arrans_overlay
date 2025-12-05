@@ -18,7 +18,11 @@ concurrency:
 env:
   ebuild_category: www-misc
   ebuild_name: which_browser
-  base_url: https://which-browser-site.pages.dev/which_browser/releases
+  description: "Which Browser? A browser selecting tool with rules to automate."
+  homepage: "https://which-browser-site.pages.dev"
+  license: "All-rights-reserved"
+  keywords: "~amd64"
+  base_url: https://which-browser-site.pages.dev/releases
   workflow_filename: www-misc-which_browser-update.yaml
 
 jobs:
@@ -51,49 +55,69 @@ jobs:
           versions=$(curl -s "${{ env.base_url }}/index.xml" | grep -o 'Which Browser v[^<]*' | awk '{print $3}' | sort -Vr)
           for version in $versions; do
             version="${version#v}"
+            base_version="${version%.*}"
+            build_suffix="${version##*.}"
+            if [ "${base_version}" = "${version}" ] || [ -z "${build_suffix}" ]; then
+              echo "Skipping unexpected version format: ${version}"
+              continue
+            fi
+            archive_name="which_browser-${base_version}+${build_suffix}-linux.deb"
             ebuild_file="${ebuild_dir}/${{ env.ebuild_name }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
-              cat <<'EOT' > "$ebuild_file"
+              default_base_url="${{ env.base_url }}"
+              cat <<EOT > "$ebuild_file"
+            # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}
             EAPI=8
 
-            DESCRIPTION="Which Browser? A browser selecting tool with rules to automate."
-            HOMEPAGE="https://github.com/arran4/which_browser"
-            SRC_URI="${BASE_URL}/v${PV}/which_browser-${PV}+27-linux.deb"
-            LICENSE="All-rights-reserved"
+            DESCRIPTION="${{ env.description }}"
+            HOMEPAGE="${{ env.homepage }}"
+
+            MY_BASE_PV=\${PV%.*}
+            MY_BUILD_SUFFIX=\${PV##*.}
+
+            if [[ \${MY_BASE_PV} == \${PV} ]] || [[ -z \${MY_BUILD_SUFFIX} ]]; then
+                    die "Unexpected PV format: \${PV}"
+            fi
+
+            MY_DEB_ARCHIVE="\${PN}-\${MY_BASE_PV}+\${MY_BUILD_SUFFIX}-linux.deb"
+            DEFAULT_BASE_URL="${default_base_url}"
+
+            SRC_URI="\${BASE_URL:-\${DEFAULT_BASE_URL}}/v\${PV}/\${MY_DEB_ARCHIVE}"
+            LICENSE="${{ env.license }}"
             SLOT="0"
-            KEYWORDS="~amd64"
+            KEYWORDS="${{ env.keywords }}"
             IUSE=""
 
             RDEPEND="|| ( dev-libs/libayatana-appindicator )"
             RESTRICT="mirror"
 
-            S="${WORKDIR}"
+            S="\${WORKDIR}"
 
             inherit unpacker
 
             src_unpack() {
-                unpack_deb which_browser-${PV}+27-linux.deb
+                    unpack_deb "\${MY_DEB_ARCHIVE}"
             }
 
             src_install() {
-                cp -vr "${S}"/usr/ "${D}"/usr/
-                fperms 0755 /usr/share/which_browser/which_browser
-                dosym /usr/share/which_browser/which_browser /usr/bin/which_browser
-                if [[ -f "${D}/usr/share/applications/which_browser.desktop" ]]; then
-                    fperms 0644 /usr/share/applications/which_browser.desktop
-                fi
-                if [[ -f "${D}/usr/share/icons/hicolor/256x256/apps/which_browser.png" ]]; then
-                    fperms 0644 /usr/share/icons/hicolor/256x256/apps/which_browser.png
-                fi
+                    cp -vr "\${S}"/usr/ "\${D}"/usr/
+                    fperms 0755 /usr/share/which_browser/which_browser
+                    dosym /usr/share/which_browser/which_browser /usr/bin/which_browser
+                    if [[ -f "\${D}/usr/share/applications/which_browser.desktop" ]]; then
+                            fperms 0644 /usr/share/applications/which_browser.desktop
+                    fi
+                    if [[ -f "\${D}/usr/share/icons/hicolor/256x256/apps/which_browser.png" ]]; then
+                            fperms 0644 /usr/share/icons/hicolor/256x256/apps/which_browser.png
+                    fi
             }
 
             pkg_postinst() {
-                einfo "Which Browser? has been installed."
-                einfo "Please set Which Browser? as the default HTTP and HTTPS handler."
+                    einfo "Which Browser? has been installed."
+                    einfo "Please set Which Browser? as the default HTTP and HTTPS handler."
             }
           EOT
               sed -i 's/^            //' "$ebuild_file"
-              BASE_URL="${{ env.base_url }}" g2 manifest upsert-from-url "${{ env.base_url }}/v${version}/which_browser-${version}+27-linux.deb" "which_browser-${version}+27-linux.deb" "${ebuild_dir}/Manifest"
+              BASE_URL="${{ env.base_url }}" g2 manifest upsert-from-url "${{ env.base_url }}/v${version}/${archive_name}" "${archive_name}" "${ebuild_dir}/Manifest"
               echo "generated_version=${version}" >> $GITHUB_OUTPUT
             fi
             break
@@ -102,8 +126,11 @@ jobs:
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
-          git add "$ebuild_dir"
-          git commit -m "Add ebuild for which_browser ${generated_version}" &&
-          git pull --rebase &&
-          git push || true
+          generated_version="${{ steps.process_releases.outputs.generated_version }}"
+          if [ -n "$generated_version" ]; then
+            git add "$ebuild_dir"
+            git commit -m "Add ebuild for which_browser ${generated_version}" &&
+            git pull --rebase &&
+            git push || true
+          fi
         if: steps.process_releases.outputs.generated_version
