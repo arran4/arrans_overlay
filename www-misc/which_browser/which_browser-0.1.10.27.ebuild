@@ -15,7 +15,7 @@ fi
 
 MY_DEB_ARCHIVE="${PN}-${MY_BASE_PV}+${MY_BUILD_SUFFIX}-linux.deb"
 
-SRC_URI="https://which-browser-site.pages.dev/which_browser/releases/v${PV}/${MY_DEB_ARCHIVE}"
+SRC_URI="https://which-browser-site.pages.dev/releases/v${PV}/${MY_DEB_ARCHIVE}"
 LICENSE="All-rights-reserved"
 SLOT="0"
 KEYWORDS="~amd64"
