@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.18 Github AppImage Release current.config 2025-08-24 12:02:36.738002164 +0000 UTC m=+0.012028373
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github AppImage Release /home/arran/Documents/Projects/arrans_overlay/current.config 2025-11-17 14:17:12.431267048 +1100 AEDT m=+0.002870566
 
 name: net-misc/localsend-appimage update
 
@@ -90,7 +90,7 @@ jobs:
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo 'IUSE=""'
                 echo 'DEPEND=""'
-                echo 'RDEPEND="sys-libs/glibc sys-libs/zlib "'
+                echo 'RDEPEND="dev-libs/wayland sys-fs/fuse sys-libs/glibc sys-libs/zlib "'
                 echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
                 echo ''
