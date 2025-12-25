@@ -1,4 +1,5 @@
-# Manually built - TODO make automated
+# Manually built because the complex ebuild logic (systemd, ROCM, library layout)
+# is not currently supported by arrans_overlay_workflow_builder.
 name: app-misc/ollama-bin update
 
 permissions:
@@ -11,7 +12,6 @@ on:
   push:
     paths:
       - '.github/workflows/app-misc-ollama-bin-update.yaml'
-
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -56,7 +56,7 @@ jobs:
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
-              echo "$version == $tag so there is no V removed skipping"
+              # Skipping tag that doesn't start with 'v'
               continue
             fi
             if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
@@ -66,7 +66,7 @@ jobs:
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               {
-                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/"
+                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-ollama-bin-update.yaml"
                 echo 'EAPI=8'
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
@@ -147,16 +147,16 @@ jobs:
               g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-arm64.tgz ${{ env.epn }}-${version}.arm64.tgz "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64-rocm.tgz ${{ env.epn }}-${version}.rocm.tgz "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+              echo "generated_tag=${tag}" >> $GITHUB_ENV
               
             fi
-            break
           done
 
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           git add ./${ebuild_dir}
-          git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}" && 
+          git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${{ env.generated_tag }}" &&
           git pull --rebase &&
           git push || true
-        if: steps.process_releases.conclusion == 'success'
+        if: env.generated_tag
