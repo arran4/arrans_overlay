@@ -1,0 +1,12 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -37,8 +37,9 @@
+ set_target_properties(xattrplaying_plugin PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+
+ ## Set installation directory for the shared library
+-#install(TARGETS xattrplaying_plugin LIBRARY DESTINATION ${VLC_INSTALL_DIR}/plugins/misc/)
++include(GNUInstallDirs)
++install(TARGETS xattrplaying_plugin LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/vlc/plugins/misc/)
+ #
+ ## Optionally: Copy the plugin to VLC plugins directory for development/testing
+ #add_custom_command(TARGET xattrplaying_plugin POST_BUILD
