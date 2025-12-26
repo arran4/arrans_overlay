@@ -17,10 +17,10 @@ IUSE=""
 DEPEND="media-video/vlc"
 S="${WORKDIR}/vlc-xattr-plugin-1.0.1/"
 
-src_prepare() {
-	default
-	cmake_src_prepare
-}
+PATCHES=(
+	"${FILESDIR}/enable-install.patch"
+)
+
 
 src_configure() {
 	cmake_src_configure
