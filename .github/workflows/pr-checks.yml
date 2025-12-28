@@ -1,0 +1,20 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+jobs:
+  # Job to run static analysis (fast)
+  pkgcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for commits check
+      - name: Run pkgcheck
+        uses: pkgcore/pkgcheck-action@v1
+        with:
+          args: --commits origin/${{ github.event.pull_request.base.ref || 'HEAD~1' }}
