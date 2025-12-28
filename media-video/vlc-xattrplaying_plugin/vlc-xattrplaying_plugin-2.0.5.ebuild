@@ -15,18 +15,6 @@ KEYWORDS="~amd64"
 IUSE=""
 
 DEPEND="media-video/vlc"
-S="${WORKDIR}/vlc-xattr-plugin-1.0.1/"
+RDEPEND="${DEPEND}"
 
-PATCHES=(
-	"${FILESDIR}/enable-install.patch"
-)
-
-
-src_configure() {
-	cmake_src_configure
-}
-
-src_install() {
-	cmake_src_install
-}
-
+S="${WORKDIR}/vlc-xattr-plugin-${PV}"
