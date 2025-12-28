@@ -5,38 +5,78 @@ on:
     branches: [ "main" ]
 
 jobs:
-  tests:
+  # Job to identify changed files
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      ebuilds: ${{ steps.filter.outputs.ebuilds }}
+      ebuilds_files: ${{ steps.filter.outputs.ebuilds_files }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          list-files: shell
+          filters: |
+            ebuilds:
+              - '**/*.ebuild'
+
+  # Job to run static analysis (fast)
+  pkgcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for commits check
+      - name: Run pkgcheck
+        uses: pkgcore/pkgcheck-action@v1
+        with:
+          args: --commits origin/${{ github.event.pull_request.base.ref }}
+
+  # Job to run fetch tests (slow, requires Gentoo container)
+  fetch-test:
+    needs: changes
+    if: ${{ needs.changes.outputs.ebuilds == 'true' }}
     runs-on: ubuntu-latest
     container:
       image: gentoo/stage3
-      volumes:
-        - ${{github.workspace}}:/var/db/repos/arrans-overlay
+      # We need to run as root to emerge and install things
       options: --user root
-    defaults:
-      run:
-        working-directory: /var/db/repos/arrans-overlay
+      volumes:
+        - /var/cache/distfiles
     steps:
-      # Check out the repository
-      - uses: actions/checkout@master
-        with:
-          fetch-depth: 0
-
-      - name: Run tests
+      - name: Install git
+        # We need git for actions/checkout to work reliably if we wanted history,
+        # but here we just need files. However, actions/checkout v4 usually works fine with tarball fallback.
+        # But if it fails, we might need to install git.
+        # Let's try to minimal setup.
         run: |
-          emerge-webrsync >> sync.txt
-          if ! command -v git >/dev/null 2>&1; then
-            emerge --quiet --oneshot dev-vcs/git
+           # Verify we are root
+           id
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Portage
+        run: |
+          # Sync portage. Retry logic is handled by emerge-webrsync usually, but let's be safe.
+          # webrsync is usually faster than rsync for fresh image
+          mkdir -p /var/db/repos/gentoo
+          # Retry 3 times
+          for i in {1..3}; do emerge-webrsync && break || sleep 15; done
+
+          # Fix potential issues with missing dev-vcs/git if ebuilds need it (e.g. for live ebuilds)
+          # But we are testing fetch, so standard fetch shouldn't need git unless it's a git-r3 ebuild.
+          # Many ebuilds in this overlay might be -bin or -appimage.
+          # If we need git, install it.
+          if ! command -v git >/dev/null; then
+             emerge --quiet dev-vcs/git || true
           fi
-          REPO_DIR="/var/db/repos/arrans-overlay"
-          git -C "$REPO_DIR" fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
-          CHANGED_EBUILDS=$(git -C "$REPO_DIR" diff --name-only origin/${{ github.event.pull_request.base.ref }} HEAD | grep '\.ebuild$' || true)
-          if [ -z "$CHANGED_EBUILDS" ]; then
-            echo "No ebuilds changed";
-            exit 0
-          fi
-          cd "$REPO_DIR"
-          for e in $CHANGED_EBUILDS; do
-            rm /var/cache/distfiles/* || true;
-            echo "Testing $e";
-            ebuild "./$e" fetch;
-          done
+
+      - name: Run Fetch Tests
+        run: |
+          # Get list of files from the 'changes' job output
+          FILES="${{ needs.changes.outputs.ebuilds_files }}"
+
+          # Run the test script
+          chmod +x scripts/test_ebuilds.sh
+          ./scripts/test_ebuilds.sh $FILES
