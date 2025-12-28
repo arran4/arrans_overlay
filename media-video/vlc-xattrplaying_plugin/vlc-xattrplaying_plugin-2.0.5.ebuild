@@ -15,20 +15,6 @@ KEYWORDS="~amd64"
 IUSE=""
 
 DEPEND="media-video/vlc"
-S="${WORKDIR}/vlc-xattr-plugin-1.0.1/"
+RDEPEND="${DEPEND}"
 
-src_prepare() {
-	default
-	cmake_src_prepare
-}
-
-src_configure() {
-	cmake_src_configure
-}
-
-src_install() {
-	# TODO give the cmake an install: cmake_src_install
-	insinto "/usr/lib64/vlc/plugins/misc"
-	doins "${S}/lib/libxattrplaying_plugin.so" || die "Failed to install plugin"
-}
-
+S="${WORKDIR}/vlc-xattr-plugin-${PV}"
