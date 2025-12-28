@@ -1,0 +1,114 @@
+name: Nightly Ebuild Tests
+
+on:
+  schedule:
+    # Run at 02:00 UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  check-activity:
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for commits in last 24 hours
+        id: check
+        run: |
+          # Get count of commits in last 24 hours
+          # We use `git log --since="24 hours ago"`
+          COMMIT_COUNT=$(git log --since="24 hours ago" --oneline | wc -l)
+          if [ "$COMMIT_COUNT" -gt 0 ]; then
+            echo "Found $COMMIT_COUNT commits in the last 24 hours."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No commits in the last 24 hours."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  nightly-test:
+    needs: check-activity
+    if: ${{ needs.check-activity.outputs.has_changes == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    container:
+      image: gentoo/stage3
+      options: --user root
+      volumes:
+        - /var/cache/distfiles
+    steps:
+      - name: Install git
+        run: |
+           # Ensure git is installed for checkout and for identifying changed files
+           # (Though we might use direct file listing if we wanted, but git diff is easier)
+           mkdir -p /var/db/repos/gentoo
+           # minimal setup to install git if missing
+           if ! command -v git >/dev/null; then
+             emerge-webrsync
+             emerge --quiet dev-vcs/git
+           fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Portage
+        run: |
+          # Sync portage (if not done above)
+          if [ ! -d "/var/db/repos/gentoo/profiles" ]; then
+             for i in {1..3}; do emerge-webrsync && break || sleep 15; done
+          fi
+
+          # Configure for binary packages
+          # We append to make.conf to enable getbinpkg globally
+          echo 'FEATURES="${FEATURES} getbinpkg"' >> /etc/portage/make.conf
+          # Also set EMERGE_DEFAULT_OPTS to always use binaries if available and respect it
+          # -g = --getbinpkg, -K = --usepkgonly (no, we want to build if bin missing), -k = --usepkg
+          # User said: "install binary from upstream where possible"
+          # So -g (get from remote) and -k (use it)
+          echo 'EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS} --getbinpkg --usepkg"' >> /etc/portage/make.conf
+
+          # Define a binhost if not set. Gentoo stage3 usually doesn't have one.
+          # We can try to use a public mirror's binpackages if available for the architecture.
+          # For amd64, we can look at gentoo mirror.
+          # However, blindly setting it might be risky if we don't know the profile.
+          # Let's check existing make.conf
+          cat /etc/portage/make.conf
+
+          # A generic safe binhost for amd64/stable (assuming stage3 is that)
+          # ARCH=$(portageq envvar ARCH)
+          # if [ "$ARCH" == "amd64" ]; then
+          #    echo 'PORTAGE_BINHOST="https://gentoo.osuosl.org/releases/amd64/binpackages/23.0/x86-64/"' >> /etc/portage/make.conf
+          # fi
+          # Since we can't easily guess the exact binhost structure without risk,
+          # we will rely on EMERGE_DEFAULT_OPTS enabling the mechanism,
+          # but we might simply skip defining PORTAGE_BINHOST if we aren't sure.
+          # BUT the user request explicitly asked for it.
+          # "It should install binary from upstream where possible"
+          # This implies enabling the feature. If upstream (Gentoo) provides it.
+          # I will add the getbinpkg flags. The stage3 might have a default binhost in newer releases.
+
+      - name: Run Tests
+        run: |
+          # Identify changed ebuilds in the last 24 hours
+          # We look at diff since "24 hours ago"
+          CHANGED_EBUILDS=$(git log --since="24 hours ago" --name-only --pretty=format: | grep '\.ebuild$' | sort -u || true)
+
+          if [ -z "$CHANGED_EBUILDS" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+             echo "No ebuilds changed in the last 24h (but commits existed?)."
+             exit 0
+          fi
+
+          # If workflow_dispatch, and no changes found (or maybe we want to force test all?),
+          # assume we test changed files if any, or maybe HEAD?
+          # Let's strictly stick to "changed files".
+
+          if [ -n "$CHANGED_EBUILDS" ]; then
+             chmod +x scripts/test_ebuilds.sh
+             # Pass -m merge to actually install
+             ./scripts/test_ebuilds.sh -m merge $CHANGED_EBUILDS
+          else
+             echo "No ebuilds changed."
+          fi
