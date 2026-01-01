@@ -96,61 +96,80 @@ jobs:
               {
                 echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
                 echo 'EAPI=8'
+                echo ''
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'SRC_URI="'
+                echo "	amd64? ("
+                echo "		!extended? ("
+                echo "			https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/hugo_\${PV}_linux-amd64.tar.gz"
+                echo "			-> \${P}-hugo_\${PV}_linux-amd64.tar.gz"
+                echo "		)"
+                echo "		extended? ("
+                echo "			https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/hugo_extended_\${PV}_Linux-64bit.tar.gz"
+                echo "			-> \${P}-hugo_extended_\${PV}_Linux-64bit.tar.gz"
+                echo "		)"
+                echo "	)"
+                echo "	arm? ("
+                echo "		https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/hugo_\${PV}_linux-arm.tar.gz"
+                echo "		-> \${P}-hugo_\${PV}_linux-arm.tar.gz"
+                echo "	)"
+                echo "	arm64? ("
+                echo "		!extended? ("
+                echo "			https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/hugo_\${PV}_linux-arm64.tar.gz"
+                echo "			-> \${P}-hugo_\${PV}_linux-arm64.tar.gz"
+                echo "		)"
+                echo "		extended? ("
+                echo "			https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/hugo_extended_\${PV}_linux-arm64.tar.gz"
+                echo "			-> \${P}-hugo_extended_\${PV}_linux-arm64.tar.gz"
+                echo "		)"
+                echo "	)"
+                echo '"'
+                echo 'S="${WORKDIR}"'
+                echo ''
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
-                echo 'IUSE=" extended"'
-                echo 'REQUIRED_USE="extended? ( || ( amd64 arm64  ) ) "'
-                echo 'DEPEND=""'
-                echo 'RDEPEND="extended? ( sys-devel/gcc sys-libs/glibc  ) "'
-                echo 'S="${WORKDIR}"'
+                echo 'IUSE="extended"'
+                echo 'REQUIRED_USE="extended? ( || ( amd64 arm64 ) )"'
                 echo ''
-                echo ''
-                echo 'SRC_URI="'
-                echo "  amd64? ( !extended? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_\${PV}_linux-amd64.tar.gz -> \${P}-hugo_\${PV}_linux-amd64.tar.gz  )  )  "
-                echo "  amd64? ( extended? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_extended_\${PV}_Linux-64bit.tar.gz -> \${P}-hugo_extended_\${PV}_Linux-64bit.tar.gz  )  )  "
-                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_\${PV}_linux-arm.tar.gz -> \${P}-hugo_\${PV}_linux-arm.tar.gz  )  "
-                echo "  arm64? ( !extended? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_\${PV}_linux-arm64.tar.gz -> \${P}-hugo_\${PV}_linux-arm64.tar.gz  )  )  "
-                echo "  arm64? ( extended? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/hugo_extended_\${PV}_linux-arm64.tar.gz -> \${P}-hugo_extended_\${PV}_linux-arm64.tar.gz  )  )  "
-                echo '"'
+                echo 'RDEPEND="extended? ( sys-devel/gcc sys-libs/glibc )"'
                 echo ''
                 echo 'src_unpack() {'
-                echo '  if use amd64 && ! use extended ; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-hugo_\${PV}_linux-amd64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use amd64 && use extended; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-hugo_extended_\${PV}_Linux-64bit.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use arm; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-hugo_\${PV}_linux-arm.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use arm64 && ! use extended ; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-hugo_\${PV}_linux-arm64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use arm64 && use extended; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-hugo_extended_\${PV}_linux-arm64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
+                echo '	if use amd64 && ! use extended ; then'
+                echo "		unpack \"\${DISTDIR}/\${P}-hugo_\${PV}_linux-amd64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '	fi'
+                echo '	if use amd64 && use extended; then'
+                echo "		unpack \"\${DISTDIR}/\${P}-hugo_extended_\${PV}_Linux-64bit.tar.gz\" || die \"Can't unpack archive file\""
+                echo '	fi'
+                echo '	if use arm; then'
+                echo "		unpack \"\${DISTDIR}/\${P}-hugo_\${PV}_linux-arm.tar.gz\" || die \"Can't unpack archive file\""
+                echo '	fi'
+                echo '	if use arm64 && ! use extended ; then'
+                echo "		unpack \"\${DISTDIR}/\${P}-hugo_\${PV}_linux-arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '	fi'
+                echo '	if use arm64 && use extended; then'
+                echo "		unpack \"\${DISTDIR}/\${P}-hugo_extended_\${PV}_linux-arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '	fi'
                 echo '}'
                 echo ''
                 echo 'src_install() {'
-                echo '  exeinto /opt/bin'
-                echo '  if use amd64 && ! use extended ; then'
-                echo '    newexe "${{ env.binary_archived_name_amd64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use arm; then'
-                echo '    newexe "${{ env.binary_archived_name_arm }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use arm64 && ! use extended ; then'
-                echo '    newexe "${{ env.binary_archived_name_arm64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use amd64 && use extended; then'
-                echo '    newexe "${{ env.extended_binary_archived_name_amd64 }}" "${{ env.extended_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use arm64 && use extended; then'
-                echo '    newexe "${{ env.extended_binary_archived_name_arm64 }}" "${{ env.extended_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
+                echo '	exeinto /opt/bin'
+                echo '	if use amd64 && ! use extended ; then'
+                echo '		newexe "${{ env.binary_archived_name_amd64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '	fi'
+                echo '	if use arm; then'
+                echo '		newexe "${{ env.binary_archived_name_arm }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '	fi'
+                echo '	if use arm64 && ! use extended ; then'
+                echo '		newexe "${{ env.binary_archived_name_arm64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '	fi'
+                echo '	if use amd64 && use extended; then'
+                echo '		newexe "${{ env.extended_binary_archived_name_amd64 }}" "${{ env.extended_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '	fi'
+                echo '	if use arm64 && use extended; then'
+                echo '		newexe "${{ env.extended_binary_archived_name_arm64 }}" "${{ env.extended_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '	fi'
                 echo '}'
                 echo ""
               } > $ebuild_file
