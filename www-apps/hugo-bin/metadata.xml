@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>maintainer@example.com</email>
+	</maintainer>
+	<use>
+		<flag name="extended">Use the extended version of Hugo (with Sass/SCSS support)</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">gohugoio/hugo</remote-id>
+	</upstream>
+</pkgmetadata>
