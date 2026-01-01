@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>admin@example.com</email>
+		<name>Admin</name>
+	</maintainer>
+	<use>
+		<flag name="extended">Enable extended version (Sass/SCSS support)</flag>
+	</use>
+</pkgmetadata>
