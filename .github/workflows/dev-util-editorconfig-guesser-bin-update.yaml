@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.18 Github Binary Release current.config 2025-08-24 12:02:36.738002164 +0000 UTC m=+0.012028373
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.20 Github Binary Release current.config 2026-01-01 21:35:40.340261651 +0000 UTC m=+0.006927750
 
 name: dev-util/editorconfig-guesser-bin update
 
@@ -28,11 +28,11 @@ env:
   workflow_filename: dev-util-editorconfig-guesser-bin-update.yaml
   binary_installed_name: 'ecguess'
   binary_archived_name_amd64: 'ecguess'
-  release_name_amd64: 'cards_\${PV}_linux_amd64.tar.gz'
+  release_name_amd64: 'ecguess_\${PV}_linux_amd64.tar.gz'
   binary_archived_name_arm: 'ecguess'
-  release_name_arm: 'cards_\${PV}_linux_armv7.tar.gz'
+  release_name_arm: 'ecguess_\${PV}_linux_armv7.tar.gz'
   binary_archived_name_arm64: 'ecguess'
-  release_name_arm64: 'cards_\${PV}_linux_arm64.tar.gz'
+  release_name_arm64: 'ecguess_\${PV}_linux_arm64.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -104,20 +104,20 @@ jobs:
                 echo ''
                 echo ''
                 echo 'SRC_URI="'
-                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/cards_\${PV}_linux_amd64.tar.gz -> \${P}-cards_\${PV}_linux_amd64.tar.gz  )  "
-                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/cards_\${PV}_linux_armv7.tar.gz -> \${P}-cards_\${PV}_linux_armv7.tar.gz  )  "
-                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/cards_\${PV}_linux_arm64.tar.gz -> \${P}-cards_\${PV}_linux_arm64.tar.gz  )  "
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ecguess_\${PV}_linux_amd64.tar.gz -> \${P}-ecguess_\${PV}_linux_amd64.tar.gz  )  "
+                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ecguess_\${PV}_linux_armv7.tar.gz -> \${P}-ecguess_\${PV}_linux_armv7.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ecguess_\${PV}_linux_arm64.tar.gz -> \${P}-ecguess_\${PV}_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-cards_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-ecguess_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-cards_\${PV}_linux_armv7.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-ecguess_\${PV}_linux_armv7.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-cards_\${PV}_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-ecguess_\${PV}_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '}'
                 echo ''
@@ -154,9 +154,9 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/cards_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-cards_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/cards_${version}_linux_armv7.tar.gz" "${{ env.epn }}-${version}-cards_${version}_linux_armv7.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/cards_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-cards_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ecguess_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-ecguess_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ecguess_${version}_linux_armv7.tar.gz" "${{ env.epn }}-${version}-ecguess_${version}_linux_armv7.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ecguess_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-ecguess_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
