@@ -75,3 +75,4 @@ src_install() {
 		newexe "hugo" "hugo" || die "Failed to install Binary"
 	fi
 }
+
