@@ -19,4 +19,4 @@ jobs:
       - name: Run pkgcheck
         uses: pkgcore/pkgcheck-action@v1
         with:
-          args: --commits origin/${{ github.event.pull_request.base.ref || 'HEAD~1' }}
+          args: --commits ${{ github.event.pull_request.base.ref && format('origin/{0}', github.event.pull_request.base.ref) || 'HEAD~1' }}
