@@ -52,22 +52,37 @@ jobs:
         run: |
           ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
           mkdir -p "$ebuild_dir"
-          versions=$(curl -s "${{ env.base_url }}/index.xml" | grep -o 'Which Browser v[^<]*' | awk '{print $3}' | sort -Vr)
-          for version in $versions; do
-            version="${version#v}"
-            base_version="${version%.*}"
-            build_suffix="${version##*.}"
-            if [ "${base_version}" = "${version}" ] || [ -z "${build_suffix}" ]; then
-              echo "Skipping unexpected version format: ${version}"
+          # Scrape the XML for .deb filenames to capture full version including build suffix
+          # This looks for patterns like which_browser-0.2.6+44-linux.deb
+          # And handles HTML entity &#43; for +
+          filenames=$(curl -s "${{ env.base_url }}/index.xml" | grep -o 'which_browser-[0-9.]\+\(&#43;\|+\)[0-9]\+-linux.deb' | sed 's/&#43;/+/g' | sort -Vr | uniq)
+
+          for filename in $filenames; do
+            # Extract version from filename: which_browser-0.2.6+44-linux.deb -> 0.2.6+44
+            full_version_str=$(echo "$filename" | sed -E 's/^which_browser-(.+)-linux\.deb$/\1/')
+
+            # Split into base version and build suffix
+            base_version="${full_version_str%+*}"
+            build_suffix="${full_version_str#*+}"
+
+            if [ -z "$base_version" ] || [ -z "$build_suffix" ]; then
+              echo "Skipping unexpected version format in filename: $filename"
               continue
             fi
-            archive_name="which_browser-${base_version}+${build_suffix}-linux.deb"
+
+            # Construct Gentoo PV: 0.2.6+44 -> 0.2.6.44
+            version="${base_version}.${build_suffix}"
+
+            archive_name="$filename"
             ebuild_file="${ebuild_dir}/${{ env.ebuild_name }}-${version}.ebuild"
+
             if [ ! -f "$ebuild_file" ]; then
-              default_base_url="${{ env.base_url }}"
               cat <<EOT > "$ebuild_file"
             # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}
             EAPI=8
+
+            # Upstream changed their download host from arran4.sdf.org to
+            # https://which-browser-site.pages.dev, update SRC_URI accordingly.
 
             DESCRIPTION="${{ env.description }}"
             HOMEPAGE="${{ env.homepage }}"
@@ -80,9 +95,9 @@ jobs:
             fi
 
             MY_DEB_ARCHIVE="\${PN}-\${MY_BASE_PV}+\${MY_BUILD_SUFFIX}-linux.deb"
-            DEFAULT_BASE_URL="${default_base_url}"
 
-            SRC_URI="\${BASE_URL:-\${DEFAULT_BASE_URL}}/v\${PV}/\${MY_DEB_ARCHIVE}"
+            # Updated SRC_URI for new host structure: downloads/vBase/file
+            SRC_URI="https://which-browser-site.pages.dev/downloads/v\${MY_BASE_PV}/\${MY_DEB_ARCHIVE}"
             LICENSE="${{ env.license }}"
             SLOT="0"
             KEYWORDS="${{ env.keywords }}"
@@ -100,12 +115,22 @@ jobs:
             }
 
             src_install() {
+                    # Install the contents of the deb package
+                    # find .
                     cp -vr "\${S}"/usr/ "\${D}"/usr/
+
+                    # Ensure the executable has the correct permissions
                     fperms 0755 /usr/share/which_browser/which_browser
+
+                    # Create a symlink in /usr/bin for easy access
                     dosym /usr/share/which_browser/which_browser /usr/bin/which_browser
+
+                    # Ensure the desktop file has the correct permissions
                     if [[ -f "\${D}/usr/share/applications/which_browser.desktop" ]]; then
                             fperms 0644 /usr/share/applications/which_browser.desktop
                     fi
+
+                    # Ensure the icon file has the correct permissions
                     if [[ -f "\${D}/usr/share/icons/hicolor/256x256/apps/which_browser.png" ]]; then
                             fperms 0644 /usr/share/icons/hicolor/256x256/apps/which_browser.png
                     fi
@@ -117,7 +142,11 @@ jobs:
             }
           EOT
               sed -i 's/^            //' "$ebuild_file"
-              BASE_URL="${{ env.base_url }}" g2 manifest upsert-from-url "${{ env.base_url }}/v${version}/${archive_name}" "${archive_name}" "${ebuild_dir}/Manifest"
+              # SRC_URI logic: https://which-browser-site.pages.dev/downloads/v${MY_BASE_PV}/${MY_DEB_ARCHIVE}
+              # g2 manifest upsert-from-url "https://which-browser-site.pages.dev/downloads/v${base_version}/${archive_name}" "${archive_name}" "${ebuild_dir}/Manifest"
+              # Need to be explicit with URL here for g2
+
+              BASE_URL="https://which-browser-site.pages.dev/downloads" g2 manifest upsert-from-url "https://which-browser-site.pages.dev/downloads/v${base_version}/${archive_name}" "${archive_name}" "${ebuild_dir}"
               echo "generated_version=${version}" >> $GITHUB_OUTPUT
             fi
             break
