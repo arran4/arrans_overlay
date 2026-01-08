@@ -1,0 +1,146 @@
+#!/bin/bash
+#
+# batch file to uninstall printer driver
+#
+
+################################################################################
+#
+# Make sure only root can run our script
+#
+if [ "$(id -u)" != "0" ]; then
+   echo "    Uninstall MUST be run as root" 1>&2
+   exit 1
+fi
+
+TARGET_CPU=`uname -m`
+INSTALL_PATH="/usr/local/share/label/printer"
+
+################################################################################
+#
+# echo informations
+#
+
+echo
+echo "    Warning...!"
+echo "    <Label Printer Driver> uninstall"
+echo
+echo -n "    input 'y' to continue:"
+read inputval
+if test "$inputval" != "y"
+then
+  echo "    uninstall be canceled"
+  echo
+  exit 1
+fi
+
+################################################################################
+#
+# check cup
+#
+FILTER_TYPE="i386"
+FILTER_PATH_SEARCH=""
+MODEL_PATH_SEARCH=""
+
+MODEL_PATH_SEARCH="$MODEL_PATH_SEARCH /usr/share/cups/model"
+MODEL_PATH_SEARCH="$MODEL_PATH_SEARCH /usr/local/share/cups/model"
+
+case $TARGET_CPU in
+	x86_64)
+		FILTER_TYPE="x86_64"
+		FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/lib64/cups/filter"
+		FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/libexec64/cups/filter"
+		FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/local/lib64/cups/filter"
+		FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/local/libexec64/cups/filter"
+
+		MODEL_PATH_SEARCH="$MODEL_PATH_SEARCH /usr/share/ppd"
+	;;
+esac
+
+FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/lib/cups/filter"
+FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/libexec/cups/filter"
+FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/local/lib/cups/filter"
+FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/local/libexec/cups/filter"
+
+################################################################################
+#
+# find install dir
+#
+FILTER_PATH=""
+for DIR in $FILTER_PATH_SEARCH; do
+	if test -d $DIR
+	then
+		FILTER_PATH=$DIR
+		break
+	fi
+done
+MODEL_PATH=""
+for DIR in $MODEL_PATH_SEARCH; do
+	if test -d $DIR
+	then
+		MODEL_PATH=$DIR
+		break
+	fi
+done
+FILTER_PROGRAMS="rastertolabel"
+UNINSTALL_PROGRAM=$FILTER_TYPE"/labelUninstall"
+
+################################################################################
+#
+# uninstall print queue
+#
+eval $UNINSTALL_PROGRAM
+
+################################################################################
+#
+# echo informations
+#
+echo "    remove files......"
+
+if test "x$MODEL_PATH" != "x"
+then
+	rm -rf $MODEL_PATH/label/*.ppd
+fi
+if test "x$FILTER_PATH" != "x"
+then
+	for FILTER in $FILTER_PROGRAMS; do
+		rm -rf $FILTER_PATH/$FILTER
+	done
+fi
+rm -rf $INSTALL_PATH/uninstall
+
+
+################################################################################
+#
+# uninstall
+#
+
+
+echo "    restart spooler - CUPS"
+################################################################################
+#
+# restart
+#
+if test -f /usr/sbin/service
+then
+  /usr/sbin/service cups restart
+else
+  if test -f /etc/init.d/cups
+  then
+    /etc/init.d/cups restart
+  else
+    if test -f /etc/init.d/cupsys
+    then
+      /etc/init.d/cupsys restart
+    fi
+  fi
+fi
+
+################################################################################
+#
+# echo informations
+#
+
+echo "    uninstall driver completed"
+echo
+
+exit 0

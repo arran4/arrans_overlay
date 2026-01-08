@@ -1,0 +1,222 @@
+#!/bin/bash
+#
+# batch file to install printer driver
+#
+
+################################################################################
+#
+# Make sure only root can run our script
+#
+if [ "$(id -u)" != "0" ]; then
+   echo "    Install MUST be run as root" 1>&2
+   exit 1
+fi
+
+TARGET_CPU=`uname -m`
+INSTALL_PATH="/usr/local/share/label/printer"
+
+################################################################################
+#
+# echo informations
+#
+
+echo
+echo "    start [Label Printer Driver]install......"
+
+################################################################################
+#
+# check program cup can install to thie system
+#
+CAN_INSTALL=no
+FILTER_TYPE=""
+FILTER_PATH_SEARCH=""
+MODEL_PATH_SEARCH=""
+
+MODEL_PATH_SEARCH="$MODEL_PATH_SEARCH /usr/share/cups/model"
+MODEL_PATH_SEARCH="$MODEL_PATH_SEARCH /usr/local/share/cups/model"
+
+case $TARGET_CPU in
+	i[345]86)
+#		case $BUILD_CPU in
+#			i386)
+				CAN_INSTALL=yes
+				FILTER_TYPE="i386"
+#			;;
+#		esac
+	;;
+	i686)
+#		case $BUILD_CPU in
+#			i[36]86)
+				CAN_INSTALL=yes
+				FILTER_TYPE="i386"
+#			;;
+#		esac
+	;;
+	x86_64)
+#		case $BUILD_CPU in
+#			x86_64)
+				CAN_INSTALL=yes
+				FILTER_TYPE="x86_64"
+#			;;
+#		esac
+		FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/lib64/cups/filter"
+		FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/libexec64/cups/filter"
+		FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/local/lib64/cups/filter"
+		FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/local/libexec64/cups/filter"
+
+		MODEL_PATH_SEARCH="$MODEL_PATH_SEARCH /usr/share/ppd"
+	;;
+	*)
+	;;
+esac
+
+FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/lib/cups/filter"
+FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/libexec/cups/filter"
+FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/local/lib/cups/filter"
+FILTER_PATH_SEARCH="$FILTER_PATH_SEARCH /usr/local/libexec/cups/filter"
+
+
+if test "x$CAN_INSTALL" != "xyes"; then
+	echo "This driver is build for $BUILD_CPU cpu, can not install to $TARGET_CPU system"
+    exit 1
+fi
+
+################################################################################
+#
+# find install dir
+#
+FILTER_PATH=""
+for DIR in $FILTER_PATH_SEARCH; do
+	if test -d $DIR
+	then
+		FILTER_PATH=$DIR
+		break
+	fi
+done
+MODEL_PATH=""
+for DIR in $MODEL_PATH_SEARCH; do
+	if test -d $DIR
+	then
+		MODEL_PATH=$DIR
+		echo "    Install Model Path: " $DIR
+		break
+	fi
+done
+
+if test "x$FILTER_PATH" == "x"
+then
+	echo "  Cannot found CUPS filter path"
+	exit
+fi
+if test "x$MODEL_PATH" == "x"
+then
+	echo "  Cannot found CUPS model path"
+	exit
+fi
+
+FILTER_PROGRAMS=$FILTER_TYPE"/rastertolabeltspl"
+INSTALL_PROGRAM=$FILTER_TYPE"/labelInstall"
+
+################################################################################
+#
+# check and execute uninstall shell script
+#
+
+if test -f $INSTALL_PATH/uninstall
+then
+  echo "    Execute uninstall shell script now......"
+  if !($INSTALL_PATH/uninstall)
+  then
+    echo "    Uninstall old [Printer Driver] failed"
+    echo "    Install driver failed"
+    echo
+    exit 1
+  fi
+fi
+
+
+################################################################################
+#
+# echo informations
+#
+
+echo "    start copy files......"
+
+################################################################################
+#
+# set own, grp and permissions
+#
+chown -R root:root ./*
+chmod 644  ppds/*.ppd
+cp -r ppds $FILTER_TYPE
+for FILTER in $FILTER_PROGRAMS; do
+	chmod 755  ./$FILTER
+done
+for INSTALL in $INSTALL_PROGRAM; do
+	chmod 755 ./$INSTALL
+done
+chmod 744  ./uninstall
+
+################################################################################
+#
+# make install dir
+#
+mkdir -p $MODEL_PATH/label/
+chown -R root:root $MODEL_PATH/label/
+chmod -R 755 $MODEL_PATH/label/
+
+mkdir -p $INSTALL_PATH/
+chown -R root:root $INSTALL_PATH/
+chmod -R 755 $INSTALL_PATH/
+
+
+################################################################################
+#
+# copy files
+#
+for FILTER in $FILTER_PROGRAMS; do
+	cp ./$FILTER $FILTER_PATH/
+done
+cp ./uninstall $INSTALL_PATH/
+cp ppds/*.ppd $MODEL_PATH/label/
+
+chmod 4755 $INSTALL_PATH/
+
+
+echo "    install printer"
+################################################################################
+#
+# install
+#
+eval $INSTALL_PROGRAM
+
+
+echo "    restart spooler - CUPS"
+################################################################################
+#
+# restart
+#
+if test -f /usr/sbin/service
+then
+  /usr/sbin/service cups restart
+else
+  if test -f /etc/init.d/cups
+  then
+    /etc/init.d/cups restart
+  else
+    if test -f /etc/init.d/cupsys
+    then
+      /etc/init.d/cupsys restart
+    fi
+  fi
+fi
+
+################################################################################
+#
+# echo informations
+#
+
+echo "    Install driver completed"
+echo
+
+exit 0

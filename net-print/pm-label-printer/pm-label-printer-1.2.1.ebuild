@@ -17,11 +17,6 @@ RDEPEND="${DEPEND}"
 
 S="${WORKDIR}/LabelPrinter-1.2.1"
 
-src_prepare() {
-    # Fix paths and permissions in the scripts if needed
-    default
-}
-
 src_install() {
     local filter_path
     local ppd_path="/usr/share/ppd/pm-label-printer"
@@ -63,4 +58,3 @@ pkg_postinst() {
     elog "Ensure your printer is configured using the appropriate PPD files located at:"
     elog "  /usr/share/ppd/pm-label-printer/"
 }
-
