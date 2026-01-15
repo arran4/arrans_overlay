@@ -7,7 +7,7 @@ SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
 DEPEND=""
-RDEPEND="sys-libs/glibc sys-libs/zlib "
+RDEPEND="dev-libs/wayland sys-fs/fuse sys-libs/glibc sys-libs/zlib "
 S="${WORKDIR}"
 RESTRICT="strip"
 
