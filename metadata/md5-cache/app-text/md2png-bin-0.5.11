@@ -1,0 +1,10 @@
+DEFINED_PHASES=install unpack
+DESCRIPTION=Render Markdown directly to PNG or JPEG images with a single static Go binary.
+EAPI=8
+HOMEPAGE=https://github.com/arran4/md2png
+KEYWORDS=~amd64 ~arm ~arm64
+LICENSE=MIT
+RDEPEND=sys-libs/glibc
+SLOT=0
+SRC_URI=amd64? ( https://github.com/arran4/md2png/releases/download/v0.5.11/md2png_0.5.11_Linux_x86_64.tar.gz -> md2png-bin-0.5.11-md2png_0.5.11_Linux_x86_64.tar.gz ) arm? ( https://github.com/arran4/md2png/releases/download/v0.5.11/md2png_0.5.11_Linux_armv7.tar.gz -> md2png-bin-0.5.11-md2png_0.5.11_Linux_armv7.tar.gz ) arm64? ( https://github.com/arran4/md2png/releases/download/v0.5.11/md2png_0.5.11_Linux_arm64.tar.gz -> md2png-bin-0.5.11-md2png_0.5.11_Linux_arm64.tar.gz )
+_md5_=36d57322a9f115a70a5180dd924f54c8

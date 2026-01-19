@@ -1,0 +1,11 @@
+DEFINED_PHASES=install
+DESCRIPTION=HAL 9000 voice model for Piper TTS
+EAPI=8
+HOMEPAGE=https://huggingface.co/campwill/HAL-9000-Piper-TTS
+KEYWORDS=~amd64
+LICENSE=Apache-2.0
+RDEPEND=media-sound/piper
+RESTRICT=mirror strip test
+SLOT=0
+SRC_URI=https://huggingface.co/campwill/HAL-9000-Piper-TTS/resolve/5ad905a1f42cb33364df9d3856491bca8738b9fa/hal.onnx?download=1 -> piper-voice-hal-0_p20250413.onnx https://huggingface.co/campwill/HAL-9000-Piper-TTS/resolve/5ad905a1f42cb33364df9d3856491bca8738b9fa/hal.onnx.json?download=1 -> piper-voice-hal-0_p20250413.onnx.json https://huggingface.co/campwill/HAL-9000-Piper-TTS/resolve/5ad905a1f42cb33364df9d3856491bca8738b9fa/model_sample.wav?download=1 -> piper-voice-hal-0_p20250413.wav https://huggingface.co/campwill/HAL-9000-Piper-TTS/resolve/5ad905a1f42cb33364df9d3856491bca8738b9fa/README.md?download=1 -> piper-voice-hal-0_p20250413.README.md
+_md5_=7e8f0fa613b6fa58374998d4c376fb05

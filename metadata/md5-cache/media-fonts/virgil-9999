@@ -1,0 +1,14 @@
+BDEPEND=X? ( >=x11-apps/mkfontscale-1.2.0 media-fonts/encodings )
+DEFINED_PHASES=install postinst postrm setup
+DESCRIPTION=The font that powers Excalidraw
+EAPI=8
+HOMEPAGE=https://virgil.excalidraw.com/
+INHERIT=font
+IUSE=X
+KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
+LICENSE=unknown-license
+RESTRICT=binchecks strip
+SLOT=0
+SRC_URI=https://github.com/excalidraw/virgil/raw/main/Virgil.woff2 -> virgil.woff2
+_eclasses_=font	aa113a3df9cd0a9693a1c1ee7c34a6eb
+_md5_=68f85cbbbf492ab6025e95fabb945b0f

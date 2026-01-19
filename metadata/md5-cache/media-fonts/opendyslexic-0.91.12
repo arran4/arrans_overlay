@@ -1,0 +1,14 @@
+BDEPEND=X? ( >=x11-apps/mkfontscale-1.2.0 media-fonts/encodings )
+DEFINED_PHASES=install postinst postrm setup
+DESCRIPTION=OpenDyslexic, a typeface that uses typeface shapes & features to help offset some visual symptoms of Dyslexia. Now in SIL-OFL.
+EAPI=8
+HOMEPAGE=https://opendyslexic.org/
+INHERIT=font
+IUSE=X
+KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
+LICENSE=SIL OPEN FONT LICENSE
+RESTRICT=binchecks strip
+SLOT=0
+SRC_URI=https://github.com/antijingoist/opendyslexic/releases/download/v0.91.12/opendyslexic-0.910.12-rc2-2019.10.17.zip -> opendyslexic-0.91.12-rc2-2019.10.17.zip
+_eclasses_=font	aa113a3df9cd0a9693a1c1ee7c34a6eb
+_md5_=8f33585a61b545ab3dfd1a7cad39a5ca
