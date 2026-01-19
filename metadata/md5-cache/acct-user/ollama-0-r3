@@ -1,0 +1,10 @@
+DEFINED_PHASES=install postinst preinst prerm pretend
+DESCRIPTION=System user for ollama
+EAPI=8
+INHERIT=acct-user
+KEYWORDS=~amd64 ~arm64
+LICENSE=BSD
+RDEPEND=acct-group/ollama, acct-group/video
+SLOT=0
+_eclasses_=acct-user	ca29416d617e4fd224258d5cf916bf33	user-info	563da40a1a20ea1e55bbf4d149fc190d
+_md5_=27d30b0caf6cd4abbfaa76d6227e5b07

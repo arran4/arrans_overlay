@@ -1,0 +1,9 @@
+DEFINED_PHASES=install
+DESCRIPTION=A very small, very simple, yet very secure encryption tool.
+EAPI=8
+KEYWORDS=~amd64
+LICENSE=MIT
+RDEPEND=media-libs/libglvnd sys-devel/gcc sys-libs/glibc x11-libs/gtk+ x11-libs/libX11
+SLOT=0
+SRC_URI=amd64? ( https://github.com/Picocrypt/Picocrypt/releases/download/1.49/Picocrypt -> picocrypt-bin-1.49-Picocrypt )
+_md5_=29751626faaf65cd77a07e129b180922

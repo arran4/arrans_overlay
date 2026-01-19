@@ -1,0 +1,13 @@
+DEFINED_PHASES=install postinst prepare unpack
+DESCRIPTION=User-friendly Desktop Client App for AI Models/LLMs (GPT, Claude, Gemini, Ollama...)
+EAPI=8
+HOMEPAGE=https://chatboxai.app
+INHERIT=xdg-utils
+KEYWORDS=~amd64 ~arm64
+LICENSE=MIT
+RDEPEND=sys-libs/glibc sys-libs/glibc sys-libs/zlib sys-libs/zlib
+RESTRICT=strip
+SLOT=0
+SRC_URI=arm64? ( https://github.com/Bin-Huang/chatbox/releases/download/v0.10.4/Chatbox.CE-0.10.4-arm64.AppImage -> chatbox-appimage-0.10.4-Chatbox-0.10.4-arm64.AppImage ) amd64? ( https://github.com/Bin-Huang/chatbox/releases/download/v0.10.4/Chatbox.CE-0.10.4-x86_64.AppImage -> chatbox-appimage-0.10.4-Chatbox-0.10.4-x86_64.AppImage )
+_eclasses_=xdg-utils	42869b3c8d86a70ef3cf75165a395e09
+_md5_=6e2c4acefd464875f703aabc755208ca

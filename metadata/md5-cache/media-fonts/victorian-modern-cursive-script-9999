@@ -1,0 +1,14 @@
+BDEPEND=X? ( >=x11-apps/mkfontscale-1.2.0 media-fonts/encodings )
+DEFINED_PHASES=install postinst postrm setup
+DESCRIPTION=Victorian Modern Cursive Script font - Handwriting Educational font
+EAPI=8
+HOMEPAGE=https://www.education.vic.gov.au/school/teachers/teachingresources/discipline/english/Pages/handwriting.aspx
+INHERIT=font
+IUSE=X
+KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
+LICENSE=unknown-license
+RESTRICT=binchecks strip
+SLOT=0
+SRC_URI=https://www.education.vic.gov.au/Documents/school/teachers/teachingresources/discipline/english/vicmodcursive.zip -> vicmodcursive-9999.zip
+_eclasses_=font	aa113a3df9cd0a9693a1c1ee7c34a6eb
+_md5_=c8df11d8fff4ff7796bbd12721d8bf15
