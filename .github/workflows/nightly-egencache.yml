@@ -29,7 +29,7 @@ jobs:
           mkdir -p /etc/portage/repos.conf
           cat > /etc/portage/repos.conf/arrans-overlay.conf << EOF
           [arrans-overlay]
-          location = ${{ github.workspace }}
+          location = $(pwd)
           EOF
 
       - name: Run egencache update
