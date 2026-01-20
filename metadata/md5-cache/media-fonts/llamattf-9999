@@ -1,0 +1,14 @@
+BDEPEND=X? ( >=x11-apps/mkfontscale-1.2.0 media-fonts/encodings )
+DEFINED_PHASES=install postinst postrm setup
+DESCRIPTION=A font containing a large language model and inference engine.
+EAPI=8
+HOMEPAGE=https://github.com/fuglede/llama.ttf
+INHERIT=font
+IUSE=X
+KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
+LICENSE=unknown-license
+RESTRICT=binchecks strip
+SLOT=0
+SRC_URI=https://github.com/fuglede/llama.ttf/raw/master/llamattf/llama.ttf -> llama-9999.ttf
+_eclasses_=font	aa113a3df9cd0a9693a1c1ee7c34a6eb
+_md5_=b9b814a394bb307bc408c76228dd8640

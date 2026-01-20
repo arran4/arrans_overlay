@@ -1,0 +1,8 @@
+DEFINED_PHASES=install postinst
+DESCRIPTION=Ensure fs.inotify.max_user_instances is set at boot
+EAPI=8
+HOMEPAGE=https://example.invalid
+KEYWORDS=~amd64
+LICENSE=GPL-2
+SLOT=0
+_md5_=4dd3ae3c500f6321b0892d9f68dec1c6

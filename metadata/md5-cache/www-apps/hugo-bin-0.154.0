@@ -1,0 +1,12 @@
+DEFINED_PHASES=install unpack
+DESCRIPTION=The world’s fastest framework for building websites.
+EAPI=8
+HOMEPAGE=https://gohugo.io
+IUSE=extended
+KEYWORDS=~amd64 ~arm ~arm64
+LICENSE=MIT
+RDEPEND=extended? ( sys-devel/gcc sys-libs/glibc )
+REQUIRED_USE=extended? ( || ( amd64 arm64 ) )
+SLOT=0
+SRC_URI=amd64? ( !extended? ( https://github.com/gohugoio/hugo/releases/download/v0.154.0/hugo_0.154.0_linux-amd64.tar.gz -> hugo-bin-0.154.0-hugo_0.154.0_linux-amd64.tar.gz ) extended? ( https://github.com/gohugoio/hugo/releases/download/v0.154.0/hugo_extended_0.154.0_Linux-64bit.tar.gz -> hugo-bin-0.154.0-hugo_extended_0.154.0_Linux-64bit.tar.gz ) ) arm? ( https://github.com/gohugoio/hugo/releases/download/v0.154.0/hugo_0.154.0_linux-arm.tar.gz -> hugo-bin-0.154.0-hugo_0.154.0_linux-arm.tar.gz ) arm64? ( !extended? ( https://github.com/gohugoio/hugo/releases/download/v0.154.0/hugo_0.154.0_linux-arm64.tar.gz -> hugo-bin-0.154.0-hugo_0.154.0_linux-arm64.tar.gz ) extended? ( https://github.com/gohugoio/hugo/releases/download/v0.154.0/hugo_extended_0.154.0_linux-arm64.tar.gz -> hugo-bin-0.154.0-hugo_extended_0.154.0_linux-arm64.tar.gz ) )
+_md5_=88a4b9dc818e5640a7f0749903013759

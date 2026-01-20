@@ -1,0 +1,9 @@
+DEFINED_PHASES=install unpack
+DESCRIPTION=jq for binary formats - tool, language and decoders for working with binary and text formats
+EAPI=8
+HOMEPAGE=https://github.com/wader/fq
+KEYWORDS=~amd64 ~arm64
+LICENSE=MIT
+SLOT=0
+SRC_URI=amd64? ( https://github.com/wader/fq/releases/download/v0.16.0/fq_0.16.0_linux_amd64.tar.gz -> fq-bin-0.16.0-fq_0.16.0_linux_amd64.tar.gz ) arm64? ( https://github.com/wader/fq/releases/download/v0.16.0/fq_0.16.0_linux_arm64.tar.gz -> fq-bin-0.16.0-fq_0.16.0_linux_arm64.tar.gz )
+_md5_=563e62c9a16ef4009a32a3761d04552b

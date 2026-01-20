@@ -1,0 +1,8 @@
+DEFINED_PHASES=install postinst
+DESCRIPTION=Sets custom systemd NOFILE limits
+EAPI=8
+HOMEPAGE=https://example.invalid
+KEYWORDS=~amd64
+LICENSE=GPL-2
+SLOT=0
+_md5_=e0718badf7f4bf301737434218bf4ffc

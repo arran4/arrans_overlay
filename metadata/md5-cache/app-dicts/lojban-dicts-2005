@@ -1,0 +1,9 @@
+DEFINED_PHASES=install
+DESCRIPTION=Lojban Text Dictionaries
+EAPI=8
+HOMEPAGE=https://mw-live.lojban.org/papri/lojban_Wordlists
+KEYWORDS=amd64
+LICENSE=public domain
+SLOT=0
+SRC_URI=https://www.lojban.org/publications/wordlists/cmavo.txt https://www.lojban.org/publications/wordlists/gismu.txt https://www.lojban.org/publications/wordlists/lujvo.txt https://www.lojban.org/publications/wordlists/rafsi.txt
+_md5_=e9e8cadaeec0ba7e0da28e9f59ce30ac
