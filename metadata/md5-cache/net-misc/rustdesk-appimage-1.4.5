@@ -1,0 +1,13 @@
+DEFINED_PHASES=install postinst prepare unpack
+DESCRIPTION=An open-source remote desktop application designed for self-hosting, as an alternative to TeamViewer.
+EAPI=8
+HOMEPAGE=https://rustdesk.com
+INHERIT=xdg-utils
+KEYWORDS=~amd64 ~arm64
+LICENSE=MIT
+RDEPEND=sys-libs/glibc sys-libs/glibc sys-libs/zlib sys-libs/zlib
+RESTRICT=strip
+SLOT=0
+SRC_URI=arm64? ( https://github.com/rustdesk/rustdesk/releases/download/1.4.5/rustdesk-1.4.5-aarch64.AppImage -> rustdesk-appimage-1.4.5-rustdesk-1.4.5-aarch64.AppImage ) amd64? ( https://github.com/rustdesk/rustdesk/releases/download/1.4.5/rustdesk-1.4.5-x86_64.AppImage -> rustdesk-appimage-1.4.5-rustdesk-1.4.5-x86_64.AppImage )
+_eclasses_=xdg-utils	42869b3c8d86a70ef3cf75165a395e09
+_md5_=ed6c000782082f833f2c1a918fc8d7dc

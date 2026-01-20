@@ -1,0 +1,9 @@
+DEFINED_PHASES=install unpack
+DESCRIPTION=Pretty fancy and modern terminal file manager
+EAPI=8
+HOMEPAGE=https://superfile.netlify.app
+KEYWORDS=~amd64 ~arm64
+LICENSE=MIT
+SLOT=0
+SRC_URI=amd64? ( https://github.com/yorukot/superfile/releases/download/v1.4.0-rc1/superfile-linux-v1.4.0-rc1-amd64.tar.gz -> superfile-bin-1.4.0_rc-superfile-linux-v1.4.0-rc1-amd64.tar.gz ) arm64? ( https://github.com/yorukot/superfile/releases/download/v1.4.0-rc1/superfile-linux-v1.4.0-rc1-arm64.tar.gz -> superfile-bin-1.4.0_rc-superfile-linux-v1.4.0-rc1-arm64.tar.gz )
+_md5_=d79397e77cec988ec895e910a15f8e43

@@ -1,0 +1,10 @@
+DEFINED_PHASES=install unpack
+DESCRIPTION=Feature rich terminal file transfer tool
+EAPI=8
+HOMEPAGE=https://termscp.veeso.dev
+KEYWORDS=~amd64 ~arm64
+LICENSE=MIT
+RDEPEND=net-fs/samba sys-libs/glibc
+SLOT=0
+SRC_URI=amd64? ( https://github.com/veeso/termscp/releases/download/v0.19.0/termscp-v\-x86_64-unknown-linux-gnu.tar.gz -> termscp-bin-0.19.0-termscp-v\-x86_64-unknown-linux-gnu.tar.gz ) arm64? ( https://github.com/veeso/termscp/releases/download/v0.19.0/termscp-v\-aarch64-unknown-linux-gnu.tar.gz -> termscp-bin-0.19.0-termscp-v\-aarch64-unknown-linux-gnu.tar.gz )
+_md5_=3382a2886c0aad7f25d09c35d56b3f25

@@ -1,0 +1,8 @@
+DEFINED_PHASES=install
+DESCRIPTION=Installs a sudoers.d drop-in to enable wheel group sudo access
+EAPI=8
+HOMEPAGE=https://www.sudo.ws/
+KEYWORDS=~amd64 ~arm ~arm64
+LICENSE=public-domain
+SLOT=0
+_md5_=8bbecf2e0f918f1cc131808461d378d1

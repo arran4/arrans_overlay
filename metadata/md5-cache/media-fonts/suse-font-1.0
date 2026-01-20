@@ -1,0 +1,14 @@
+BDEPEND=X? ( >=x11-apps/mkfontscale-1.2.0 media-fonts/encodings )
+DEFINED_PHASES=install postinst postrm prepare setup
+DESCRIPTION=SUSE is a sans serif typeface designed by René Bieder, embodying a unique hybrid between geometric and monospaced features. It captures the essence of SUSE, a company renowned for its open-source solutions.
+EAPI=8
+HOMEPAGE=https://fonts.google.com/specimen/SUSE
+INHERIT=font
+IUSE=X
+KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
+LICENSE=MIT License
+RESTRICT=binchecks strip
+SLOT=0
+SRC_URI=https://github.com/SUSE/suse-font/releases/download/v1.000/suse-font-v1.000.zip -> suse-font-1.0.zip
+_eclasses_=font	aa113a3df9cd0a9693a1c1ee7c34a6eb
+_md5_=e5a44761a4629673240bffa637cf238a

@@ -1,0 +1,13 @@
+DEFINED_PHASES=install postinst unpack
+DESCRIPTION=Which Browser? A browser selecting tool with rules to automate.
+EAPI=8
+HOMEPAGE=https://which-browser-site.pages.dev
+INHERIT=unpacker
+KEYWORDS=~amd64
+LICENSE=All-rights-reserved
+RDEPEND=|| ( dev-libs/libayatana-appindicator )
+RESTRICT=mirror
+SLOT=0
+SRC_URI=https://which-browser-site.pages.dev/downloads/v0.2.6/which_browser-0.2.6+44-linux.deb
+_eclasses_=multiprocessing	1e32df7deee68372153dca65f4a7c21f	toolchain-funcs	30214924c0c3b92ec7dbf24fc70d60d3	unpacker	3b4ee72d1e2e0374fd8cd3eddfa00627
+_md5_=941287f9da175a5954238e4e038e1933

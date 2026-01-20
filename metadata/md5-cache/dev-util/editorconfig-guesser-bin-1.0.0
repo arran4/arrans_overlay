@@ -1,0 +1,9 @@
+DEFINED_PHASES=install unpack
+DESCRIPTION=Generates reasonable .editorconfig files for source files.
+EAPI=8
+IUSE=ecguess doc
+KEYWORDS=~amd64 ~arm ~arm64
+LICENSE=MIT
+SLOT=0
+SRC_URI=amd64? ( https://github.com/arran4/editorconfig-guesser/releases/download/v1.0.0/cards_1.0.0_linux_amd64.tar.gz -> editorconfig-guesser-bin-1.0.0-cards_1.0.0_linux_amd64.tar.gz ) arm? ( ecguess? ( https://github.com/arran4/editorconfig-guesser/releases/download/v1.0.0/cards_1.0.0_linux_armv7.tar.gz -> editorconfig-guesser-bin-1.0.0-cards_1.0.0_linux_armv7.tar.gz ) ) arm64? ( https://github.com/arran4/editorconfig-guesser/releases/download/v1.0.0/cards_1.0.0_linux_arm64.tar.gz -> editorconfig-guesser-bin-1.0.0-cards_1.0.0_linux_arm64.tar.gz )
+_md5_=35b7964382890ea1deee7cfc08be3f5d

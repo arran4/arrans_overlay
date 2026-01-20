@@ -1,0 +1,11 @@
+DEFINED_PHASES=install unpack
+DESCRIPTION=View disk space usage and delete unwanted data, fast.
+EAPI=8
+HOMEPAGE=https://lib.rs/crates/dua-cli
+IUSE=doc
+KEYWORDS=~amd64 ~arm ~arm64
+LICENSE=MIT
+RDEPEND=sys-devel/gcc sys-libs/glibc
+SLOT=0
+SRC_URI=amd64? ( https://github.com/Byron/dua-cli/releases/download/v2.32.2/dua-v2.32.2-x86_64-unknown-linux-musl.tar.gz -> dua-cli-bin-2.32.2-dua-v2.32.2-x86_64-unknown-linux-musl.tar.gz ) arm? ( https://github.com/Byron/dua-cli/releases/download/v2.32.2/dua-v2.32.2-arm-unknown-linux-gnueabihf.tar.gz -> dua-cli-bin-2.32.2-dua-v2.32.2-arm-unknown-linux-gnueabihf.tar.gz ) arm64? ( https://github.com/Byron/dua-cli/releases/download/v2.32.2/dua-v2.32.2-aarch64-unknown-linux-musl.tar.gz -> dua-cli-bin-2.32.2-dua-v2.32.2-aarch64-unknown-linux-musl.tar.gz )
+_md5_=ef470a6aaf0e1d84f9da5a771b46212d

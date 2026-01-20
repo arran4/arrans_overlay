@@ -1,0 +1,15 @@
+DEFINED_PHASES=install postinst prepare unpack
+DEPEND=acct-user/ollama acct-group/ollama
+DESCRIPTION=Get up and running with Llama 3, Mistral, Gemma, and other large language models.
+EAPI=8
+HOMEPAGE=https://ollama.com
+INHERIT=xdg-utils
+IUSE=+systemd -rocm
+KEYWORDS=~amd64 ~arm64
+LICENSE=MIT
+RDEPEND=acct-user/ollama acct-group/ollama
+RESTRICT=strip
+SLOT=0
+SRC_URI=amd64? ( https://github.com/ollama/ollama/releases/download/v0.11.7/ollama-linux-amd64.tgz -> ollama-bin-0.11.7.amd64.tgz ) arm64? ( https://github.com/ollama/ollama/releases/download/v0.11.7/ollama-linux-arm64.tgz -> ollama-bin-0.11.7.arm64.tgz ) rocm? ( https://github.com/ollama/ollama/releases/download/v0.11.7/ollama-linux-amd64-rocm.tgz -> ollama-bin-0.11.7.rocm.tgz )
+_eclasses_=xdg-utils	42869b3c8d86a70ef3cf75165a395e09
+_md5_=8f9335fa180b715d8c83128e02d4659a

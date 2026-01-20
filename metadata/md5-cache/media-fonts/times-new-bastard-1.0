@@ -1,0 +1,14 @@
+BDEPEND=X? ( >=x11-apps/mkfontscale-1.2.0 media-fonts/encodings )
+DEFINED_PHASES=install postinst postrm setup
+DESCRIPTION=It's Times New Roman but every seventh letter is jarringly sans serif
+EAPI=8
+HOMEPAGE=https://github.com/weiweihuanghuang/Times-New-Bastard
+INHERIT=font
+IUSE=X
+KEYWORDS=~amd64 ~arm ~arm64 ~loong ~ppc64 ~riscv ~x86
+LICENSE=AGPL-3.0
+RESTRICT=binchecks strip
+SLOT=0
+SRC_URI=https://github.com/weiweihuanghuang/Times-New-Bastard/releases/download/v1.0/TimesNewBastardv1.0.zip -> times-new-bastard-1.0.zip
+_eclasses_=font	aa113a3df9cd0a9693a1c1ee7c34a6eb
+_md5_=374ae3723cee151fe13e04307f674559
