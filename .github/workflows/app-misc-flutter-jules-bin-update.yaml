@@ -70,7 +70,7 @@ jobs:
             ) > "$metadata_file"
           fi
           declare -A releaseTypes=()
-          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name") and (.assets | length > 0)) | .tag_name')
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
