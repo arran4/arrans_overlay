@@ -42,7 +42,7 @@ jobs:
           fi
 
           echo "Comparing $BASE to $HEAD"
-          CHANGED_FILES=$(git diff --name-only $BASE $HEAD -- '**/Manifest' || true)
+          CHANGED_FILES=$(git diff --name-only "$BASE" "$HEAD" -- '**/Manifest' || true)
 
           if [ -z "$CHANGED_FILES" ]; then
             echo "No Manifest files changed."
@@ -51,7 +51,7 @@ jobs:
             # Extract directories
             DIRS=$(echo "$CHANGED_FILES" | xargs -n1 dirname | sort -u | tr '\n' ' ')
             echo "Changed directories: $DIRS"
-            echo "dirs=$DIRS" >> $GITHUB_OUTPUT
+            echo "dirs=$DIRS" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Verify Manifests
