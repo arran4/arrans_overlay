@@ -52,17 +52,38 @@ jobs:
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
-          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+
+          # Clean up old ebuilds and Manifest to keep only the latest stable version
+          rm -f "${ebuild_dir}"/*.ebuild "${ebuild_dir}/Manifest"
+
+          # Fetch only the latest non-prerelease tag
+          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '[.[] | select(.prerelease==false)] | .[0].tag_name')
+
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
               # Skipping tag that doesn't start with 'v'
               continue
             fi
+
+            # Keep original version for comparison
+            orig_version="$version"
+
+            # Gentoofy version
+            version=$(echo "$version" | sed 's/-rc/_rc/g; s/-beta/_beta/g; s/-alpha/_alpha/g; s/-p/_p/g')
+
             if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
               echo "tag / $version doesn't match regexp";
               continue; 
             fi
+
+            ext="tgz"
+            bdepend=""
+            if dpkg --compare-versions "$orig_version" "ge" "0.14.0"; then
+               ext="tar.zst"
+               bdepend='BDEPEND="app-arch/zstd"'
+            fi
+
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               {
@@ -74,6 +95,9 @@ jobs:
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="~amd64 ~arm64"'
                 echo 'IUSE="+systemd -rocm"'
+                if [ -n "$bdepend" ]; then
+                  echo "$bdepend"
+                fi
                 echo 'DEPEND="acct-user/ollama acct-group/ollama"'
                 echo 'RDEPEND="acct-user/ollama acct-group/ollama"'
                 echo 'S="${WORKDIR}"'
@@ -81,20 +105,21 @@ jobs:
                 echo ''
                 echo "inherit xdg-utils"
                 echo ''
+                echo 'MY_PV="${PV/_/-}"'
                 echo 'SRC_URI="  '
-                echo '  amd64? ( https://github.com/ollama/ollama/releases/download/v${PV}/ollama-linux-amd64.tgz  -> $P.amd64.tgz  )'
-                echo '  arm64? ( https://github.com/ollama/ollama/releases/download/v${PV}/ollama-linux-arm64.tgz  -> $P.arm64.tgz  )'
-                echo '  rocm? ( https://github.com/ollama/ollama/releases/download/v${PV}/ollama-linux-amd64-rocm.tgz -> $P.rocm.tgz )'
+                echo '  amd64? ( https://github.com/ollama/ollama/releases/download/v${MY_PV}/ollama-linux-amd64.'${ext}'  -> $P.amd64.'${ext}'  )'
+                echo '  arm64? ( https://github.com/ollama/ollama/releases/download/v${MY_PV}/ollama-linux-arm64.'${ext}'  -> $P.arm64.'${ext}'  )'
+                echo '  rocm? ( https://github.com/ollama/ollama/releases/download/v${MY_PV}/ollama-linux-amd64-rocm.'${ext}' -> $P.rocm.'${ext}' )'
                 echo '" '
                 echo ''
                 echo "src_unpack() {"
                 echo "  if use rocm; then"
-                echo "    tar -xzvf \"\${DISTDIR}/\${P}.rocm.tgz\" -C \"\${WORKDIR}\" || die \"Can't extract rocm tgz\""
+                echo "    unpack \"\${P}.rocm.${ext}\""
                 echo "  fi"
                 echo "  if use amd64; then"
-                echo "    tar -xzvf \"\${DISTDIR}/\${P}.amd64.tgz\" -C \"\${WORKDIR}\" || die \"Failed to extract binary\""
+                echo "    unpack \"\${P}.amd64.${ext}\""
                 echo "  elif use arm64; then"
-                echo "    tar -xzvf \"\${DISTDIR}/\${P}.arm64.tgz\" -C \"\${WORKDIR}\" || die \"Failed to extract binary\""
+                echo "    unpack \"\${P}.arm64.${ext}\""
                 echo "  fi"
                 echo "}"
                 echo ""
@@ -143,9 +168,9 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64.tgz ${{ env.epn }}-${version}.amd64.tgz "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-arm64.tgz ${{ env.epn }}-${version}.arm64.tgz "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64-rocm.tgz ${{ env.epn }}-${version}.rocm.tgz "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64.${ext} ${{ env.epn }}-${version}.amd64.${ext} "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-arm64.${ext} ${{ env.epn }}-${version}.arm64.${ext} "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64-rocm.${ext} ${{ env.epn }}-${version}.rocm.${ext} "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
               echo "generated_tag=${tag}" >> $GITHUB_ENV
               
