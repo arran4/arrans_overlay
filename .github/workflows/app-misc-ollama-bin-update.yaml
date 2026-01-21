@@ -113,14 +113,25 @@ jobs:
                 echo '" '
                 echo ''
                 echo "src_unpack() {"
-                echo "  if use rocm; then"
-                echo "    unpack \"\${P}.rocm.${ext}\""
-                echo "  fi"
-                echo "  if use amd64; then"
-                echo "    unpack \"\${P}.amd64.${ext}\""
-                echo "  elif use arm64; then"
-                echo "    unpack \"\${P}.arm64.${ext}\""
-                echo "  fi"
+                if [ "${ext}" = "tar.zst" ]; then
+                  echo "  if use rocm; then"
+                  echo "    tar --zstd -xf \"\${DISTDIR}/\${P}.rocm.${ext}\" -C \"\${WORKDIR}\" || die \"Failed to unpack rocm\""
+                  echo "  fi"
+                  echo "  if use amd64; then"
+                  echo "    tar --zstd -xf \"\${DISTDIR}/\${P}.amd64.${ext}\" -C \"\${WORKDIR}\" || die \"Failed to unpack amd64\""
+                  echo "  elif use arm64; then"
+                  echo "    tar --zstd -xf \"\${DISTDIR}/\${P}.arm64.${ext}\" -C \"\${WORKDIR}\" || die \"Failed to unpack arm64\""
+                  echo "  fi"
+                else
+                  echo "  if use rocm; then"
+                  echo "    unpack \"\${P}.rocm.${ext}\""
+                  echo "  fi"
+                  echo "  if use amd64; then"
+                  echo "    unpack \"\${P}.amd64.${ext}\""
+                  echo "  elif use arm64; then"
+                  echo "    unpack \"\${P}.arm64.${ext}\""
+                  echo "  fi"
+                fi
                 echo "}"
                 echo ""
                 echo "src_install() {"
