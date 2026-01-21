@@ -52,7 +52,13 @@ jobs:
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
-          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+
+          # Clean up old ebuilds and Manifest to keep only the latest stable version
+          rm -f "${ebuild_dir}"/*.ebuild "${ebuild_dir}/Manifest"
+
+          # Fetch only the latest non-prerelease tag
+          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '[.[] | select(.prerelease==false)] | .[0].tag_name')
+
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
