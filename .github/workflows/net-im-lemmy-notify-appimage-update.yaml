@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.18 Github AppImage Release current.config 2025-08-24 12:02:36.738002164 +0000 UTC m=+0.012028373
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github AppImage Release input.config 2026-01-22 07:34:15.553349379 +0000 UTC m=+0.005262218
 
 name: net-im/lemmy-notify-appimage update
 
@@ -46,27 +46,46 @@ jobs:
         run: |
             sudo apt-get update
             sudo apt-get install -y wget jq coreutils
-            url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-            echo "$url"
-            wget "${url}" -O /tmp/g2.deb
-            sudo dpkg -i /tmp/g2.deb
-            rm /tmp/g2.deb
+            if command -v go &> /dev/null
+            then
+                go install github.com/arran4/g2@latest
+            else
+                url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+                echo "$url"
+                wget "${url}" -O /tmp/g2.deb
+                sudo dpkg -i /tmp/g2.deb
+                rm /tmp/g2.deb
+            fi
 
       - name: Process each release
         id: process_releases
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-          mkdir -p $ebuild_dir
+          mkdir -p "$ebuild_dir"
+          metadata_file="${ebuild_dir}/metadata.xml"
+          if [ ! -f "$metadata_file" ]; then
+            cat <<EOF > "$metadata_file"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<remote-id type="github">arran4/lemmy_notify</remote-id>
+	</upstream>
+</pkgmetadata>
+EOF
+          fi
           declare -A releaseTypes=()
             tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          # shellcheck disable=SC2086
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
                 echo "$version == $tag so there is no v removed skipping"
                 continue
             fi
+            # shellcheck disable=SC2034
             originalVersion="${version}"
-            if ! echo "${version}" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+            if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
                 echo "version: $version doesn't match regexp";
                 continue;
             fi
@@ -80,6 +99,7 @@ jobs:
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
 
+              # shellcheck disable=SC2016
               {
                 echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
                 echo 'EAPI=8'
@@ -144,8 +164,9 @@ jobs:
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-          git add ./${ebuild_dir}
-          git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}" &&
-          git pull --rebase &&
-          git push || true
+          git add "./${ebuild_dir}"
+          if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
+            git pull --rebase &&
+            git push
+          fi || true
         if: steps.process_releases.outputs.generated_tag
