@@ -23,12 +23,12 @@ SRC_URI="
 
 src_unpack() {
   if use rocm; then
-    unpack "${P}.rocm.tar.zst"
+    tar --zstd -xf "${DISTDIR}/${P}.rocm.tar.zst" -C "${WORKDIR}" || die "Failed to unpack rocm"
   fi
   if use amd64; then
-    unpack "${P}.amd64.tar.zst"
+    tar --zstd -xf "${DISTDIR}/${P}.amd64.tar.zst" -C "${WORKDIR}" || die "Failed to unpack amd64"
   elif use arm64; then
-    unpack "${P}.arm64.tar.zst"
+    tar --zstd -xf "${DISTDIR}/${P}.arm64.tar.zst" -C "${WORKDIR}" || die "Failed to unpack arm64"
   fi
 }
 
