@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.19 Web AppImage current.config 2025-10-17 06:23:49.724498573 +0000 UTC m=+0.040933991
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Web AppImage input.config 2026-01-22 07:34:15.553349379 +0000 UTC m=+0.005262218
 
 name: net-im/beeper-appimage update
 
@@ -38,23 +38,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils
-          url="$(curl -s --header "Accept: application/vnd.github+json" \
-            --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" \
-            https://api.github.com/repos/arran4/g2/releases/latest \
-            | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-          wget "${url}" -O /tmp/g2.deb
-          sudo dpkg -i /tmp/g2.deb
-          rm /tmp/g2.deb
+          wget https://github.com/mgdm/htmlq/releases/download/v0.4.0/htmlq-x86_64-linux.tar.gz
+          tar -xf htmlq-x86_64-linux.tar.gz
+          sudo mv htmlq /usr/local/bin/htmlq
 
       - name: Determine latest AppImage
         id: find_appimage
         run: |
           set -euo pipefail
-          page="$(curl -sL 'https://www.beeper.com/download')"
-          source_url="$(printf '%s\n' "$page" | grep -oE "https://[^\"[:space:]]+/desktop/download/linux/x64/stable/[^\"[:space:]]+\\.desktop" | sort -u | head -n1)"
-          if [ -z "$source_url" ]; then
-            source_url="$(printf '%s\n' "$page" | grep -oE "https://[^\"[:space:]]+/desktop/download/linux/arm64/stable/[^\"[:space:]]+\\.desktop" | sort -u | head -n1)"
-          fi
+          source_url="$(curl -sL 'https://www.beeper.com/download' | htmlq -a href 'a' | grep -iE 'Beeper-.*\.desktop$' | sort -V | tail -n1)"
           if [ -z "$source_url" ]; then
             echo "failed to find AppImage link" >&2
             exit 1
@@ -80,8 +72,17 @@ jobs:
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
+          metadata_file="${ebuild_dir}/metadata.xml"
+          if [ ! -f "$metadata_file" ]; then
+            cat <<EOF > "$metadata_file"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata></pkgmetadata>
+EOF
+          fi
           ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
           if [ ! -f "$ebuild_file" ]; then
+            # shellcheck disable=SC2016
             {
               echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
               echo 'EAPI=8'
@@ -125,5 +126,8 @@ jobs:
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           git add "${ebuild_dir}"
-          git commit -m "Add ebuild for version ${version}" && git pull --rebase && git push || true
+          if git commit -m "Add ebuild for version ${version}"; then
+            git pull --rebase &&
+            git push
+          fi || true
         if: steps.find_appimage.outputs.version
