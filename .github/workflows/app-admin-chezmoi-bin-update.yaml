@@ -70,16 +70,15 @@ jobs:
         run: |
             sudo apt-get update
             sudo apt-get install -y wget jq coreutils
-            if command -v go &> /dev/null
-            then
-                go install github.com/arran4/g2@latest
-            else
-                url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-                echo "$url"
-                wget "${url}" -O /tmp/g2.deb
-                sudo dpkg -i /tmp/g2.deb
-                rm /tmp/g2.deb
-            fi
+            url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+
+            echo "$url"
+
+            wget "${url}" -O /tmp/g2.deb
+
+            sudo dpkg -i /tmp/g2.deb
+
+            rm /tmp/g2.deb
 
       - name: Process each release
         id: process_releases
@@ -88,21 +87,21 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<EOF > "$metadata_file"
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-<pkgmetadata>
-	<use>
-		<flag name="android">Install android binary</flag>
-		<flag name="glibc">Install glibc binary</flag>
-		<flag name="le">Install le binary</flag>
-		<flag name="loong64">Install loong64 binary</flag>
-	</use>
-	<upstream>
-		<remote-id type="github">twpayne/chezmoi</remote-id>
-	</upstream>
-</pkgmetadata>
-EOF
+            (
+              echo '<?xml version="1.0" encoding="UTF-8"?>'
+              echo '<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">'
+              echo '<pkgmetadata>'
+              echo '	<use>'
+              echo '		<flag name="android">Install android binary</flag>'
+              echo '		<flag name="glibc">Install glibc binary</flag>'
+              echo '		<flag name="le">Install le binary</flag>'
+              echo '		<flag name="loong64">Install loong64 binary</flag>'
+              echo '	</use>'
+              echo '	<upstream>'
+              echo '		<remote-id type="github">twpayne/chezmoi</remote-id>'
+              echo '	</upstream>'
+              echo '</pkgmetadata>'
+            ) > "$metadata_file"
           fi
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
