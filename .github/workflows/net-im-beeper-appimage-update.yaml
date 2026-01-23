@@ -51,12 +51,26 @@ jobs:
         id: find_appimage
         run: |
           set -euo pipefail
-          source_url="$(curl -sL 'https://www.beeper.com/download' | htmlq -a href 'a' | grep -iE 'Beeper-.*\.desktop$' | sort -V | tail -n1)"
+          set -x
+
+          # Fetch page content
+          page_content="$(curl -sL 'https://www.beeper.com/download/linux')"
+
+          # Find the download link (expecting com.automattic.beeper.desktop)
+          source_url="$(echo "$page_content" | htmlq -a href 'a' | grep -F 'com.automattic.beeper.desktop' | head -n1 || true)"
+
           if [ -z "$source_url" ]; then
-            echo "failed to find AppImage link" >&2
+            echo "failed to find AppImage link. Links found:" >&2
+            echo "$page_content" | htmlq -a href 'a'
             exit 1
           fi
+
+          echo "Found source URL: $source_url"
+
           appimage_url="$(curl -sIL -o /dev/null -w '%{url_effective}' "$source_url")"
+
+          echo "Resolved AppImage URL: $appimage_url"
+
           if [ -z "$appimage_url" ]; then
             echo "failed to resolve AppImage redirect" >&2
             exit 1
