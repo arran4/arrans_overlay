@@ -66,15 +66,15 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<EOF > "$metadata_file"
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-<pkgmetadata>
-	<upstream>
-		<remote-id type="github">Shopify/ejson</remote-id>
-	</upstream>
-</pkgmetadata>
-EOF
+            (
+              echo '<?xml version="1.0" encoding="UTF-8"?>'
+              echo '<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">'
+              echo '<pkgmetadata>'
+              echo '	<upstream>'
+              echo '		<remote-id type="github">Shopify/ejson</remote-id>'
+              echo '	</upstream>'
+              echo '</pkgmetadata>'
+            ) > "$metadata_file"
           fi
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
