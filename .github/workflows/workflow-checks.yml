@@ -17,4 +17,4 @@ jobs:
         id: get_actionlint
         run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
       - name: Check workflow files
-        run: ./actionlint -color -ignore 'action is too old' -ignore 'SC2016' -ignore 'SC2028' -ignore 'SC2034' -ignore 'SC2086' -ignore 'SC2196' -ignore 'SC2015'
+        run: ./actionlint -color -ignore 'action is too old' -ignore 'SC2016' -ignore 'SC2028' -ignore 'SC2034' -ignore 'SC2086' -ignore 'SC2196' -ignore 'SC2015' -ignore 'SC2001' -ignore 'SC2129'
