@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>arran4@gmail.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">Maxteabag/sqlit</remote-id>
+	</upstream>
+</pkgmetadata>
