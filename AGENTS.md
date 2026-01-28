@@ -6,8 +6,9 @@ This repository uses [arrans_overlay_workflow_builder](https://github.com/arran4
 
 The `current.config` file is the **source of truth** for all packages managed by the builder.
 
+*   **Generated File Headers:** Generated files must include a comment at the top stating they are generated and listing the tool used.
 *   **Do not manually edit generated ebuilds** (files usually ending in `-bin.ebuild` or `-appimage.ebuild` that appear in `current.config`).
-*   **To Add/Update a Package:**
+*   **To Add/Update a Package using generated code from overlay_workflow_builder_generator:**
     1.  Modify `current.config`.
     2.  If you have the `overlay_workflow_builder_generator` tool locally, run it to regenerate the workflows and ebuilds.
     3.  Otherwise, commit the change to `current.config` and let the Github Actions workflows handle the regeneration.
@@ -42,8 +43,11 @@ To keep the overlay clean, we follow a **"One Version Per Grade"** policy.
 
 ## 4. Safety & Readme
 
-*   **WARNING: Do NOT use `g2 readme` or any automated tool to overwrite `README.md`.**
-    *   The root `README.md` is manually maintained. Using `g2` to regenerate it will wipe custom instructions and documentation.
+*   **WARNING: Avoid Overwriting `README.md` when installing tools.**
+    *   Many tool release tarballs (like `g2`) contain a `README.md`. **Do NOT extract them directly into the repository root**, as this will overwrite the project's README.
+    *   **Recommendation:**
+        *   Use `go run <package_url>` (e.g., `go run github.com/arran4/g2@latest manifest ...`).
+        *   OR extract *only* the binary: `tar -xvf g2_archive.tar.gz g2`.
 *   **Manifests:** Use `g2 manifest` commands safely.
 *   **Git History:** Write descriptive commit messages explaining *why* a change was made, not just *what* changed.
 
