@@ -36,6 +36,14 @@ if ! command -v ebuild >/dev/null 2>&1; then
     exit 1
 fi
 
+# Clear distfiles to ensure we verify the download URL validity.
+# Only do this if we are in a CI environment or instructed to.
+# We'll assume if this script is run, we want strict checks.
+if [ -d "/var/cache/distfiles" ]; then
+    echo "Cleaning /var/cache/distfiles/..."
+    rm -rf /var/cache/distfiles/*
+fi
+
 for ebuild_file in $EBUILDS; do
     echo "------------------------------------------------"
     echo "Testing $ebuild_file"
@@ -43,14 +51,6 @@ for ebuild_file in $EBUILDS; do
     if [ ! -f "$ebuild_file" ]; then
         echo "File $ebuild_file not found!"
         continue
-    fi
-
-    # Clear distfiles to ensure we verify the download URL validity.
-    # Only do this if we are in a CI environment or instructed to.
-    # We'll assume if this script is run, we want strict checks.
-    if [ -d "/var/cache/distfiles" ]; then
-        echo "Cleaning /var/cache/distfiles/..."
-        rm -rf /var/cache/distfiles/*
     fi
 
     if [ "$MODE" = "fetch" ]; then
