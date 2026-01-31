@@ -4,15 +4,17 @@ import re
 import subprocess
 import sys
 
+# Regex to capture PN and PV from ebuild filename.
+# Example: ollama-bin-0.10.1.ebuild -> PN=ollama-bin, PV=0.10.1
+# Example: g2-bin-0.0.2.ebuild -> PN=g2-bin, PV=0.0.2
+# This regex is a simplification but covers most cases in this overlay
+EBUILD_FILENAME_PATTERN = re.compile(r'^(?P<pn>.+)-(?P<pv>\d+(\.\d+)*([a-z]|_p\d+|_rc\d+|_beta\d+|_alpha\d+)?(-r\d+)?)\.ebuild$')
+
 def parse_ebuild_variables(filename):
     # Basic parsing for PV, P, PN from filename
     basename = os.path.basename(filename)
-    # Regex to capture PN and PV.
-    # Example: ollama-bin-0.10.1.ebuild -> PN=ollama-bin, PV=0.10.1
-    # Example: g2-bin-0.0.2.ebuild -> PN=g2-bin, PV=0.0.2
 
-    # This regex is a simplification but covers most cases in this overlay
-    match = re.match(r'^(?P<pn>.+)-(?P<pv>\d+(\.\d+)*([a-z]|_p\d+|_rc\d+|_beta\d+|_alpha\d+)?(-r\d+)?)\.ebuild$', basename)
+    match = EBUILD_FILENAME_PATTERN.match(basename)
 
     if not match:
         return None
