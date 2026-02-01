@@ -182,54 +182,17 @@ def process_directory(directory):
         uris = extract_uris(content, variables)
         all_uris.extend(uris)
 
-    # Process all URIs
-    # Remove duplicates? SRC_URI might be repeated across ebuilds?
-    # Yes, multiple ebuilds might use same source file.
-    # We should deduplicate based on filename, but check if URL matches?
-    # Usually same filename means same file.
-
-    # Using a dict to dedupe by filename
+    # Deduplicate URIs by filename. Gentoo enforces unique filenames per directory.
     unique_uris = {}
     for url, filename in all_uris:
         if filename not in unique_uris:
             unique_uris[filename] = url
-        # If filename exists but url is different?
-        # Gentoo forbids collision of filename with different content.
-        # So we assume filename uniqueness is sufficient.
 
-    # Prepare tasks
-    tasks = []
-
-    # We need to upsert.
-    # If using ThreadPoolExecutor
-
-    # To match original logic exactly (which loops ebuilds then URIs):
-    # The original logic:
-    # For each ebuild:
-    #   For each URI:
-    #     Upsert(url, filename)
-
-    # Since we collected all URIs, we can process them.
-
-    # BUT wait, the original logic process ebuilds sequentially.
-    # And calls upsert.
-    # If I batch them, I change the order of printing?
-    # That's fine.
-
-    # Also original logic:
-    # "Error updating manifest for {url}: {e}"
-    # "pass"
-
-    # My logic:
-    # Parallel download.
-
+    # Process downloads in parallel
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
         future_to_file = {}
         for filename, url in unique_uris.items():
-            # Optimization: If file exists in manifest, verify it?
-            # Or just update it?
-            # Review said: "Ensure the logic downloads and verifies all URLs"
-            # So we download all.
+            # Always verify by downloading, ensuring manifest integrity.
             future = executor.submit(fetch_and_hash, url)
             future_to_file[future] = (filename, url)
 
@@ -239,20 +202,15 @@ def process_directory(directory):
                 result = future.result()
                 if result:
                     print(f"    Upserting: {url} -> {filename}")
-                    # Update manifest entries
-                    # Check if changed?
 
-                    # Create entry dict
+                    # Create or update entry dict
                     entry = {
                         'size': result['size'],
                         'hashes': result['hashes']
                     }
-                    # We lose 'line' here, so it will be regenerated.
                     manifest_entries[filename] = entry
                 else:
-                    # Download failed.
-                    # Original code printed error and passed.
-                    # fetch_and_hash prints error.
+                    # Download failed. Logged in fetch_and_hash.
                     pass
             except Exception as e:
                 print(f"    Exception processing {url}: {e}")
