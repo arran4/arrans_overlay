@@ -36,17 +36,13 @@ def version_key(version):
                 parts.append((1, token))
     return tuple(parts)
 
-def parse_slot(path):
+def parse_slot(lines):
     slot = "0"
-    try:
-        with open(path, "r", errors="ignore") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("SLOT="):
-                    slot = line.split("=", 1)[1].strip().strip('"').strip("'")
-                    break
-    except FileNotFoundError:
-        pass
+    for line in lines:
+        line = line.strip()
+        if line.startswith("SLOT="):
+            slot = line.split("=", 1)[1].strip().strip('"').strip("'")
+            break
     return slot
 
 
@@ -54,15 +50,14 @@ def main(repo_root):
     pattern = re.compile(r"(.+)-([0-9][^/]*)\.ebuild$")
     packages = defaultdict(lambda: defaultdict(list))
 
-    def digest(path):
-        with open(path, "r", errors="ignore") as fh:
-            content = []
-            for line in fh:
-                if line.lstrip().startswith("# Generated via:"):
-                    continue
-                content.append(line)
-            data = "".join(content).encode()
-            return hashlib.md5(data).hexdigest()
+    def digest(lines):
+        content = []
+        for line in lines:
+            if line.lstrip().startswith("# Generated via:"):
+                continue
+            content.append(line)
+        data = "".join(content).encode()
+        return hashlib.md5(data).hexdigest()
 
     for root, dirs, files in os.walk(repo_root):
         for file in files:
@@ -72,7 +67,12 @@ def main(repo_root):
             m = pattern.match(file)
             if not m:
                 continue
-            slot = parse_slot(path)
+            try:
+                with open(path, "r", errors="ignore") as f:
+                    lines = f.readlines()
+            except OSError:
+                continue
+            slot = parse_slot(lines)
             try:
                 ver, rev = split_ebuild_name(file)
             except ValueError:
@@ -87,7 +87,7 @@ def main(repo_root):
             packages[(root, slot)][grade].append({
                 "version": full_ver,
                 "path": path,
-                "digest": digest(path),
+                "digest": digest(lines),
             })
 
     removed = []
