@@ -1,0 +1,13 @@
+DEFINED_PHASES=install postinst prepare unpack
+DESCRIPTION=Official Anytype client for MacOS, Linux, and Windows
+EAPI=8
+HOMEPAGE=https://anytype.io
+INHERIT=xdg-utils
+KEYWORDS=~amd64
+LICENSE=MIT
+RDEPEND=sys-libs/glibc sys-libs/zlib
+RESTRICT=strip
+SLOT=0
+SRC_URI=amd64? ( https://github.com/anyproto/anytype-ts/releases/download/v0.53.33-alpha/Anytype-0.53.33-alpha.AppImage -> anytype-ts-appimage-0.53.33_alpha-Anytype-0.53.33_alpha.AppImage )
+_eclasses_=xdg-utils	42869b3c8d86a70ef3cf75165a395e09
+_md5_=ce83b2dd857d15f864df1f9d53026b1d
