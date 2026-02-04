@@ -11,5 +11,5 @@ RDEPEND=app-accessibility/at-spi2-core app-crypt/libsecret dev-libs/glib dev-lib
 RESTRICT=bindist mirror strip
 SLOT=0
 SRC_URI=amd64? ( https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/1.15.8-5724687216017408/linux-x64/Antigravity.tar.gz -> antigravity-bin-1.15.8-5724687216017408.tar.gz )
-_eclasses_=bash-completion-r1	767861f3744f589ee5291c1698b1c082	desktop	26d57169ca094c04be416993844ec8bc	toolchain-funcs	30214924c0c3b92ec7dbf24fc70d60d3	xdg	3ef49a87c52c8b77c476351195dfe575	xdg-utils	42869b3c8d86a70ef3cf75165a395e09
+_eclasses_=bash-completion-r1	767861f3744f589ee5291c1698b1c082	desktop	26d57169ca094c04be416993844ec8bc	toolchain-funcs	7e440a20ac11dece04e3334622e6e5da	xdg	3ef49a87c52c8b77c476351195dfe575	xdg-utils	42869b3c8d86a70ef3cf75165a395e09
 _md5_=fffd02f0381e382dd38fef2d85eefaad
