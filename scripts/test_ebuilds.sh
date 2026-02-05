@@ -44,23 +44,49 @@ if [ -d "/var/cache/distfiles" ]; then
     rm -rf /var/cache/distfiles/*
 fi
 
+# Collect valid ebuilds
+valid_ebuilds=()
 for ebuild_file in $EBUILDS; do
-    echo "------------------------------------------------"
-    echo "Testing $ebuild_file"
-
     if [ ! -f "$ebuild_file" ]; then
         echo "File $ebuild_file not found!"
         continue
     fi
+    valid_ebuilds+=("$ebuild_file")
+done
 
-    if [ "$MODE" = "fetch" ]; then
+if [ ${#valid_ebuilds[@]} -eq 0 ]; then
+    echo "No valid ebuild files found."
+    exit 0
+fi
+
+if [ "$MODE" = "fetch" ]; then
+    # Parallel fetch logic
+    CORES=$(nproc 2>/dev/null || echo 4)
+    echo "Fetching in parallel with $CORES jobs..."
+
+    fetch_script='
+        ebuild_file="$1"
+        echo "------------------------------------------------"
+        echo "Testing $ebuild_file"
         if ebuild "$ebuild_file" fetch; then
             echo "PASS: $ebuild_file fetch successful."
         else
             echo "FAIL: $ebuild_file fetch failed."
             exit 1
         fi
-    elif [ "$MODE" = "merge" ]; then
+    '
+    # Use printf to handle spaces in filenames correctly with null delimiter
+    # We pass the fetch_script as the command to run. xargs passes the filename as the first argument ($1).
+    printf "%s\0" "${valid_ebuilds[@]}" | xargs -0 -P "$CORES" -n 1 bash -c "$fetch_script" _ || {
+         echo "One or more fetches failed."
+         exit 1
+    }
+
+elif [ "$MODE" = "merge" ]; then
+    for ebuild_file in "${valid_ebuilds[@]}"; do
+        echo "------------------------------------------------"
+        echo "Testing $ebuild_file"
+
         # We need to determine the package atom.
         # Simple way: just emerge the file.
         # Note: 'emerge <file>' works if inside the repo or if path is correct.
@@ -75,10 +101,10 @@ for ebuild_file in $EBUILDS; do
              echo "FAIL: $ebuild_file emerge failed."
              exit 1
         fi
-    else
-        echo "Unknown mode: $MODE"
-        exit 1
-    fi
-done
+    done
+else
+    echo "Unknown mode: $MODE"
+    exit 1
+fi
 
 echo "All tests passed."
