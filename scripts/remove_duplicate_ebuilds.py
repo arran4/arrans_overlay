@@ -2,10 +2,12 @@
 import os
 import re
 import hashlib
+import concurrent.futures
 from collections import defaultdict
 
 
 _VERSION_PART_RE = re.compile(r"(\d+|[a-zA-Z]+|[^a-zA-Z\d]+)")
+_EBUILD_PATTERN = re.compile(r"(.+)-([0-9][^/]*)\.ebuild$")
 
 
 def split_ebuild_name(filename):
@@ -36,6 +38,7 @@ def version_key(version):
                 parts.append((1, token))
     return tuple(parts)
 
+
 def parse_slot(lines):
     slot = "0"
     for line in lines:
@@ -46,49 +49,72 @@ def parse_slot(lines):
     return slot
 
 
+def digest(lines):
+    content = []
+    for line in lines:
+        if line.lstrip().startswith("# Generated via:"):
+            continue
+        content.append(line)
+    data = "".join(content).encode()
+    return hashlib.md5(data).hexdigest()
+
+
+def process_ebuild(args):
+    root, file = args
+    if not file.endswith(".ebuild"):
+        return None
+
+    path = os.path.join(root, file)
+    m = _EBUILD_PATTERN.match(file)
+    if not m:
+        return None
+
+    try:
+        with open(path, "r", errors="ignore") as f:
+            lines = f.readlines()
+    except OSError:
+        return None
+
+    slot = parse_slot(lines)
+    try:
+        ver, rev = split_ebuild_name(file)
+    except ValueError:
+        return None
+
+    full_ver = ver if rev == "r0" else f"{ver}-{rev}"
+    grade = "release"
+    v_lower = ver.lower()
+    for tag in ("alpha", "beta", "rc", "pre", "test"):
+        if tag in v_lower:
+            grade = tag
+            break
+
+    return ((root, slot), grade, {
+        "version": full_ver,
+        "path": path,
+        "digest": digest(lines),
+    })
+
+
 def main(repo_root):
-    pattern = re.compile(r"(.+)-([0-9][^/]*)\.ebuild$")
     packages = defaultdict(lambda: defaultdict(list))
 
-    def digest(lines):
-        content = []
-        for line in lines:
-            if line.lstrip().startswith("# Generated via:"):
-                continue
-            content.append(line)
-        data = "".join(content).encode()
-        return hashlib.md5(data).hexdigest()
-
+    file_tasks = []
     for root, dirs, files in os.walk(repo_root):
         for file in files:
-            if not file.endswith(".ebuild"):
-                continue
-            path = os.path.join(root, file)
-            m = pattern.match(file)
-            if not m:
-                continue
-            try:
-                with open(path, "r", errors="ignore") as f:
-                    lines = f.readlines()
-            except OSError:
-                continue
-            slot = parse_slot(lines)
-            try:
-                ver, rev = split_ebuild_name(file)
-            except ValueError:
-                continue
-            full_ver = ver if rev == "r0" else f"{ver}-{rev}"
-            grade = "release"
-            v_lower = ver.lower()
-            for tag in ("alpha", "beta", "rc", "pre", "test"):
-                if tag in v_lower:
-                    grade = tag
-                    break
-            packages[(root, slot)][grade].append({
-                "version": full_ver,
-                "path": path,
-                "digest": digest(lines),
-            })
+            if file.endswith(".ebuild"):
+                file_tasks.append((root, file))
+
+    # Use ProcessPoolExecutor for parallel processing
+    # Adjust max_workers as needed, usually default is fine (number of processors)
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        # chunksize helps with many small tasks
+        results = executor.map(process_ebuild, file_tasks, chunksize=100)
+
+    for result in results:
+        if result:
+            key, grade, item = result
+            packages[key][grade].append(item)
 
     removed = []
     # remove identical files based on digest
