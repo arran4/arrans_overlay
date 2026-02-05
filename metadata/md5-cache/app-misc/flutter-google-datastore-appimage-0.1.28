@@ -1,0 +1,13 @@
+DEFINED_PHASES=install postinst prepare unpack
+DESCRIPTION=Google Datastore and Datastore emulator client for easy modification of values
+EAPI=8
+HOMEPAGE=https://github.com/arran4/flutter_google_datastore
+INHERIT=xdg-utils
+KEYWORDS=~amd64
+LICENSE=MIT
+RDEPEND=sys-libs/glibc sys-libs/zlib
+RESTRICT=strip
+SLOT=0
+SRC_URI=amd64? ( https://github.com/arran4/flutter_google_datastore/releases/download/v0.1.28/flutter_google_datastore-0.1.28-linux.AppImage -> flutter-google-datastore-appimage-0.1.28-flutter_google_datastore-0.1.28-linux.AppImage )
+_eclasses_=xdg-utils	42869b3c8d86a70ef3cf75165a395e09
+_md5_=cccf57df58f696121204aab88397d93c
