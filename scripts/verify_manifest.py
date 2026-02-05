@@ -3,6 +3,9 @@ import os
 import re
 import subprocess
 import sys
+import concurrent.futures
+import tempfile
+import shutil
 
 # Regex to capture PN and PV from ebuild filename.
 # Example: ollama-bin-0.10.1.ebuild -> PN=ollama-bin, PV=0.10.1
@@ -82,6 +85,23 @@ def extract_uris(content, variables):
 
     return uris
 
+def upsert_worker(url, filename):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        temp_path = os.path.join(tmpdir, 'Manifest')
+        # Create empty manifest file
+        open(temp_path, 'a').close()
+
+        try:
+            subprocess.run(['g2', 'manifest', 'upsert-from-url', url, filename, temp_path], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+
+            with open(temp_path, 'r') as f:
+                lines = f.readlines()
+
+            return lines
+        except subprocess.CalledProcessError as e:
+            print(f"    Error updating manifest for {url}: {e}")
+            return []
+
 def process_directory(directory):
     print(f"Processing directory: {directory}")
     manifest_path = os.path.join(directory, 'Manifest')
@@ -92,6 +112,8 @@ def process_directory(directory):
     if not ebuilds:
         print("No ebuilds found.")
         return
+
+    tasks = []
 
     for ebuild in ebuilds:
         ebuild_path = os.path.join(directory, ebuild)
@@ -106,17 +128,58 @@ def process_directory(directory):
             content = f.read()
 
         uris = extract_uris(content, variables)
+        tasks.extend(uris)
 
-        for url, filename in uris:
-            print(f"    Upserting: {url} -> {filename}")
+    if not tasks:
+        return
+
+    print(f"  Upserting {len(tasks)} URIs in parallel...")
+
+    new_entries = []
+    # Deduplicate tasks based on (url, filename) just in case
+    tasks = list(set(tasks))
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(32, len(tasks) + 1)) as executor:
+        future_to_url = {executor.submit(upsert_worker, url, filename): (url, filename) for url, filename in tasks}
+
+        for future in concurrent.futures.as_completed(future_to_url):
+            url, filename = future_to_url[future]
             try:
-                subprocess.run(['g2', 'manifest', 'upsert-from-url', url, filename, manifest_path], check=True)
-            except subprocess.CalledProcessError as e:
-                print(f"    Error updating manifest for {url}: {e}")
-                # We might want to exit or continue?
-                # If a URL is dead, this might fail.
-                # But the request implies fixing the manifest. If URL is dead, we can't fix it easily.
-                pass
+                lines = future.result()
+                if lines:
+                    new_entries.extend(lines)
+                    print(f"    Upserted: {url} -> {filename}")
+                else:
+                    print(f"    Failed to upsert: {url}")
+            except Exception as e:
+                print(f"    Exception processing {url}: {e}")
+
+    # Now update Manifest
+    header_lines = []
+    dist_lines_map = {}
+
+    if os.path.exists(manifest_path):
+        with open(manifest_path, 'r') as f:
+            for line in f:
+                parts = line.strip().split()
+                if len(parts) > 1 and parts[0] == 'DIST':
+                    dist_lines_map[parts[1]] = line
+                else:
+                    header_lines.append(line)
+
+    # Update with new entries
+    for line in new_entries:
+        parts = line.strip().split()
+        if len(parts) > 1 and parts[0] == 'DIST':
+            dist_lines_map[parts[1]] = line
+
+    # Write back
+    with open(manifest_path, 'w') as f:
+        for line in header_lines:
+            f.write(line)
+
+        for filename in sorted(dist_lines_map.keys()):
+            f.write(dist_lines_map[filename])
 
 def main():
     if len(sys.argv) < 2:
