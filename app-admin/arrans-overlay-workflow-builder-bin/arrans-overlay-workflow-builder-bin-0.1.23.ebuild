@@ -1,6 +1,6 @@
 # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-admin-arrans-overlay-workflow-builder-bin-update.yaml
 EAPI=8
-DESCRIPTION="TODO"
+DESCRIPTION="A gentoo overlay ebuild workflow builder generator for -bin with a special purpose handler for .appimage binary files"
 HOMEPAGE=""
 LICENSE="MIT"
 SLOT="0"
