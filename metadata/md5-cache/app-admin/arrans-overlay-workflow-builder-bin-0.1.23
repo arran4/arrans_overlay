@@ -1,5 +1,5 @@
 DEFINED_PHASES=install unpack
-DESCRIPTION=TODO
+DESCRIPTION=A gentoo overlay ebuild workflow builder generator for -bin with a special purpose handler for .appimage binary files
 EAPI=8
 IUSE=doc
 KEYWORDS=~amd64
@@ -7,4 +7,4 @@ LICENSE=MIT
 RDEPEND=sys-libs/glibc
 SLOT=0
 SRC_URI=amd64? ( https://github.com/arran4/arrans_overlay_workflow_builder/releases/download/v0.1.23/arrans_overlay_workflow_builder_0.1.23_linux_amd64.tar.gz -> arrans-overlay-workflow-builder-bin-0.1.23-arrans_overlay_workflow_builder_0.1.23_linux_amd64.tar.gz )
-_md5_=fb8da6e95168ef92060f20844cb53b53
+_md5_=665c726b33ba869d3de1e8a71cab0376
