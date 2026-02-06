@@ -16,6 +16,8 @@ RDEPEND="media-libs/libglvnd sys-devel/gcc sys-libs/zlib x11-libs/gtk+ x11-libs/
 
 S="${WORKDIR}"
 
+inherit xdg-utils
+
 src_unpack() {
   if use amd64; then
     unpack "${DISTDIR}/${P}-flutter_jules-linux.tar.gz" || die "Can't unpack archive file"
@@ -25,6 +27,18 @@ src_unpack() {
 src_install() {
   exeinto /opt/bin
   if use amd64; then
-    newexe "flutter_jules/flutter_jules" "jules_client" || die "Failed to install Binary"
+    newexe "flutter_jules/flutter_jules" "flutter_jules" || die "Failed to install Binary"
+    insinto /usr/share/applications
+    doins "flutter_jules/share/applications/com.arran4.flutter_jules.desktop" || die "Failed to install desktop file"
+    insinto /usr/share/icons
+    doins -r "flutter_jules/share/icons/hicolor" || die "Failed to install icons"
   fi
+}
+
+pkg_postinst() {
+  xdg_desktop_database_update
+}
+
+pkg_postrm() {
+  xdg_desktop_database_update
 }

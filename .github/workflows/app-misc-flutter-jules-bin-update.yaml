@@ -26,9 +26,9 @@ env:
   github_repo: flutter_jules
   keywords: ~amd64
   workflow_filename: app-misc-flutter-jules-bin-update.yaml
-  jules_client_binary_installed_name: 'jules_client'
-  jules_client_binary_archived_name_amd64: 'flutter_jules/flutter_jules'
-  jules_client_release_name_amd64: 'flutter_jules-linux.tar.gz'
+  flutter_jules_binary_installed_name: 'flutter_jules'
+  flutter_jules_binary_archived_name_amd64: 'flutter_jules/flutter_jules'
+  flutter_jules_release_name_amd64: 'flutter_jules-linux.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -132,6 +132,8 @@ jobs:
                 echo ''
                 echo 'S="${WORKDIR}"'
                 echo ''
+                echo 'inherit xdg-utils'
+                echo ''
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
                 echo "    unpack \"\${DISTDIR}/\${P}-flutter_jules-linux.tar.gz\" || die \"Can't unpack archive file\""
@@ -141,8 +143,20 @@ jobs:
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'
-                echo '    newexe "${{ env.jules_client_binary_archived_name_amd64 }}" "${{ env.jules_client_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.flutter_jules_binary_archived_name_amd64 }}" "${{ env.flutter_jules_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    insinto /usr/share/applications'
+                echo '    doins "flutter_jules/share/applications/com.arran4.flutter_jules.desktop" || die "Failed to install desktop file"'
+                echo '    insinto /usr/share/icons'
+                echo '    doins -r "flutter_jules/share/icons/hicolor" || die "Failed to install icons"'
                 echo '  fi'
+                echo '}'
+                echo ''
+                echo 'pkg_postinst() {'
+                echo '  xdg_desktop_database_update'
+                echo '}'
+                echo ''
+                echo 'pkg_postrm() {'
+                echo '  xdg_desktop_database_update'
                 echo '}'
               } > $ebuild_file
 
