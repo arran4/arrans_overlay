@@ -16,6 +16,8 @@ RDEPEND="media-libs/libglvnd sys-devel/gcc sys-libs/zlib x11-libs/gtk+ x11-libs/
 
 S="${WORKDIR}"
 
+QA_PREBUILT="opt/flutter_jules/*"
+
 src_unpack() {
   if use amd64; then
     unpack "${DISTDIR}/${P}-flutter_jules-linux.tar.gz" || die "Can't unpack archive file"
@@ -23,8 +25,11 @@ src_unpack() {
 }
 
 src_install() {
-  exeinto /opt/bin
   if use amd64; then
-    newexe "flutter_jules/flutter_jules" "jules_client" || die "Failed to install Binary"
+    local dir="/opt/flutter_jules"
+    insinto "${dir}"
+    doins -r flutter_jules/*
+    fperms +x "${dir}/flutter_jules"
+    dosym "${dir}/flutter_jules" /usr/bin/jules_client
   fi
 }

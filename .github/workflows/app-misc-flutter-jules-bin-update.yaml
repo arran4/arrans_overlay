@@ -132,6 +132,8 @@ jobs:
                 echo ''
                 echo 'S="${WORKDIR}"'
                 echo ''
+                echo 'QA_PREBUILT="opt/flutter_jules/*"'
+                echo ''
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
                 echo "    unpack \"\${DISTDIR}/\${P}-flutter_jules-linux.tar.gz\" || die \"Can't unpack archive file\""
@@ -139,9 +141,12 @@ jobs:
                 echo '}'
                 echo ''
                 echo 'src_install() {'
-                echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'
-                echo '    newexe "${{ env.jules_client_binary_archived_name_amd64 }}" "${{ env.jules_client_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    local dir="/opt/flutter_jules"'
+                echo '    insinto "${dir}"'
+                echo '    doins -r flutter_jules/*'
+                echo '    fperms +x "${dir}/flutter_jules"'
+                echo '    dosym "${dir}/flutter_jules" /usr/bin/jules_client'
                 echo '  fi'
                 echo '}'
               } > $ebuild_file
