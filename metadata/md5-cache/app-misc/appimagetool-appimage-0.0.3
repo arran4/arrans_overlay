@@ -1,0 +1,12 @@
+DEFINED_PHASES=install postinst prepare unpack
+DESCRIPTION=AppImage tool to create AppImages (As an AppImage)
+EAPI=8
+HOMEPAGE=https://github.com/AppImage/AppImageKit
+INHERIT=xdg-utils
+KEYWORDS=~amd64 ~x86 ~arm ~arm64
+LICENSE=MIT
+RESTRICT=strip
+SLOT=0
+SRC_URI=amd64? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -> appimagetool-appimage-0.0.3.amd64 ) x86? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-i686.AppImage -> appimagetool-appimage-0.0.3.x86 ) arm? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-armhf.AppImage -> appimagetool-appimage-0.0.3.arm ) arm64? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage -> appimagetool-appimage-0.0.3.arm64 )
+_eclasses_=xdg-utils	42869b3c8d86a70ef3cf75165a395e09
+_md5_=f8205eca7ee9c7941ba88fe273e05eb2
