@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<use>
+		<flag name="android">Install android binary</flag>
+		<flag name="glibc">Install glibc binary</flag>
+		<flag name="le">Install le binary</flag>
+		<flag name="loong64">Install loong64 binary</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">twpayne/chezmoi</remote-id>
+	</upstream>
+</pkgmetadata>
