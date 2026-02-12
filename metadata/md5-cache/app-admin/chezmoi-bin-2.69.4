@@ -1,0 +1,11 @@
+DEFINED_PHASES=install unpack
+DESCRIPTION=Manage your dotfiles across multiple diverse machines, securely.
+EAPI=8
+HOMEPAGE=https://www.chezmoi.io/
+IUSE=android glibc le loong64
+KEYWORDS=~amd64 ~arm ~arm64 ~ppc64 ~riscv ~s390 ~x86
+LICENSE=MIT
+REQUIRED_USE=android? ( || ( arm64 ) ) glibc? ( || ( amd64 ) ) le? ( || ( ppc64 ) ) loong64? ( || ( amd64 ) )
+SLOT=0
+SRC_URI=amd64? ( glibc? ( !loong64? ( https://github.com/twpayne/chezmoi/releases/download/v2.69.4/chezmoi_2.69.4_linux-glibc_amd64.tar.gz -> chezmoi-bin-2.69.4-chezmoi_2.69.4_linux-glibc_amd64.tar.gz ) ) ) amd64? ( !glibc? ( !loong64? ( https://github.com/twpayne/chezmoi/releases/download/v2.69.4/chezmoi_2.69.4_linux-musl_amd64.tar.gz -> chezmoi-bin-2.69.4-chezmoi_2.69.4_linux-musl_amd64.tar.gz ) ) ) amd64? ( loong64? ( !glibc? ( https://github.com/twpayne/chezmoi/releases/download/v2.69.4/chezmoi_2.69.4_linux_loong64.tar.gz -> chezmoi-bin-2.69.4-chezmoi_2.69.4_linux_loong64.tar.gz ) ) ) arm? ( https://github.com/twpayne/chezmoi/releases/download/v2.69.4/chezmoi_2.69.4_linux_arm.tar.gz -> chezmoi-bin-2.69.4-chezmoi_2.69.4_linux_arm.tar.gz ) arm64? ( android? ( https://github.com/twpayne/chezmoi/releases/download/v2.69.4/chezmoi_2.69.4_android_arm64.tar.gz -> chezmoi-bin-2.69.4-chezmoi_2.69.4_android_arm64.tar.gz ) ) arm64? ( !android? ( https://github.com/twpayne/chezmoi/releases/download/v2.69.4/chezmoi_2.69.4_linux_arm64.tar.gz -> chezmoi-bin-2.69.4-chezmoi_2.69.4_linux_arm64.tar.gz ) ) ppc64? ( !le? ( https://github.com/twpayne/chezmoi/releases/download/v2.69.4/chezmoi_2.69.4_linux_ppc64.tar.gz -> chezmoi-bin-2.69.4-chezmoi_2.69.4_linux_ppc64.tar.gz ) ) ppc64? ( le? ( https://github.com/twpayne/chezmoi/releases/download/v2.69.4/chezmoi_2.69.4_linux_ppc64le.tar.gz -> chezmoi-bin-2.69.4-chezmoi_2.69.4_linux_ppc64le.tar.gz ) ) riscv? ( https://github.com/twpayne/chezmoi/releases/download/v2.69.4/chezmoi_2.69.4_linux_riscv64.tar.gz -> chezmoi-bin-2.69.4-chezmoi_2.69.4_linux_riscv64.tar.gz ) s390? ( https://github.com/twpayne/chezmoi/releases/download/v2.69.4/chezmoi_2.69.4_linux_s390x.tar.gz -> chezmoi-bin-2.69.4-chezmoi_2.69.4_linux_s390x.tar.gz ) x86? ( https://github.com/twpayne/chezmoi/releases/download/v2.69.4/chezmoi_2.69.4_linux_i386.tar.gz -> chezmoi-bin-2.69.4-chezmoi_2.69.4_linux_i386.tar.gz )
+_md5_=33b7d1f0ef93f891e48ab23f8de405d3
