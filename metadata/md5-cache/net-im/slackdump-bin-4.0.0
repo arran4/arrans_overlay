@@ -1,0 +1,8 @@
+DEFINED_PHASES=install unpack
+DESCRIPTION=Save or export your private and public Slack messages, threads, files, and users locally without admin privileges.
+EAPI=8
+KEYWORDS=~amd64 ~arm64 ~x86
+LICENSE=MIT
+SLOT=0
+SRC_URI=amd64? ( https://github.com/rusq/slackdump/releases/download/v4.0.0/slackdump_Linux_x86_64.tar.gz -> slackdump-bin-4.0.0-slackdump_Linux_x86_64.tar.gz ) arm64? ( https://github.com/rusq/slackdump/releases/download/v4.0.0/slackdump_Linux_arm64.tar.gz -> slackdump-bin-4.0.0-slackdump_Linux_arm64.tar.gz ) x86? ( https://github.com/rusq/slackdump/releases/download/v4.0.0/slackdump_Linux_i386.tar.gz -> slackdump-bin-4.0.0-slackdump_Linux_i386.tar.gz )
+_md5_=8fee0a6d53c251fc322f0c6b071c33b0
