@@ -11,6 +11,6 @@ LICENSE=MIT
 RDEPEND=acct-user/ollama acct-group/ollama
 RESTRICT=strip
 SLOT=0
-SRC_URI=amd64? ( https://github.com/ollama/ollama/releases/download/v0.15.6/ollama-linux-amd64.tar.zst -> ollama-bin-0.15.6.amd64.tar.zst ) arm64? ( https://github.com/ollama/ollama/releases/download/v0.15.6/ollama-linux-arm64.tar.zst -> ollama-bin-0.15.6.arm64.tar.zst ) rocm? ( https://github.com/ollama/ollama/releases/download/v0.15.6/ollama-linux-amd64-rocm.tar.zst -> ollama-bin-0.15.6.rocm.tar.zst )
+SRC_URI=amd64? ( https://github.com/ollama/ollama/releases/download/v0.16.0/ollama-linux-amd64.tar.zst -> ollama-bin-0.16.0.amd64.tar.zst ) arm64? ( https://github.com/ollama/ollama/releases/download/v0.16.0/ollama-linux-arm64.tar.zst -> ollama-bin-0.16.0.arm64.tar.zst ) rocm? ( https://github.com/ollama/ollama/releases/download/v0.16.0/ollama-linux-amd64-rocm.tar.zst -> ollama-bin-0.16.0.rocm.tar.zst )
 _eclasses_=xdg-utils	42869b3c8d86a70ef3cf75165a395e09
 _md5_=334629aa96e5cfbfe33d6f8626960aeb
