@@ -10,5 +10,5 @@ LICENSE=SIL OPEN FONT LICENSE
 RESTRICT=binchecks strip
 SLOT=0
 SRC_URI=https://github.com/antijingoist/opendyslexic/releases/download/v0.91.12/opendyslexic-0.910.12-rc2-2019.10.17.zip -> opendyslexic-0.91.12-rc2-2019.10.17.zip
-_eclasses_=font	aa113a3df9cd0a9693a1c1ee7c34a6eb
+_eclasses_=font	6d0c60c855c05ae2ba808d300440ded2
 _md5_=8f33585a61b545ab3dfd1a7cad39a5ca
