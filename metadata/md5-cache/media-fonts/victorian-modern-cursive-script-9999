@@ -10,5 +10,5 @@ LICENSE=unknown-license
 RESTRICT=binchecks strip
 SLOT=0
 SRC_URI=https://www.education.vic.gov.au/Documents/school/teachers/teachingresources/discipline/english/vicmodcursive.zip -> vicmodcursive-9999.zip
-_eclasses_=font	aa113a3df9cd0a9693a1c1ee7c34a6eb
+_eclasses_=font	6d0c60c855c05ae2ba808d300440ded2
 _md5_=c8df11d8fff4ff7796bbd12721d8bf15
