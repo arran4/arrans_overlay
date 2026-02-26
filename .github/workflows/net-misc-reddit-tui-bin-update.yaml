@@ -67,12 +67,12 @@ jobs:
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
             echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > "$metadata_file"
-echo "<!DOCTYPE pkgmetadata SYSTEM \"http://www.gentoo.org/dtd/metadata.dtd\">" >> "$metadata_file"
-echo "<pkgmetadata>" >> "$metadata_file"
-echo "	<upstream>" >> "$metadata_file"
-echo "		<remote-id type=\"github\">tonymajestro/reddit-tui</remote-id>" >> "$metadata_file"
-echo "	</upstream>" >> "$metadata_file"
-echo "</pkgmetadata>" >> "$metadata_file"
+            echo "<!DOCTYPE pkgmetadata SYSTEM \"http://www.gentoo.org/dtd/metadata.dtd\">" >> "$metadata_file"
+            echo "<pkgmetadata>" >> "$metadata_file"
+            echo "	<upstream>" >> "$metadata_file"
+            echo "		<remote-id type=\"github\">tonymajestro/reddit-tui</remote-id>" >> "$metadata_file"
+            echo "	</upstream>" >> "$metadata_file"
+            echo "</pkgmetadata>" >> "$metadata_file"
           fi
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
