@@ -65,7 +65,6 @@ jobs:
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
             echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > "$metadata_file"
-<?xml version="1.0" encoding="UTF-8"?>
 echo "<!DOCTYPE pkgmetadata SYSTEM \"http://www.gentoo.org/dtd/metadata.dtd\">" >> "$metadata_file"
 echo "<pkgmetadata>" >> "$metadata_file"
 echo "	<upstream>" >> "$metadata_file"
