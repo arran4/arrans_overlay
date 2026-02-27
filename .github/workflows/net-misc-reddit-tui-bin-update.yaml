@@ -1,34 +1,36 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release input.config 2026-02-05 11:35:45.337360512 +0000 UTC m=+0.007444633
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-02-26 09:23:01.384513564 +0000 UTC m=+0.006734119
 
-name: app-admin/arrans-overlay-workflow-builder-bin update
+name: net-misc/reddit-tui-bin update
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '36 7 * * *'
+    - cron: '59 16 * * *'
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/app-admin-arrans-overlay-workflow-builder-bin-update.yaml'
+      - '.github/workflows/net-misc-reddit-tui-bin-update.yaml'
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
 env:
-  ecn: app-admin
-  epn: arrans-overlay-workflow-builder-bin
-  description: "A gentoo overlay ebuild workflow builder generator for -bin with a special purpose handler for .appimage binary files"
-  homepage: ""
-  github_owner: arran4
-  github_repo: arrans_overlay_workflow_builder
-  keywords: ~amd64
-  workflow_filename: app-admin-arrans-overlay-workflow-builder-bin-update.yaml
-  arrans_overlay_workflow_builder_binary_installed_name: 'overlay_workflow_builder_generator'
-  arrans_overlay_workflow_builder_binary_archived_name_amd64: 'overlay_workflow_builder_generator'
-  arrans_overlay_workflow_builder_release_name_amd64: 'arrans_overlay_workflow_builder_\${PV}_linux_amd64.tar.gz'
+  ecn: net-misc
+  epn: reddit-tui-bin
+  description: "A lightweight terminal application for browsing Reddit from your command line."
+  homepage: "https://github.com/tonymajestro/reddit-tui"
+  github_owner: tonymajestro
+  github_repo: reddit-tui
+  keywords: ~amd64 ~arm64
+  workflow_filename: net-misc-reddit-tui-bin-update.yaml
+  reddittui_binary_installed_name: 'reddittui'
+  reddittui_binary_archived_name_amd64: 'reddittui'
+  reddittui_release_name_amd64: 'reddit-tui_Linux_x86_64.tar.gz'
+  reddittui_binary_archived_name_arm64: 'reddittui'
+  reddittui_release_name_arm64: 'reddit-tui_Linux_arm64.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -68,7 +70,7 @@ jobs:
             echo "<!DOCTYPE pkgmetadata SYSTEM \"http://www.gentoo.org/dtd/metadata.dtd\">" >> "$metadata_file"
             echo "<pkgmetadata>" >> "$metadata_file"
             echo "	<upstream>" >> "$metadata_file"
-            echo "		<remote-id type=\"github\">arran4/arrans_overlay_workflow_builder</remote-id>" >> "$metadata_file"
+            echo "		<remote-id type=\"github\">tonymajestro/reddit-tui</remote-id>" >> "$metadata_file"
             echo "	</upstream>" >> "$metadata_file"
             echo "</pkgmetadata>" >> "$metadata_file"
           fi
@@ -108,7 +110,8 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/arrans_overlay_workflow_builder_\${PV}_linux_amd64.tar.gz -> \${P}-arrans_overlay_workflow_builder_\${PV}_linux_amd64.tar.gz  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/reddit-tui_Linux_x86_64.tar.gz -> \${P}-reddit-tui_Linux_x86_64.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/reddit-tui_Linux_arm64.tar.gz -> \${P}-reddit-tui_Linux_arm64.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -133,24 +136,34 @@ jobs:
                 echo ''
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-arrans_overlay_workflow_builder_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-reddit-tui_Linux_x86_64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-reddit-tui_Linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '}'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'
-                echo '    newexe "${{ env.arrans_overlay_workflow_builder_binary_archived_name_amd64 }}" "${{ env.arrans_overlay_workflow_builder_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.reddittui_binary_archived_name_amd64 }}" "${{ env.reddittui_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.reddittui_binary_archived_name_arm64 }}" "${{ env.reddittui_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use doc; then'
-                echo '    newdoc "readme.md" "readme.md" || die "Failed to install document readme.md"'
+                echo '    if use amd64; then'
+                echo '      newdoc "LICENSE.txt" "LICENSE.txt" || die "Failed to install document LICENSE.txt"'
+                echo '      newdoc "README.md" "README.md" || die "Failed to install document README.md"'
+                echo '    fi'
                 echo '  fi'
                 echo '}'
               } > $ebuild_file
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/arrans_overlay_workflow_builder_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-arrans_overlay_workflow_builder_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/reddit-tui_Linux_x86_64.tar.gz" "${{ env.epn }}-${version}-reddit-tui_Linux_x86_64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/reddit-tui_Linux_arm64.tar.gz" "${{ env.epn }}-${version}-reddit-tui_Linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
