@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Web AppImage input.config 2026-01-22 07:34:15.553349379 +0000 UTC m=+0.005262218
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Web AppImage current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
 
 name: net-im/beeper-appimage update
 
@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Git
         run: |
@@ -37,40 +37,18 @@ jobs:
       - name: Install required tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget jq coreutils
-          url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-          echo "$url"
-          wget "${url}" -O /tmp/g2.deb
-          sudo dpkg -i /tmp/g2.deb
-          rm /tmp/g2.deb
-          wget https://github.com/mgdm/htmlq/releases/download/v0.4.0/htmlq-x86_64-linux.tar.gz
-          tar -xf htmlq-x86_64-linux.tar.gz
-          sudo mv htmlq /usr/local/bin/htmlq
+          sudo apt-get install -y wget jq coreutils htmlq
 
       - name: Determine latest AppImage
         id: find_appimage
         run: |
           set -euo pipefail
-          set -x
-
-          # Fetch page content
-          page_content="$(curl -sL 'https://www.beeper.com/download/linux')"
-
-          # Find the download link (expecting com.automattic.beeper.desktop)
-          source_url="$(echo "$page_content" | htmlq -a href 'a' | grep -F 'com.automattic.beeper.desktop' | head -n1 || true)"
-
+          source_url="$(curl -sL 'https://www.beeper.com/download' | htmlq -a href 'a' | grep -iE 'Beeper-.*\.desktop$' | sort -V | tail -n1)"
           if [ -z "$source_url" ]; then
-            echo "failed to find AppImage link. Links found:" >&2
-            echo "$page_content" | htmlq -a href 'a'
+            echo "failed to find AppImage link" >&2
             exit 1
           fi
-
-          echo "Found source URL: $source_url"
-
           appimage_url="$(curl -sIL -o /dev/null -w '%{url_effective}' "$source_url")"
-
-          echo "Resolved AppImage URL: $appimage_url"
-
           if [ -z "$appimage_url" ]; then
             echo "failed to resolve AppImage redirect" >&2
             exit 1
@@ -93,11 +71,11 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            (
-              echo '<?xml version="1.0" encoding="UTF-8"?>'
-              echo '<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">'
-              echo '<pkgmetadata></pkgmetadata>'
-            ) > "$metadata_file"
+            cat <<-"EOF" > "$metadata_file"
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+          <pkgmetadata></pkgmetadata>
+          EOF
           fi
           ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
           if [ ! -f "$ebuild_file" ]; then
