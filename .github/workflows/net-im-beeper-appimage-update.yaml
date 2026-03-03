@@ -44,7 +44,7 @@ jobs:
         id: find_appimage
         run: |
           set -euo pipefail
-          source_url="$(curl -sL 'https://www.beeper.com/download' | htmlq -a href 'a' | grep -iE 'Beeper-.*\.desktop$' | sort -V | tail -n1)"
+          source_url="$(curl -sL 'https://www.beeper.com/download/linux' | htmlq -a href 'a' | grep -iE 'x64.*com.automattic.beeper.desktop' | sort -V | tail -n1)"
           if [ -z "$source_url" ]; then
             echo "failed to find AppImage link" >&2
             exit 1
