@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-03 04:57:31.120195115 +0000 UTC m=+0.005372130
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
 
 name: app-misc/gocdm-bin update
 
@@ -51,6 +51,7 @@ jobs:
             if command -v go &> /dev/null
             then
                 go install github.com/arran4/g2/cmd/g2@latest
+                sudo cp ~/go/bin/g2 /usr/local/bin/g2
             else
                 url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
                 echo "$url"
@@ -112,8 +113,8 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/gocdm_Linux_x86_64.tar.gz -> \${P}-gocdm_Linux_x86_64.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/gocdm_Linux_arm64.tar.gz -> \${P}-gocdm_Linux_arm64.tar.gz  )  "
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/gocdm_Linux_x86_64.tar.gz -> \${P}-gocdm_Linux_x86_64.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/gocdm_Linux_arm64.tar.gz -> \${P}-gocdm_Linux_arm64.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
