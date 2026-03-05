@@ -35,3 +35,30 @@ src_install() {
     newexe "gocdm" "gocdm" || die "Failed to install Binary"
   fi
 }
+
+pkg_postinst() {
+  einfo "To autostart gocdm when you log in your account, append this to ~/.profile:"
+  einfo "if [ -z \"\${DISPLAY:-}\" ] && [ \"\$(tty)\" = \"/dev/tty1\" ]; then"
+  einfo "  exec /opt/bin/gocdm"
+  einfo "fi"
+  einfo ""
+  einfo "To run GoCDM directly from tty1 under systemd, override getty@tty1.service:"
+  einfo "sudo systemctl edit getty@tty1.service"
+  einfo "Use this override:"
+  einfo "[Service]"
+  einfo "ExecStart="
+  einfo "ExecStart=-/opt/bin/gocdm -login -pam-service login"
+  einfo "StandardInput=tty"
+  einfo "StandardOutput=tty"
+  einfo "TTYPath=/dev/tty1"
+  einfo "TTYReset=yes"
+  einfo "TTYVHangup=yes"
+  einfo "TTYVTDisallocate=yes"
+  einfo ""
+  einfo "Then reload and restart:"
+  einfo "sudo systemctl daemon-reload"
+  einfo "sudo systemctl restart getty@tty1.service"
+  einfo ""
+  einfo "Note: The binary release might not have PAM support compiled in."
+  einfo "See https://github.com/arran4/gocdm for more details."
+}
