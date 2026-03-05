@@ -1,0 +1,163 @@
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-05 02:31:04.658234814 +0000 UTC m=+0.005536357
+
+name: gui-apps/tuigreet-bin update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '33 14 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/gui-apps-tuigreet-bin-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ecn: gui-apps
+  epn: tuigreet-bin
+  description: "Graphical console greeter for greetd"
+  homepage: "https://github.com/apognu/tuigreet"
+  github_owner: apognu
+  github_repo: tuigreet
+  keywords: ~amd64
+  workflow_filename: gui-apps-tuigreet-bin-update.yaml
+  tuigreet_binary_installed_name: 'tuigreet'
+  tuigreet_binary_archived_name_amd64: 'tuigreet'
+  tuigreet_release_name_amd64: 'tuigreet-\${PV}-x86_64'
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y wget jq coreutils
+            if command -v go &> /dev/null
+            then
+                go install github.com/arran4/g2/cmd/g2@latest
+                sudo cp ~/go/bin/g2 /usr/local/bin/g2
+            else
+                url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+                echo "$url"
+                wget "${url}" -O /tmp/g2.deb
+                sudo dpkg -i /tmp/g2.deb
+                rm /tmp/g2.deb
+            fi
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p "$ebuild_dir"
+          metadata_file="${ebuild_dir}/metadata.xml"
+          if [ ! -f "$metadata_file" ]; then
+            cat <<EOF > "$metadata_file"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<remote-id type="github">apognu/tuigreet</remote-id>
+	</upstream>
+</pkgmetadata>
+EOF
+          fi
+          declare -A releaseTypes=()
+          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          # shellcheck disable=SC2086
+          for tag in $tags; do
+            version="${tag}"
+            # shellcheck disable=SC2034
+            originalVersion="${version}"
+            if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                echo "tag / $version doesn't match regexp";
+                continue;
+            fi
+            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
+            if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
+                if [[ -v releaseTypes[release] ]]; then
+                  echo "Already have a newer main release: ${releaseTypes[release]}"
+                  continue
+                fi
+                releaseTypes[${releaseType:=release}]="${version}"
+            else
+                echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+                continue
+            fi
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+
+              # shellcheck disable=SC2016
+              {
+                echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'SRC_URI="'
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/tuigreet-\${PV}-x86_64 -> \${P}-tuigreet-\${PV}-x86_64  )  "
+                echo '"'
+                echo 'LICENSE="GNU General Public License v3.0"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="${{ env.keywords }}"'
+                echo -n 'IUSE="'
+                echo -n ''
+                echo -n ''
+                echo -n ''
+                echo -n ''
+                echo '"'
+                echo ''
+                echo -n 'REQUIRED_USE="'
+                echo -n ''
+                echo '"'
+                echo ''
+                echo -n 'RDEPEND="'
+                echo -n ''
+                echo -n ''
+                echo '"'
+                echo ''
+                echo 'S="${WORKDIR}"'
+                echo ''
+                echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo '    mkdir -p "${S}"'
+                echo '    cp "${DISTDIR}/${P}-tuigreet-${PV}-x86_64" "${S}/tuigreet" || die "Failed to copy executable"'
+                echo '  fi'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '  exeinto /opt/bin'
+                echo '  if use amd64; then'
+                echo '    newexe "${S}/tuigreet" "tuigreet" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '}'
+              } > $ebuild_file
+
+              # Manifest generation
+
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/tuigreet-${version}-x86_64" "${{ env.epn }}-${version}-tuigreet-${version}-x86_64" "${ebuild_dir}/Manifest"
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+            fi
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          git add "./${ebuild_dir}"
+          if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
+            git pull --rebase &&
+            git push
+          fi || true
+        if: steps.process_releases.outputs.generated_tag
