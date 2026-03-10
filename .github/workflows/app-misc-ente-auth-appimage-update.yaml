@@ -99,7 +99,7 @@ jobs:
                 continue
             fi
             # Check if ebuild exists, if it does, check if we need to RC bump due to size change
-            highest_rev_ebuild=$(ls ${ebuild_dir}/${{ env.epn }}-${version}*.ebuild 2>/dev/null | sort -V | tail -n 1)
+            highest_rev_ebuild=$(find "${ebuild_dir}" -maxdepth 1 \( -name "${{ env.epn }}-${version}.ebuild" -o -name "${{ env.epn }}-${version}-r*.ebuild" \) 2>/dev/null | sort -V | tail -n 1)
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             needs_update=false
             revision_suffix=""
@@ -108,7 +108,7 @@ jobs:
                 needs_update=true
             else
                 # Ebuild exists, check if upstream replaced the file by comparing sizes
-                remote_size=$(curl -s --head "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage" | grep -i 'content-length' | awk '{print $2}' | tr -d '\r')
+                remote_size=$(curl -sL --head "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage" | grep -i 'content-length' | awk '{print $2}' | tr -d '\r')
 
                 # Get local size from Manifest
                 highest_rev_file=$(basename "$highest_rev_ebuild")
@@ -130,6 +130,7 @@ jobs:
                         revision_suffix="-r1"
                     fi
                     ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}${revision_suffix}.ebuild"
+                    rm "$highest_rev_ebuild"
                 fi
             fi
 
