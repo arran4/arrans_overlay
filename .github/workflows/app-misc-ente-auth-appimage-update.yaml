@@ -1,4 +1,7 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github AppImage Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
+# This workflow was originally generated but is now manually maintained.
+# Reason: Upstream ente-io occasionally replaces the release asset without bumping the version tag.
+# This custom workflow compares the upstream Content-Length against the local Manifest and automatically
+# bumps the ebuild revision (RC bump) if a mismatch is detected, preventing Manifest verification errors.
 
 name: app-misc/ente-auth-appimage update
 
