@@ -98,8 +98,42 @@ jobs:
                 echo "Already have a newier ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
                 continue
             fi
+            # Check if ebuild exists, if it does, check if we need to RC bump due to size change
+            highest_rev_ebuild=$(ls ${ebuild_dir}/${{ env.epn }}-${version}*.ebuild 2>/dev/null | sort -V | tail -n 1)
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-            if [ ! -f "$ebuild_file" ]; then
+            needs_update=false
+            revision_suffix=""
+
+            if [ -z "$highest_rev_ebuild" ]; then
+                needs_update=true
+            else
+                # Ebuild exists, check if upstream replaced the file by comparing sizes
+                remote_size=$(curl -s --head "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage" | grep -i 'content-length' | awk '{print $2}' | tr -d '\r')
+
+                # Get local size from Manifest
+                highest_rev_file=$(basename "$highest_rev_ebuild")
+                # Strip .ebuild
+                highest_rev_p="${highest_rev_file%.ebuild}"
+                local_distfile="${highest_rev_p}-ente-${tag}-x86_64.AppImage"
+                local_size=$(grep "DIST $local_distfile " "${ebuild_dir}/Manifest" | awk '{print $3}')
+
+                if [ -n "$remote_size" ] && [ -n "$local_size" ] && [ "$remote_size" != "$local_size" ]; then
+                    echo "Size mismatch for ${version}: remote $remote_size, local $local_size. RC bumping."
+                    needs_update=true
+
+                    # Calculate new revision
+                    if [[ "$highest_rev_file" =~ -r([0-9]+)\.ebuild$ ]]; then
+                        current_rev="${BASH_REMATCH[1]}"
+                        next_rev=$((current_rev + 1))
+                        revision_suffix="-r${next_rev}"
+                    else
+                        revision_suffix="-r1"
+                    fi
+                    ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}${revision_suffix}.ebuild"
+                fi
+            fi
+
+            if [ "$needs_update" = true ]; then
 
               # shellcheck disable=SC2016
               {
@@ -158,7 +192,7 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage" "${{ env.epn }}-${version}-ente-${tag}-x86_64.AppImage" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage" "${{ env.epn }}-${version}${revision_suffix}-ente-${tag}-x86_64.AppImage" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
