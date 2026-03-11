@@ -15,17 +15,18 @@ KEYWORDS="~amd64"
 IUSE=""
 
 DEPEND="
-	dev-qt/qtcore:5
-	dev-qt/qtgui:5
-	dev-qt/qtnetwork:5
-	dev-qt/qtwidgets:5
-	dev-qt/qtsvg:5
-	kde-frameworks/knotifications:5
-	kde-frameworks/kwallet:5
+	dev-qt/qtbase:6[dbus,gui,network,widgets]
+	dev-qt/qtsvg:6
+	kde-frameworks/kconfigwidgets:6
+	kde-frameworks/kcoreaddons:6
+	kde-frameworks/ki18n:6
+	kde-frameworks/knotifications:6
+	kde-frameworks/kwallet:6
+	kde-frameworks/kxmlgui:6
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
-	dev-qt/linguist-tools:5
+	dev-qt/qttools:6[linguist]
 	virtual/pkgconfig
-	kde-frameworks/extra-cmake-modules:5
+	kde-frameworks/extra-cmake-modules:0
 "
