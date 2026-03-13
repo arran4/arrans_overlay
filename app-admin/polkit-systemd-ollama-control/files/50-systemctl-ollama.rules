@@ -1,0 +1,17 @@
+/* Allow members of the systemctl-operators group to start, stop, and restart ollama.service */
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-units" &&
+        subject.isInGroup("systemctl-operators") &&
+        subject.local &&
+        subject.active) {
+
+        var unit = action.lookup("unit");
+        var verb = action.lookup("verb");
+
+        if (unit == "ollama.service" &&
+            (verb == "start" || verb == "stop" || verb == "restart")) {
+            return polkit.Result.YES;
+        }
+    }
+});
