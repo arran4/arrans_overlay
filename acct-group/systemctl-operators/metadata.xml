@@ -2,7 +2,7 @@
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<maintainer type="person">
-		<email>arran@arrans.com</email>
+		<email>gentoo@arran4.com</email>
 		<name>Arran Ubels</name>
 	</maintainer>
 	<longdescription lang="en">Shared group for delegated systemctl access via Polkit rules</longdescription>
