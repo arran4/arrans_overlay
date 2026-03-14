@@ -153,6 +153,7 @@ jobs:
                 echo 'RDEPEND="sys-libs/glibc sys-libs/zlib "'
                 echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
+                echo 'QA_PREBUILT="opt/bin/ente_auth.AppImage"'
                 echo ''
                 echo "inherit xdg-utils"
                 echo ''
