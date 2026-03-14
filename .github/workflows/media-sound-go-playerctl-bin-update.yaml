@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Git
         run: |
@@ -67,14 +67,14 @@ jobs:
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
             cat <<EOF > "$metadata_file"
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-<pkgmetadata>
-	<upstream>
-		<remote-id type="github">arran4/go-playerctl</remote-id>
-	</upstream>
-</pkgmetadata>
-EOF
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+            <pkgmetadata>
+              <upstream>
+                <remote-id type="github">arran4/go-playerctl</remote-id>
+              </upstream>
+            </pkgmetadata>
+            EOF
           fi
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
@@ -112,8 +112,8 @@ EOF
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/go-playerctl_\${PV}_linux_amd64.tar.gz -> \${P}-go-playerctl_\${PV}_linux_amd64.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/go-playerctl_\${PV}_linux_arm64.tar.gz -> \${P}-go-playerctl_\${PV}_linux_arm64.tar.gz  )  "
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/go-playerctl_\${PV}_linux_amd64.tar.gz -> \${P}-go-playerctl_\${PV}_linux_amd64.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/go-playerctl_\${PV}_linux_arm64.tar.gz -> \${P}-go-playerctl_\${PV}_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'

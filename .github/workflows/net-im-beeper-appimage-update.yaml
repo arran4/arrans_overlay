@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Git
         run: |
@@ -71,10 +71,10 @@ jobs:
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
             cat <<EOF > "$metadata_file"
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-<pkgmetadata></pkgmetadata>
-EOF
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+            <pkgmetadata></pkgmetadata>
+            EOF
           fi
           ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
           if [ ! -f "$ebuild_file" ]; then
