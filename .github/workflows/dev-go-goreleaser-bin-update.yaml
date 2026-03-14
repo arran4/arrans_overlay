@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-14 22:47:00.15298246 +0000 UTC m=+0.013422929
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
 
 name: dev-go/goreleaser-bin update
 
@@ -24,9 +24,19 @@ env:
   homepage: "https://goreleaser.com"
   github_owner: goreleaser
   github_repo: goreleaser
-  keywords:
+  keywords: ~amd64 ~arm ~arm64 ~ppc64 ~x86
   workflow_filename: dev-go-goreleaser-bin-update.yaml
-  goreleaser_binary_installed_name: ''
+  goreleaser_binary_installed_name: 'goreleaser'
+  goreleaser_binary_archived_name_amd64: 'goreleaser'
+  goreleaser_release_name_amd64: 'goreleaser_Linux_x86_64.tar.gz'
+  goreleaser_binary_archived_name_arm: 'goreleaser'
+  goreleaser_release_name_arm: 'goreleaser_Linux_armv7.tar.gz'
+  goreleaser_binary_archived_name_arm64: 'goreleaser'
+  goreleaser_release_name_arm64: 'goreleaser_Linux_arm64.tar.gz'
+  goreleaser_binary_archived_name_ppc64: 'goreleaser'
+  goreleaser_release_name_ppc64: 'goreleaser_Linux_ppc64.tar.gz'
+  goreleaser_binary_archived_name_x86: 'goreleaser'
+  goreleaser_release_name_x86: 'goreleaser_Linux_i386.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -46,7 +56,8 @@ jobs:
             sudo apt-get install -y wget jq coreutils
             if command -v go &> /dev/null
             then
-                go install github.com/arran4/g2@latest
+                go install github.com/arran4/g2/cmd/g2@latest
+                sudo cp ~/go/bin/g2 /usr/local/bin/g2
             else
                 url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
                 echo "$url"
@@ -62,10 +73,15 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<EOF > "$metadata_file"
+            cat <<-"EOF" > "$metadata_file"
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
+            <use>
+              <flag name="bash">Install bash completion</flag>
+              <flag name="fish">Install fish completion</flag>
+              <flag name="zsh">Install zsh completion</flag>
+            </use>
             <upstream>
               <remote-id type="github">goreleaser/goreleaser</remote-id>
             </upstream>
@@ -108,6 +124,11 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_x86_64.tar.gz -> \${P}-goreleaser_Linux_x86_64.tar.gz  )  "
+                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_armv7.tar.gz -> \${P}-goreleaser_Linux_armv7.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_arm64.tar.gz -> \${P}-goreleaser_Linux_arm64.tar.gz  )  "
+                echo "  ppc64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_ppc64.tar.gz -> \${P}-goreleaser_Linux_ppc64.tar.gz  )  "
+                echo "  x86? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_i386.tar.gz -> \${P}-goreleaser_Linux_i386.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -115,8 +136,8 @@ jobs:
                 echo -n 'IUSE="'
                 echo -n ''
                 echo -n ' man'
-                echo -n ''
-                echo -n ''
+                echo -n ' doc'
+                echo -n ' bash fish zsh'
                 echo '"'
                 echo ''
                 echo -n 'REQUIRED_USE="'
@@ -131,6 +152,21 @@ jobs:
                 echo 'S="${WORKDIR}"'
                 echo ''
                 echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-goreleaser_Linux_x86_64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-goreleaser_Linux_armv7.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-goreleaser_Linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use ppc64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-goreleaser_Linux_ppc64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use x86; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-goreleaser_Linux_i386.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
                 echo '  if use man; then'
                 echo '    gzip -d "manpages/goreleaser.1.gz" || die "Failed to decompress manual page goreleaser.1"'
                 echo '  fi'
@@ -138,14 +174,50 @@ jobs:
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.goreleaser_binary_archived_name_amd64 }}" "${{ env.goreleaser_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm; then'
+                echo '    newexe "${{ env.goreleaser_binary_archived_name_arm }}" "${{ env.goreleaser_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.goreleaser_binary_archived_name_arm64 }}" "${{ env.goreleaser_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use ppc64; then'
+                echo '    newexe "${{ env.goreleaser_binary_archived_name_ppc64 }}" "${{ env.goreleaser_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use x86; then'
+                echo '    newexe "${{ env.goreleaser_binary_archived_name_x86 }}" "${{ env.goreleaser_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use bash; then'
+                echo '    insinto "/usr/share/bash-completion/completions"'
+                echo '    newins "completions/goreleaser.bash" "goreleaser.bash" || die "Failed to bash completion file"'
+                echo '  fi'
+                echo '  if use fish; then'
+                echo '    insinto "/usr/share/fish/vendor_completions.d"'
+                echo '    newins "completions/goreleaser.fish" "goreleaser.fish" || die "Failed to bash completion file"'
+                echo '  fi'
+                echo '  if use zsh; then'
+                echo '    insinto "/usr/share/zsh/site-functions"'
+                echo '    newins "completions/goreleaser.zsh" "goreleaser.zsh" || die "Failed to bash completion file"'
+                echo '  fi'
                 echo '  if use man; then'
                 echo '    newman "manpages/goreleaser.1" "goreleaser.1" || die "Failed to install manual page goreleaser.1"'
+                echo '  fi'
+                echo '  if use doc; then'
+                echo '    newdoc "LICENSE.md" "LICENSE.md" || die "Failed to install document LICENSE.md"'
+                echo '    newdoc "README.md" "README.md" || die "Failed to install document README.md"'
                 echo '  fi'
                 echo '}'
               } > $ebuild_file
 
               # Manifest generation
 
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/goreleaser_Linux_x86_64.tar.gz" "${{ env.epn }}-${version}-goreleaser_Linux_x86_64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/goreleaser_Linux_armv7.tar.gz" "${{ env.epn }}-${version}-goreleaser_Linux_armv7.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/goreleaser_Linux_arm64.tar.gz" "${{ env.epn }}-${version}-goreleaser_Linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/goreleaser_Linux_ppc64.tar.gz" "${{ env.epn }}-${version}-goreleaser_Linux_ppc64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/goreleaser_Linux_i386.tar.gz" "${{ env.epn }}-${version}-goreleaser_Linux_i386.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done

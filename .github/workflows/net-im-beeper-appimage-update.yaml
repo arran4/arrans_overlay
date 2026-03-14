@@ -1,5 +1,3 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Web AppImage current.config 2026-03-14 22:47:00.15298246 +0000 UTC m=+0.013422929
-
 name: net-im/beeper-appimage update
 
 permissions:
@@ -18,8 +16,9 @@ env:
   epn: beeper-appimage
   description: "Unified chat client bridging multiple networks"
   homepage: "https://www.beeper.com"
-  keywords:
+  keywords: ~amd64
   workflow_filename: net-im-beeper-appimage-update.yaml
+  beeper_appimage_installed_name: 'beeper.AppImage'
 
 jobs:
   fetch-latest:
@@ -36,7 +35,19 @@ jobs:
       - name: Install required tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget jq coreutils htmlq
+          sudo apt-get install -y wget jq coreutils
+          wget -qO- https://github.com/mgdm/htmlq/releases/download/v0.4.0/htmlq-x86_64-linux.tar.gz | tar xz -C /usr/local/bin htmlq
+          if command -v go &> /dev/null
+          then
+              go install github.com/arran4/g2/cmd/g2@latest
+              sudo cp ~/go/bin/g2 /usr/local/bin/g2
+          else
+              url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+              echo "$url"
+              wget "${url}" -O /tmp/g2.deb
+              sudo dpkg -i /tmp/g2.deb
+              rm /tmp/g2.deb
+          fi
 
       - name: Determine latest AppImage
         id: find_appimage
@@ -70,7 +81,7 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<EOF > "$metadata_file"
+            cat <<-"EOF" > "$metadata_file"
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata></pkgmetadata>
@@ -99,7 +110,14 @@ jobs:
               echo '  cp "${DISTDIR}/${P}.${appimage_extension}" "${P}.${appimage_extension}" || die "Failed to copy AppImage"'
               echo '  chmod a+x "${P}.${appimage_extension}" || die "Can'"'"'t chmod archive file"'
 
+
+
+
               echo '  exeinto /opt/bin'
+
+              echo '  newexe "${P}.${appimage_extension}" "${{ env.beeper_appimage_installed_name }}" || die "Failed to install AppImage"'
+
+
 
 
 

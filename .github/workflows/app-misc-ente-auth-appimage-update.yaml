@@ -69,144 +69,144 @@ jobs:
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
             cat <<-"EOF" > "$metadata_file"
-                      <?xml version="1.0" encoding="UTF-8"?>
-                      <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-                      <pkgmetadata>
-                        <upstream>
-                          <remote-id type="github">ente-io/ente</remote-id>
-                        </upstream>
-                      </pkgmetadata>
-                      EOF
-                      fi
-                      declare -A releaseTypes=()
-                        tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
-                      # shellcheck disable=SC2086
-                      for tag in $tags; do
-                        version="${tag#auth-v}"
-                        if [ "${version}" = "${tag}" ]; then
-                            echo "$version == $tag so there is no auth-v removed skipping"
-                            continue
-                        fi
-                        # shellcheck disable=SC2034
-                        originalVersion="${version}"
-                        version="$(echo "${version}" | sed 's/^\([0-9]\+\(\.[0-9]\+\)*\)\(-r[0-9]*\)\?\([-_]\(alpha\|beta\|rc\|p\)\(\|\.\?\([0-9]\+\)\)\)$/\1_\5\3\7/')"
-                        if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
-                            echo "version: $version doesn't match regexp";
-                            continue;
-                        fi
-                        releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
-                        if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
-                            releaseTypes[${releaseType:=release}]="$version"
-                        else
-                            echo "Already have a newier ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
-                            continue
-                        fi
-                        # Check if ebuild exists, if it does, check if we need to RC bump due to size change
-                        highest_rev_ebuild=$(find "${ebuild_dir}" -maxdepth 1 \( -name "${{ env.epn }}-${version}.ebuild" -o -name "${{ env.epn }}-${version}-r*.ebuild" \) 2>/dev/null | sort -V | tail -n 1)
-                        ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-                        needs_update=false
-                        revision_suffix=""
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+          <pkgmetadata>
+            <upstream>
+              <remote-id type="github">ente-io/ente</remote-id>
+            </upstream>
+          </pkgmetadata>
+          EOF
+          fi
+          declare -A releaseTypes=()
+            tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          # shellcheck disable=SC2086
+          for tag in $tags; do
+            version="${tag#auth-v}"
+            if [ "${version}" = "${tag}" ]; then
+                echo "$version == $tag so there is no auth-v removed skipping"
+                continue
+            fi
+            # shellcheck disable=SC2034
+            originalVersion="${version}"
+            version="$(echo "${version}" | sed 's/^\([0-9]\+\(\.[0-9]\+\)*\)\(-r[0-9]*\)\?\([-_]\(alpha\|beta\|rc\|p\)\(\|\.\?\([0-9]\+\)\)\)$/\1_\5\3\7/')"
+            if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                echo "version: $version doesn't match regexp";
+                continue;
+            fi
+            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
+            if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
+                releaseTypes[${releaseType:=release}]="$version"
+            else
+                echo "Already have a newier ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+                continue
+            fi
+            # Check if ebuild exists, if it does, check if we need to RC bump due to size change
+            highest_rev_ebuild=$(find "${ebuild_dir}" -maxdepth 1 \( -name "${{ env.epn }}-${version}.ebuild" -o -name "${{ env.epn }}-${version}-r*.ebuild" \) 2>/dev/null | sort -V | tail -n 1)
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+            needs_update=false
+            revision_suffix=""
 
-                        if [ -z "$highest_rev_ebuild" ]; then
-                            needs_update=true
-                        else
-                            # Ebuild exists, check if upstream replaced the file by comparing sizes
-                            remote_size=$(curl -sL --head "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage" | grep -i 'content-length' | awk '{print $2}' | tr -d '\r')
+            if [ -z "$highest_rev_ebuild" ]; then
+                needs_update=true
+            else
+                # Ebuild exists, check if upstream replaced the file by comparing sizes
+                remote_size=$(curl -sL --head "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage" | grep -i 'content-length' | awk '{print $2}' | tr -d '\r')
 
-                            # Get local size from Manifest
-                            highest_rev_file=$(basename "$highest_rev_ebuild")
-                            # Strip .ebuild
-                            highest_rev_p="${highest_rev_file%.ebuild}"
-                            local_distfile="${highest_rev_p}-ente-${tag}-x86_64.AppImage"
-                            local_size=$(grep "DIST $local_distfile " "${ebuild_dir}/Manifest" | awk '{print $3}')
+                # Get local size from Manifest
+                highest_rev_file=$(basename "$highest_rev_ebuild")
+                # Strip .ebuild
+                highest_rev_p="${highest_rev_file%.ebuild}"
+                local_distfile="${highest_rev_p}-ente-${tag}-x86_64.AppImage"
+                local_size=$(grep "DIST $local_distfile " "${ebuild_dir}/Manifest" | awk '{print $3}')
 
-                            if [ -n "$remote_size" ] && [ -n "$local_size" ] && [ "$remote_size" != "$local_size" ]; then
-                                echo "Size mismatch for ${version}: remote $remote_size, local $local_size. RC bumping."
-                                needs_update=true
+                if [ -n "$remote_size" ] && [ -n "$local_size" ] && [ "$remote_size" != "$local_size" ]; then
+                    echo "Size mismatch for ${version}: remote $remote_size, local $local_size. RC bumping."
+                    needs_update=true
 
-                                # Calculate new revision
-                                if [[ "$highest_rev_file" =~ -r([0-9]+)\.ebuild$ ]]; then
-                                    current_rev="${BASH_REMATCH[1]}"
-                                    next_rev=$((current_rev + 1))
-                                    revision_suffix="-r${next_rev}"
-                                else
-                                    revision_suffix="-r1"
-                                fi
-                                ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}${revision_suffix}.ebuild"
-                                rm "$highest_rev_ebuild"
-                            fi
-                        fi
+                    # Calculate new revision
+                    if [[ "$highest_rev_file" =~ -r([0-9]+)\.ebuild$ ]]; then
+                        current_rev="${BASH_REMATCH[1]}"
+                        next_rev=$((current_rev + 1))
+                        revision_suffix="-r${next_rev}"
+                    else
+                        revision_suffix="-r1"
+                    fi
+                    ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}${revision_suffix}.ebuild"
+                    rm "$highest_rev_ebuild"
+                fi
+            fi
 
-                        if [ "$needs_update" = true ]; then
+            if [ "$needs_update" = true ]; then
 
-                          # shellcheck disable=SC2016
-                          {
-                            echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
-                            echo 'EAPI=8'
-                            echo "DESCRIPTION=\"${{ env.description }}\""
-                            echo "HOMEPAGE=\"${{ env.homepage }}\""
-                            echo 'LICENSE="MIT"'
-                            echo 'SLOT="0"'
-                            echo 'KEYWORDS="${{ env.keywords }}"'
-                            echo 'IUSE=""'
-                            echo 'DEPEND=""'
-                            echo 'RDEPEND="sys-libs/glibc sys-libs/zlib "'
-                            echo 'S="${WORKDIR}"'
-                            echo 'RESTRICT="strip"'
-                            echo ''
-                            echo "inherit xdg-utils"
-                            echo ''
-                            echo 'SRC_URI="'
-                            echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage -> \${P}-ente-${tag}-x86_64.AppImage )"
-                            echo '"'
-                            echo ''
-                            echo 'src_unpack() {'
-                            echo '  if use amd64; then'
-                            echo "    cp \"\${DISTDIR}/\${P}-${{ env.ente_auth_release_name_amd64 }}\" \"${{ env.ente_auth_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
-                            echo '  fi'
-                            echo '  chmod a+x "${{ env.ente_auth_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
-                            echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "${{ env.ente_auth_desktop_file }}" || die "Failed to extract .desktop from appimage"'
-                            echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
-                            echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
-                            echo '}'
-                            echo ''
-                            echo 'src_prepare() {'
-                            echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.ente_auth_appimage_installed_name }}:' 'squashfs-root/${{ env.ente_auth_desktop_file }}'"
-                            echo "  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm {} \; "
-                            echo "  find squashfs-root -type d -exec rmdir -p --ignore-fail-on-non-empty {} \; "
-                            echo '  eapply_user'
-                            echo '}'
-                            echo ''
-                            echo 'src_install() {'
-                            echo '  exeinto /opt/bin'
-                            echo '  doexe "${{ env.ente_auth_appimage_installed_name }}" || die "Failed to install AppImage"'
-                            echo '  insinto /usr/share/applications'
-                            echo '  doins "squashfs-root/${{ env.ente_auth_desktop_file }}" || die "Failed to install desktop file"'
-                            echo '  insinto /usr/share/icons'
-                            echo '  doins -r squashfs-root/usr/share/icons/hicolor || die "Failed to install icons"'
-                            echo '  insinto /usr/share/pixmaps'
-                            echo '  doins squashfs-root/*.png || die "Failed to install icons"'
-                            echo '}'
-                            echo ""
-                            echo "pkg_postinst() {"
-                            echo "  xdg_desktop_database_update"
-                            echo "}"
-                            echo ""
-                          } > $ebuild_file
+              # shellcheck disable=SC2016
+              {
+                echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'LICENSE="MIT"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="${{ env.keywords }}"'
+                echo 'IUSE=""'
+                echo 'DEPEND=""'
+                echo 'RDEPEND="sys-libs/glibc sys-libs/zlib "'
+                echo 'S="${WORKDIR}"'
+                echo 'RESTRICT="strip"'
+                echo ''
+                echo "inherit xdg-utils"
+                echo ''
+                echo 'SRC_URI="'
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage -> \${P}-ente-${tag}-x86_64.AppImage )"
+                echo '"'
+                echo ''
+                echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    cp \"\${DISTDIR}/\${P}-${{ env.ente_auth_release_name_amd64 }}\" \"${{ env.ente_auth_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
+                echo '  fi'
+                echo '  chmod a+x "${{ env.ente_auth_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
+                echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "${{ env.ente_auth_desktop_file }}" || die "Failed to extract .desktop from appimage"'
+                echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
+                echo '  "./${{ env.ente_auth_appimage_installed_name }}" --appimage-extract "*.png" || die "Failed to extract root icons from app image"'
+                echo '}'
+                echo ''
+                echo 'src_prepare() {'
+                echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.ente_auth_appimage_installed_name }}:' 'squashfs-root/${{ env.ente_auth_desktop_file }}'"
+                echo "  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm {} \; "
+                echo "  find squashfs-root -type d -exec rmdir -p --ignore-fail-on-non-empty {} \; "
+                echo '  eapply_user'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '  exeinto /opt/bin'
+                echo '  doexe "${{ env.ente_auth_appimage_installed_name }}" || die "Failed to install AppImage"'
+                echo '  insinto /usr/share/applications'
+                echo '  doins "squashfs-root/${{ env.ente_auth_desktop_file }}" || die "Failed to install desktop file"'
+                echo '  insinto /usr/share/icons'
+                echo '  doins -r squashfs-root/usr/share/icons/hicolor || die "Failed to install icons"'
+                echo '  insinto /usr/share/pixmaps'
+                echo '  doins squashfs-root/*.png || die "Failed to install icons"'
+                echo '}'
+                echo ""
+                echo "pkg_postinst() {"
+                echo "  xdg_desktop_database_update"
+                echo "}"
+                echo ""
+              } > $ebuild_file
 
-                          # Manifest generation
+              # Manifest generation
 
-                          g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage" "${{ env.epn }}-${version}${revision_suffix}-ente-${tag}-x86_64.AppImage" "${ebuild_dir}/Manifest"
-                          echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
-                        fi
-                      done
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/ente-${tag}-x86_64.AppImage" "${{ env.epn }}-${version}${revision_suffix}-ente-${tag}-x86_64.AppImage" "${ebuild_dir}/Manifest"
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+            fi
+          done
 
-                  - name: Commit and push changes
-                    run: |
-                      ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-                      git add "./${ebuild_dir}"
-                      if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
-                        git pull --rebase &&
-                        git push
-                      fi || true
-                    if: steps.process_releases.outputs.generated_tag
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          git add "./${ebuild_dir}"
+          if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
+            git pull --rebase &&
+            git push
+          fi || true
+        if: steps.process_releases.outputs.generated_tag

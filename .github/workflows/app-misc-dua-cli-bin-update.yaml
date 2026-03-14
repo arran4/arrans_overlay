@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-14 22:47:00.15298246 +0000 UTC m=+0.013422929
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
 
 name: app-misc/dua-cli-bin update
 
@@ -24,9 +24,15 @@ env:
   homepage: "https://lib.rs/crates/dua-cli"
   github_owner: Byron
   github_repo: dua-cli
-  keywords:
+  keywords: ~amd64 ~arm ~arm64
   workflow_filename: app-misc-dua-cli-bin-update.yaml
-  dua_binary_installed_name: ''
+  dua_binary_installed_name: 'dua'
+  dua_binary_archived_name_amd64: 'dua-v2.29.2-x86_64-unknown-linux-musl/dua'
+  dua_release_name_amd64: 'dua-${tag}-x86_64-unknown-linux-musl.tar.gz'
+  dua_binary_archived_name_arm: 'dua-v2.29.2-arm-unknown-linux-gnueabihf/dua'
+  dua_release_name_arm: 'dua-${tag}-arm-unknown-linux-gnueabihf.tar.gz'
+  dua_binary_archived_name_arm64: 'dua-v2.29.2-aarch64-unknown-linux-musl/dua'
+  dua_release_name_arm64: 'dua-${tag}-aarch64-unknown-linux-musl.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -46,7 +52,8 @@ jobs:
             sudo apt-get install -y wget jq coreutils
             if command -v go &> /dev/null
             then
-                go install github.com/arran4/g2@latest
+                go install github.com/arran4/g2/cmd/g2@latest
+                sudo cp ~/go/bin/g2 /usr/local/bin/g2
             else
                 url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
                 echo "$url"
@@ -62,7 +69,7 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<EOF > "$metadata_file"
+            cat <<-"EOF" > "$metadata_file"
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
@@ -108,6 +115,9 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/dua-${tag}-x86_64-unknown-linux-musl.tar.gz -> \${P}-dua-${tag}-x86_64-unknown-linux-musl.tar.gz  )  "
+                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/dua-${tag}-arm-unknown-linux-gnueabihf.tar.gz -> \${P}-dua-${tag}-arm-unknown-linux-gnueabihf.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/dua-${tag}-aarch64-unknown-linux-musl.tar.gz -> \${P}-dua-${tag}-aarch64-unknown-linux-musl.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -130,10 +140,29 @@ jobs:
                 echo ''
                 echo 'S="${WORKDIR}"'
                 echo ''
-                echo 'src_unpack() { :; }'
+                echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-dua-${tag}-x86_64-unknown-linux-musl.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-dua-${tag}-arm-unknown-linux-gnueabihf.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-dua-${tag}-aarch64-unknown-linux-musl.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '}'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.dua_binary_archived_name_amd64 }}" "${{ env.dua_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm; then'
+                echo '    newexe "${{ env.dua_binary_archived_name_arm }}" "${{ env.dua_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.dua_binary_archived_name_arm64 }}" "${{ env.dua_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
                 echo '  if use doc; then'
                 echo '    if use amd64; then'
                 echo '      newdoc "dua-v2.29.2-x86_64-unknown-linux-musl/LICENSE" "dua-${TAG}-LICENSE" || die "Failed to install document dua-${TAG}-LICENSE"'
@@ -156,6 +185,9 @@ jobs:
 
               # Manifest generation
 
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/dua-${tag}-x86_64-unknown-linux-musl.tar.gz" "${{ env.epn }}-${version}-dua-${tag}-x86_64-unknown-linux-musl.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/dua-${tag}-arm-unknown-linux-gnueabihf.tar.gz" "${{ env.epn }}-${version}-dua-${tag}-arm-unknown-linux-gnueabihf.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/dua-${tag}-aarch64-unknown-linux-musl.tar.gz" "${{ env.epn }}-${version}-dua-${tag}-aarch64-unknown-linux-musl.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done

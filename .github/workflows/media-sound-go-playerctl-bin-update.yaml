@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-14 22:47:00.15298246 +0000 UTC m=+0.013422929
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-14 07:05:49.55494487 +0000 UTC m=+0.007290831
 
 name: media-sound/go-playerctl-bin update
 
@@ -50,7 +50,8 @@ jobs:
             sudo apt-get install -y wget jq coreutils
             if command -v go &> /dev/null
             then
-                go install github.com/arran4/g2@latest
+                go install github.com/arran4/g2/cmd/g2@latest
+                sudo cp ~/go/bin/g2 /usr/local/bin/g2
             else
                 url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
                 echo "$url"
@@ -121,7 +122,7 @@ jobs:
                 echo -n 'IUSE="'
                 echo -n ''
                 echo -n ''
-                echo -n ''
+                echo -n ' doc'
                 echo -n ''
                 echo '"'
                 echo ''
@@ -146,13 +147,18 @@ jobs:
                 echo '}'
                 echo ''
                 echo 'src_install() {'
-                echo '  exeinto /opt/bin'
+                echo '  exeinto /usr/bin'
                 echo '  if use amd64; then'
                 echo '    newexe "${{ env.go-playerctl_binary_archived_name_amd64 }}" "${{ env.go-playerctl_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use arm64; then'
                 echo '    newexe "${{ env.go-playerctl_binary_archived_name_arm64 }}" "${{ env.go-playerctl_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
+                echo '  if use doc; then'
+                echo '    newdoc "COPYING" "COPYING" || die "Failed to install document COPYING"'
+                echo '    newdoc "README.md" "README.md" || die "Failed to install document README.md"'
+                echo '  fi'
+                echo '  dosym go-playerctl /usr/bin/go-playerctld'
                 echo '}'
               } > $ebuild_file
 

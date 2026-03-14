@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-14 22:47:00.15298246 +0000 UTC m=+0.013422929
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
 
 name: www-apps/pagefind-bin update
 
@@ -24,8 +24,18 @@ env:
   homepage: "https://pagefind.app"
   github_owner: CloudCannon
   github_repo: pagefind
-  keywords:
+  keywords: ~amd64 ~arm64
   workflow_filename: www-apps-pagefind-bin-update.yaml
+  binary_installed_name: 'pagefind'
+  binary_archived_name_amd64: 'pagefind'
+  release_name_amd64: 'pagefind-${tag}-x86_64-unknown-linux-musl.tar.gz'
+  binary_archived_name_arm64: 'pagefind'
+  release_name_arm64: 'pagefind-${tag}-aarch64-unknown-linux-musl.tar.gz'
+  extended_binary_installed_name: 'pagefind_extended'
+  extended_binary_archived_name_amd64: 'pagefind_extended'
+  extended_release_name_amd64: 'pagefind_extended-${tag}-x86_64-unknown-linux-musl.tar.gz'
+  extended_binary_archived_name_arm64: 'pagefind_extended'
+  extended_release_name_arm64: 'pagefind_extended-${tag}-aarch64-unknown-linux-musl.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -45,7 +55,8 @@ jobs:
             sudo apt-get install -y wget jq coreutils
             if command -v go &> /dev/null
             then
-                go install github.com/arran4/g2@latest
+                go install github.com/arran4/g2/cmd/g2@latest
+                sudo cp ~/go/bin/g2 /usr/local/bin/g2
             else
                 url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
                 echo "$url"
@@ -61,7 +72,7 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<EOF > "$metadata_file"
+            cat <<-"EOF" > "$metadata_file"
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
@@ -107,6 +118,10 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/pagefind-${tag}-x86_64-unknown-linux-musl.tar.gz -> \${P}-pagefind-${tag}-x86_64-unknown-linux-musl.tar.gz  )  "
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/pagefind_extended-${tag}-x86_64-unknown-linux-musl.tar.gz -> \${P}-pagefind_extended-${tag}-x86_64-unknown-linux-musl.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/pagefind-${tag}-aarch64-unknown-linux-musl.tar.gz -> \${P}-pagefind-${tag}-aarch64-unknown-linux-musl.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/pagefind_extended-${tag}-aarch64-unknown-linux-musl.tar.gz -> \${P}-pagefind_extended-${tag}-aarch64-unknown-linux-musl.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -129,15 +144,44 @@ jobs:
                 echo ''
                 echo 'S="${WORKDIR}"'
                 echo ''
-                echo 'src_unpack() { :; }'
+                echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-pagefind-${tag}-x86_64-unknown-linux-musl.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-pagefind_extended-${tag}-x86_64-unknown-linux-musl.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-pagefind-${tag}-aarch64-unknown-linux-musl.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-pagefind_extended-${tag}-aarch64-unknown-linux-musl.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '}'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.binary_archived_name_amd64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.binary_archived_name_arm64 }}" "${{ env.binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.extended_binary_archived_name_amd64 }}" "${{ env.extended_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.extended_binary_archived_name_arm64 }}" "${{ env.extended_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
                 echo '}'
               } > $ebuild_file
 
               # Manifest generation
 
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/pagefind-${tag}-x86_64-unknown-linux-musl.tar.gz" "${{ env.epn }}-${version}-pagefind-${tag}-x86_64-unknown-linux-musl.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/pagefind_extended-${tag}-x86_64-unknown-linux-musl.tar.gz" "${{ env.epn }}-${version}-pagefind_extended-${tag}-x86_64-unknown-linux-musl.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/pagefind-${tag}-aarch64-unknown-linux-musl.tar.gz" "${{ env.epn }}-${version}-pagefind-${tag}-aarch64-unknown-linux-musl.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/pagefind_extended-${tag}-aarch64-unknown-linux-musl.tar.gz" "${{ env.epn }}-${version}-pagefind_extended-${tag}-aarch64-unknown-linux-musl.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done

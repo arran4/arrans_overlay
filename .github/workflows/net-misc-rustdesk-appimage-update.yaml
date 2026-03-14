@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github AppImage Release current.config 2026-03-14 22:47:00.15298246 +0000 UTC m=+0.013422929
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github AppImage Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
 
 name: net-misc/rustdesk-appimage update
 
@@ -24,10 +24,12 @@ env:
   homepage: "https://rustdesk.com"
   github_owner: rustdesk
   github_repo: rustdesk
-  keywords:
+  keywords: ~amd64 ~arm64
   workflow_filename: net-misc-rustdesk-appimage-update.yaml
   rustdesk_desktop_file: 'rustdesk.desktop'
-  rustdesk_appimage_installed_name: ''
+  rustdesk_appimage_installed_name: 'rustdesk.AppImage'
+  rustdesk_release_name_amd64: 'rustdesk-${tag}-x86_64.AppImage'
+  rustdesk_release_name_arm64: 'rustdesk-${tag}-aarch64.AppImage'
 
 jobs:
   check-and-create-ebuild:
@@ -47,7 +49,8 @@ jobs:
             sudo apt-get install -y wget jq coreutils
             if command -v go &> /dev/null
             then
-                go install github.com/arran4/g2@latest
+                go install github.com/arran4/g2/cmd/g2@latest
+                sudo cp ~/go/bin/g2 /usr/local/bin/g2
             else
                 url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
                 echo "$url"
@@ -63,7 +66,7 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<EOF > "$metadata_file"
+            cat <<-"EOF" > "$metadata_file"
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
@@ -113,9 +116,17 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="'
+                echo "  arm64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rustdesk-${tag}-aarch64.AppImage -> \${P}-rustdesk-${tag}-aarch64.AppImage )"
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rustdesk-${tag}-x86_64.AppImage -> \${P}-rustdesk-${tag}-x86_64.AppImage )"
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    cp \"\${DISTDIR}/\${P}-${{ env.rustdesk_release_name_amd64 }}\" \"${{ env.rustdesk_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo "    cp \"\${DISTDIR}/\${P}-${{ env.rustdesk_release_name_arm64 }}\" \"${{ env.rustdesk_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
+                echo '  fi'
                 echo '  chmod a+x "${{ env.rustdesk_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
                 echo '  "./${{ env.rustdesk_appimage_installed_name }}" --appimage-extract "${{ env.rustdesk_desktop_file }}" || die "Failed to extract .desktop from appimage"'
                 echo '  "./${{ env.rustdesk_appimage_installed_name }}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
@@ -145,6 +156,8 @@ jobs:
 
               # Manifest generation
 
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rustdesk-${tag}-aarch64.AppImage" "${{ env.epn }}-${version}-rustdesk-${tag}-aarch64.AppImage" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rustdesk-${tag}-x86_64.AppImage" "${{ env.epn }}-${version}-rustdesk-${tag}-x86_64.AppImage" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done

@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github AppImage Release current.config 2026-03-14 22:47:00.15298246 +0000 UTC m=+0.013422929
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github AppImage Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
 
 name: app-misc/flutter-google-datastore-appimage update
 
@@ -24,10 +24,11 @@ env:
   homepage: "https://github.com/arran4/flutter_google_datastore"
   github_owner: arran4
   github_repo: flutter_google_datastore
-  keywords:
+  keywords: ~amd64
   workflow_filename: app-misc-flutter-google-datastore-appimage-update.yaml
   flutter_google_datastore_desktop_file: 'flutter_google_datastore.desktop'
-  flutter_google_datastore_appimage_installed_name: ''
+  flutter_google_datastore_appimage_installed_name: 'flutter_google_datastore.AppImage'
+  flutter_google_datastore_release_name_amd64: 'flutter_google_datastore-\${PV}-linux.AppImage'
 
 jobs:
   check-and-create-ebuild:
@@ -47,7 +48,8 @@ jobs:
             sudo apt-get install -y wget jq coreutils
             if command -v go &> /dev/null
             then
-                go install github.com/arran4/g2@latest
+                go install github.com/arran4/g2/cmd/g2@latest
+                sudo cp ~/go/bin/g2 /usr/local/bin/g2
             else
                 url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
                 echo "$url"
@@ -63,7 +65,7 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<EOF > "$metadata_file"
+            cat <<-"EOF" > "$metadata_file"
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
@@ -117,9 +119,13 @@ jobs:
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="'
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/flutter_google_datastore-${originalVersion}-linux.AppImage -> \${P}-flutter_google_datastore-\${PV}-linux.AppImage )"
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    cp \"\${DISTDIR}/\${P}-${{ env.flutter_google_datastore_release_name_amd64 }}\" \"${{ env.flutter_google_datastore_appimage_installed_name }}\"  || die \"Can't copy downloaded file\""
+                echo '  fi'
                 echo '  chmod a+x "${{ env.flutter_google_datastore_appimage_installed_name }}"  || die "Can'\''t chmod archive file"'
                 echo '  "./${{ env.flutter_google_datastore_appimage_installed_name }}" --appimage-extract "${{ env.flutter_google_datastore_desktop_file }}" || die "Failed to extract .desktop from appimage"'
                 echo '  "./${{ env.flutter_google_datastore_appimage_installed_name }}" --appimage-extract "usr/share/icons" || die "Failed to extract hicolor icons from app image"'
@@ -152,6 +158,7 @@ jobs:
 
               # Manifest generation
 
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/flutter_google_datastore-${originalVersion}-linux.AppImage" "${{ env.epn }}-${version}-flutter_google_datastore-${version}-linux.AppImage" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
