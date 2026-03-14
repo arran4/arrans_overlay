@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-14 22:47:00.15298246 +0000 UTC m=+0.013422929
 
 name: app-misc/shineyshot-bin update
 
@@ -24,24 +24,15 @@ env:
   homepage: "https://github.com/arran4/shineyshot"
   github_owner: arran4
   github_repo: shineyshot
-  keywords: ~amd64 ~arm ~arm64 ~x86
+  keywords:
   workflow_filename: app-misc-shineyshot-bin-update.yaml
-  shineyshot_binary_installed_name: 'shineyshot'
-  shineyshot_binary_archived_name_amd64: 'shineyshot'
-  shineyshot_release_name_amd64: 'shineyshot_\${PV}_Linux_x86_64.tar.gz'
-  shineyshot_binary_archived_name_arm: 'shineyshot'
-  shineyshot_release_name_arm: 'shineyshot_\${PV}_Linux_armv7.tar.gz'
-  shineyshot_binary_archived_name_arm64: 'shineyshot'
-  shineyshot_release_name_arm64: 'shineyshot_\${PV}_Linux_arm64.tar.gz'
-  shineyshot_binary_archived_name_x86: 'shineyshot'
-  shineyshot_release_name_x86: 'shineyshot_\${PV}_Linux_i386.tar.gz'
 
 jobs:
   check-and-create-ebuild:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Set up Git
         run: |
@@ -54,8 +45,7 @@ jobs:
             sudo apt-get install -y wget jq coreutils
             if command -v go &> /dev/null
             then
-                go install github.com/arran4/g2/cmd/g2@latest
-                sudo cp ~/go/bin/g2 /usr/local/bin/g2
+                go install github.com/arran4/g2@latest
             else
                 url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
                 echo "$url"
@@ -71,15 +61,15 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<-"EOF" > "$metadata_file"
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-          <pkgmetadata>
-            <upstream>
-              <remote-id type="github">arran4/shineyshot</remote-id>
-            </upstream>
-          </pkgmetadata>
-          EOF
+            cat <<EOF > "$metadata_file"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<remote-id type="github">arran4/shineyshot</remote-id>
+	</upstream>
+</pkgmetadata>
+EOF
           fi
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
@@ -117,10 +107,6 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/shineyshot_\${PV}_Linux_x86_64.tar.gz -> \${P}-shineyshot_\${PV}_Linux_x86_64.tar.gz  )  "
-                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/shineyshot_\${PV}_Linux_armv7.tar.gz -> \${P}-shineyshot_\${PV}_Linux_armv7.tar.gz  )  "
-                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/shineyshot_\${PV}_Linux_arm64.tar.gz -> \${P}-shineyshot_\${PV}_Linux_arm64.tar.gz  )  "
-                echo "  x86? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/shineyshot_\${PV}_Linux_i386.tar.gz -> \${P}-shineyshot_\${PV}_Linux_i386.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -128,7 +114,7 @@ jobs:
                 echo -n 'IUSE="'
                 echo -n ''
                 echo -n ''
-                echo -n ' doc'
+                echo -n ''
                 echo -n ''
                 echo '"'
                 echo ''
@@ -143,59 +129,15 @@ jobs:
                 echo ''
                 echo 'S="${WORKDIR}"'
                 echo ''
-                echo 'src_unpack() {'
-                echo '  if use amd64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-shineyshot_\${PV}_Linux_x86_64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use arm; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-shineyshot_\${PV}_Linux_armv7.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-shineyshot_\${PV}_Linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use x86; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-shineyshot_\${PV}_Linux_i386.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '}'
+                echo 'src_unpack() { :; }'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
-                echo '  if use amd64; then'
-                echo '    newexe "${{ env.shineyshot_binary_archived_name_amd64 }}" "${{ env.shineyshot_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use arm; then'
-                echo '    newexe "${{ env.shineyshot_binary_archived_name_arm }}" "${{ env.shineyshot_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use arm64; then'
-                echo '    newexe "${{ env.shineyshot_binary_archived_name_arm64 }}" "${{ env.shineyshot_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use x86; then'
-                echo '    newexe "${{ env.shineyshot_binary_archived_name_x86 }}" "${{ env.shineyshot_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use doc; then'
-                echo '    if use amd64; then'
-                echo '      newdoc "README.md" "README.md" || die "Failed to install document README.md"'
-                echo '    fi'
-                echo '    if use arm; then'
-                echo '      newdoc "README.md" "README.md" || die "Failed to install document README.md"'
-                echo '      newdoc "README.md" "README.md" || die "Failed to install document README.md"'
-                echo '    fi'
-                echo '    if use arm64; then'
-                echo '      newdoc "README.md" "README.md" || die "Failed to install document README.md"'
-                echo '    fi'
-                echo '    if use x86; then'
-                echo '      newdoc "README.md" "README.md" || die "Failed to install document README.md"'
-                echo '    fi'
-                echo '  fi'
                 echo '}'
               } > $ebuild_file
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/shineyshot_${version}_Linux_x86_64.tar.gz" "${{ env.epn }}-${version}-shineyshot_${version}_Linux_x86_64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/shineyshot_${version}_Linux_armv7.tar.gz" "${{ env.epn }}-${version}-shineyshot_${version}_Linux_armv7.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/shineyshot_${version}_Linux_arm64.tar.gz" "${{ env.epn }}-${version}-shineyshot_${version}_Linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/shineyshot_${version}_Linux_i386.tar.gz" "${{ env.epn }}-${version}-shineyshot_${version}_Linux_i386.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done

@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-14 07:05:49.55494487 +0000 UTC m=+0.007290831
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-14 22:47:00.15298246 +0000 UTC m=+0.013422929
 
 name: media-sound/go-playerctl-bin update
 
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Set up Git
         run: |
@@ -50,8 +50,7 @@ jobs:
             sudo apt-get install -y wget jq coreutils
             if command -v go &> /dev/null
             then
-                go install github.com/arran4/g2/cmd/g2@latest
-                sudo cp ~/go/bin/g2 /usr/local/bin/g2
+                go install github.com/arran4/g2@latest
             else
                 url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
                 echo "$url"
@@ -68,14 +67,14 @@ jobs:
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
             cat <<EOF > "$metadata_file"
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-          <pkgmetadata>
-            <upstream>
-              <remote-id type="github">arran4/go-playerctl</remote-id>
-            </upstream>
-          </pkgmetadata>
-          EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<remote-id type="github">arran4/go-playerctl</remote-id>
+	</upstream>
+</pkgmetadata>
+EOF
           fi
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
@@ -113,8 +112,8 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/go-playerctl_\${PV}_linux_amd64.tar.gz -> \${P}-go-playerctl_\${PV}_linux_amd64.tar.gz  )  "
-                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/go-playerctl_\${PV}_linux_arm64.tar.gz -> \${P}-go-playerctl_\${PV}_linux_arm64.tar.gz  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/go-playerctl_\${PV}_linux_amd64.tar.gz -> \${P}-go-playerctl_\${PV}_linux_amd64.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/go-playerctl_\${PV}_linux_arm64.tar.gz -> \${P}-go-playerctl_\${PV}_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -122,7 +121,7 @@ jobs:
                 echo -n 'IUSE="'
                 echo -n ''
                 echo -n ''
-                echo -n ' doc'
+                echo -n ''
                 echo -n ''
                 echo '"'
                 echo ''
@@ -147,18 +146,13 @@ jobs:
                 echo '}'
                 echo ''
                 echo 'src_install() {'
-                echo '  exeinto /usr/bin'
+                echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'
                 echo '    newexe "${{ env.go-playerctl_binary_archived_name_amd64 }}" "${{ env.go-playerctl_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use arm64; then'
                 echo '    newexe "${{ env.go-playerctl_binary_archived_name_arm64 }}" "${{ env.go-playerctl_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
-                echo '  if use doc; then'
-                echo '    newdoc "COPYING" "COPYING" || die "Failed to install document COPYING"'
-                echo '    newdoc "README.md" "README.md" || die "Failed to install document README.md"'
-                echo '  fi'
-                echo '  dosym go-playerctl /usr/bin/go-playerctld'
                 echo '}'
               } > $ebuild_file
 

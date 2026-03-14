@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-14 22:47:00.15298246 +0000 UTC m=+0.013422929
 
 name: app-misc/fq-bin update
 
@@ -24,20 +24,15 @@ env:
   homepage: "https://github.com/wader/fq"
   github_owner: wader
   github_repo: fq
-  keywords: ~amd64 ~arm64
+  keywords:
   workflow_filename: app-misc-fq-bin-update.yaml
-  fq_binary_installed_name: 'fq'
-  fq_binary_archived_name_amd64: 'fq'
-  fq_release_name_amd64: 'fq_\${PV}_linux_amd64.tar.gz'
-  fq_binary_archived_name_arm64: 'fq'
-  fq_release_name_arm64: 'fq_\${PV}_linux_arm64.tar.gz'
 
 jobs:
   check-and-create-ebuild:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Set up Git
         run: |
@@ -50,8 +45,7 @@ jobs:
             sudo apt-get install -y wget jq coreutils
             if command -v go &> /dev/null
             then
-                go install github.com/arran4/g2/cmd/g2@latest
-                sudo cp ~/go/bin/g2 /usr/local/bin/g2
+                go install github.com/arran4/g2@latest
             else
                 url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
                 echo "$url"
@@ -67,15 +61,15 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<-"EOF" > "$metadata_file"
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-          <pkgmetadata>
-            <upstream>
-              <remote-id type="github">wader/fq</remote-id>
-            </upstream>
-          </pkgmetadata>
-          EOF
+            cat <<EOF > "$metadata_file"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<remote-id type="github">wader/fq</remote-id>
+	</upstream>
+</pkgmetadata>
+EOF
           fi
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
@@ -113,8 +107,6 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/fq_\${PV}_linux_amd64.tar.gz -> \${P}-fq_\${PV}_linux_amd64.tar.gz  )  "
-                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/fq_\${PV}_linux_arm64.tar.gz -> \${P}-fq_\${PV}_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -137,30 +129,15 @@ jobs:
                 echo ''
                 echo 'S="${WORKDIR}"'
                 echo ''
-                echo 'src_unpack() {'
-                echo '  if use amd64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-fq_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-fq_\${PV}_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '}'
+                echo 'src_unpack() { :; }'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
-                echo '  if use amd64; then'
-                echo '    newexe "${{ env.fq_binary_archived_name_amd64 }}" "${{ env.fq_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use arm64; then'
-                echo '    newexe "${{ env.fq_binary_archived_name_arm64 }}" "${{ env.fq_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
                 echo '}'
               } > $ebuild_file
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/fq_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-fq_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/fq_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-fq_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done

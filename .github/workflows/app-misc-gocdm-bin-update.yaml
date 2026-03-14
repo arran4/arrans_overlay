@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-14 22:47:00.15298246 +0000 UTC m=+0.013422929
 
 name: app-misc/gocdm-bin update
 
@@ -24,20 +24,15 @@ env:
   homepage: "https://github.com/arran4/gocdm"
   github_owner: arran4
   github_repo: gocdm
-  keywords: ~amd64 ~arm64
+  keywords:
   workflow_filename: app-misc-gocdm-bin-update.yaml
-  gocdm_binary_installed_name: 'gocdm'
-  gocdm_binary_archived_name_amd64: 'gocdm'
-  gocdm_release_name_amd64: 'gocdm_Linux_x86_64.tar.gz'
-  gocdm_binary_archived_name_arm64: 'gocdm'
-  gocdm_release_name_arm64: 'gocdm_Linux_arm64.tar.gz'
 
 jobs:
   check-and-create-ebuild:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
       - name: Set up Git
         run: |
@@ -50,8 +45,7 @@ jobs:
             sudo apt-get install -y wget jq coreutils
             if command -v go &> /dev/null
             then
-                go install github.com/arran4/g2/cmd/g2@latest
-                sudo cp ~/go/bin/g2 /usr/local/bin/g2
+                go install github.com/arran4/g2@latest
             else
                 url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
                 echo "$url"
@@ -67,15 +61,15 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<-"EOF" > "$metadata_file"
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-          <pkgmetadata>
-            <upstream>
-              <remote-id type="github">arran4/gocdm</remote-id>
-            </upstream>
-          </pkgmetadata>
-          EOF
+            cat <<EOF > "$metadata_file"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<remote-id type="github">arran4/gocdm</remote-id>
+	</upstream>
+</pkgmetadata>
+EOF
           fi
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
@@ -113,8 +107,6 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/gocdm_Linux_x86_64.tar.gz -> \${P}-gocdm_Linux_x86_64.tar.gz  )  "
-                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/gocdm_Linux_arm64.tar.gz -> \${P}-gocdm_Linux_arm64.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -137,57 +129,15 @@ jobs:
                 echo ''
                 echo 'S="${WORKDIR}"'
                 echo ''
-                echo 'src_unpack() {'
-                echo '  if use amd64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-gocdm_Linux_x86_64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-gocdm_Linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '}'
+                echo 'src_unpack() { :; }'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
-                echo '  if use amd64; then'
-                echo '    newexe "${{ env.gocdm_binary_archived_name_amd64 }}" "${{ env.gocdm_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use arm64; then'
-                echo '    newexe "${{ env.gocdm_binary_archived_name_arm64 }}" "${{ env.gocdm_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '}'
-                echo ''
-                echo 'pkg_postinst() {'
-                echo '  einfo "To autostart gocdm when you log in your account, append this to ~/.profile:"'
-                echo '  einfo "if [ -z \"\${DISPLAY:-}\" ] && [ \"\$(tty)\" = \"/dev/tty1\" ]; then"'
-                echo '  einfo "  exec /opt/bin/gocdm"'
-                echo '  einfo "fi"'
-                echo '  einfo ""'
-                echo '  einfo "To run GoCDM directly from tty1 under systemd, override getty@tty1.service:"'
-                echo '  einfo "sudo systemctl edit getty@tty1.service"'
-                echo '  einfo "Use this override:"'
-                echo '  einfo "[Service]"'
-                echo '  einfo "ExecStart="'
-                echo '  einfo "ExecStart=-/opt/bin/gocdm -login -pam-service login"'
-                echo '  einfo "StandardInput=tty"'
-                echo '  einfo "StandardOutput=tty"'
-                echo '  einfo "TTYPath=/dev/tty1"'
-                echo '  einfo "TTYReset=yes"'
-                echo '  einfo "TTYVHangup=yes"'
-                echo '  einfo "TTYVTDisallocate=yes"'
-                echo '  einfo ""'
-                echo '  einfo "Then reload and restart:"'
-                echo '  einfo "sudo systemctl daemon-reload"'
-                echo '  einfo "sudo systemctl restart getty@tty1.service"'
-                echo '  einfo ""'
-                echo '  einfo "Note: The binary release might not have PAM support compiled in."'
-                echo '  einfo "See https://github.com/arran4/gocdm for more details."'
                 echo '}'
               } > $ebuild_file
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/gocdm_Linux_x86_64.tar.gz" "${{ env.epn }}-${version}-gocdm_Linux_x86_64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/gocdm_Linux_arm64.tar.gz" "${{ env.epn }}-${version}-gocdm_Linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
