@@ -10,6 +10,7 @@ DEPEND=""
 RDEPEND="sys-libs/glibc sys-libs/zlib "
 S="${WORKDIR}"
 RESTRICT="strip"
+QA_PREBUILT="opt/bin/ente_auth.AppImage"
 
 inherit xdg-utils
 
