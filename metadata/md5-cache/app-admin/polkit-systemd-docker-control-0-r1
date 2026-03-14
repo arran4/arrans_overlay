@@ -1,0 +1,9 @@
+DEFINED_PHASES=install postinst
+DESCRIPTION=Polkit rules for systemctl control of docker.service
+EAPI=8
+HOMEPAGE=https://github.com/arran4/arrans-overlay
+KEYWORDS=~amd64
+LICENSE=metapackage
+RDEPEND=sys-auth/polkit acct-group/systemctl-operators
+SLOT=0
+_md5_=ad75207e0e1b32d17ccf37f1f173769f
