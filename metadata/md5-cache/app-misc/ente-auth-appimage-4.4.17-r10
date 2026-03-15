@@ -10,4 +10,4 @@ RESTRICT=strip
 SLOT=0
 SRC_URI=amd64? ( https://github.com/ente-io/ente/releases/download/auth-v4.4.17/ente-auth-v4.4.17-x86_64.AppImage -> ente-auth-appimage-4.4.17-ente-auth-v4.4.17-x86_64.AppImage )
 _eclasses_=xdg-utils	42869b3c8d86a70ef3cf75165a395e09
-_md5_=9c77ada1e92796890c0ee0b0b2778b52
+_md5_=45505bf24da940785306b7feab2c4e74
