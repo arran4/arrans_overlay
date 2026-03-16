@@ -1,0 +1,9 @@
+DEFINED_PHASES=install postinst unpack
+DESCRIPTION=The Console Display Manager (Go Port)
+EAPI=8
+HOMEPAGE=https://github.com/arran4/gocdm
+KEYWORDS=~amd64 ~arm64
+LICENSE=MIT
+SLOT=0
+SRC_URI=amd64? ( https://github.com/arran4/gocdm/releases/download/v0.0.20/gocdm_Linux_x86_64.tar.gz -> gocdm-bin-0.0.20-gocdm_Linux_x86_64.tar.gz ) arm64? ( https://github.com/arran4/gocdm/releases/download/v0.0.20/gocdm_Linux_arm64.tar.gz -> gocdm-bin-0.0.20-gocdm_Linux_arm64.tar.gz )
+_md5_=124efd4a3d3c1515b4f1b2d3593851d6
