@@ -68,10 +68,12 @@ jobs:
           fi
           fi
 
-          main_js=$(curl -sL -A "Mozilla/5.0" https://antigravity.google/download/linux | grep -o 'main-[^"]*\.js' | head -n 1 | tr -d '\r')
+          curl -sL -A "Mozilla/5.0" https://antigravity.google/download/linux > index.html
+          main_js=$(grep -o 'main-[^"]*\.js' index.html | head -n 1 | tr -d '\r')
           echo "main_js: $main_js"
           if [ -z "$main_js" ]; then
-            echo "Could not find main_js"
+            echo "Could not find main_js. First 500 bytes of index.html:"
+            head -c 500 index.html
             exit 1
           fi
 
