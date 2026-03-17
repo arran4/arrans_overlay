@@ -68,21 +68,21 @@ jobs:
           fi
           fi
 
-          curl -sL --compressed -A "Mozilla/5.0" https://antigravity.google/download/linux > index.html
-          main_js=$(grep -o 'main-[^"]*\.js' index.html | head -n 1 | tr -d '\r')
+          curl -sL --compressed -A "Mozilla/5.0" https://antigravity.google/download/linux > /tmp/index.html
+          main_js=$(grep -o 'main-[^"]*\.js' /tmp/index.html | head -n 1 | tr -d '\r')
           echo "main_js: $main_js"
           if [ -z "$main_js" ]; then
             echo "Could not find main_js. First 500 bytes of index.html:"
-            head -c 500 index.html
+            head -c 500 /tmp/index.html
             exit 1
           fi
 
-          curl -sL --compressed -A "Mozilla/5.0" "https://antigravity.google/$main_js" > main.js
-          download_url=$(grep -io 'https://[a-zA-Z0-9./_-]*antigravity\.tar\.gz' main.js | head -n 1 | tr -d '\r')
+          curl -sL --compressed -A "Mozilla/5.0" "https://antigravity.google/$main_js" > /tmp/main.js
+          download_url=$(grep -io 'https://[a-zA-Z0-9./_-]*antigravity\.tar\.gz' /tmp/main.js | head -n 1 | tr -d '\r')
           echo "download_url: $download_url"
           if [ -z "$download_url" ]; then
             echo "Could not find download_url. First 500 bytes of main.js:"
-            head -c 500 main.js
+            head -c 500 /tmp/main.js
             exit 1
           fi
 
@@ -132,6 +132,7 @@ jobs:
             } > "$ebuild_file"
 
             g2 manifest upsert-from-url "$download_url" "${{ env.epn }}-${gentoo_version}.tar.gz" "${ebuild_dir}/Manifest"
+            rm -f "${{ env.epn }}-${gentoo_version}.tar.gz"
             echo "generated_version=${gentoo_version}" >> $GITHUB_OUTPUT
           fi
 
@@ -143,6 +144,6 @@ jobs:
           commit-message: "Add ebuilds for new ${{ env.epn }} release ${{ steps.process_releases.outputs.generated_version }}"
           title: "Update ${{ env.epn }} to ${{ steps.process_releases.outputs.generated_version }}"
           body: "Automated update for ${{ env.epn }} to version ${{ steps.process_releases.outputs.generated_version }}."
-          branch: "update-${{ env.epn }}-${{ steps.process_releases.outputs.generated_version }}"
+          branch: "update-${{ env.epn }}-${{ steps.process_releases.outputs.generated_version }}-1"
           base: main
           signoff: false
