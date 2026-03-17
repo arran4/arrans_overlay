@@ -50,6 +50,7 @@ jobs:
       - name: Process release
         id: process_releases
         run: |
+          set -e
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
@@ -68,25 +69,25 @@ jobs:
           fi
           fi
 
-          main_js=$(curl -sL https://antigravity.google/download/linux | grep -o 'main-[^"]*\.js')
+          main_js=$(curl -sL https://antigravity.google/download/linux | grep -o 'main-[^"]*\.js' || true)
+          echo "main_js: $main_js"
           if [ -z "$main_js" ]; then
             echo "Could not find main_js"
-            (exit 1)
-            return 1 2>/dev/null || false
+            exit 1
           fi
 
-          download_url=$(curl -sL --compressed "https://antigravity.google/$main_js" | grep -o 'https://[^"]*Antigravity.tar.gz' | head -n 1)
+          download_url=$(curl -sL --compressed "https://antigravity.google/$main_js" | grep -o 'https://[^"]*Antigravity.tar.gz' | head -n 1 || true)
+          echo "download_url: $download_url"
           if [ -z "$download_url" ]; then
             echo "Could not find download_url"
-            (exit 1)
-            return 1 2>/dev/null || false
+            exit 1
           fi
 
-          version=$(echo "$download_url" | awk -F'/' '{for(i=1;i<=NF;i++) if($i=="stable") print $(i+1)}')
+          version=$(echo "$download_url" | awk -F'/' '{for(i=1;i<=NF;i++) if($i=="stable") print $(i+1)}' || true)
+          echo "version: $version"
           if [ -z "$version" ]; then
             echo "Could not find version"
-            (exit 1)
-            return 1 2>/dev/null || false
+            exit 1
           fi
 
           gentoo_version=$(echo "$version" | sed 's/-/_p/g')
