@@ -1,0 +1,144 @@
+name: Check and Update Antigravity Bin
+
+permissions:
+  contents: write
+  pull-requests: write
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-misc-antigravity-bin-update.yaml'
+
+env:
+  ecn: app-misc
+  epn: antigravity-bin
+  description: "Antigravity binary"
+  homepage: "https://antigravity.google/"
+  workflow_filename: app-misc-antigravity-bin-update.yaml
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y wget jq coreutils curl
+            if command -v go &> /dev/null
+            then
+                go install github.com/arran4/g2/cmd/g2@latest
+                sudo cp ~/go/bin/g2 /usr/local/bin/g2
+            else
+                url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+                echo "$url"
+                wget "${url}" -O /tmp/g2.deb
+                sudo dpkg -i /tmp/g2.deb
+                rm /tmp/g2.deb
+            fi
+
+      - name: Process release
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p "$ebuild_dir"
+          metadata_file="${ebuild_dir}/metadata.xml"
+          if [ ! -f "$metadata_file" ]; then
+          if [ ! -f "$metadata_file" ]; then
+            {
+              echo '<?xml version="1.0" encoding="UTF-8"?>'
+              echo '<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">'
+              echo '<pkgmetadata>'
+              echo '  <maintainer type="person">'
+              echo '    <email>arran@arran4.com</email>'
+              echo '    <name>Arran Ubels</name>'
+              echo '  </maintainer>'
+              echo '</pkgmetadata>'
+            } > "$metadata_file"
+          fi
+          fi
+
+          main_js=$(curl -sL https://antigravity.google/download/linux | grep -o 'main-[^"]*\.js')
+          if [ -z "$main_js" ]; then
+            echo "Could not find main_js"
+            (exit 1)
+            return 1 2>/dev/null || false
+          fi
+
+          download_url=$(curl -sL --compressed "https://antigravity.google/$main_js" | grep -o 'https://[^"]*Antigravity.tar.gz' | head -n 1)
+          if [ -z "$download_url" ]; then
+            echo "Could not find download_url"
+            (exit 1)
+            return 1 2>/dev/null || false
+          fi
+
+          version=$(echo "$download_url" | awk -F'/' '{for(i=1;i<=NF;i++) if($i=="stable") print $(i+1)}')
+          if [ -z "$version" ]; then
+            echo "Could not find version"
+            (exit 1)
+            return 1 2>/dev/null || false
+          fi
+
+          gentoo_version=$(echo "$version" | sed 's/-/_p/g')
+
+          ebuild_file="${ebuild_dir}/${{ env.epn }}-${gentoo_version}.ebuild"
+          needs_update=false
+
+          if [ ! -f "$ebuild_file" ]; then
+              needs_update=true
+          fi
+
+          if [ "$needs_update" = true ]; then
+            # shellcheck disable=SC2016
+            {
+              echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
+              echo 'EAPI=8'
+              echo "DESCRIPTION=\"${{ env.description }}\""
+              echo "HOMEPAGE=\"${{ env.homepage }}\""
+              echo 'LICENSE="unknown"'
+              echo 'SLOT="0"'
+              echo 'KEYWORDS="~amd64"'
+              echo 'IUSE=""'
+              echo 'DEPEND=""'
+              echo 'RDEPEND="sys-libs/glibc"'
+              echo 'RESTRICT="strip"'
+              echo 'QA_PREBUILT="opt/antigravity/antigravity opt/antigravity/chrome-sandbox"'
+              echo ''
+              echo 'SRC_URI="amd64? ( '"${download_url}"' -> \${P}.tar.gz )"'
+              echo ''
+              echo 'S="${WORKDIR}/Antigravity-linux-x64"'
+              echo ''
+              echo 'src_install() {'
+              echo '  insinto /opt/antigravity'
+              echo '  doins -r *'
+              echo '  fperms +x /opt/antigravity/antigravity'
+              echo '  fperms 4755 /opt/antigravity/chrome-sandbox'
+              echo '  dosym ../antigravity/antigravity /opt/bin/antigravity'
+              echo '}'
+            } > "$ebuild_file"
+
+            g2 manifest upsert-from-url "$download_url" "${{ env.epn }}-${gentoo_version}.tar.gz" "${ebuild_dir}/Manifest"
+            echo "generated_version=${gentoo_version}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        if: steps.process_releases.outputs.generated_version
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Add ebuilds for new ${{ env.epn }} release ${{ steps.process_releases.outputs.generated_version }}"
+          title: "Update ${{ env.epn }} to ${{ steps.process_releases.outputs.generated_version }}"
+          body: "Automated update for ${{ env.epn }} to version ${{ steps.process_releases.outputs.generated_version }}."
+          branch: "update-${{ env.epn }}-${{ steps.process_releases.outputs.generated_version }}"
+          base: main
+          signoff: false
