@@ -68,7 +68,7 @@ jobs:
           fi
           fi
 
-          curl -sL -A "Mozilla/5.0" https://antigravity.google/download/linux > index.html
+          curl -sL --compressed -A "Mozilla/5.0" https://antigravity.google/download/linux > index.html
           main_js=$(grep -o 'main-[^"]*\.js' index.html | head -n 1 | tr -d '\r')
           echo "main_js: $main_js"
           if [ -z "$main_js" ]; then
