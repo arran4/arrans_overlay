@@ -69,6 +69,7 @@ jobs:
           fi
 
           main_js=$(curl -sL https://antigravity.google/download/linux | grep -o 'main-[^"]*\.js')
+          echo "main_js: $main_js"
           if [ -z "$main_js" ]; then
             echo "Could not find main_js"
             (exit 1)
@@ -76,6 +77,7 @@ jobs:
           fi
 
           download_url=$(curl -sL --compressed "https://antigravity.google/$main_js" | grep -o 'https://[^"]*Antigravity.tar.gz' | head -n 1)
+          echo "download_url: $download_url"
           if [ -z "$download_url" ]; then
             echo "Could not find download_url"
             (exit 1)
@@ -83,6 +85,7 @@ jobs:
           fi
 
           version=$(echo "$download_url" | awk -F'/' '{for(i=1;i<=NF;i++) if($i=="stable") print $(i+1)}')
+          echo "version: $version"
           if [ -z "$version" ]; then
             echo "Could not find version"
             (exit 1)
