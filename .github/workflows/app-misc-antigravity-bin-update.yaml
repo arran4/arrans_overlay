@@ -60,7 +60,7 @@ jobs:
               echo '<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">'
               echo '<pkgmetadata>'
               echo '  <maintainer type="person">'
-              echo '    <email>arran@arran4.com</email>'
+              echo '    <email>gentoo@arran4.com</email>'
               echo '    <name>Arran Ubels</name>'
               echo '  </maintainer>'
               echo '</pkgmetadata>'
