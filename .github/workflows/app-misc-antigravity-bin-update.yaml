@@ -54,16 +54,18 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<-"EOF_METADATA" > "$metadata_file"
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-          <pkgmetadata>
-            <maintainer type="person">
-              <email>arran@arran4.com</email>
-              <name>Arran Ubels</name>
-            </maintainer>
-          </pkgmetadata>
-EOF_METADATA
+          if [ ! -f "$metadata_file" ]; then
+            {
+              echo '<?xml version="1.0" encoding="UTF-8"?>'
+              echo '<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">'
+              echo '<pkgmetadata>'
+              echo '  <maintainer type="person">'
+              echo '    <email>arran@arran4.com</email>'
+              echo '    <name>Arran Ubels</name>'
+              echo '  </maintainer>'
+              echo '</pkgmetadata>'
+            } > "$metadata_file"
+          fi
           fi
 
           main_js=$(curl -sL https://antigravity.google/download/linux | grep -o 'main-[^"]*\.js')
