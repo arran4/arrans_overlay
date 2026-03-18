@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release /app/current.config 2026-03-17 23:51:14.800034978 +0000 UTC m=+0.006170208
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release /app/current.config 2026-03-18 04:28:54.222620492 +0000 UTC m=+0.005424044
 
 name: app-misc/voxtype-bin update
 
@@ -111,7 +111,7 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/voxtype-\${PV}-linux-x86_64-avx2 -> \${P}-voxtype-\${PV}-linux-x86_64-avx2  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/voxtype-\${PV}-linux-x86_64-avx2 -> \${P}-voxtype-\${PV}-linux-x86_64-avx2  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
