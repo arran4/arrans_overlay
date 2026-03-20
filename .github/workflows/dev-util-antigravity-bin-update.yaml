@@ -10,14 +10,14 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/app-misc-antigravity-bin-update.yaml'
+      - '.github/workflows/dev-util-antigravity-bin-update.yaml'
 
 env:
-  ecn: app-misc
+  ecn: dev-util
   epn: antigravity-bin
-  description: "Antigravity binary"
+  description: "Google Antigravity AI-driven IDE (binary release)"
   homepage: "https://antigravity.google/"
-  workflow_filename: app-misc-antigravity-bin-update.yaml
+  workflow_filename: dev-util-antigravity-bin-update.yaml
 
 jobs:
   check-and-create-ebuild:
