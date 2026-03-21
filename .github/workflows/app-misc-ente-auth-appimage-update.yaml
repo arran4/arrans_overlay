@@ -149,7 +149,7 @@ jobs:
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo 'IUSE=""'
-                echo 'BDEPEND="sys-fs/squashfs-tools"'
+                echo 'BDEPEND="sys-fs/squashfs-tools[zstd]"'
                 echo 'DEPEND=""'
                 echo 'RDEPEND="sys-libs/glibc sys-libs/zlib"'
                 echo 'S="${WORKDIR}"'
