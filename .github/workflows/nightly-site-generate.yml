@@ -23,7 +23,7 @@ jobs:
           go-version: '1.22'
 
       - name: Install g2
-        run: go install github.com/arran4/g2/cmd/g2@v0.0.14
+        run: go install github.com/arran4/g2/cmd/g2@latest
 
       - name: Generate site
         run: ~/go/bin/g2 overlay site generate -out site_out
