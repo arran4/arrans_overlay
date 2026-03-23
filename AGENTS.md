@@ -30,7 +30,7 @@ There are two primary methods for updates:
 ### Manual Updates
 *   For packages **not** in `current.config` (e.g., complex source builds, `-9999` live ebuilds, or packages requiring manual patches), you must edit the ebuild manually.
 *   After editing, always run `g2 manifest upsert-from-url <url> <filename> <path_to_manifest>` to update the Manifest.
-*   **Important:** When modifying an existing ebuild (e.g., to fix a bug or add a patch) without bumping the upstream version, you **must** bump the Gentoo revision number (e.g., rename `app-1.0.ebuild` to `app-1.0-r1.ebuild`, or `-r1` to `-r2`). This ensures users receive the updated ebuild instructions during system updates.
+*   **Important:** When modifying or updating an existing ebuild (e.g., to fix a bug, add a patch, or any other change) without bumping the upstream version, you **must** bump the Gentoo revision number (e.g., rename `app-1.0.ebuild` to `app-1.0-r1.ebuild`, or `-r1` to `-r2`). This ensures users receive the updated ebuild instructions during system updates.
 
 ## 3. Versioning Policy
 
