@@ -6,7 +6,7 @@ SRC_URI="
   amd64? (  https://github.com/arran4/go-playerctl/releases/download/v${PV}/go-playerctl_${PV}_linux_amd64.tar.gz -> ${P}-go-playerctl_${PV}_linux_amd64.tar.gz  )  
   arm64? (  https://github.com/arran4/go-playerctl/releases/download/v${PV}/go-playerctl_${PV}_linux_arm64.tar.gz -> ${P}-go-playerctl_${PV}_linux_arm64.tar.gz  )  
 "
-LICENSE="MIT"
+LICENSE="LGPL-3"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 IUSE=" doc"
