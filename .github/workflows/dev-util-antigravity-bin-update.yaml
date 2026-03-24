@@ -118,7 +118,7 @@ jobs:
               echo 'RESTRICT="strip"'
               echo 'QA_PREBUILT="opt/antigravity/antigravity opt/antigravity/chrome-sandbox"'
               echo ''
-              echo 'SRC_URI="amd64? ( '"${download_url}"' -> \${P}.tar.gz )"'
+              echo 'SRC_URI="amd64? ( '"${download_url}"' -> ${P}.tar.gz )"'
               echo ''
               echo 'S="${WORKDIR}/Antigravity-linux-x64"'
               echo ''
