@@ -1,0 +1,20 @@
+#!/bin/bash
+# portage-sync-notifier
+# Notify active users when emerge --sync finishes
+
+TITLE="Portage Sync Complete"
+MESSAGE="The Portage tree has been successfully synchronized."
+
+for bus in /run/user/*/bus; do
+    if [ -S "$bus" ]; then
+        user_id=$(basename $(dirname "$bus"))
+        user_name=$(id -nu "$user_id")
+
+        # Determine if notify-send or kdialog is available
+        if su - "$user_name" -c "which notify-send > /dev/null 2>&1"; then
+            su - "$user_name" -c "DBUS_SESSION_BUS_ADDRESS=unix:path=$bus notify-send '$TITLE' '$MESSAGE' -i system-software-update"
+        elif su - "$user_name" -c "which kdialog > /dev/null 2>&1"; then
+            su - "$user_name" -c "DBUS_SESSION_BUS_ADDRESS=unix:path=$bus kdialog --title '$TITLE' --passivepopup '$MESSAGE' 5"
+        fi
+    fi
+done
