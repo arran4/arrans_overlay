@@ -5,16 +5,26 @@
 TITLE="Portage Sync Complete"
 MESSAGE="The Portage tree has been successfully synchronized."
 
-for bus in /run/user/*/bus; do
-    if [ -S "$bus" ]; then
-        user_id=$(basename $(dirname "$bus"))
-        user_name=$(id -nu "$user_id")
+# Pre-determine available tools system-wide instead of per-user
+NOTIFY_CMD=""
+if command -v notify-send > /dev/null 2>&1; then
+    NOTIFY_CMD="notify-send '$TITLE' '$MESSAGE' -i system-software-update"
+elif command -v kdialog > /dev/null 2>&1; then
+    NOTIFY_CMD="kdialog --title '$TITLE' --passivepopup '$MESSAGE' 5"
+fi
 
-        # Determine if notify-send or kdialog is available
-        if su - "$user_name" -c "which notify-send > /dev/null 2>&1"; then
-            su - "$user_name" -c "DBUS_SESSION_BUS_ADDRESS=unix:path=$bus notify-send '$TITLE' '$MESSAGE' -i system-software-update"
-        elif su - "$user_name" -c "which kdialog > /dev/null 2>&1"; then
-            su - "$user_name" -c "DBUS_SESSION_BUS_ADDRESS=unix:path=$bus kdialog --title '$TITLE' --passivepopup '$MESSAGE' 5"
+if [ -n "$NOTIFY_CMD" ]; then
+    for bus in /run/user/*/bus; do
+        if [ -S "$bus" ]; then
+            user_id=$(basename $(dirname "$bus"))
+            user_name=$(id -nu "$user_id")
+
+            # Avoid su. Since portage hooks run as root, we can use sudo to impersonate the user cleanly.
+            if command -v sudo > /dev/null 2>&1; then
+                sudo -u "$user_name" DBUS_SESSION_BUS_ADDRESS="unix:path=$bus" bash -c "$NOTIFY_CMD"
+            elif command -v runuser > /dev/null 2>&1; then
+                runuser -u "$user_name" -- bash -c "DBUS_SESSION_BUS_ADDRESS=unix:path=$bus $NOTIFY_CMD"
+            fi
         fi
-    fi
-done
+    done
+fi
