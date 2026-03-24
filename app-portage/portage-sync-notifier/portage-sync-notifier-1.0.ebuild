@@ -12,6 +12,7 @@ RDEPEND="
 		x11-libs/libnotify
 		kde-apps/kdialog
 	)
+	sys-apps/coreutils
 "
 
 S="${WORKDIR}"
