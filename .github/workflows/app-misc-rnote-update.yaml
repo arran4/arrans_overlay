@@ -22,7 +22,7 @@ jobs:
             echo "Could not fetch latest release tag"
             false
           fi
-          current_version=$(ls app-misc/rnote/rnote-*.ebuild 2>/dev/null | sed -E 's/.*rnote-(.+)\.ebuild/\1/' | head -n 1)
+          current_version=$(find app-misc/rnote -name "rnote-*.ebuild" 2>/dev/null | sed -E 's/.*rnote-(.+)\.ebuild/\1/' | head -n 1)
           echo "Latest tag: $latest_tag"
           echo "Current version: $current_version"
           if [ "$latest_tag" != "$current_version" ]; then
