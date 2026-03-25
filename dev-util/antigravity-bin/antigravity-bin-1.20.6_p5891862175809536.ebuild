@@ -1,5 +1,6 @@
 # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/dev-util-antigravity-bin-update.yaml
 EAPI=8
+inherit desktop
 DESCRIPTION="Google Antigravity AI-driven IDE (binary release)"
 HOMEPAGE="https://antigravity.google/"
 LICENSE="unknown"
@@ -21,4 +22,5 @@ src_install() {
   fperms +x /opt/antigravity/antigravity
   fperms 4755 /opt/antigravity/chrome-sandbox
   dosym ../antigravity/antigravity /opt/bin/antigravity
+  domenu "${FILESDIR}/antigravity-bin.desktop"
 }

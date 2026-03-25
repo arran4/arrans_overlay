@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Antigravity
 Comment=Google Antigravity IDE
-Exec=/usr/bin/antigravity %F
+Exec=/opt/bin/antigravity %F
 Icon=antigravity
 Terminal=false
 Type=Application
