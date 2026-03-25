@@ -45,8 +45,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Fix g2-action permissions
+        run: chmod +x /home/runner/work/_actions/arran4/g2-action/v1.1/setup.sh || true
+
       - name: Install g2
-        uses: arran4/setup-g2@v1
+        uses: arran4/g2-action@v1.1
 
       - name: Set up Git
         run: |
