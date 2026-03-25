@@ -27,14 +27,12 @@ jobs:
       - name: Install g2
         run: |
           mkdir -p /tmp/g2-bin
-          url="$(curl -s https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[] | select(.name | endswith("linux_amd64.tar.gz")) | .browser_download_url')"
+          url="$(curl -s https://api.github.com/repos/arran4/g2/releases/tags/v0.0.16 | jq -r '.assets[] | select(.name | endswith("linux_amd64.tar.gz")) | .browser_download_url')"
           curl -sL "${url}" | tar -xz -C /tmp/g2-bin
 
       - name: Generate site
         run: |
           /tmp/g2-bin/g2 overlay site generate -out site_out
-          shopt -s globstar
-          sed -i "s|</footer>|<br>Generated on $(date -u +'%Y-%m-%d %H:%M:%S UTC')</footer>|g" site_out/**/*.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
