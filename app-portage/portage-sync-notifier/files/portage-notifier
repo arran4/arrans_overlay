@@ -1,0 +1,73 @@
+#!/bin/bash
+# portage-notifier
+# Notify active users about Portage events
+
+HOOK_DIR=$(basename "$(dirname "$0")")
+
+TITLE="Portage Event"
+MESSAGE="An unknown portage event occurred."
+
+case "$HOOK_DIR" in
+    postsync.d|portage-sync-notifier|portage-notifier|bin)
+        TITLE="Portage Sync Complete"
+        MESSAGE="The Portage tree has been successfully synchronized."
+        ;;
+    ebuild.postmerge.d)
+        TITLE="Portage Merge Complete"
+        MESSAGE="Successfully merged $1"
+        ;;
+    ebuild.postfail.d)
+        TITLE="Portage Merge Failed"
+        MESSAGE="Failed to merge $1"
+        ;;
+    ask.d)
+        TITLE="Portage Requires Input"
+        # $1 is a temp file containing the packages
+        if [ -r "$1" ]; then
+            PKGS=$(awk '{print $1}' "$1" | paste -sd, -)
+            MESSAGE="Emerge is asking for confirmation to merge: $PKGS"
+        else
+            MESSAGE="Emerge is asking for confirmation."
+        fi
+        ;;
+    postdepclean.d)
+        TITLE="Portage Depclean Complete"
+        MESSAGE="The depclean operation has finished."
+        ;;
+    postemerge.d)
+        TITLE="Portage Emerge Complete"
+        ACTION="${1:-merge}"
+        RETVAL="${2:-0}"
+        if [ "$RETVAL" = "0" ]; then
+            MESSAGE="Emerge ($ACTION) completed successfully."
+        else
+            MESSAGE="Emerge ($ACTION) failed with return value $RETVAL."
+        fi
+        ;;
+    *)
+        TITLE="Portage: $HOOK_DIR"
+        MESSAGE="Event triggered: $1 $2 $3"
+        ;;
+esac
+
+# Pre-determine available tools system-wide instead of per-user
+NOTIFY_CMD=""
+if command -v notify-send > /dev/null 2>&1; then
+    NOTIFY_CMD="notify-send '$TITLE' '$MESSAGE' -i system-software-update"
+elif command -v kdialog > /dev/null 2>&1; then
+    NOTIFY_CMD="kdialog --title '$TITLE' --passivepopup '$MESSAGE' 5"
+fi
+
+if [ -n "$NOTIFY_CMD" ]; then
+    for bus in /run/user/*/bus; do
+        if [ -S "$bus" ]; then
+            user_id=$(basename $(dirname "$bus"))
+            user_name=$(id -nu "$user_id")
+
+            # Use runuser as it is the preferred tool for root to run commands as another user without PAM/sudo overhead.
+            if command -v runuser > /dev/null 2>&1; then
+                runuser -u "$user_name" -- bash -c "DBUS_SESSION_BUS_ADDRESS=unix:path=$bus $NOTIFY_CMD"
+            fi
+        fi
+    done
+fi
