@@ -38,6 +38,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install g2
+        uses: arran4/setup-g2@v1
+
       - name: Set up Git
         run: |
           git config --global user.name 'github-actions[bot]'
@@ -47,12 +50,6 @@ jobs:
         run: |
             sudo apt-get update
             sudo apt-get install -y wget jq coreutils
-            url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-            echo "$url"
-            wget "${url}" -O /tmp/g2.deb
-            sudo dpkg -i /tmp/g2.deb
-            rm /tmp/g2.deb
-
       - name: Process each release
         id: process_releases
         run: |
