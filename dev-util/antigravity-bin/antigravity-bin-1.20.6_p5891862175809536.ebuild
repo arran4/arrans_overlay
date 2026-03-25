@@ -13,7 +13,7 @@ QA_PREBUILT="opt/antigravity/antigravity opt/antigravity/chrome-sandbox"
 
 SRC_URI="amd64? ( https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/1.20.6-5891862175809536/linux-x64/Antigravity.tar.gz -> ${P}.tar.gz )"
 
-S="${WORKDIR}/Antigravity-linux-x64"
+S="${WORKDIR}/Antigravity"
 
 src_install() {
   insinto /opt/antigravity
