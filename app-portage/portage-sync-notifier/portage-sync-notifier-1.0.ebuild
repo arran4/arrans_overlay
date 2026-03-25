@@ -27,9 +27,3 @@ src_install() {
 	dosym ../../../usr/bin/portage-notifier /etc/portage/postdepclean.d/portage-notifier
 	dosym ../../../usr/bin/portage-notifier /etc/portage/postemerge.d/portage-notifier
 }
-
-pkg_postinst() {
-	elog "For events other than sync to be notified, this package requires"
-	elog "the arran4 fork of portage with PR #2 merged:"
-	elog "https://github.com/arran4/fork-portage/pull/2"
-}
