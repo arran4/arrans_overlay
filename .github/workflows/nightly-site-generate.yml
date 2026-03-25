@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install g2
-        uses: arran4/setup-g2@v1
+        uses: arran4/g2-action@v1.1
 
       - name: Generate site
         run: |
