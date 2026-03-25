@@ -120,7 +120,7 @@ jobs:
               echo ''
               echo 'SRC_URI="amd64? ( '"${download_url}"' -> ${P}.tar.gz )"'
               echo ''
-              echo 'S="${WORKDIR}/Antigravity-linux-x64"'
+              echo 'S="${WORKDIR}/Antigravity"'
               echo ''
               echo 'src_install() {'
               echo '  insinto /opt/antigravity'
