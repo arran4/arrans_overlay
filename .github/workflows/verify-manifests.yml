@@ -18,13 +18,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install g2
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget jq coreutils
-          url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-          wget "${url}" -O /tmp/g2.deb
-          sudo dpkg -i /tmp/g2.deb
-          rm /tmp/g2.deb
+        uses: arran4/setup-g2@v1
 
       - name: Identify changed Manifests
         id: changed-files
