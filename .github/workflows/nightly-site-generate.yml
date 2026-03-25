@@ -33,7 +33,8 @@ jobs:
       - name: Generate site
         run: |
           /tmp/g2-bin/g2 overlay site generate -out site_out
-          find site_out -type f -name "*.html" -exec sed -i "s|</footer>|<br>Generated on $(date -u +'%Y-%m-%d %H:%M:%S UTC')</footer>|g" {} +
+          shopt -s globstar
+          sed -i "s|</footer>|<br>Generated on $(date -u +'%Y-%m-%d %H:%M:%S UTC')</footer>|g" site_out/**/*.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
