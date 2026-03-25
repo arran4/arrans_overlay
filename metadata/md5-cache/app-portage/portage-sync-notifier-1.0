@@ -1,0 +1,9 @@
+DEFINED_PHASES=install
+DESCRIPTION=A DBus notification agent for Portage sync completion
+EAPI=8
+HOMEPAGE=https://github.com/arran4/arrans_overlay
+KEYWORDS=~amd64
+LICENSE=MIT
+RDEPEND=|| ( x11-libs/libnotify kde-apps/kdialog ) sys-apps/coreutils
+SLOT=0
+_md5_=d50267e7f8d5b6ca8615f1caf6770754
