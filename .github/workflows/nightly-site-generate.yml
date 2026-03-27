@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '0 4 * * *'
   workflow_dispatch:
+    inputs:
+      g2_version:
+        description: 'Version of g2 to use'
+        required: false
+        default: 'latest'
+        type: string
   push:
     paths:
       - '.github/workflows/nightly-site-generate.yml'
@@ -26,6 +32,8 @@ jobs:
 
       - name: Install g2
         uses: arran4/g2-action@v1.2
+        with:
+          version: ${{ inputs.g2_version || 'latest' }}
 
       - name: Generate site
         run: |
