@@ -1,0 +1,77 @@
+--- src/restore.c	2020-05-18 20:31:07.000000000 +0200
++++ src/restore.c	2024-03-28 08:00:00.000000000 +0200
+@@ -1420,7 +1420,7 @@
+				goto leave;
+			}
+
+-			if (zip_replace(za, zindex, zs) == -1) {
++			if (zip_file_replace(za, zindex, zs, 0) == -1) {
+				error("ERROR: could not update signed '%s' in archive\n", signfn);
+				goto leave;
+			}
+@@ -1438,7 +1438,7 @@
+		free(iter);
+
+		// remove everything but required files
+-		int i, j, keep, numf = zip_get_num_files(za);
++		int i, j, keep, numf = zip_get_num_entries(za, 0);
+		int *skip = malloc(sizeof(int) * numf);
+		for (i = 0; i < numf; i++) {
+			skip[i] = 0;
+@@ -1539,7 +1539,7 @@
+				goto leave;
+			}
+
+-			if (zip_replace(za, zindex, zs) == -1) {
++			if (zip_file_replace(za, zindex, zs, 0) == -1) {
+				error("ERROR: could not update archive with ticketed ebl.fls\n");
+				goto leave;
+			}
+@@ -1560,7 +1560,7 @@
+				goto leave;
+			}
+			blob = NULL;
+
+-			if (zip_add(za, "bbticket.der", zs) == -1) {
++			if (zip_file_add(za, "bbticket.der", zs, ZIP_FL_OVERWRITE) == -1) {
+				error("ERROR: could not add bbticket.der to archive\n");
+				goto leave;
+			}
+--- src/ipsw.c	2020-05-18 20:31:07.000000000 +0200
++++ src/ipsw.c	2024-03-28 08:00:00.000000000 +0200
+@@ -34,6 +34,7 @@
+ #include <zip.h>
+ #ifdef HAVE_OPENSSL
+ #include <openssl/sha.h>
++#include <openssl/evp.h>
+ #else
+ #include "sha1.h"
+ #define SHA_CTX SHA1_CTX
+@@ -692,13 +693,23 @@
+	unsigned char tsha1[20];
+	char buf[8192];
+	if (!f) return 0;
++#ifdef HAVE_OPENSSL
++	EVP_MD_CTX *sha1ctx = EVP_MD_CTX_new();
++	EVP_DigestInit_ex(sha1ctx, EVP_sha1(), NULL);
++#else
+	SHA_CTX sha1ctx;
+	SHA1_Init(&sha1ctx);
++#endif
+	rewind(f);
+	while (!feof(f)) {
+		size_t sz = fread(buf, 1, 8192, f);
++#ifdef HAVE_OPENSSL
++		EVP_DigestUpdate(sha1ctx, (const void*)buf, sz);
++#else
+		SHA1_Update(&sha1ctx, (const void*)buf, sz);
++#endif
+	}
++#ifdef HAVE_OPENSSL
++	EVP_DigestFinal_ex(sha1ctx, tsha1, NULL);
++	EVP_MD_CTX_free(sha1ctx);
++#else
+	SHA1_Final(tsha1, &sha1ctx);
++#endif
+	return (memcmp(expected_sha1, tsha1, 20) == 0) ? 1 : 0;
+ }
