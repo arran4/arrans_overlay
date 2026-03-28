@@ -1,0 +1,11 @@
+LICENSE=MIT
+EAPI=8
+SRC_URI=
+  amd64? (  https://github.com/wader/fq/releases/download/v0.17.0/fq_0.17.0_linux_amd64.tar.gz -> fq-bin-0.17.0-fq_0.17.0_linux_amd64.tar.gz  )
+  arm64? (  https://github.com/wader/fq/releases/download/v0.17.0/fq_0.17.0_linux_arm64.tar.gz -> fq-bin-0.17.0-fq_0.17.0_linux_arm64.tar.gz  )
+
+SLOT=0
+KEYWORDS=~amd64 ~arm64
+DESCRIPTION=jq for binary formats - tool, language and decoders for working with binary and text formats
+HOMEPAGE=https://github.com/wader/fq
+_md5_=14342fbb2067d4e93e0330305cc5875a

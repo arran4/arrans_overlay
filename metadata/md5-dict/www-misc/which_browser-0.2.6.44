@@ -1,0 +1,11 @@
+INHERITED=unpacker
+SLOT=0
+LICENSE=All-rights-reserved
+DESCRIPTION=Which Browser? A browser selecting tool with rules to automate.
+EAPI=8
+HOMEPAGE=https://which-browser-site.pages.dev
+RDEPEND=|| ( dev-libs/libayatana-appindicator )
+KEYWORDS=~amd64
+SRC_URI=https://which-browser-site.pages.dev/downloads/v${PV%.*}/${MY_DEB_ARCHIVE}
+RESTRICT=mirror
+_md5_=941287f9da175a5954238e4e038e1933

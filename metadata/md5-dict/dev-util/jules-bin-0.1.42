@@ -1,0 +1,12 @@
+DESCRIPTION=Jules, the asynchronous coding agent from Google, in the terminal.
+SRC_URI=
+	amd64? ( https://storage.googleapis.com/jules-cli/v0.1.42/jules_external_v0.1.42_linux_amd64.tar.gz -> jules-bin-0.1.42-amd64.tar.gz )
+	arm64? ( https://storage.googleapis.com/jules-cli/v0.1.42/jules_external_v0.1.42_linux_arm64.tar.gz -> jules-bin-0.1.42-arm64.tar.gz )
+
+LICENSE=unknown
+KEYWORDS=~amd64 ~arm64
+RDEPEND=sys-libs/glibc
+HOMEPAGE=https://jules.google
+SLOT=0
+EAPI=8
+_md5_=ee9428aa49898dd18cbfc457f9a1cf51

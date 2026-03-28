@@ -1,0 +1,23 @@
+SRC_URI=
+  arm64? ( https://github.com/probonopd/go-appimage/releases/download/continuous/appimaged-940-aarch64.AppImage -> go-appimage-appimage-0.0.940.appimaged.arm64 )
+  arm? ( https://github.com/probonopd/go-appimage/releases/download/continuous/appimaged-940-armhf.AppImage -> go-appimage-appimage-0.0.940.appimaged.arm )
+  x86? ( https://github.com/probonopd/go-appimage/releases/download/continuous/appimaged-940-i686.AppImage -> go-appimage-appimage-0.0.940.appimaged.x86 )
+  amd64? ( https://github.com/probonopd/go-appimage/releases/download/continuous/appimaged-940-x86_64.AppImage  -> go-appimage-appimage-0.0.940.appimaged.amd64 )
+  arm64? ( https://github.com/probonopd/go-appimage/releases/download/continuous/appimagetool-940-aarch64.AppImage -> go-appimage-appimage-0.0.940.appimagetool.arm64 )
+  arm? ( https://github.com/probonopd/go-appimage/releases/download/continuous/appimagetool-940-armhf.AppImage -> go-appimage-appimage-0.0.940.appimagetool.arm )
+  x86? ( https://github.com/probonopd/go-appimage/releases/download/continuous/appimagetool-940-i686.AppImage -> go-appimage-appimage-0.0.940.appimagetool.x86 )
+  amd64? ( https://github.com/probonopd/go-appimage/releases/download/continuous/appimagetool-940-x86_64.AppImage  -> go-appimage-appimage-0.0.940.appimagetool.amd64 )
+  arm64? ( https://github.com/probonopd/go-appimage/releases/download/continuous/mkappimage-940-aarch64.AppImage -> go-appimage-appimage-0.0.940.mkappimage.arm64 )
+  arm? ( https://github.com/probonopd/go-appimage/releases/download/continuous/mkappimage-940-armhf.AppImage -> go-appimage-appimage-0.0.940.mkappimage.arm )
+  x86? ( https://github.com/probonopd/go-appimage/releases/download/continuous/mkappimage-940-i686.AppImage -> go-appimage-appimage-0.0.940.mkappimage.x86 )
+  amd64? ( https://github.com/probonopd/go-appimage/releases/download/continuous/mkappimage-940-x86_64.AppImage  -> go-appimage-appimage-0.0.940.mkappimage.amd64 )
+
+KEYWORDS=~amd64 ~x86 ~arm ~arm64
+RESTRICT=strip
+INHERITED=xdg-utils
+EAPI=8
+LICENSE=MIT
+HOMEPAGE=https://github.com/probonopd/go-appimage
+SLOT=0
+DESCRIPTION= Go implementation of AppImage tools
+_md5_=720fcf779cd67655ebc4512460edcec2

@@ -1,0 +1,11 @@
+EAPI=8
+LICENSE=MIT
+SRC_URI=
+  amd64? (  https://github.com/arran4/mvcommon/releases/download/v1.0.8/mvcommon_1.0.8_linux_amd64.tar.gz -> mvcommon-bin-1.0.8-mvcommon_1.0.8_linux_amd64.tar.gz  )
+  arm64? (  https://github.com/arran4/mvcommon/releases/download/v1.0.8/mvcommon_1.0.8_linux_arm64.tar.gz -> mvcommon-bin-1.0.8-mvcommon_1.0.8_linux_arm64.tar.gz  )
+
+SLOT=0
+KEYWORDS=~amd64 ~arm64
+IUSE= doc
+DESCRIPTION=Tool for moving files into a folder where they have a common prefix
+_md5_=510f045683e2c0136498b962ed91cccd

@@ -1,0 +1,4 @@
+EAPI=8
+INHERITED=acct-group
+DESCRIPTION=Shared group for delegated systemctl access via Polkit rules
+_md5_=6db2f9d1528967f86151eb6a19efb592

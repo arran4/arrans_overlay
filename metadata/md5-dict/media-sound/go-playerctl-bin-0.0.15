@@ -1,0 +1,13 @@
+DESCRIPTION=mpris media player command-line controller for vlc, mpv, RhythmBox, web browsers, cmus, mpd, spotify and others
+SRC_URI=
+  amd64? (  https://github.com/arran4/go-playerctl/releases/download/v0.0.15/go-playerctl_0.0.15_linux_amd64.tar.gz -> go-playerctl-bin-0.0.15-go-playerctl_0.0.15_linux_amd64.tar.gz  )
+  arm64? (  https://github.com/arran4/go-playerctl/releases/download/v0.0.15/go-playerctl_0.0.15_linux_arm64.tar.gz -> go-playerctl-bin-0.0.15-go-playerctl_0.0.15_linux_arm64.tar.gz  )
+
+HOMEPAGE=https://github.com/arran4/go-playerctl
+KEYWORDS=~amd64 ~arm64
+IUSE= doc
+EAPI=8
+LICENSE=LGPL-3
+RDEPEND=!media-sound/go-playerctl
+SLOT=0
+_md5_=be6de73b8c41b6905df28f949b4781c5

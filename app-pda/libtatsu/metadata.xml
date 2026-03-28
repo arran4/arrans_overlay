@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>gentoo@arran4.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">libimobiledevice/libtatsu</remote-id>
+		<bugs-to>https://github.com/libimobiledevice/libtatsu/issues</bugs-to>
+	</upstream>
+	<use>
+		<flag name="static-libs">Enable static libraries</flag>
+	</use>
+</pkgmetadata>

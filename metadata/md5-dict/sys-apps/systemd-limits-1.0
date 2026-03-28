@@ -1,0 +1,7 @@
+KEYWORDS=~amd64
+EAPI=8
+HOMEPAGE=https://example.invalid
+DESCRIPTION=Sets custom systemd NOFILE limits
+LICENSE=GPL-2
+SLOT=0
+_md5_=e0718badf7f4bf301737434218bf4ffc
