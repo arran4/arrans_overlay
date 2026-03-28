@@ -11,7 +11,7 @@ SLOT="0"
 
 DEPEND="
 	>=app-pda/libimobiledevice-1.3.0:=
-	>=dev-libs/libplist-2.2.0:=
+	>=app-pda/libplist-2.2.0:=
 	>=net-misc/curl-7.20:=
 	>=dev-libs/libxml2-2.9:=
 "
