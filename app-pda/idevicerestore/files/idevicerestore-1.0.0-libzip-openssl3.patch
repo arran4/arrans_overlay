@@ -1,5 +1,5 @@
---- src/restore.c	2020-05-18 20:31:07.000000000 +0200
-+++ src/restore.c	2024-03-28 08:00:00.000000000 +0200
+--- a/src/restore.c.orig	2026-03-28 07:31:21.203998289 +0000
++++ b/src/restore.c	2026-03-28 07:31:21.219998289 +0000
 @@ -1420,7 +1420,7 @@
 				goto leave;
 			}
@@ -10,14 +10,14 @@
 				goto leave;
 			}
 @@ -1438,7 +1438,7 @@
-		free(iter);
+	free(iter);
 
-		// remove everything but required files
--		int i, j, keep, numf = zip_get_num_files(za);
-+		int i, j, keep, numf = zip_get_num_entries(za, 0);
-		int *skip = malloc(sizeof(int) * numf);
-		for (i = 0; i < numf; i++) {
-			skip[i] = 0;
+	// remove everything but required files
+-	int i, j, keep, numf = zip_get_num_files(za);
++	int i, j, keep, numf = zip_get_num_entries(za, 0);
+	for (i = 0; i < numf; i++) {
+		keep = 0;
+		// check for signed file index
 @@ -1539,7 +1539,7 @@
 				goto leave;
 			}
@@ -28,7 +28,6 @@
 				goto leave;
 			}
 @@ -1560,7 +1560,7 @@
-				goto leave;
 			}
 			blob = NULL;
 
@@ -37,8 +36,8 @@
 				error("ERROR: could not add bbticket.der to archive\n");
 				goto leave;
 			}
---- src/ipsw.c	2020-05-18 20:31:07.000000000 +0200
-+++ src/ipsw.c	2024-03-28 08:00:00.000000000 +0200
+--- a/src/ipsw.c.orig	2026-03-28 07:31:21.207998289 +0000
++++ b/src/ipsw.c	2026-03-28 07:31:21.475998286 +0000
 @@ -34,6 +34,7 @@
  #include <zip.h>
  #ifdef HAVE_OPENSSL
@@ -47,7 +46,7 @@
  #else
  #include "sha1.h"
  #define SHA_CTX SHA1_CTX
-@@ -692,13 +693,23 @@
+@@ -692,14 +693,28 @@
 	unsigned char tsha1[20];
 	char buf[8192];
 	if (!f) return 0;
