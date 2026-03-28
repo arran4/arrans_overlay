@@ -2,6 +2,7 @@
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<use>
+		<flag name="man">Install man pages</flag>
 		<flag name="bash">Install bash completion</flag>
 		<flag name="fish">Install fish completion</flag>
 		<flag name="zsh">Install zsh completion</flag>
