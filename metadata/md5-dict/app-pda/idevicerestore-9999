@@ -1,20 +1,7 @@
 HOMEPAGE=https://libimobiledevice.org/
-SLOT=0
-DEPEND=
-	>=app-pda/libimobiledevice-1.4.0:=
-	>=app-pda/libirecovery-1.3.0:=
-	>=app-pda/libtatsu-1.0.4:=
-	>=app-pda/libusbmuxd-2.0.2:=
-	>=dev-libs/libimobiledevice-glue-1.3.0:=
-	>=app-pda/libplist-2.6.0:=
-	>=dev-libs/libzip-1.0:=
-	net-misc/curl
-	sys-libs/zlib
-
 EAPI=8
 INHERITED=autotools git-r3
 LICENSE=LGPL-3
-DESCRIPTION=Restore/upgrade firmware of iOS devices
 BDEPEND=
 	virtual/pkgconfig
 
@@ -29,4 +16,17 @@ RDEPEND=
 	net-misc/curl
 	sys-libs/zlib
 
-_md5_=9122d698086bdeb9b7f15f76b780a26b
+DESCRIPTION=Restore/upgrade firmware of iOS devices
+SLOT=0
+DEPEND=
+	>=app-pda/libimobiledevice-1.4.0:=
+	>=app-pda/libirecovery-1.3.0:=
+	>=app-pda/libtatsu-1.0.4:=
+	>=app-pda/libusbmuxd-2.0.2:=
+	>=dev-libs/libimobiledevice-glue-1.3.0:=
+	>=app-pda/libplist-2.6.0:=
+	>=dev-libs/libzip-1.0:=
+	net-misc/curl
+	sys-libs/zlib
+
+_md5_=69310604a1423f0999babe48818075e2

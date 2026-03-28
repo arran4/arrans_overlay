@@ -24,6 +24,7 @@ RDEPEND="${DEPEND}"
 BDEPEND="virtual/pkgconfig"
 
 PATCHES=(
+	"${FILESDIR}/${P}-remove-irecv-init.patch"
 	"${FILESDIR}/${P}-libzip-openssl3.patch"
 )
 
