@@ -1,0 +1,14 @@
+IUSE= doc
+LICENSE=MIT
+SRC_URI=
+	amd64? (  https://github.com/Byron/dua-cli/releases/download/v2.34.0/dua-v2.34.0-x86_64-unknown-linux-musl.tar.gz -> dua-cli-bin-2.34.0-dua-v2.34.0-x86_64-unknown-linux-musl.tar.gz  )
+	arm? (  https://github.com/Byron/dua-cli/releases/download/v2.34.0/dua-v2.34.0-arm-unknown-linux-gnueabihf.tar.gz -> dua-cli-bin-2.34.0-dua-v2.34.0-arm-unknown-linux-gnueabihf.tar.gz  )
+	arm64? (  https://github.com/Byron/dua-cli/releases/download/v2.34.0/dua-v2.34.0-aarch64-unknown-linux-musl.tar.gz -> dua-cli-bin-2.34.0-dua-v2.34.0-aarch64-unknown-linux-musl.tar.gz  )
+
+SLOT=0
+RDEPEND=sys-devel/gcc
+KEYWORDS=~amd64 ~arm ~arm64
+EAPI=8
+DESCRIPTION=View disk space usage and delete unwanted data, fast.
+HOMEPAGE=https://lib.rs/crates/dua-cli
+_md5_=130b7fee0d2ecc568a69c41c884e626c

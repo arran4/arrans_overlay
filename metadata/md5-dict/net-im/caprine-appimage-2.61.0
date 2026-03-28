@@ -1,0 +1,13 @@
+RDEPEND=sys-libs/glibc sys-libs/zlib
+RESTRICT=strip
+HOMEPAGE=https://sindresorhus.com/caprine
+DESCRIPTION=Elegant Facebook Messenger desktop app
+LICENSE=MIT
+INHERITED=xdg-utils
+EAPI=8
+KEYWORDS=~amd64
+SRC_URI=
+  amd64? ( https://github.com/sindresorhus/caprine/releases/download/v2.61.0/Caprine-2.61.0.AppImage -> caprine-appimage-2.61.0-Caprine-2.61.0.AppImage )
+
+SLOT=0
+_md5_=957118a1e64ca5d7c0416e1cd8b0a1db

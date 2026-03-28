@@ -1,0 +1,10 @@
+EAPI=8
+DESCRIPTION=The font that powers Excalidraw
+LICENSE=unknown-license
+KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
+SLOT=0
+INHERITED=font
+HOMEPAGE=https://virgil.excalidraw.com/
+SRC_URI=https://github.com/excalidraw/virgil/raw/main/Virgil.woff2 -> virgil.woff2
+RESTRICT=binchecks strip
+_md5_=68f85cbbbf492ab6025e95fabb945b0f

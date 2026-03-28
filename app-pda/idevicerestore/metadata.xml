@@ -6,10 +6,7 @@
 		<name>Arran Ubels</name>
 	</maintainer>
 	<upstream>
-		<remote-id type="github">libimobiledevice/libirecovery</remote-id>
-		<bugs-to>https://github.com/libimobiledevice/libirecovery/issues</bugs-to>
+		<remote-id type="github">libimobiledevice/idevicerestore</remote-id>
+		<bugs-to>https://github.com/libimobiledevice/idevicerestore/issues</bugs-to>
 	</upstream>
-	<use>
-		<flag name="static-libs">Enable static libraries</flag>
-	</use>
 </pkgmetadata>

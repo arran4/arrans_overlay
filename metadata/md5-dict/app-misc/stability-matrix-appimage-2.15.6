@@ -1,0 +1,13 @@
+SRC_URI=
+  amd64? ( https://github.com/LykosAI/StabilityMatrix/releases/download/v2.15.6/StabilityMatrix-linux-x64.zip -> stability-matrix-appimage-2.15.6-StabilityMatrix-linux-x64.zip )
+
+HOMEPAGE=https://lykos.ai
+LICENSE=MIT
+KEYWORDS=~amd64
+DESCRIPTION=Multi-Platform Package Manager for Stable Diffusion
+SLOT=0
+INHERITED=xdg-utils
+RESTRICT=strip
+EAPI=8
+RDEPEND=sys-libs/glibc sys-libs/zlib
+_md5_=3b31d63b53cf60919274463e84da02dc

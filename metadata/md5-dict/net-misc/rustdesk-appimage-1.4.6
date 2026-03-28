@@ -1,0 +1,14 @@
+RDEPEND=sys-libs/glibc sys-libs/glibc sys-libs/zlib sys-libs/zlib
+DESCRIPTION=An open-source remote desktop application designed for self-hosting, as an alternative to TeamViewer.
+HOMEPAGE=https://rustdesk.com
+INHERITED=xdg-utils
+EAPI=8
+LICENSE=MIT
+SRC_URI=
+  arm64? ( https://github.com/rustdesk/rustdesk/releases/download/1.4.6/rustdesk-1.4.6-aarch64.AppImage -> rustdesk-appimage-1.4.6-rustdesk-1.4.6-aarch64.AppImage )
+  amd64? ( https://github.com/rustdesk/rustdesk/releases/download/1.4.6/rustdesk-1.4.6-x86_64.AppImage -> rustdesk-appimage-1.4.6-rustdesk-1.4.6-x86_64.AppImage )
+
+SLOT=0
+KEYWORDS=~amd64 ~arm64
+RESTRICT=strip
+_md5_=abcd9c7f2d26183e036b0ab86c45f5da

@@ -1,0 +1,11 @@
+DESCRIPTION=Google Antigravity AI-driven IDE (binary release)
+SLOT=0
+HOMEPAGE=https://antigravity.google/
+LICENSE=unknown
+SRC_URI=amd64? ( https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/1.21.6-5723021441368064/linux-x64/Antigravity.tar.gz -> antigravity-bin-1.21.6_p5723021441368064.tar.gz )
+RESTRICT=strip
+INHERITED=desktop
+KEYWORDS=~amd64
+RDEPEND=sys-libs/glibc
+EAPI=8
+_md5_=868ea992afd1322e6fdf3c25552718de

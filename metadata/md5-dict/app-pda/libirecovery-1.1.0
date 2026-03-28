@@ -1,0 +1,18 @@
+HOMEPAGE=https://libimobiledevice.org/
+SLOT=0/3
+LICENSE=LGPL-2.1
+KEYWORDS=~amd64
+BDEPEND=virtual/pkgconfig
+DESCRIPTION=Library and utility to talk to iBoot/iBSS via USB
+SRC_URI=https://github.com/libimobiledevice/libirecovery/releases/download/1.1.0/libirecovery-1.1.0.tar.bz2
+IUSE=static-libs
+DEPEND=
+	>=dev-libs/libimobiledevice-glue-1.0.0:=
+	virtual/libusb:1
+
+RDEPEND=
+	>=dev-libs/libimobiledevice-glue-1.0.0:=
+	virtual/libusb:1
+
+EAPI=8
+_md5_=bc033362a81848bcf7a95e70a7801468
