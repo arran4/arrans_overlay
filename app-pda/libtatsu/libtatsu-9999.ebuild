@@ -15,7 +15,7 @@ KEYWORDS=""
 IUSE="static-libs"
 
 DEPEND="
-	>=dev-libs/libplist-2.3.0:=
+	>=app-pda/libplist-2.3.0:=
 	net-misc/curl
 "
 RDEPEND="${DEPEND}"

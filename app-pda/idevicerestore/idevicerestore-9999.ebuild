@@ -19,7 +19,7 @@ DEPEND="
 	>=app-pda/libtatsu-1.0.4:=
 	>=app-pda/libusbmuxd-2.0.2:=
 	>=dev-libs/libimobiledevice-glue-1.3.0:=
-	>=dev-libs/libplist-2.6.0:=
+	>=app-pda/libplist-2.6.0:=
 	>=dev-libs/libzip-1.0:=
 	net-misc/curl
 	sys-libs/zlib

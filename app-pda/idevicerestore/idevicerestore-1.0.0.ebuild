@@ -14,7 +14,7 @@ KEYWORDS="~amd64"
 DEPEND="
 	>=app-pda/libimobiledevice-1.3.0:=
 	>=app-pda/libirecovery-1.0.0:=
-	>=dev-libs/libplist-2.2.0:=
+	>=app-pda/libplist-2.2.0:=
 	>=dev-libs/libzip-0.8:=
 	dev-libs/openssl:0=
 	net-misc/curl
