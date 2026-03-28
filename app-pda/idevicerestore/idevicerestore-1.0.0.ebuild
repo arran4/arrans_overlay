@@ -23,6 +23,10 @@ DEPEND="
 RDEPEND="${DEPEND}"
 BDEPEND="virtual/pkgconfig"
 
+PATCHES=(
+	"${FILESDIR}/${P}-libzip-openssl3.patch"
+)
+
 src_install() {
 	default
 	find "${ED}" -name '*.la' -delete || die
