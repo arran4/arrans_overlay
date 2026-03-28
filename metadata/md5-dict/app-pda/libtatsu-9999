@@ -1,5 +1,5 @@
 DEPEND=
-	>=dev-libs/libplist-2.3.0:=
+	>=app-pda/libplist-2.3.0:=
 	net-misc/curl
 
 BDEPEND=
@@ -11,7 +11,7 @@ LICENSE=LGPL-2.1
 HOMEPAGE=https://libimobiledevice.org/
 EAPI=8
 RDEPEND=
-	>=dev-libs/libplist-2.3.0:=
+	>=app-pda/libplist-2.3.0:=
 	net-misc/curl
 
 INHERITED=autotools git-r3
