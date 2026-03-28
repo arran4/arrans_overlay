@@ -1,26 +1,37 @@
-# Copyright 1999-2024 Gentoo Authors
-# Distributed under the terms of the GNU General Public License v2
-
 EAPI=8
 
+inherit autotools udev
+
 DESCRIPTION="Library and utility to talk to iBoot/iBSS via USB"
-HOMEPAGE="https://libimobiledevice.org/"
+HOMEPAGE="https://libimobiledevice.org https://github.com/libimobiledevice/libirecovery"
 SRC_URI="https://github.com/libimobiledevice/${PN}/releases/download/${PV}/${P}.tar.bz2"
 
-LICENSE="LGPL-2.1"
-SLOT="0/3"
-KEYWORDS="~amd64"
-IUSE="static-libs"
+LICENSE="LGPL-2.1+"
+SLOT="0"
+KEYWORDS="~amd64 ~arm64 ~x86"
 
 DEPEND="
-	>=dev-libs/libimobiledevice-glue-1.3.0:=
+	>=app-pda/libimobiledevice-glue-1.2.0
 	virtual/libusb:1
+	sys-libs/readline:0=
 "
 RDEPEND="${DEPEND}"
-BDEPEND="virtual/pkgconfig"
+BDEPEND="
+	virtual/pkgconfig
+"
+
+src_prepare() {
+	default
+	eautoreconf
+}
 
 src_configure() {
-	econf $(use_enable static-libs static)
+	local myeconfargs=(
+		--with-udev
+		--with-udevrulesdir="$(get_udevdir)/rules.d"
+		--disable-static
+	)
+	econf "${myeconfargs[@]}"
 }
 
 src_install() {
