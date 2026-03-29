@@ -1,0 +1,12 @@
+BDEPEND=virtual/pkgconfig
+DEFINED_PHASES=install
+DEPEND=>=app-pda/libimobiledevice-1.3.0:= >=app-pda/libirecovery-1.0.0:= >=app-pda/libplist-2.2.0:= >=dev-libs/libzip-0.8:= dev-libs/openssl:0= net-misc/curl sys-libs/zlib
+DESCRIPTION=Restore/upgrade firmware of iOS devices
+EAPI=8
+HOMEPAGE=https://libimobiledevice.org/
+KEYWORDS=~amd64
+LICENSE=LGPL-3
+RDEPEND=>=app-pda/libimobiledevice-1.3.0:= >=app-pda/libirecovery-1.0.0:= >=app-pda/libplist-2.2.0:= >=dev-libs/libzip-0.8:= dev-libs/openssl:0= net-misc/curl sys-libs/zlib
+SLOT=0
+SRC_URI=https://github.com/libimobiledevice/idevicerestore/releases/download/1.0.0/idevicerestore-1.0.0.tar.bz2
+_md5_=6971ae57883916298bc25af8828589da
