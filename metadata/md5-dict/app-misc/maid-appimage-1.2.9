@@ -1,12 +1,12 @@
+RDEPEND=sys-libs/glibc sys-libs/zlib
 DESCRIPTION=Maid is a cross-platform Flutter app for interfacing with GGUF / llama.cpp models locally, and with Ollama and OpenAI models remotely.
 RESTRICT=strip
+INHERITED=xdg-utils
+KEYWORDS=~amd64
 SRC_URI=
   amd64? ( https://github.com/Mobile-Artificial-Intelligence/maid/releases/download/1.2.9/maid.AppImage -> maid-appimage-1.2.9-maid.AppImage )
 
-SLOT=0
-KEYWORDS=~amd64
-LICENSE=MIT
-RDEPEND=sys-libs/glibc sys-libs/zlib
-INHERITED=xdg-utils
 EAPI=8
+SLOT=0
+LICENSE=MIT
 _md5_=a6fa65a0dddfac7ae24213f453494bd7

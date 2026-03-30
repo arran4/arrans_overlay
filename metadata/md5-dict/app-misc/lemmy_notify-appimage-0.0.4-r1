@@ -1,13 +1,13 @@
-RESTRICT=strip
-EAPI=8
-INHERITED=xdg-utils
-LICENSE=Unknown
 SRC_URI=
   amd64? ( https://github.com/arran4/lemmy_notify/releases/download/v0.0.4-r1/lemmy_notify-linux-x86_64.AppImage -> lemmy_notify-appimage-0.0.4-r1.amd64 )
 
-DESCRIPTION=Lemmy Notification app - for desktop atm
-SLOT=0
+LICENSE=Unknown
 KEYWORDS=~amd64
 RDEPEND=dev-libs/libindicator
+EAPI=8
 HOMEPAGE=https://github.com/arran4/lemmy_notify
+SLOT=0
+RESTRICT=strip
+DESCRIPTION=Lemmy Notification app - for desktop atm
+INHERITED=xdg-utils
 _md5_=0c3d91b4930e66702e3a3e79a290df89

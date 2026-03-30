@@ -1,18 +1,18 @@
-KEYWORDS=~amd64 ~arm64
-EAPI=8
-IUSE=+systemd -rocm
-BDEPEND=app-arch/zstd
-INHERITED=xdg-utils
-LICENSE=MIT
-DEPEND=acct-user/ollama acct-group/ollama
-RESTRICT=strip
-SRC_URI=
-  amd64? ( https://github.com/ollama/ollama/releases/download/v${PV/_/-}/ollama-linux-amd64.tar.zst  -> ollama-bin-0.18.3.amd64.tar.zst  )
-  arm64? ( https://github.com/ollama/ollama/releases/download/v${PV/_/-}/ollama-linux-arm64.tar.zst  -> ollama-bin-0.18.3.arm64.tar.zst  )
-  rocm? ( https://github.com/ollama/ollama/releases/download/v${PV/_/-}/ollama-linux-amd64-rocm.tar.zst -> ollama-bin-0.18.3.rocm.tar.zst )
-
-RDEPEND=acct-user/ollama acct-group/ollama
-DESCRIPTION=Get up and running with Llama 3, Mistral, Gemma, and other large language models.
-HOMEPAGE=https://ollama.com
 SLOT=0
+HOMEPAGE=https://ollama.com
+DESCRIPTION=Get up and running with Llama 3, Mistral, Gemma, and other large language models.
+IUSE=+systemd -rocm
+KEYWORDS=~amd64 ~arm64
+RDEPEND=acct-user/ollama acct-group/ollama
+RESTRICT=strip
+DEPEND=acct-user/ollama acct-group/ollama
+SRC_URI=
+  amd64? ( https://github.com/ollama/ollama/releases/download/v0.18.3/ollama-linux-amd64.tar.zst  -> ollama-bin-0.18.3.amd64.tar.zst  )
+  arm64? ( https://github.com/ollama/ollama/releases/download/v0.18.3/ollama-linux-arm64.tar.zst  -> ollama-bin-0.18.3.arm64.tar.zst  )
+  rocm? ( https://github.com/ollama/ollama/releases/download/v0.18.3/ollama-linux-amd64-rocm.tar.zst -> ollama-bin-0.18.3.rocm.tar.zst )
+
+INHERITED=xdg-utils
+BDEPEND=app-arch/zstd
+LICENSE=MIT
+EAPI=8
 _md5_=334629aa96e5cfbfe33d6f8626960aeb

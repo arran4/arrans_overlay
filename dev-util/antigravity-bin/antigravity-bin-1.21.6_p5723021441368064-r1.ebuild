@@ -22,5 +22,6 @@ src_install() {
   fperms +x /opt/antigravity/antigravity
   fperms 4755 /opt/antigravity/chrome-sandbox
   dosym ../antigravity/antigravity /opt/bin/antigravity
+  newicon "resources/app/resources/linux/code.png" antigravity.png
   domenu "${FILESDIR}/antigravity-bin.desktop"
 }

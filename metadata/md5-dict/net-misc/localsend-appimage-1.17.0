@@ -1,13 +1,13 @@
 SRC_URI=
   amd64? ( https://github.com/localsend/localsend/releases/download/v1.17.0/LocalSend-1.17.0-linux-x86-64.AppImage -> localsend-appimage-1.17.0-LocalSend-1.17.0-linux-x86-64.AppImage )
 
-DESCRIPTION=An open-source cross-platform alternative to AirDrop
 KEYWORDS=~amd64
-HOMEPAGE=https://localsend.org
-RDEPEND=sys-libs/glibc sys-libs/zlib
-EAPI=8
-INHERITED=xdg-utils
-SLOT=0
 RESTRICT=strip
+HOMEPAGE=https://localsend.org
+EAPI=8
 LICENSE=MIT
+RDEPEND=sys-libs/glibc sys-libs/zlib
+INHERITED=xdg-utils
+DESCRIPTION=An open-source cross-platform alternative to AirDrop
+SLOT=0
 _md5_=5621c02b795c86ce392f6dc0e9564f1b

@@ -1,10 +1,10 @@
-DEPEND=virtual/libc dev-lang/perl sys-devel/bison sys-devel/flex
-DESCRIPTION=The de facto standard parser and glosser for Lojban.
-HOMEPAGE=https://github.com/lojban/jbofihe
-SRC_URI=https://github.com/lojban/jbofihe/archive/refs/tags/v0.44.tar.gz -> jbofihe-0.44.tar.gz
-LICENSE=GPL-2
-RDEPEND=virtual/libc dev-lang/perl sys-devel/bison sys-devel/flex
 EAPI=8
+HOMEPAGE=https://github.com/lojban/jbofihe
+DESCRIPTION=The de facto standard parser and glosser for Lojban.
+SRC_URI=https://github.com/lojban/jbofihe/archive/refs/tags/v0.44.tar.gz -> jbofihe-0.44.tar.gz
 KEYWORDS=~amd64 ~x86
+LICENSE=GPL-2
 SLOT=0
+DEPEND=virtual/libc dev-lang/perl sys-devel/bison sys-devel/flex
+RDEPEND=virtual/libc dev-lang/perl sys-devel/bison sys-devel/flex
 _md5_=8ff59e9ba688b957ebc34ab75c02f62c

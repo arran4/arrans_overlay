@@ -1,11 +1,11 @@
+SLOT=0
 RDEPEND=media-libs/libglvnd sys-devel/gcc sys-libs/zlib x11-libs/gtk+ x11-libs/libX11
-EAPI=8
-DESCRIPTION=A comprehensive Flutter-based client application for interacting with the Google Jules API.
 SRC_URI=
 	amd64? (  https://github.com/arran4/flutter_jules/releases/download/v0.0.98/flutter_jules-linux.tar.gz -> flutter-jules-bin-0.0.98-flutter_jules-linux.tar.gz  )
 
 LICENSE=MIT
-HOMEPAGE=https://github.com/arran4/flutter_jules
-SLOT=0
 KEYWORDS=~amd64
+DESCRIPTION=A comprehensive Flutter-based client application for interacting with the Google Jules API.
+HOMEPAGE=https://github.com/arran4/flutter_jules
+EAPI=8
 _md5_=7537932396403b265ccc232cd2ac72f4

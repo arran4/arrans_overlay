@@ -1,10 +1,3 @@
-HOMEPAGE=https://libimobiledevice.org/
-EAPI=8
-INHERITED=autotools git-r3
-LICENSE=LGPL-3
-BDEPEND=
-	virtual/pkgconfig
-
 RDEPEND=
 	>=app-pda/libimobiledevice-1.4.0:=
 	>=app-pda/libirecovery-1.3.0:=
@@ -16,8 +9,9 @@ RDEPEND=
 	net-misc/curl
 	sys-libs/zlib
 
-DESCRIPTION=Restore/upgrade firmware of iOS devices
-SLOT=0
+INHERITED=autotools git-r3
+EAPI=8
+HOMEPAGE=https://libimobiledevice.org/
 DEPEND=
 	>=app-pda/libimobiledevice-1.4.0:=
 	>=app-pda/libirecovery-1.3.0:=
@@ -29,4 +23,10 @@ DEPEND=
 	net-misc/curl
 	sys-libs/zlib
 
+BDEPEND=
+	virtual/pkgconfig
+
+DESCRIPTION=Restore/upgrade firmware of iOS devices
+LICENSE=LGPL-3
+SLOT=0
 _md5_=69310604a1423f0999babe48818075e2
