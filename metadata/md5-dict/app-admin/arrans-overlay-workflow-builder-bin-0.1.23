@@ -1,8 +1,8 @@
+EAPI=8
 DESCRIPTION=A gentoo overlay ebuild workflow builder generator for -bin with a special purpose handler for .appimage binary files
 LICENSE=MIT
-RDEPEND=sys-libs/glibc
 KEYWORDS=~amd64
-EAPI=8
+RDEPEND=sys-libs/glibc
 SLOT=0
 IUSE= doc
 SRC_URI=

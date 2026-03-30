@@ -1,11 +1,11 @@
-DESCRIPTION=Polkit rules for systemctl control of cups.service
-HOMEPAGE=https://github.com/arran4/arrans-overlay
 LICENSE=metapackage
+KEYWORDS=~amd64
 RDEPEND=
 	sys-auth/polkit
 	acct-group/systemctl-operators
 
-SLOT=0
 EAPI=8
-KEYWORDS=~amd64
+DESCRIPTION=Polkit rules for systemctl control of cups.service
+HOMEPAGE=https://github.com/arran4/arrans-overlay
+SLOT=0
 _md5_=c0021a47dca89af0ad2e3499772d3297

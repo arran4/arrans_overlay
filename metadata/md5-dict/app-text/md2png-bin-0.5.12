@@ -1,7 +1,6 @@
-SLOT=0
-KEYWORDS=~amd64 ~arm ~arm64
 EAPI=8
 DESCRIPTION=Render Markdown directly to PNG or JPEG images with a single static Go binary.
+KEYWORDS=~amd64 ~arm ~arm64
 HOMEPAGE=https://github.com/arran4/md2png
 LICENSE=MIT
 SRC_URI=
@@ -9,4 +8,5 @@ SRC_URI=
 	arm? (  https://github.com/arran4/md2png/releases/download/v0.5.12/md2png_0.5.12_Linux_armv7.tar.gz -> md2png-bin-0.5.12-md2png_0.5.12_Linux_armv7.tar.gz  )
 	arm64? (  https://github.com/arran4/md2png/releases/download/v0.5.12/md2png_0.5.12_Linux_arm64.tar.gz -> md2png-bin-0.5.12-md2png_0.5.12_Linux_arm64.tar.gz  )
 
+SLOT=0
 _md5_=a15bdbea8a20db9369b30840f9cafaf3

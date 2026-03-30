@@ -1,11 +1,11 @@
-SLOT=0
 SRC_URI=
   amd64? (  https://github.com/yorukot/superfile/releases/download/v1.5.0-rc1/superfile-linux-v1.5.0-rc1-amd64.tar.gz -> superfile-bin-1.5.0_rc-superfile-linux-v1.5.0-rc1-amd64.tar.gz  )
   arm64? (  https://github.com/yorukot/superfile/releases/download/v1.5.0-rc1/superfile-linux-v1.5.0-rc1-arm64.tar.gz -> superfile-bin-1.5.0_rc-superfile-linux-v1.5.0-rc1-arm64.tar.gz  )
 
-LICENSE=MIT
-DESCRIPTION=Pretty fancy and modern terminal file manager
-HOMEPAGE=https://superfile.netlify.app
 EAPI=8
+LICENSE=MIT
 KEYWORDS=~amd64 ~arm64
+HOMEPAGE=https://superfile.netlify.app
+SLOT=0
+DESCRIPTION=Pretty fancy and modern terminal file manager
 _md5_=1f2a9534cb320067731056f6a0228cdf

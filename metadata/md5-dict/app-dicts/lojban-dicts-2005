@@ -1,13 +1,13 @@
 EAPI=8
+DESCRIPTION=Lojban Text Dictionaries
 LICENSE=public domain
 KEYWORDS=amd64
 HOMEPAGE=https://mw-live.lojban.org/papri/lojban_Wordlists
-SLOT=0
-DESCRIPTION=Lojban Text Dictionaries
 SRC_URI=
 	https://www.lojban.org/publications/wordlists/cmavo.txt
 	https://www.lojban.org/publications/wordlists/gismu.txt
 	https://www.lojban.org/publications/wordlists/lujvo.txt
 	https://www.lojban.org/publications/wordlists/rafsi.txt
 
+SLOT=0
 _md5_=e9e8cadaeec0ba7e0da28e9f59ce30ac

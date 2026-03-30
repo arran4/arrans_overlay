@@ -1,11 +1,11 @@
-KEYWORDS=~amd64
-DESCRIPTION=Polkit rules for systemctl control of docker.service
-HOMEPAGE=https://github.com/arran4/arrans-overlay
 LICENSE=metapackage
+SLOT=0
+KEYWORDS=~amd64
 RDEPEND=
 	sys-auth/polkit
 	acct-group/systemctl-operators
 
-SLOT=0
 EAPI=8
+HOMEPAGE=https://github.com/arran4/arrans-overlay
+DESCRIPTION=Polkit rules for systemctl control of docker.service
 _md5_=ad75207e0e1b32d17ccf37f1f173769f

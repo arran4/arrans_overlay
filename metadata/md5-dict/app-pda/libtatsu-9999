@@ -1,19 +1,19 @@
+IUSE=static-libs
+DESCRIPTION=Library to handle Apple's TSS protocol
+BDEPEND=
+	virtual/pkgconfig
+
+INHERITED=autotools git-r3
+LICENSE=LGPL-2.1
+EAPI=8
 DEPEND=
 	>=app-pda/libplist-2.3.0:=
 	net-misc/curl
 
-BDEPEND=
-	virtual/pkgconfig
-
-SLOT=0
-IUSE=static-libs
-LICENSE=LGPL-2.1
-HOMEPAGE=https://libimobiledevice.org/
-EAPI=8
 RDEPEND=
 	>=app-pda/libplist-2.3.0:=
 	net-misc/curl
 
-INHERITED=autotools git-r3
-DESCRIPTION=Library to handle Apple's TSS protocol
-_md5_=bdef236fe24ce3b7753c93c24cdc0192
+HOMEPAGE=https://libimobiledevice.org/
+SLOT=0
+_md5_=3242ba2feae0e3d0cff8073bfd187097

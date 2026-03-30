@@ -1,22 +1,22 @@
+EAPI=8
 HOMEPAGE=https://github.com/fairyglade/ly
-BDEPEND=|| ( dev-lang/zig-bin:0.13 dev-lang/zig:0.13 )
-DESCRIPTION=A lightweight TUI (ncurses-like) display manager for Linux and BSD
-SLOT=0
 IUSE=systemd
-LICENSE=WTFPL-2
-KEYWORDS=~amd64
+DESCRIPTION=A lightweight TUI (ncurses-like) display manager for Linux and BSD
 SRC_URI=
 	https://github.com/fairyglade/ly/archive/refs/tags/v1.0.3.tar.gz -> ly-1.0.3.tar.gz
 	https://github.com/Hejsil/zig-clap/archive/refs/tags/0.9.1.tar.gz -> zig-clap-0.9.1.tar.gz
 	https://github.com/Kawaii-Ash/zigini/archive/0bba97a12582928e097f4074cc746c43351ba4c8.tar.gz -> zigini-${ZIGINI_COMMIT:0:7}.tar.gz
 
-RDEPEND=
-	sys-libs/pam
-	x11-libs/libxcb
-
+SLOT=0
+KEYWORDS=~amd64
+BDEPEND=|| ( dev-lang/zig-bin:0.13 dev-lang/zig:0.13 )
 DEPEND=
 	sys-libs/pam
 	x11-libs/libxcb
 
-EAPI=8
+LICENSE=WTFPL-2
+RDEPEND=
+	sys-libs/pam
+	x11-libs/libxcb
+
 _md5_=b8ffb7bbaa9789fcface46fca398804d

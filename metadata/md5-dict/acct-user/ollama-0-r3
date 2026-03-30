@@ -1,7 +1,7 @@
+KEYWORDS=~amd64 ~arm64
 EAPI=8
 INHERITED=acct-user
-SLOT=0
 DESCRIPTION=System user for ollama
 LICENSE=BSD
-KEYWORDS=~amd64 ~arm64
+SLOT=0
 _md5_=27d30b0caf6cd4abbfaa76d6227e5b07

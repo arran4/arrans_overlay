@@ -1,19 +1,20 @@
-IUSE=static-libs
-INHERITED=autotools git-r3
-HOMEPAGE=https://libimobiledevice.org/
+SLOT=0
+DESCRIPTION=Library and utility to talk to iBoot/iBSS via USB
+LICENSE=LGPL-2.1+
 DEPEND=
-	>=dev-libs/libimobiledevice-glue-1.3.0:=
+	>=app-pda/libimobiledevice-glue-1.2.0
 	virtual/libusb:1
+	sys-libs/readline:0=
 
-SLOT=0/3
-RDEPEND=
-	>=dev-libs/libimobiledevice-glue-1.3.0:=
-	virtual/libusb:1
-
-LICENSE=LGPL-2.1
 BDEPEND=
 	virtual/pkgconfig
 
 EAPI=8
-DESCRIPTION=Library and utility to talk to iBoot/iBSS via USB
-_md5_=b38f2909694917c70c68f05441b40873
+RDEPEND=
+	>=app-pda/libimobiledevice-glue-1.2.0
+	virtual/libusb:1
+	sys-libs/readline:0=
+
+INHERITED=autotools git-r3 udev
+HOMEPAGE=https://libimobiledevice.org https://github.com/libimobiledevice/libirecovery
+_md5_=b98535b700ab9bdfe97ce877c66e0837
