@@ -1,0 +1,17 @@
+app-admin/chezmoi-bin:android - Install android binary
+app-admin/chezmoi-bin:glibc - Install glibc binary
+app-admin/chezmoi-bin:le - Install le binary
+app-admin/chezmoi-bin:loong64 - Install loong64 binary
+app-misc/ollama-bin:rocm - Enable ROCm support
+app-misc/ollama-bin:systemd - Install systemd service file
+dev-go/goreleaser-bin:bash - Install bash completion
+dev-go/goreleaser-bin:fish - Install fish completion
+dev-go/goreleaser-bin:man - Install man pages
+dev-go/goreleaser-bin:zsh - Install zsh completion
+dev-java/corretto-bin:alsa - Enable ALSA sound support
+dev-java/corretto-bin:cups - Enable CUPS print support
+dev-java/corretto-bin:headless-awt - Don't install the X backend for AWT, needed by some GUIs
+dev-java/corretto-bin:selinux - Enable SELinux support
+dev-java/corretto-bin:source - Install JVM sources
+sys-apps/ly:systemd - Enable systemd support
+www-apps/hugo-bin:extended - Enable extended version (Sass/SCSS support)

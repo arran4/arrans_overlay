@@ -1,0 +1,17 @@
+name: g2 lint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+      - name: Run g2 lint
+        run: g2 lint

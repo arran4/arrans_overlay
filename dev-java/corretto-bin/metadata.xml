@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+  <maintainer type="person">
+    <email>gentoo@arran4.com</email>
+    <name>Arran Ubels</name>
+  </maintainer>
+  <use>
+    <flag name="alsa">Enable ALSA sound support</flag>
+    <flag name="cups">Enable CUPS print support</flag>
+    <flag name="headless-awt">Don't install the X backend for AWT, needed by some GUIs</flag>
+    <flag name="selinux">Enable SELinux support</flag>
+    <flag name="source">Install JVM sources</flag>
+  </use>
+</pkgmetadata>
