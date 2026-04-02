@@ -12,7 +12,7 @@ SRC_URI="
 	https://www.lojban.org/publications/wordlists/rafsi.txt
 "
 
-LICENSE="public domain"
+LICENSE="public-domain"
 SLOT="0"
 KEYWORDS="amd64"
 

@@ -10,7 +10,7 @@ HOMEPAGE="https://copypaste.wtf/TT2020/docs/"
 
 SRC_URI="https://github.com/ctrlcctrlv/TT2020/archive/refs/tags/v${PV}.zip -> ${P}.zip"
 
-LICENSE="SIL OPEN FONT LICENSE Version 1.1"
+LICENSE="OFL-1.1"
 SLOT="0"
 KEYWORDS="amd64 arm arm64 ~loong ~ppc64 ~riscv x86"
 IUSE=""

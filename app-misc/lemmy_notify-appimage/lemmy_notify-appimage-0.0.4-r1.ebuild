@@ -2,7 +2,7 @@
 EAPI=8
 DESCRIPTION="Lemmy Notification app - for desktop atm"
 HOMEPAGE="https://github.com/arran4/lemmy_notify"
-LICENSE="Unknown"
+LICENSE="unknown"
 SLOT="0"
 KEYWORDS="~amd64"
 DEPEND=""
