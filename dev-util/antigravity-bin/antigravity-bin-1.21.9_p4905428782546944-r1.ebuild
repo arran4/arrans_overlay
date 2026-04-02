@@ -10,7 +10,7 @@ IUSE=""
 DEPEND=""
 RDEPEND="sys-libs/glibc"
 RESTRICT="strip"
-QA_PREBUILT="opt/antigravity/antigravity opt/antigravity/chrome-sandbox"
+QA_PREBUILT="opt/antigravity/antigravity opt/antigravity/chrome-sandbox opt/antigravity/chrome_crashpad_handler"
 
 SRC_URI="amd64? ( https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/1.21.9-4905428782546944/linux-x64/Antigravity.tar.gz -> ${P}.tar.gz )"
 
@@ -21,6 +21,7 @@ src_install() {
   doins -r *
   fperms +x /opt/antigravity/antigravity
   fperms 4755 /opt/antigravity/chrome-sandbox
+  fperms +x /opt/antigravity/chrome_crashpad_handler
   dosym ../antigravity/antigravity /opt/bin/antigravity
   newicon "resources/app/resources/linux/code.png" antigravity.png
   domenu "${FILESDIR}/antigravity-bin.desktop"
