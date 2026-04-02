@@ -9,7 +9,7 @@ DESCRIPTION="OpenDyslexic, a typeface that uses typeface shapes & features to he
 HOMEPAGE="https://opendyslexic.org/"
 SRC_URI="https://github.com/antijingoist/opendyslexic/releases/download/v${PV}/${PN}-0.910.12-rc2-2019.10.17.zip -> ${P}-rc2-2019.10.17.zip"
 
-LICENSE="SIL OPEN FONT LICENSE"
+LICENSE="OFL-1.1"
 SLOT="0"
 KEYWORDS="amd64 arm arm64 ~loong ~ppc64 ~riscv x86"
 IUSE=""
