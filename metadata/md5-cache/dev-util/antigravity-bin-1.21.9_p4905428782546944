@@ -10,4 +10,4 @@ RESTRICT=strip
 SLOT=0
 SRC_URI=amd64? ( https://edgedl.me.gvt1.com/edgedl/release2/j0qc3/antigravity/stable/1.21.9-4905428782546944/linux-x64/Antigravity.tar.gz -> antigravity-bin-1.21.9_p4905428782546944.tar.gz )
 _eclasses_=desktop	26d57169ca094c04be416993844ec8bc
-_md5_=d719d773d71bf82843512ffdb3263bb1
+_md5_=42655cc6c80fb1c2587c1520af38e2b1
