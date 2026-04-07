@@ -3,7 +3,7 @@ EAPI=8
 inherit desktop
 DESCRIPTION="Google Antigravity AI-driven IDE (binary release)"
 HOMEPAGE="https://antigravity.google/"
-LICENSE="unknown"
+LICENSE="Antigravity"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
