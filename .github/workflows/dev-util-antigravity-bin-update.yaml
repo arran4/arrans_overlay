@@ -101,7 +101,7 @@ jobs:
               echo 'inherit desktop'
               echo "DESCRIPTION=\"${{ env.description }}\""
               echo "HOMEPAGE=\"${{ env.homepage }}\""
-              echo 'LICENSE="unknown"'
+              echo 'LICENSE="Antigravity"'
               echo 'SLOT="0"'
               echo 'KEYWORDS="~amd64"'
               echo 'IUSE=""'
