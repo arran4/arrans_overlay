@@ -65,11 +65,11 @@ jobs:
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
-		<upstream>
-			<remote-id type="github">AkashRajpurohit/git-sync</remote-id>
-		</upstream>
+            <upstream>
+              <remote-id type="github">AkashRajpurohit/git-sync</remote-id>
+            </upstream>
           </pkgmetadata>
-          EOF
+EOF
           fi
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
@@ -107,9 +107,9 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/git-sync_\${PV}_linux_amd64.tar.gz -> \${P}-git-sync_\${PV}_linux_amd64.tar.gz  )  "
-                echo "	arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/git-sync_\${PV}_linux_armv7.tar.gz -> \${P}-git-sync_\${PV}_linux_armv7.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/git-sync_\${PV}_linux_arm64.tar.gz -> \${P}-git-sync_\${PV}_linux_arm64.tar.gz  )  "
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/git-sync_\${PV}_linux_amd64.tar.gz -> \${P}-git-sync_\${PV}_linux_amd64.tar.gz  )  "
+                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/git-sync_\${PV}_linux_armv7.tar.gz -> \${P}-git-sync_\${PV}_linux_armv7.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/git-sync_\${PV}_linux_arm64.tar.gz -> \${P}-git-sync_\${PV}_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -171,7 +171,7 @@ jobs:
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           git add "./${ebuild_dir}"
-          if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
+          if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${{ steps.process_releases.outputs.generated_tag }}"; then
             git pull --rebase &&
             git push
           fi || true
