@@ -59,3 +59,5 @@ To keep the overlay clean, we follow a **"One Version Per Grade"** policy.
     *   It checks if the ebuild can `fetch` sources (default) or `merge` (install) if flags are provided.
 *   **Manifest Verification:** `scripts/verify_manifest.py` is used in CI to ensure all distfiles are accounted for.
 *   **Linting:** Be aware of `pkgcheck` and `actionlint` results in the PR checks.
+*   **Checksum & Manifest Errors:** If you encounter `VERIFY FAILED! Reason: Insufficient data for checksum verification` during an emerge/fetch operation, it is typically caused by a missing, empty, or outdated `Manifest` file.
+    *   To resolve this, you must generate or update the `Manifest` file with the correct distfile entries and hashes. You can use tools such as `g2 manifest upsert-from-url <url> <filename> <path_to_manifest>` to fix these issues.
