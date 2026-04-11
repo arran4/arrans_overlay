@@ -20,3 +20,11 @@ jobs:
         uses: pkgcore/pkgcheck-action@v1
         with:
           args: --keywords=-UnknownManifest --commits ${{ github.event.pull_request.base.ref && format('origin/{0}', github.event.pull_request.base.ref) || 'HEAD~1' }}
+
+  g2-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arran4/g2-action@v1.2
+      - name: Run g2 lint
+        run: g2 lint
