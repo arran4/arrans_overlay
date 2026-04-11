@@ -33,7 +33,7 @@ env:
   chezmoi_binary_archived_name_amd64: 'chezmoi'
   chezmoi_release_name_amd64: 'chezmoi_\${PV}_linux-musl_amd64.tar.gz'
   chezmoi_binary_archived_name_arm: 'chezmoi'
-  chezmoi_release_name_arm: 'chezmoi_\${PV}_linux_arm.tar.gz'
+  chezmoi_release_name_arm: 'chezmoi_\${PV}_linux_armv6.tar.gz'
   chezmoi_binary_archived_name_arm64: 'chezmoi'
   chezmoi_release_name_arm64: 'chezmoi_\${PV}_linux_arm64.tar.gz'
   chezmoi_binary_archived_name_ppc64: 'chezmoi'
@@ -135,7 +135,7 @@ jobs:
                 echo "  amd64? ( glibc? ( !loong64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/chezmoi_\${PV}_linux-glibc_amd64.tar.gz -> \${P}-chezmoi_\${PV}_linux-glibc_amd64.tar.gz  )  )  )  "
                 echo "  amd64? ( !glibc? ( !loong64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/chezmoi_\${PV}_linux-musl_amd64.tar.gz -> \${P}-chezmoi_\${PV}_linux-musl_amd64.tar.gz  )  )  )  "
                 echo "  amd64? ( loong64? ( !glibc? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/chezmoi_\${PV}_linux_loong64.tar.gz -> \${P}-chezmoi_\${PV}_linux_loong64.tar.gz  )  )  )  "
-                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/chezmoi_\${PV}_linux_arm.tar.gz -> \${P}-chezmoi_\${PV}_linux_arm.tar.gz  )  "
+                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/chezmoi_\${PV}_linux_armv6.tar.gz -> \${P}-chezmoi_\${PV}_linux_armv6.tar.gz  )  "
                 echo "  arm64? ( android? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/chezmoi_\${PV}_android_arm64.tar.gz -> \${P}-chezmoi_\${PV}_android_arm64.tar.gz  )  )  "
                 echo "  arm64? ( !android? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/chezmoi_\${PV}_linux_arm64.tar.gz -> \${P}-chezmoi_\${PV}_linux_arm64.tar.gz  )  )  "
                 echo "  ppc64? ( !le? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/chezmoi_\${PV}_linux_ppc64.tar.gz -> \${P}-chezmoi_\${PV}_linux_ppc64.tar.gz  )  )  "
@@ -176,7 +176,7 @@ jobs:
                 echo "    unpack \"\${DISTDIR}/\${P}-chezmoi_\${PV}_linux_loong64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-chezmoi_\${PV}_linux_arm.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-chezmoi_\${PV}_linux_armv6.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm64 && use android; then'
                 echo "    unpack \"\${DISTDIR}/\${P}-chezmoi_\${PV}_android_arm64.tar.gz\" || die \"Can't unpack archive file\""
@@ -244,7 +244,7 @@ jobs:
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/chezmoi_${version}_linux-glibc_amd64.tar.gz" "${{ env.epn }}-${version}-chezmoi_${version}_linux-glibc_amd64.tar.gz" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/chezmoi_${version}_linux-musl_amd64.tar.gz" "${{ env.epn }}-${version}-chezmoi_${version}_linux-musl_amd64.tar.gz" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/chezmoi_${version}_linux_loong64.tar.gz" "${{ env.epn }}-${version}-chezmoi_${version}_linux_loong64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/chezmoi_${version}_linux_arm.tar.gz" "${{ env.epn }}-${version}-chezmoi_${version}_linux_arm.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/chezmoi_${version}_linux_armv6.tar.gz" "${{ env.epn }}-${version}-chezmoi_${version}_linux_armv6.tar.gz" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/chezmoi_${version}_android_arm64.tar.gz" "${{ env.epn }}-${version}-chezmoi_${version}_android_arm64.tar.gz" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/chezmoi_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-chezmoi_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/chezmoi_${version}_linux_ppc64.tar.gz" "${{ env.epn }}-${version}-chezmoi_${version}_linux_ppc64.tar.gz" "${ebuild_dir}/Manifest"
