@@ -3,8 +3,8 @@ EAPI=8
 DESCRIPTION="The Console Display Manager (Go Port)"
 HOMEPAGE="https://github.com/arran4/gocdm"
 SRC_URI="
-  amd64? (  https://github.com/arran4/gocdm/releases/download/v${PV}/gocdm_${PV}_linux_amd64.tar.gz -> ${P}-gocdm_${PV}_linux_amd64.tar.gz  )  
-  arm64? (  https://github.com/arran4/gocdm/releases/download/v${PV}/gocdm_${PV}_linux_arm64.tar.gz -> ${P}-gocdm_${PV}_linux_arm64.tar.gz  )  
+  amd64? (  https://github.com/arran4/gocdm/releases/download/v${PV}/gocdm_${PV}_linux_amd64.tar.gz -> ${P}-gocdm_${PV}_linux_amd64.tar.gz  )
+  arm64? (  https://github.com/arran4/gocdm/releases/download/v${PV}/gocdm_${PV}_linux_arm64.tar.gz -> ${P}-gocdm_${PV}_linux_arm64.tar.gz  )
 "
 LICENSE="MIT"
 SLOT="0"
