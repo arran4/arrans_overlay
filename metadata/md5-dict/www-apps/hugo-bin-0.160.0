@@ -1,0 +1,17 @@
+HOMEPAGE=https://gohugo.io
+KEYWORDS=~amd64 ~arm ~arm64
+IUSE= extended
+DESCRIPTION=The world’s fastest framework for building websites.
+RDEPEND=extended? ( sys-devel/gcc  )
+SRC_URI=
+  amd64? ( !extended? (  https://github.com/gohugoio/hugo/releases/download/v0.160.0/hugo__linux-amd64.tar.gz -> hugo-bin-0.160.0-hugo__linux-amd64.tar.gz  )  )
+  amd64? ( extended? (  https://github.com/gohugoio/hugo/releases/download/v/hugo_extended__Linux-64bit.tar.gz -> -hugo_extended__Linux-64bit.tar.gz  )  )
+  arm? (  https://github.com/gohugoio/hugo/releases/download/v/hugo__linux-arm.tar.gz -> -hugo__linux-arm.tar.gz  )
+  arm64? ( !extended? (  https://github.com/gohugoio/hugo/releases/download/v/hugo__linux-arm64.tar.gz -> -hugo__linux-arm64.tar.gz  )  )
+  arm64? ( extended? (  https://github.com/gohugoio/hugo/releases/download/v/hugo_extended__linux-arm64.tar.gz -> -hugo_extended__linux-arm64.tar.gz  )  )
+
+LICENSE=MIT
+SLOT=0
+REQUIRED_USE=extended? ( || ( amd64 arm64  ) )
+EAPI=8
+_md5_=97c6e2bb149b5897219a5858e670e063

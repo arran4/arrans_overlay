@@ -1,0 +1,13 @@
+EAPI=8
+INHERITED=xdg-utils
+KEYWORDS=~amd64
+SRC_URI=
+  amd64? ( https://github.com/anyproto/anytype-ts/releases/download/v0.54.23-alpha/Anytype-0.54.23-alpha.AppImage -> anytype-ts-appimage-0.54.23_alpha-Anytype-0.54.23_alpha.AppImage )
+
+DESCRIPTION=Official Anytype client for MacOS, Linux, and Windows
+SLOT=0
+RESTRICT=strip
+RDEPEND=sys-libs/glibc sys-libs/zlib
+HOMEPAGE=https://anytype.io
+LICENSE=MIT
+_md5_=67a4d7db521be8516120a2d570bb52a1

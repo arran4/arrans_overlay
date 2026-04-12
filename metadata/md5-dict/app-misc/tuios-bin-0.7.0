@@ -1,0 +1,14 @@
+IUSE= doc
+HOMEPAGE=https://github.com/Gaurav-Gosain/tuios
+LICENSE=MIT
+SLOT=0
+DESCRIPTION=Terminal UI OS (Terminal Multiplexer)
+SRC_URI=
+  amd64? (  https://github.com/Gaurav-Gosain/tuios/releases/download/v0.7.0/tuios__Linux_x86_64.tar.gz -> tuios-bin-0.7.0-tuios__Linux_x86_64.tar.gz  )
+  arm? (  https://github.com/Gaurav-Gosain/tuios/releases/download/v/tuios__Linux_armv7.tar.gz -> -tuios__Linux_armv7.tar.gz  )
+  arm64? (  https://github.com/Gaurav-Gosain/tuios/releases/download/v/tuios__Linux_arm64.tar.gz -> -tuios__Linux_arm64.tar.gz  )
+  x86? (  https://github.com/Gaurav-Gosain/tuios/releases/download/v/tuios__Linux_i386.tar.gz -> -tuios__Linux_i386.tar.gz  )
+
+KEYWORDS=~amd64 ~arm ~arm64 ~x86
+EAPI=8
+_md5_=3813e133a974374788a306c7dc7450aa

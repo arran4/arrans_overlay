@@ -4,4 +4,8 @@
 	<upstream>
 		<remote-id type="github">anyproto/anytype-ts</remote-id>
 	</upstream>
+    <maintainer type="person">
+        <email>gentoo@arran4.com</email>
+        <name>Arran Ubels</name>
+    </maintainer>
 </pkgmetadata>

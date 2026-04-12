@@ -17,7 +17,7 @@ SRC_URI="
 
 S="${WORKDIR}/amazon-corretto-${MY_PV}-linux-x64"
 LICENSE="GPL-2-with-classpath-exception"
-SLOT=$(ver_cut 1)
+SLOT="24"
 KEYWORDS="~amd64"
 IUSE="alsa cups headless-awt selinux source"
 

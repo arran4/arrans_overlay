@@ -1,0 +1,143 @@
+[acct-group/ollama]
+  - [Error] Package has no maintainers defined in metadata.xml
+[acct-user/ollama]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-admin/arrans-overlay-workflow-builder-bin]
+  - [Error] Invalid or missing metadata.xml: open app-admin/arrans-overlay-workflow-builder-bin/metadata.xml: no such file or directory
+[app-admin/chezmoi-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-admin/ejson-bin]
+  - [Error] Invalid or missing metadata.xml: open app-admin/ejson-bin/metadata.xml: no such file or directory
+[app-admin/g2-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-admin/sudoers-wheel]
+  - [Error] Invalid or missing metadata.xml: open app-admin/sudoers-wheel/metadata.xml: no such file or directory
+[app-dicts/lojban-dicts]
+  - [Error] Invalid or missing metadata.xml: open app-dicts/lojban-dicts/metadata.xml: no such file or directory
+[app-emulation/86box-roms]
+  - [Error] Invalid or missing metadata.xml: open app-emulation/86box-roms/metadata.xml: no such file or directory
+[app-misc/anytype-to-linkwarden-bin]
+  - [Error] Invalid or missing metadata.xml: open app-misc/anytype-to-linkwarden-bin/metadata.xml: no such file or directory
+[app-misc/appimagetool-appimage]
+  - [Error] Invalid or missing metadata.xml: open app-misc/appimagetool-appimage/metadata.xml: no such file or directory
+[app-misc/chatbox-appimage]
+  - [Error] Invalid or missing metadata.xml: open app-misc/chatbox-appimage/metadata.xml: no such file or directory
+[app-misc/dua-cli-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-misc/ente-auth-appimage]
+  - [Error] Missing md5-cache for ebuild ente-auth-appimage-4.4.18_beta-r42
+  - [Error] Missing md5-cache for ebuild ente-auth-appimage-4.4.17-r41
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-misc/flutter-google-datastore-appimage]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-misc/flutter-jules-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-misc/fq-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-misc/go-appimage-appimage]
+  - [Error] Invalid or missing metadata.xml: open app-misc/go-appimage-appimage/metadata.xml: no such file or directory
+[app-misc/gocdm-bin]
+  - [Error] Missing md5-cache for ebuild gocdm-bin-0.0.22
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-misc/lemmy-notify-appimage]
+  - [Error] Invalid or missing metadata.xml: open app-misc/lemmy-notify-appimage/metadata.xml: no such file or directory
+[app-misc/lemmy_notify-appimage]
+  - [Error] Invalid or missing metadata.xml: open app-misc/lemmy_notify-appimage/metadata.xml: no such file or directory
+[app-misc/maid-appimage]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-misc/mvcommon-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-misc/ollama-bin]
+  - [Error] Invalid or missing metadata.xml: open app-misc/ollama-bin/metadata.xml: no such file or directory
+[app-misc/picocrypt-bin]
+  - [Error] Invalid or missing metadata.xml: open app-misc/picocrypt-bin/metadata.xml: no such file or directory
+[app-misc/podcast-cdr-manager-bin]
+  - [Error] Invalid or missing metadata.xml: open app-misc/podcast-cdr-manager-bin/metadata.xml: no such file or directory
+[app-misc/rntocase-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-misc/shineyshot-bin]
+  - [Error] Invalid or missing metadata.xml: open app-misc/shineyshot-bin/metadata.xml: no such file or directory
+[app-misc/stability-matrix-appimage]
+  - [Error] Invalid or missing metadata.xml: open app-misc/stability-matrix-appimage/metadata.xml: no such file or directory
+[app-misc/superfile-bin]
+  - [Error] Invalid or missing metadata.xml: open app-misc/superfile-bin/metadata.xml: no such file or directory
+[app-misc/tuios-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-portage/portage-sync-notifier]
+  - [Error] Invalid or missing metadata.xml: open app-portage/portage-sync-notifier/metadata.xml: no such file or directory
+[app-text/anytype-ts-appimage]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-text/jbofihe]
+  - [Error] Invalid or missing metadata.xml: open app-text/jbofihe/metadata.xml: no such file or directory
+[app-text/md2png-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[app-text/mostcomm-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[dev-go/goreleaser-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[dev-java/corretto-bin]
+  - [Error] Invalid or missing metadata.xml: open dev-java/corretto-bin/metadata.xml: no such file or directory
+[dev-lang/dart-bin]
+  - [Error] Invalid or missing metadata.xml: open dev-lang/dart-bin/metadata.xml: no such file or directory
+[dev-lang/flutter-bin]
+  - [Error] Invalid or missing metadata.xml: open dev-lang/flutter-bin/metadata.xml: no such file or directory
+[dev-util/editorconfig-guesser-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[dev-util/im-hex-appimage]
+  - [Error] Invalid or missing metadata.xml: open dev-util/im-hex-appimage/metadata.xml: no such file or directory
+[dev-util/jules-bin]
+  - [Error] Invalid or missing metadata.xml: open dev-util/jules-bin/metadata.xml: no such file or directory
+[dev-vcs/git-credential-oauth-bin]
+  - [Error] Invalid or missing metadata.xml: open dev-vcs/git-credential-oauth-bin/metadata.xml: no such file or directory
+[dev-vcs/git-credential-with-kwallet]
+  - [Error] Package has no maintainers defined in metadata.xml
+[dev-vcs/git-tag-inc-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[media-fonts/comic-mono-font]
+  - [Error] Invalid or missing metadata.xml: open media-fonts/comic-mono-font/metadata.xml: no such file or directory
+[media-fonts/llamattf]
+  - [Error] Invalid or missing metadata.xml: open media-fonts/llamattf/metadata.xml: no such file or directory
+[media-fonts/opendyslexic]
+  - [Error] Invalid or missing metadata.xml: open media-fonts/opendyslexic/metadata.xml: no such file or directory
+[media-fonts/suse-font]
+  - [Error] Invalid or missing metadata.xml: open media-fonts/suse-font/metadata.xml: no such file or directory
+[media-fonts/times-new-bastard]
+  - [Error] Invalid or missing metadata.xml: open media-fonts/times-new-bastard/metadata.xml: no such file or directory
+[media-fonts/tt2020]
+  - [Error] Invalid or missing metadata.xml: open media-fonts/tt2020/metadata.xml: no such file or directory
+[media-fonts/virgil]
+  - [Error] Invalid or missing metadata.xml: open media-fonts/virgil/metadata.xml: no such file or directory
+[media-sound/piper-voice-hal]
+  - [Error] Invalid or missing metadata.xml: open media-sound/piper-voice-hal/metadata.xml: no such file or directory
+[media-video/vlc-xattrplaying_plugin]
+  - [Error] Invalid or missing metadata.xml: open media-video/vlc-xattrplaying_plugin/metadata.xml: no such file or directory
+[net-im/caprine-appimage]
+  - [Error] Invalid or missing metadata.xml: open net-im/caprine-appimage/metadata.xml: no such file or directory
+[net-im/lemmy-notify-appimage]
+  - [Error] Invalid or missing metadata.xml: open net-im/lemmy-notify-appimage/metadata.xml: no such file or directory
+[net-im/slackdump-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[net-misc/abc-justin-rss-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[net-misc/localsend-appimage]
+  - [Error] Invalid or missing metadata.xml: open net-misc/localsend-appimage/metadata.xml: no such file or directory
+[net-misc/pimtrace-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[net-misc/podcast-cdr-manager-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[net-misc/reddit-tui-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[net-misc/rustdesk-appimage]
+  - [Error] Package has no maintainers defined in metadata.xml
+[net-misc/termscp-bin]
+  - [Error] Invalid or missing metadata.xml: open net-misc/termscp-bin/metadata.xml: no such file or directory
+[sys-apps/lxa-bin]
+  - [Error] Package has no maintainers defined in metadata.xml
+[sys-apps/sysctl-inotify]
+  - [Error] Invalid or missing metadata.xml: open sys-apps/sysctl-inotify/metadata.xml: no such file or directory
+[sys-apps/systemd-limits]
+  - [Error] Invalid or missing metadata.xml: open sys-apps/systemd-limits/metadata.xml: no such file or directory
+[www-apps/pagefind-bin]
+  - [Error] Invalid or missing metadata.xml: open www-apps/pagefind-bin/metadata.xml: no such file or directory
+[www-misc/which_browser]
+  - [Error] Invalid or missing metadata.xml: open www-misc/which_browser/metadata.xml: no such file or directory
