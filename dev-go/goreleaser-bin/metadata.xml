@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<use>
-		<flag name="bash">Install bash completion</flag>
-		<flag name="fish">Install fish completion</flag>
-		<flag name="zsh">Install zsh completion</flag>
-	</use>
-	<upstream>
-		<remote-id type="github">goreleaser/goreleaser</remote-id>
-	</upstream>
+  <use>
+    <flag name="bash">Install bash completion</flag>
+    <flag name="fish">Install fish completion</flag>
+    <flag name="zsh">Install zsh completion</flag>
+  </use>
+  <upstream>
+    <remote-id type="github">goreleaser/goreleaser</remote-id>
+  </upstream>
+  <maintainer type="person">
+    <email>gentoo@arran4.com</email>
+    <name>Arran Ubels</name>
+  </maintainer>
 </pkgmetadata>
