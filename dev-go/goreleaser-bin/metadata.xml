@@ -9,4 +9,8 @@
 	<upstream>
 		<remote-id type="github">goreleaser/goreleaser</remote-id>
 	</upstream>
+    <maintainer type="person">
+        <email>gentoo@arran4.com</email>
+        <name>Arran Ubels</name>
+    </maintainer>
 </pkgmetadata>

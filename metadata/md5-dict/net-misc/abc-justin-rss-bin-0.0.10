@@ -1,0 +1,13 @@
+SLOT=0
+IUSE= doc
+KEYWORDS=~amd64 ~arm64 ~x86
+EAPI=8
+DESCRIPTION=ABC news just-in to rss converter - generated
+HOMEPAGE=https://github.com/arran4/abc-justin-rss
+SRC_URI=
+	amd64? (  https://github.com/arran4/abc-justin-rss/releases/download/v0.0.10/abcjustinrss__linux_amd64.tar.gz -> abc-justin-rss-bin-0.0.10-abcjustinrss__linux_amd64.tar.gz  )
+	arm64? (  https://github.com/arran4/abc-justin-rss/releases/download/v/abcjustinrss__linux_arm64.tar.gz -> -abcjustinrss__linux_arm64.tar.gz  )
+	x86? (  https://github.com/arran4/abc-justin-rss/releases/download/v/abcjustinrss__linux_386.tar.gz -> -abcjustinrss__linux_386.tar.gz  )
+
+LICENSE=GPL-3
+_md5_=8ce019fc665a0b63496d9b64eb7c229e

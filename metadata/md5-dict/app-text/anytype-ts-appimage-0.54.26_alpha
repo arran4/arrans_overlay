@@ -1,0 +1,13 @@
+HOMEPAGE=https://anytype.io
+KEYWORDS=~amd64
+SRC_URI=
+  amd64? ( https://github.com/anyproto/anytype-ts/releases/download/v0.54.26-alpha/Anytype-0.54.26-alpha.AppImage -> anytype-ts-appimage-0.54.26_alpha-Anytype-0.54.26_alpha.AppImage )
+
+RDEPEND=sys-libs/glibc sys-libs/zlib
+INHERITED=xdg-utils
+SLOT=0
+EAPI=8
+LICENSE=MIT
+DESCRIPTION=Official Anytype client for MacOS, Linux, and Windows
+RESTRICT=strip
+_md5_=635de688632bf80ee4cc8c0931ddce2e

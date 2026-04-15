@@ -1,0 +1,1 @@
+echo "Mocking ebuild command: $@"
