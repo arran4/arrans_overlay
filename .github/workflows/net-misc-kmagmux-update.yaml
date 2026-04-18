@@ -68,6 +68,8 @@ jobs:
                 echo ""
                 echo "EAPI=8"
                 echo ""
+                echo "KFMIN=6.0.0"
+                echo "QTMIN=6.6.2"
                 echo "inherit ecm"
                 echo ""
                 echo "DESCRIPTION=\"$description\""
@@ -77,20 +79,15 @@ jobs:
                 echo 'LICENSE="GPL-3.0-or-later"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="~amd64"'
-                echo 'IUSE=""'
-                echo ""
-                echo 'DEPEND="'
+                                echo 'DEPEND="'
                 echo '	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]'
                 echo '	kde-frameworks/kcoreaddons:6'
-                echo '	kde-frameworks/ki18n:6'
                 echo '	kde-frameworks/kxmlgui:6'
                 echo '	dev-libs/qtkeychain:=[qt6]'
                 echo '"'
                 echo 'RDEPEND="${DEPEND}"'
                 echo 'BDEPEND="'
-                echo '	dev-qt/qttools:6[linguist]'
                 echo '	virtual/pkgconfig'
-                echo '	kde-frameworks/extra-cmake-modules:0'
                 echo '"'
                 echo ""
                 echo 'S="${WORKDIR}/${{env.github_repo}}-${PV}"'
