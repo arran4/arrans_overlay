@@ -70,9 +70,9 @@ jobs:
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
-		<upstream>
-			<remote-id type="github">google/magika</remote-id>
-		</upstream>
+            <upstream>
+              <remote-id type="github">google/magika</remote-id>
+            </upstream>
           </pkgmetadata>
           EOF
           fi
@@ -112,8 +112,8 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/cli/v\${PV}/magika-x86_64-unknown-linux-gnu.tar.xz -> \${P}-magika-x86_64-unknown-linux-gnu.tar.xz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/cli/v\${PV}/magika-aarch64-unknown-linux-gnu.tar.xz -> \${P}-magika-aarch64-unknown-linux-gnu.tar.xz  )  "
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/cli/v\${PV}/magika-x86_64-unknown-linux-gnu.tar.xz -> \${P}-magika-x86_64-unknown-linux-gnu.tar.xz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/cli/v\${PV}/magika-aarch64-unknown-linux-gnu.tar.xz -> \${P}-magika-aarch64-unknown-linux-gnu.tar.xz  )  "
                 echo '"'
                 echo 'LICENSE="Apache-2.0"'
                 echo 'SLOT="0"'
