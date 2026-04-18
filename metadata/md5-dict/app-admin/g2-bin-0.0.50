@@ -1,0 +1,12 @@
+LICENSE=MIT
+EAPI=8
+SLOT=0
+SRC_URI=
+  amd64? (  https://github.com/arran4/g2/releases/download/v0.0.50/g2_0.0.50_linux_amd64.tar.gz -> g2-bin-0.0.50-g2_0.0.50_linux_amd64.tar.gz  )
+  arm? (  https://github.com/arran4/g2/releases/download/v0.0.50/g2_0.0.50_linux_armv6.tar.gz -> g2-bin-0.0.50-g2_0.0.50_linux_armv6.tar.gz  )
+  arm64? (  https://github.com/arran4/g2/releases/download/v0.0.50/g2_0.0.50_linux_arm64.tar.gz -> g2-bin-0.0.50-g2_0.0.50_linux_arm64.tar.gz  )
+
+HOMEPAGE=https://wiki.gentoo.org/wiki/User:Arran4
+KEYWORDS=~amd64 ~arm ~arm64
+DESCRIPTION=g2 Gentoo Tools
+_md5_=89cf9adb83d97c441aa79b2c22626e4c
