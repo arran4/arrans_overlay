@@ -1,0 +1,62 @@
+name: dev-util/junie-bin update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '59 8 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/dev-util-junie-bin-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./dev-util/junie-bin"
+          mkdir -p "$ebuild_dir"
+
+          tags=$(curl -s "https://raw.githubusercontent.com/JetBrains/junie/main/update-info.jsonl" | grep '"platform":"linux-amd64"' | grep -o '"version":"[^"]*"' | sed 's/"version":"\([^"]*\)"/\1/' | sort -u)
+          for tag in $tags; do
+            version="${tag}"
+
+            ebuild_file="${ebuild_dir}/junie-bin-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+
+              cp "${ebuild_dir}/files/ebuild.template" "$ebuild_file"
+
+              g2 manifest upsert-from-url "https://github.com/JetBrains/junie/releases/download/${tag}/junie-release-${version}-linux-amd64.zip" "junie-bin-${version}-junie-release-${version}-linux-amd64.zip" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/JetBrains/junie/releases/download/${tag}/junie-release-${version}-linux-aarch64.zip" "junie-bin-${version}-junie-release-${version}-linux-aarch64.zip" "${ebuild_dir}/Manifest"
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+            fi
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./dev-util/junie-bin"
+          git add "./${ebuild_dir}"
+          if git commit -m "Add ebuilds for new junie-bin releases tag ${{ steps.process_releases.outputs.generated_tag }}"; then
+            git pull --rebase &&
+            git push
+          fi || true
+        if: steps.process_releases.outputs.generated_tag
