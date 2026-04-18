@@ -43,7 +43,7 @@ jobs:
             ebuild_file="${ebuild_dir}/junie-bin-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
 
-              cp "${ebuild_dir}/files/ebuild.template" "$ebuild_file"
+              cp "${ebuild_dir}/junie-bin-9999.ebuild" "$ebuild_file"
 
               g2 manifest upsert-from-url "https://github.com/JetBrains/junie/releases/download/${tag}/junie-release-${version}-linux-amd64.zip" "junie-bin-${version}-junie-release-${version}-linux-amd64.zip" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/JetBrains/junie/releases/download/${tag}/junie-release-${version}-linux-aarch64.zip" "junie-bin-${version}-junie-release-${version}-linux-aarch64.zip" "${ebuild_dir}/Manifest"

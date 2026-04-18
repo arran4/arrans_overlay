@@ -1,13 +1,13 @@
 EAPI=8
 
-DESCRIPTION="Junie CLI"
+DESCRIPTION="JetBrains Junie CLI, a lightweight database client"
 HOMEPAGE="https://junie.jetbrains.com"
 SRC_URI="
     amd64? ( https://github.com/JetBrains/junie/releases/download/${PV}/junie-release-${PV}-linux-amd64.zip -> ${P}-junie-release-${PV}-linux-amd64.zip )
     arm64? ( https://github.com/JetBrains/junie/releases/download/${PV}/junie-release-${PV}-linux-aarch64.zip -> ${P}-junie-release-${PV}-linux-aarch64.zip )
 "
 
-LICENSE="unknown"
+LICENSE="JetBrains-User-Agreement"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 IUSE=""
@@ -27,8 +27,8 @@ src_unpack() {
 
 src_install() {
     # Install the main app directory into /opt/junie-bin
-    insinto /opt/junie-bin
-    doins -r junie-app
+    dodir /opt/junie-bin
+    cp -pPR junie-app "${ED}/opt/junie-bin/" || die "Failed to copy junie-app"
 
     # Ensure the binary is executable
     fperms +x /opt/junie-bin/junie-app/bin/junie
