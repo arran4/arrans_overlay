@@ -1,0 +1,14 @@
+EAPI=8
+DESCRIPTION= The Dart SDK, including the VM, dart2js, core libraries, and more.
+KEYWORDS=~amd64 ~arm ~arm64 ~riscv
+RDEPEND=app-arch/unzip
+HOMEPAGE=https://dart.dev/
+SLOT=0
+SRC_URI=
+  amd64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/3.11.5/sdk/dartsdk-linux-x64-release.zip -> dart-bin-3.11.5.amd64.zip )
+  arm? ( https://storage.googleapis.com/dart-archive/channels/stable/release/3.11.5/sdk/dartsdk-linux-arm-release.zip -> dart-bin-3.11.5.arm.zip )
+  arm64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/3.11.5/sdk/dartsdk-linux-arm64-release.zip -> dart-bin-3.11.5.arm64.zip )
+  riscv? ( https://storage.googleapis.com/dart-archive/channels/stable/release/3.11.5/sdk/dartsdk-linux-riscv64-release.zip -> dart-bin-3.11.5.riscv.zip )
+
+LICENSE=BSD
+_md5_=8f0c738a2fec095a9050625aac7f783a

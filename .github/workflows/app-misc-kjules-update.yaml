@@ -48,7 +48,7 @@ jobs:
       - name: Process each release
         id: process_releases
         run: |
-          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
           mkdir -p $ebuild_dir
           tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
           for tag in $tags; do
@@ -61,7 +61,7 @@ jobs:
               echo "$tag / $version doesn't match regexp";
               continue;
             fi
-            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            ebuild_file="${ebuild_dir}/${{ env.ebuild_name }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               # Create ebuild script
               {
@@ -70,8 +70,8 @@ jobs:
                 echo ""
                 echo "inherit ecm"
                 echo ""
-                echo "DESCRIPTION=\"$description\""
-                echo "HOMEPAGE=\"$homepage\""
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
                 echo 'S="${WORKDIR}/${P}"'
                 echo ""
@@ -97,14 +97,14 @@ jobs:
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
-              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${version}.tar.gz" "${ebuild_name}-${version}.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${version}.tar.gz" "${{ env.ebuild_name }}-${version}.tar.gz" "${ebuild_dir}/Manifest"
             fi
             break
           done
 
       - name: Commit and push changes
         run: |
-          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
           git add "./${ebuild_dir}"
-          git commit -m "Add ebuilds for new ${ebuild_name} releases" && git pull --rebase && git push || true
+          git commit -m "Add ebuilds for new ${{ env.ebuild_name }} releases" && git pull --rebase && git push || true
         if: steps.process_releases.conclusion == 'success'
