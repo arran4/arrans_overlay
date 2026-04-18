@@ -1,4 +1,4 @@
-# Copyright 2024 Gentoo Authors
+# Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -18,7 +18,7 @@ DEPEND="
 	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/kxmlgui:6
-	dev-libs/qtkeychain:=[qt6]
+	kde-frameworks/kwallet:6
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
