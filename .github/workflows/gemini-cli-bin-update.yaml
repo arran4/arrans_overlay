@@ -1,0 +1,99 @@
+name: Check and Update gemini-cli-bin
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check_update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Check for updates and create ebuild
+        id: update_check
+        run: |
+          LATEST_VERSION=$(npm view @google/gemini-cli version)
+          if [ -z "$LATEST_VERSION" ]; then
+            echo "Failed to get latest version from NPM"
+            exit 1
+          fi
+
+          PACKAGE="app-misc/gemini-cli-bin"
+          EBUILD_FILE="${PACKAGE}/gemini-cli-bin-${LATEST_VERSION}.ebuild"
+
+          if [ -f "$EBUILD_FILE" ]; then
+            echo "Latest version ${LATEST_VERSION} is already present."
+            echo "updated=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Creating new ebuild for version ${LATEST_VERSION}..."
+          mkdir -p ${PACKAGE}
+
+          cat << 'EBUILD_CONTENT' > "$EBUILD_FILE"
+EAPI=8
+
+DESCRIPTION="Gemini CLI"
+HOMEPAGE="https://github.com/google-gemini/gemini-cli"
+SRC_URI="https://registry.npmjs.org/@google/gemini-cli/-/gemini-cli-${PV}.tgz -> ${P}.tgz"
+
+LICENSE="Apache-2.0"
+SLOT="0"
+KEYWORDS="~amd64"
+
+DEPEND=">=net-libs/nodejs-20.0.0"
+RDEPEND="${DEPEND}"
+
+S="${WORKDIR}/package"
+
+src_install() {
+	insinto /opt/${PN}
+	doins -r bundle package.json
+
+	exeinto /opt/${PN}/bundle
+	doexe bundle/gemini.js
+
+	dosym ../../opt/${PN}/bundle/gemini.js /usr/bin/gemini
+}
+EBUILD_CONTENT
+
+          echo "updated=true" >> $GITHUB_OUTPUT
+          echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Generate Manifest and metadata
+        if: steps.update_check.outputs.updated == 'true'
+        run: |
+          # The g2 tool automatically downloads SRC_URI from ebuilds and generates Manifest and cache
+          g2 ebuild check app-misc/gemini-cli-bin/gemini-cli-bin-${{ steps.update_check.outputs.version }}.ebuild
+          g2 cache generate app-misc/gemini-cli-bin
+
+      - name: Remove duplicated ebuilds
+        if: steps.update_check.outputs.updated == 'true'
+        run: |
+          python3 scripts/remove_duplicate_ebuilds.py
+          git add -A app-misc/gemini-cli-bin
+          git restore .
+          g2 lint app-misc/gemini-cli-bin || true
+
+      - name: Commit and push changes
+        if: steps.update_check.outputs.updated == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add app-misc/gemini-cli-bin
+          git commit -m "app-misc/gemini-cli-bin: Bump to version ${{ steps.update_check.outputs.version }}"
+          git push
