@@ -1,8 +1,9 @@
 REQUIRED_USE=android? ( || ( arm64  ) ) glibc? ( || ( amd64  ) ) le? ( || ( ppc64  ) ) loong64? ( || ( amd64  ) )
-LICENSE=MIT
-HOMEPAGE=https://www.chezmoi.io/
-IUSE= android glibc le loong64
 EAPI=8
+DESCRIPTION=Manage your dotfiles across multiple diverse machines, securely.
+HOMEPAGE=https://www.chezmoi.io/
+LICENSE=MIT
+IUSE= android glibc le loong64
 SRC_URI=
   amd64? ( glibc? ( !loong64? (  https://github.com/twpayne/chezmoi/releases/download/v2.70.2/chezmoi__linux-glibc_amd64.tar.gz -> chezmoi-bin-2.70.2-chezmoi__linux-glibc_amd64.tar.gz  )  )  )
   amd64? ( !glibc? ( !loong64? (  https://github.com/twpayne/chezmoi/releases/download/v/chezmoi__linux-musl_amd64.tar.gz -> -chezmoi__linux-musl_amd64.tar.gz  )  )  )
@@ -18,5 +19,4 @@ SRC_URI=
 
 SLOT=0
 KEYWORDS=~amd64 ~arm ~arm64 ~ppc64 ~riscv ~s390 ~x86
-DESCRIPTION=Manage your dotfiles across multiple diverse machines, securely.
 _md5_=2b77c88d3212e99d27653fb46eb5dfd3

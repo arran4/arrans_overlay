@@ -1,4 +1,4 @@
-HOMEPAGE=https://github.com/arran4/kjules
+SRC_URI=https://github.com/arran4/kjules/archive/refs/tags/v0.0.8.tar.gz -> kjules-0.0.8.tar.gz
 LICENSE=MIT
 SLOT=0
 DEPEND=
@@ -8,7 +8,8 @@ DEPEND=
     kde-frameworks/ki18n:6
     kde-frameworks/kxmlgui:6
 
-SRC_URI=https://github.com/arran4/kjules/archive/refs/tags/v0.0.8.tar.gz -> kjules-0.0.8.tar.gz
+EAPI=8
+KEYWORDS=~amd64
 RDEPEND=
     dev-qt/qtbase:6
     dev-qt/qtdeclarative:6
@@ -16,8 +17,7 @@ RDEPEND=
     kde-frameworks/ki18n:6
     kde-frameworks/kxmlgui:6
 
-KEYWORDS=~amd64
-EAPI=8
-DESCRIPTION=kjules KDE application
 INHERITED=ecm
+DESCRIPTION=kjules KDE application
+HOMEPAGE=https://github.com/arran4/kjules
 _md5_=efe8998c487203f8118523a8c1355028
