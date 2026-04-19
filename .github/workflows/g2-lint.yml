@@ -32,7 +32,7 @@ jobs:
           CHANGED_FILES=$(git diff --name-only $BASE $HEAD || true)
 
           # Extract unique package directories (e.g., category/package)
-          DIRS=$(echo "$CHANGED_FILES" | grep -E "^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+/" | cut -d/ -f1,2 | sort -u | tr '\n' ' ' || true)
+          DIRS=$(echo "$CHANGED_FILES" | grep -E "^[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+/" | cut -d/ -f1,2 | sort -u | tr '\n' ' ' || true)
 
           if [ -z "$DIRS" ]; then
             echo "No package files changed. Skipping lint."
