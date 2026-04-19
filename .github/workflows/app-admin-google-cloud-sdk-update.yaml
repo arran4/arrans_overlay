@@ -1,0 +1,101 @@
+name: Update app-admin/google-cloud-sdk
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch Latest Google Cloud CLI Version
+        id: fetch_version
+        run: |
+          LATEST_URL=$(curl -w "%{url_effective}\n" -I -L -s -S https://cloud.google.com/sdk/docs/install-sdk | grep -o "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-[0-9.]*-linux-x86_64.tar.gz" | head -n 1)
+          VERSION=$(echo "$LATEST_URL" | sed -nE 's/.*google-cloud-cli-([0-9.]+)-linux-x86_64.tar.gz/\1/p')
+          echo "latest_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Found version: $VERSION"
+
+      - name: Check if Ebuild Exists
+        id: check_ebuild
+        run: |
+          EBUILD_PATH="app-admin/google-cloud-sdk/google-cloud-sdk-${{ steps.fetch_version.outputs.latest_version }}.ebuild"
+          if [ -f "$EBUILD_PATH" ]; then
+            echo "Ebuild already exists. No update needed."
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "ebuild_path=$EBUILD_PATH" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Ebuild
+        if: steps.check_ebuild.outputs.exists == 'false'
+        run: |
+          VERSION="${{ steps.fetch_version.outputs.latest_version }}"
+          EBUILD_PATH="${{ steps.check_ebuild.outputs.ebuild_path }}"
+          cat << EBUILD > "$EBUILD_PATH"
+          EAPI=8
+
+          DESCRIPTION="Google Cloud SDK"
+          HOMEPAGE="https://cloud.google.com/sdk/"
+          SRC_URI="
+		amd64? ( https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-\${PV}-linux-x86_64.tar.gz -> \${P}-linux-x86_64.tar.gz )
+		x86? ( https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-\${PV}-linux-x86.tar.gz -> \${P}-linux-x86.tar.gz )
+		arm64? ( https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-\${PV}-linux-arm.tar.gz -> \${P}-linux-arm.tar.gz )
+          "
+
+          LICENSE="Apache-2.0"
+          SLOT="0"
+          KEYWORDS="~amd64 ~x86 ~arm64"
+          IUSE=""
+
+          DEPEND=""
+          RDEPEND="\${DEPEND}"
+
+          S="\${WORKDIR}/google-cloud-sdk"
+
+          QA_PREBUILT="*"
+
+          src_install() {
+		dodir /opt/\${PN}
+		cp -a * "\${ED}/opt/\${PN}/" || die "failed to install files"
+
+		dodir /usr/bin
+		for i in bq docker-credential-gcloud gcloud git-credential-gcloud.sh gsutil java_dev_appserver.sh; do
+			dosym ../../opt/\${PN}/bin/\${i} /usr/bin/\${i}
+		done
+          }
+          EBUILD
+
+      - name: Generate Manifest
+        if: steps.check_ebuild.outputs.exists == 'false'
+        uses: arran4/g2-action@v1.2
+        with:
+            version: 'latest'
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            mode: install
+      - name: Upsert manifest
+        if: steps.check_ebuild.outputs.exists == 'false'
+        run: |
+            VERSION="${{ steps.fetch_version.outputs.latest_version }}"
+            g2 manifest upsert-from-url https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-${VERSION}-linux-x86_64.tar.gz google-cloud-sdk-${VERSION}-linux-x86_64.tar.gz app-admin/google-cloud-sdk/
+            g2 manifest upsert-from-url https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-${VERSION}-linux-x86.tar.gz google-cloud-sdk-${VERSION}-linux-x86.tar.gz app-admin/google-cloud-sdk/
+            g2 manifest upsert-from-url https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-${VERSION}-linux-arm.tar.gz google-cloud-sdk-${VERSION}-linux-arm.tar.gz app-admin/google-cloud-sdk/
+
+      - name: Remove Old Ebuilds
+        if: steps.check_ebuild.outputs.exists == 'false'
+        run: python scripts/remove_duplicate_ebuilds.py || true
+
+      - name: Commit Changes
+        if: steps.check_ebuild.outputs.exists == 'false'
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add app-admin/google-cloud-sdk/
+          git commit -m "Update app-admin/google-cloud-sdk to ${{ steps.fetch_version.outputs.latest_version }}"
+          git push\${empty}
