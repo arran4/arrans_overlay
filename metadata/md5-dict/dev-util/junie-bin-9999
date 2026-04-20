@@ -1,0 +1,9 @@
+BDEPEND=app-arch/unzip
+DESCRIPTION=JetBrains Junie CLI, a lightweight database client
+LICENSE=JetBrains-User-Agreement
+EAPI=8
+SLOT=0
+KEYWORDS=~amd64 ~arm64
+HOMEPAGE=https://junie.jetbrains.com
+RDEPEND=virtual/jre
+_md5_=30f6f6a2e1d3f61301711f741bf95a3a
