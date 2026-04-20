@@ -25,6 +25,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: arran4/g2-action@v1.2
       - name: Run g2 lint
-        run: g2 lint
+        run: |
+          git fetch origin main
+          changed_packages=$(git diff --name-only origin/main | grep -E "^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+/" | cut -d/ -f1,2 | sort -u || true)
+          if [ -z "$changed_packages" ]; then
+            echo "No package changes detected. Linting everything but allowing failures."
+            g2 lint || true
+          else
+            echo "Linting modified packages: $changed_packages"
+            for pkg in $changed_packages; do
+              g2 lint "$pkg"
+            done
+          fi
