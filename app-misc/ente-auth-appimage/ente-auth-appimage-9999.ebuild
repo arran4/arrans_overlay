@@ -3,7 +3,7 @@ DESCRIPTION="Ente's 2FA solution"
 HOMEPAGE="https://ente.io/blog/auth/"
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~amd64"
+KEYWORDS="~amd64 ~arm64"
 PROPERTIES="live"
 IUSE=""
 BDEPEND="sys-fs/squashfs-tools[zstd] net-misc/curl net-misc/jq"
@@ -20,8 +20,12 @@ src_unpack() {
   if [[ -z "${tag}" ]]; then
       die "Failed to get latest release tag"
   fi
-  local download_url="https://github.com/ente-io/ente/releases/download/${tag}/ente-${tag}-x86_64.AppImage"
-  wget -qO "ente_auth.AppImage" "${download_url}" || die "Failed to download AppImage"
+
+  local arch="x86_64"
+  if use arm64; then arch="arm64"; fi
+  local download_url="https://github.com/ente-io/ente/releases/download/${tag}/ente-${tag}-${arch}.AppImage"
+
+  curl -sL -o "ente_auth.AppImage" "${download_url}" || die "Failed to download AppImage"
   chmod a+x "ente_auth.AppImage" || die "Can't chmod archive file"
   "./ente_auth.AppImage" --appimage-extract || die "Failed to extract appimage"
 }
