@@ -16,12 +16,12 @@ QA_PREBUILT="opt/bin/ente_auth.AppImage"
 inherit xdg-utils
 
 SRC_URI="
-  amd64? ( https://github.com/ente-io/ente/releases/download/auth-v4.4.18-beta/ente-auth-v4.4.18-beta-x86_64.AppImage -> ${P}-ente-auth-v4.4.18-beta-x86_64.AppImage )
+  amd64? ( https://github.com/ente-io/ente/releases/download/auth-v4.4.17/ente-auth-v4.4.17-x86_64.AppImage -> ${P}-ente-auth-v4.4.17-x86_64.AppImage )
 "
 
 src_unpack() {
   if use amd64; then
-    cp "${DISTDIR}/${P}-ente-auth-v4.4.18-beta-x86_64.AppImage" "ente_auth.AppImage"  || die "Can't copy downloaded file"
+    cp "${DISTDIR}/${P}-ente-auth-v4.4.17-x86_64.AppImage" "ente_auth.AppImage"  || die "Can't copy downloaded file"
   fi
   chmod a+x "ente_auth.AppImage"  || die "Can't chmod archive file"
   "./ente_auth.AppImage" --appimage-extract || die "Failed to extract appimage"
@@ -29,8 +29,8 @@ src_unpack() {
 
 src_prepare() {
   sed -i 's:^Exec=.*:Exec=/opt/bin/ente_auth.AppImage:' 'squashfs-root/enteauth.desktop'
-  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm {} \;
-  find squashfs-root -type d -exec rmdir -p --ignore-fail-on-non-empty {} \;
+  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm {} \; 
+  find squashfs-root -type d -exec rmdir -p --ignore-fail-on-non-empty {} \; 
   rm "squashfs-root/usr/lib/libcrypto.so.3" || die "Failed to remove bundled libcrypto.so.3"
   rm "squashfs-root/usr/lib/libssl.so.3" || die "Failed to remove bundled libssl.so.3"
   local offset=$(./"ente_auth.AppImage" --appimage-offset) || die "Failed to get appimage offset"
@@ -55,3 +55,4 @@ src_install() {
 pkg_postinst() {
   xdg_desktop_database_update
 }
+

@@ -16,12 +16,12 @@ QA_PREBUILT="opt/bin/ente_auth.AppImage"
 inherit xdg-utils
 
 SRC_URI="
-  amd64? ( https://github.com/ente-io/ente/releases/download/auth-v4.4.17/ente-auth-v4.4.17-x86_64.AppImage -> ${P}-ente-auth-v4.4.17-x86_64.AppImage )
+  amd64? ( https://github.com/ente-io/ente/releases/download/auth-v4.4.18-beta/ente-auth-v4.4.18-beta-x86_64.AppImage -> ${P}-ente-auth-v4.4.18-beta-x86_64.AppImage )
 "
 
 src_unpack() {
   if use amd64; then
-    cp "${DISTDIR}/${P}-ente-auth-v4.4.17-x86_64.AppImage" "ente_auth.AppImage"  || die "Can't copy downloaded file"
+    cp "${DISTDIR}/${P}-ente-auth-v4.4.18-beta-x86_64.AppImage" "ente_auth.AppImage"  || die "Can't copy downloaded file"
   fi
   chmod a+x "ente_auth.AppImage"  || die "Can't chmod archive file"
   "./ente_auth.AppImage" --appimage-extract || die "Failed to extract appimage"
@@ -55,3 +55,4 @@ src_install() {
 pkg_postinst() {
   xdg_desktop_database_update
 }
+
