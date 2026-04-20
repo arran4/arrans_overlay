@@ -1,0 +1,11 @@
+DESCRIPTION=The Console Display Manager (Go Port)
+HOMEPAGE=https://github.com/arran4/gocdm
+SLOT=0
+SRC_URI=
+  amd64? (  https://github.com/arran4/gocdm/releases/download/v0.0.21/gocdm_Linux_x86_64.tar.gz -> gocdm-bin-0.0.21-gocdm_Linux_x86_64.tar.gz  )
+  arm64? (  https://github.com/arran4/gocdm/releases/download/v/gocdm_Linux_arm64.tar.gz -> -gocdm_Linux_arm64.tar.gz  )
+
+LICENSE=MIT
+EAPI=8
+KEYWORDS=~amd64 ~arm64
+_md5_=124efd4a3d3c1515b4f1b2d3593851d6

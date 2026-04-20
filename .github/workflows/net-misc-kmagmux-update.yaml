@@ -1,0 +1,107 @@
+name: net-misc/kmagmux Update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/net-misc-kmagmux-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ebuild_category: net-misc
+  ebuild_name: kmagmux
+  github_owner: arran4
+  github_repo: KMagMux
+  description: "Torrent file and Magnet link handler for routing to programs / services."
+  homepage: "https://github.com/arran4/KMagMux"
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          mkdir -p $ebuild_dir
+          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          for tag in $tags; do
+            version="${tag#v}"
+            if [ "${version}" = "${tag}" ]; then
+              echo "$version == $tag so there is no V removed skipping"
+              continue
+            fi
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+              echo "$tag / $version doesn't match regexp";
+              continue;
+            fi
+            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+              # Create ebuild script
+              {
+                echo "# Copyright $(date +%Y) Gentoo Authors"
+                echo "# Distributed under the terms of the GNU General Public License v2"
+                echo ""
+                echo "EAPI=8"
+                echo ""
+                echo "KFMIN=6.0.0"
+                echo "QTMIN=6.6.2"
+                echo "inherit ecm"
+                echo ""
+                echo "DESCRIPTION=\"$description\""
+                echo "HOMEPAGE=\"$homepage\""
+                echo 'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
+                echo ""
+                echo 'LICENSE="GPL-3.0-or-later"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="~amd64"'
+                                echo 'DEPEND="'
+                echo '	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]'
+                echo '	kde-frameworks/kcoreaddons:6'
+                echo '	kde-frameworks/kxmlgui:6'
+                echo '	dev-libs/qtkeychain:=[qt6]'
+                echo '"'
+                echo 'RDEPEND="${DEPEND}"'
+                echo 'BDEPEND="'
+                echo '	virtual/pkgconfig'
+                echo '"'
+                echo ""
+                echo 'S="${WORKDIR}/${{env.github_repo}}-${PV}"'
+              } > $ebuild_file
+
+              # Generate the manifest for the new ebuild
+              g2 manifest upsert-from-url "https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${version}.tar.gz" "${ebuild_name}-${version}.tar.gz" "${ebuild_dir}/Manifest"
+            fi
+            break
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${ebuild_category}/${ebuild_name}"
+          git add "./${ebuild_dir}"
+          git commit -m "Add ebuilds for new ${ebuild_name} releases" && git pull --rebase && git push || true
+        if: steps.process_releases.conclusion == 'success'
