@@ -12,18 +12,11 @@ SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 IUSE=""
 
-RDEPEND="dev-java/openjdk"
+RDEPEND="virtual/jre"
 BDEPEND="app-arch/unzip"
 
 S="${WORKDIR}"
 
-src_unpack() {
-    if use amd64; then
-        unpack "${P}-junie-release-${PV}-linux-amd64.zip"
-    elif use arm64; then
-        unpack "${P}-junie-release-${PV}-linux-aarch64.zip"
-    fi
-}
 
 src_install() {
     # Install the main app directory into /opt/junie-bin
@@ -34,8 +27,7 @@ src_install() {
     fperms +x /opt/junie-bin/junie-app/bin/junie
 
     # Create a wrapper or symlink in /opt/bin
-    dodir /opt/bin
-    dosym ../junie-bin/junie-app/bin/junie /opt/bin/junie
+    dosym ../../opt/junie-bin/junie-app/bin/junie /usr/bin/junie
 
     # Install icon
     if [[ -f junie-app/lib/junie.png ]]; then

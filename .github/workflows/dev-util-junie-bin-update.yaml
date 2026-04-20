@@ -36,7 +36,7 @@ jobs:
           ebuild_dir="./dev-util/junie-bin"
           mkdir -p "$ebuild_dir"
 
-          tags=$(curl -s "https://raw.githubusercontent.com/JetBrains/junie/main/update-info.jsonl" | grep '"platform":"linux-amd64"' | grep -o '"version":"[^"]*"' | sed 's/"version":"\([^"]*\)"/\1/' | sort -u)
+          tags=$(curl -s "https://raw.githubusercontent.com/JetBrains/junie/main/update-info.jsonl" | grep '"platform":"linux-amd64"' | grep -o '"version":"[^"]*"' | sed 's/"version":"\([^"]*\)"/\1/' | sort -u -V -r)
           for tag in $tags; do
             version="${tag}"
 
@@ -44,10 +44,14 @@ jobs:
             if [ ! -f "$ebuild_file" ]; then
 
               cp "${ebuild_dir}/junie-bin-9999.ebuild" "$ebuild_file"
+              sed -i 's/SRC_URI=""/SRC_URI="\n    amd64? ( https:\/\/github.com\/JetBrains\/junie\/releases\/download\/\${PV}\/junie-release-\${PV}-linux-amd64.zip -> \${P}-junie-release-\${PV}-linux-amd64.zip )\n    arm64? ( https:\/\/github.com\/JetBrains\/junie\/releases\/download\/\${PV}\/junie-release-\${PV}-linux-aarch64.zip -> \${P}-junie-release-\${PV}-linux-aarch64.zip )\n"/' "$ebuild_file"
+
 
               g2 manifest upsert-from-url "https://github.com/JetBrains/junie/releases/download/${tag}/junie-release-${version}-linux-amd64.zip" "junie-bin-${version}-junie-release-${version}-linux-amd64.zip" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/JetBrains/junie/releases/download/${tag}/junie-release-${version}-linux-aarch64.zip" "junie-bin-${version}-junie-release-${version}-linux-aarch64.zip" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+              python3 scripts/remove_duplicate_ebuilds.py dev-util/junie-bin
+              break
             fi
           done
 
