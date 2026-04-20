@@ -1037,6 +1037,16 @@ SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 IUSE=""
 
+DEPEND="
+	dev-db/sqlite:3
+	dev-libs/openssl:=
+	dev-libs/wayland
+	media-libs/alsa-lib
+	sys-apps/dbus
+"
+RDEPEND="${DEPEND}"
+BDEPEND="virtual/pkgconfig"
+
 S="${WORKDIR}/codex-rust-v${PV}/codex-rs"
 
 src_unpack() {
@@ -1044,9 +1054,6 @@ src_unpack() {
 	cargo_src_unpack
 }
 
-src_prepare() {
-	default
-}
 
 src_install() {
 	cargo_src_install

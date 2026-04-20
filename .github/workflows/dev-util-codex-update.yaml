@@ -112,6 +112,16 @@ jobs:
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo 'IUSE=""'
+                echo ""
+                echo "DEPEND=\""
+                echo "	dev-db/sqlite:3"
+                echo "	dev-libs/openssl:="
+                echo "	dev-libs/wayland"
+                echo "	media-libs/alsa-lib"
+                echo "	sys-apps/dbus"
+                echo "\""
+                echo "RDEPEND=\"${DEPEND}\""
+                echo "BDEPEND=\"virtual/pkgconfig\""
                 echo ''
                 echo 'S="${WORKDIR}/codex-rust-v${PV}/codex-rs"'
                 echo ''
@@ -120,9 +130,6 @@ jobs:
                 echo '	cargo_src_unpack'
                 echo '}'
                 echo ''
-                echo 'src_prepare() {'
-                echo '	default'
-                echo '}'
                 echo ''
                 echo 'src_install() {'
                 echo '	cargo_src_install'
