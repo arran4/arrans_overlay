@@ -1,4 +1,5 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-04-18 01:58:23.164052193 +0000 UTC m=+0.006687940
+# This workflow was originally generated but is now manually maintained.
+# Reason: Upstream uses a non-standard "rust-v" tag prefix which needs custom stripping logic.
 
 name: dev-util/codex-bin update
 
@@ -73,9 +74,9 @@ jobs:
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
           for tag in $tags; do
-            version="${tag#v}"
+            version="${tag#rust-v}"
             if [ "${version}" = "${tag}" ]; then
-                echo "$version == $tag so there is no v removed skipping"
+                echo "$version == $tag so there is no rust-v removed skipping"
                 continue
             fi
             # shellcheck disable=SC2034
@@ -105,8 +106,8 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/codex-x86_64-unknown-linux-gnu.tar.gz -> \${P}-codex-x86_64-unknown-linux-gnu.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/codex-aarch64-unknown-linux-gnu.tar.gz -> \${P}-codex-aarch64-unknown-linux-gnu.tar.gz  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/rust-v\${PV}/codex-x86_64-unknown-linux-gnu.tar.gz -> \${P}-codex-x86_64-unknown-linux-gnu.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/rust-v\${PV}/codex-aarch64-unknown-linux-gnu.tar.gz -> \${P}-codex-aarch64-unknown-linux-gnu.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
