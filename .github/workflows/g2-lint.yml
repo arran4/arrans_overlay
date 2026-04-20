@@ -1,0 +1,42 @@
+name: G2 Lint
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+      - name: Run g2 lint on changed packages
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BASE="origin/${{ github.base_ref }}"
+            HEAD="HEAD"
+          else
+            BASE="${{ github.event.before }}"
+            HEAD="${{ github.sha }}"
+            if [ -z "$BASE" ] || [ "$BASE" == "0000000000000000000000000000000000000000" ]; then
+               BASE="HEAD~1"
+            fi
+          fi
+
+          echo "Comparing $BASE to $HEAD"
+          CHANGED_FILES=$(git diff --name-only $BASE $HEAD || true)
+
+          # Extract unique package directories (e.g., category/package)
+          DIRS=$(echo "$CHANGED_FILES" | grep -E "^[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+/" | cut -d/ -f1,2 | sort -u | tr '\n' ' ' || true)
+
+          if [ -z "$DIRS" ]; then
+            echo "No package files changed. Skipping lint."
+          else
+            echo "Running g2 lint on changed directories: $DIRS"
+            g2 lint $DIRS
+          fi
