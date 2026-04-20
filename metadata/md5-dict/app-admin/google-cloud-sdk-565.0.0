@@ -1,0 +1,12 @@
+LICENSE=Apache-2.0
+SLOT=0
+EAPI=8
+DESCRIPTION=Google Cloud SDK
+SRC_URI=
+	amd64? ( https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-565.0.0-linux-x86_64.tar.gz -> google-cloud-sdk-565.0.0-linux-x86_64.tar.gz )
+	x86? ( https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli--linux-x86.tar.gz -> -linux-x86.tar.gz )
+	arm64? ( https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli--linux-arm.tar.gz -> -linux-arm.tar.gz )
+
+KEYWORDS=~amd64 ~x86 ~arm64
+HOMEPAGE=https://cloud.google.com/sdk/
+_md5_=69d74e6dcd64cbaa8ea5f18660e8efec

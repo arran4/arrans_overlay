@@ -1,0 +1,23 @@
+LICENSE=MIT
+KEYWORDS=~amd64
+DEPEND=
+    dev-qt/qtbase:6
+    dev-qt/qtdeclarative:6
+    kde-frameworks/kcoreaddons:6
+    kde-frameworks/ki18n:6
+    kde-frameworks/kxmlgui:6
+
+SRC_URI=https://github.com/arran4/kjules/archive/refs/tags/v0.0.15.tar.gz -> kjules-0.0.15.tar.gz
+SLOT=0
+EAPI=8
+DESCRIPTION=kjules KDE application
+HOMEPAGE=https://github.com/arran4/kjules
+RDEPEND=
+    dev-qt/qtbase:6
+    dev-qt/qtdeclarative:6
+    kde-frameworks/kcoreaddons:6
+    kde-frameworks/ki18n:6
+    kde-frameworks/kxmlgui:6
+
+INHERITED=ecm
+_md5_=efe8998c487203f8118523a8c1355028
