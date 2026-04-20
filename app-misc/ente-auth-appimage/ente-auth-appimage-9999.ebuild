@@ -1,29 +1,28 @@
-# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-ente-auth-appimage-update.yaml
 EAPI=8
 DESCRIPTION="Ente's 2FA solution"
 HOMEPAGE="https://ente.io/blog/auth/"
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
+PROPERTIES="live"
 IUSE=""
-BDEPEND="sys-fs/squashfs-tools[zstd]"
+BDEPEND="sys-fs/squashfs-tools[zstd] net-misc/curl net-misc/jq"
 DEPEND=""
 RDEPEND="sys-libs/glibc sys-libs/zlib"
 S="${WORKDIR}"
-RESTRICT="strip"
+RESTRICT="strip network-sandbox"
 QA_PREBUILT="opt/bin/ente_auth.AppImage"
 
 inherit xdg-utils
 
-SRC_URI="
-  amd64? ( https://github.com/ente-io/ente/releases/download/auth-v4.4.17/ente-auth-v4.4.17-x86_64.AppImage -> ${P}-ente-auth-v4.4.17-x86_64.AppImage )
-"
-
 src_unpack() {
-  if use amd64; then
-    cp "${DISTDIR}/${P}-ente-auth-v4.4.17-x86_64.AppImage" "ente_auth.AppImage"  || die "Can't copy downloaded file"
+  local tag=$(curl -s --header "Accept: application/vnd.github+json" https://api.github.com/repos/ente-io/ente/releases | jq -r '.[]? | select(type=="object" and has("tag_name") and (.tag_name | startswith("auth-v"))) | .tag_name' | head -n 1)
+  if [[ -z "${tag}" ]]; then
+      die "Failed to get latest release tag"
   fi
-  chmod a+x "ente_auth.AppImage"  || die "Can't chmod archive file"
+  local download_url="https://github.com/ente-io/ente/releases/download/${tag}/ente-${tag}-x86_64.AppImage"
+  wget -qO "ente_auth.AppImage" "${download_url}" || die "Failed to download AppImage"
+  chmod a+x "ente_auth.AppImage" || die "Can't chmod archive file"
   "./ente_auth.AppImage" --appimage-extract || die "Failed to extract appimage"
 }
 
@@ -55,4 +54,3 @@ src_install() {
 pkg_postinst() {
   xdg_desktop_database_update
 }
-
