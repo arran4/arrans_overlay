@@ -26,6 +26,7 @@ src_unpack() {
   local download_url="https://github.com/ente-io/ente/releases/download/${tag}/ente-${tag}-${arch}.AppImage"
 
   curl -sL -o "ente_auth.AppImage" "${download_url}" || die "Failed to download AppImage"
+
   chmod a+x "ente_auth.AppImage" || die "Can't chmod archive file"
   "./ente_auth.AppImage" --appimage-extract || die "Failed to extract appimage"
 }
