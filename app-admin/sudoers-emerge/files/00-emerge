@@ -1,1 +1,1 @@
-ALL ALL=(ALL:ALL) NOPASSWD: /usr/bin/emerge --sync, /usr/bin/emerge -avuDNU --with-bdeps=y @world --keep-going=y
+%wheel ALL=(ALL:ALL) NOPASSWD: /usr/bin/emerge --sync, /usr/bin/emerge -avuDNU --with-bdeps=y @world --keep-going=y
