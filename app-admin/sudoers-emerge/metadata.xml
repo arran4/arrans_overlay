@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-    <maintainer type="person">
-        <email>gentoo@arran4.com</email>
-        <name>Arran Ubels</name>
-    </maintainer>
+  <maintainer type="person">
+    <email>gentoo@arran4.com</email>
+    <name>Arran Ubels</name>
+  </maintainer>
 </pkgmetadata>
