@@ -36,3 +36,7 @@ BDEPEND="
 	virtual/pkgconfig
 	kde-frameworks/extra-cmake-modules:0
 "
+
+PATCHES=(
+	"${FILESDIR}/${PN}-0.0.3-icon.patch"
+)

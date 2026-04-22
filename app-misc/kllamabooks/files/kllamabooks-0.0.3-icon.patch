@@ -1,0 +1,13 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -120,7 +120,7 @@
+ add_test(NAME test_TemplateParser COMMAND test_TemplateParser)
+
+-install(FILES src/assets/icon.svg
++install(FILES src/assets/icon.png
+     DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
+-    RENAME kllamabooks.svg
++    RENAME kllamabooks.png
+ )
+
+ install(FILES src/kllamabooks.notifyrc
