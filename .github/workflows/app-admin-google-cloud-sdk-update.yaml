@@ -16,8 +16,7 @@ jobs:
       - name: Fetch Latest Google Cloud CLI Version
         id: fetch_version
         run: |
-          LATEST_URL=$(curl -w "%{url_effective}\n" -I -L -s -S https://cloud.google.com/sdk/docs/install-sdk | grep -o "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-[0-9.]*-linux-x86_64.tar.gz" | head -n 1)
-          VERSION=$(echo "$LATEST_URL" | sed -nE 's/.*google-cloud-cli-([0-9.]+)-linux-x86_64.tar.gz/\1/p')
+          VERSION=$(curl -s -L https://cloud.google.com/sdk/docs/release-notes | grep -m 1 -oE 'data-text="[0-9]+\.[0-9]+\.[0-9]+' | cut -d '"' -f 2)
           echo "latest_version=$VERSION" >> $GITHUB_OUTPUT
           echo "Found version: $VERSION"
 
