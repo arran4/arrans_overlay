@@ -36,3 +36,8 @@ BDEPEND="
 	virtual/pkgconfig
 	kde-frameworks/extra-cmake-modules:0
 "
+
+src_prepare() {
+	sed -i -e 's/icon.svg/icon.png/g' CMakeLists.txt || die
+	cmake_src_prepare
+}
