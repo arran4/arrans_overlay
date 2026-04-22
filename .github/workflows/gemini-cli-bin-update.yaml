@@ -61,18 +61,18 @@ jobs:
           S="\${WORKDIR}"
 
           src_install() {
-		insinto /opt/\${PN}
-		doins -r .
+            insinto /opt/\${PN}
+            doins -r .
 
-		exeinto /opt/\${PN}
-		doexe gemini.js
+            exeinto /opt/\${PN}
+            doexe gemini.js
 
-		dosym ../../opt/\${PN}/gemini.js /usr/bin/gemini
+            dosym ../../opt/\${PN}/gemini.js /usr/bin/gemini
           }
           EBUILD_CONTENT
 
           sed -i 's/^ *//' "$EBUILD_FILE"
-          sed -i 's/^	*//' "$EBUILD_FILE"
+          sed -i 's/^\t*//' "$EBUILD_FILE"
 
           echo "updated=true" >> $GITHUB_OUTPUT
           echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
