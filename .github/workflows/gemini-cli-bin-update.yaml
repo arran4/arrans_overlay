@@ -72,7 +72,7 @@ jobs:
           EBUILD_CONTENT
 
           sed -i 's/^ *//' "$EBUILD_FILE"
-          sed -i 's/^	*//' "$EBUILD_FILE"
+          sed -i 's/^\t*//' "$EBUILD_FILE"
 
           echo "updated=true" >> $GITHUB_OUTPUT
           echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
