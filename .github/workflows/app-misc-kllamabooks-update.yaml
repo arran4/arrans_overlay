@@ -1,0 +1,78 @@
+# Manually maintained: Does not use current.config as it builds from source and overlay_workflow_builder_generator doesn't natively support it.
+name: app-misc/kllamabooks Update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-misc-kllamabooks-update.yaml'
+      - 'app-misc/kllamabooks/9999.ebuild'
+
+concurrency:
+  group: ci-${{ github.ref }}-kllamabooks
+  cancel-in-progress: false
+
+env:
+  ebuild_category: app-misc
+  ebuild_name: kllamabooks
+  github_owner: arran4
+  github_repo: kllamabooks
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget jq coreutils
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
+          mkdir -p $ebuild_dir
+          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          for tag in $tags; do
+            version="${tag#v}"
+            if [ "${version}" = "${tag}" ]; then
+              echo "$version == $tag so there is no V removed skipping"
+              continue
+            fi
+            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+              echo "$tag / $version doesn't match regexp";
+              continue;
+            fi
+            ebuild_file="${ebuild_dir}/${{ env.ebuild_name }}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+              cp "${ebuild_dir}/9999.ebuild" "$ebuild_file"
+              sed -i "s/Copyright [0-9]*/Copyright $(date +%Y)/" "$ebuild_file"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/archive/refs/tags/v${version}.tar.gz" "${{ env.ebuild_name }}-${version}.tar.gz" "${ebuild_dir}/Manifest"
+            fi
+            break
+          done
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
+          git add "${ebuild_dir}"
+          git commit -m "Add ebuilds for new ${{ env.ebuild_name }} releases" && git pull --rebase && git push || true
+        if: steps.process_releases.conclusion == 'success'
