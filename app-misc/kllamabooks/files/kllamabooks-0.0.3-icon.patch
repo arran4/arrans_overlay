@@ -1,12 +1,14 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -120,7 +120,7 @@
+@@ -119,9 +119,9 @@
+ target_link_libraries(test_TemplateParser Qt6::Test Qt6::Core)
  add_test(NAME test_TemplateParser COMMAND test_TemplateParser)
 
 -install(FILES src/assets/icon.svg
-+install(FILES src/assets/icon.png
-     DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
+-    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
 -    RENAME kllamabooks.svg
++install(FILES src/assets/icon.png
++    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps
 +    RENAME kllamabooks.png
  )
 
