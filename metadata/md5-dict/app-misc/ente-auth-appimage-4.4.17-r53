@@ -1,0 +1,14 @@
+BDEPEND=sys-fs/squashfs-tools[zstd]
+RDEPEND=sys-libs/glibc sys-libs/zlib
+HOMEPAGE=https://ente.io/blog/auth/
+KEYWORDS=~amd64
+RESTRICT=strip
+INHERITED=xdg-utils
+DESCRIPTION=Ente's 2FA solution
+SRC_URI=
+  amd64? ( https://github.com/ente-io/ente/releases/download/auth-v4.4.17/ente-auth-v4.4.17-x86_64.AppImage -> ente-auth-appimage-4.4.17-r53-ente-auth-v4.4.17-x86_64.AppImage )
+
+EAPI=8
+SLOT=0
+LICENSE=MIT
+_md5_=e8c28097e2ae1663e29c712166636aae
