@@ -1,0 +1,23 @@
+INHERITED=ecm
+DESCRIPTION=kjules KDE application
+EAPI=8
+LICENSE=MIT
+KEYWORDS=~amd64
+DEPEND=
+    dev-qt/qtbase:6
+    dev-qt/qtdeclarative:6
+    kde-frameworks/kcoreaddons:6
+    kde-frameworks/ki18n:6
+    kde-frameworks/kxmlgui:6
+
+HOMEPAGE=https://github.com/arran4/kjules
+SRC_URI=https://github.com/arran4/kjules/archive/refs/tags/v0.0.21.tar.gz -> kjules-0.0.21.tar.gz
+SLOT=0
+RDEPEND=
+    dev-qt/qtbase:6
+    dev-qt/qtdeclarative:6
+    kde-frameworks/kcoreaddons:6
+    kde-frameworks/ki18n:6
+    kde-frameworks/kxmlgui:6
+
+_md5_=efe8998c487203f8118523a8c1355028
