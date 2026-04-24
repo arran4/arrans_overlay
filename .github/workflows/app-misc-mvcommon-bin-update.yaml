@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: app-misc
   epn: mvcommon-bin
   description: "Tool for moving files into a folder where they have a common prefix"

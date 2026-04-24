@@ -21,6 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: app-misc
   epn: ente-auth-appimage
   description: "Ente's 2FA solution"

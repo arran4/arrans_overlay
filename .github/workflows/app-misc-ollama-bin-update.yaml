@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: app-misc
   epn: ollama-bin
   description: "Get up and running with Llama 3, Mistral, Gemma, and other large language models."

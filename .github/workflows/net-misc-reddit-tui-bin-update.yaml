@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: net-misc
   epn: reddit-tui-bin
   description: "A lightweight terminal application for browsing Reddit from your command line."

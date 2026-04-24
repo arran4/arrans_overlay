@@ -13,7 +13,7 @@ SRC_URI="https://github.com/openai/codex/archive/refs/tags/rust-v${PV}.tar.gz ->
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
-IUSE=""
+S="${WORKDIR}/codex-rust-v${PV}/codex-rs"
 
 DEPEND="
 	dev-db/sqlite:3
@@ -22,16 +22,13 @@ DEPEND="
 	media-libs/alsa-lib
 	sys-apps/dbus
 "
-RDEPEND=""
+RDEPEND="${DEPEND}"
 BDEPEND="virtual/pkgconfig"
-
-S="${WORKDIR}/codex-rust-v${PV}/codex-rs"
 
 src_unpack() {
 	default
 	cargo_src_unpack
 }
-
 
 src_install() {
 	cargo_src_install

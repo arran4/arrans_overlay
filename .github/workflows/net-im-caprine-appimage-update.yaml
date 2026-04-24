@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: net-im
   epn: caprine-appimage
   description: "Elegant Facebook Messenger desktop app"

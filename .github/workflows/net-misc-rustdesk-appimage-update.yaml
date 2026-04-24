@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: net-misc
   epn: rustdesk-appimage
   description: "An open-source remote desktop application designed for self-hosting, as an alternative to TeamViewer."

@@ -19,6 +19,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: dev-util
   epn: codex
   description: "Lightweight coding agent that runs in your terminal"
@@ -111,7 +112,7 @@ jobs:
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
-                echo 'IUSE=""'
+                echo 'S="${WORKDIR}/codex-rust-v${PV}/codex-rs"'
                 echo ""
                 echo "DEPEND=\""
                 echo "	dev-db/sqlite:3"
@@ -120,16 +121,13 @@ jobs:
                 echo "	media-libs/alsa-lib"
                 echo "	sys-apps/dbus"
                 echo "\""
-                echo "RDEPEND=\"${DEPEND}\""
+                echo "RDEPEND=\"\${DEPEND}\""
                 echo "BDEPEND=\"virtual/pkgconfig\""
-                echo ''
-                echo 'S="${WORKDIR}/codex-rust-v${PV}/codex-rs"'
                 echo ''
                 echo 'src_unpack() {'
                 echo '	default'
                 echo '	cargo_src_unpack'
                 echo '}'
-                echo ''
                 echo ''
                 echo 'src_install() {'
                 echo '	cargo_src_install'

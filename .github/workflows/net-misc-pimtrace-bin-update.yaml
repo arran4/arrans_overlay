@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: net-misc
   epn: pimtrace-bin
   description: "A CLI tool for preforming queries on ical and csv files"

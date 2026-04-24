@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: app-misc
   epn: chatbox-appimage
   description: "User-friendly Desktop Client App for AI Models/LLMs (GPT, Claude, Gemini, Ollama...)"

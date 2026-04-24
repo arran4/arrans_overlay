@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: dev-vcs
   epn: git-tag-inc-bin
   description: "Yet another semantic version incrementor and tagger for git"

@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: app-text
   epn: md2png-bin
   description: "Render Markdown directly to PNG or JPEG images with a single static Go binary."

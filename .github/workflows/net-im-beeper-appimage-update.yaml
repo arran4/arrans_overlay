@@ -12,6 +12,7 @@ on:
       - '.github/workflows/net-im-beeper-appimage-update.yaml'
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: net-im
   epn: beeper-appimage
   description: "Unified chat client bridging multiple networks"

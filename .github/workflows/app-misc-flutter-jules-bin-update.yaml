@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: app-misc
   epn: flutter-jules-bin
   description: "A comprehensive Flutter-based client application for interacting with the Google Jules API."

@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: app-misc
   epn: appimagetool-appimage
   description: "AppImage tool to create AppImages (As an AppImage)"
