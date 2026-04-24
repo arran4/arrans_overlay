@@ -81,8 +81,8 @@ jobs:
         if: steps.update_check.outputs.updated == 'true'
         run: |
           # The g2 tool automatically downloads SRC_URI from ebuilds and generates Manifest and cache
-          g2 ebuild check app-misc/gemini-cli-bin/gemini-cli-bin-${{ steps.update_check.outputs.version }}.ebuild
           g2 cache generate app-misc/gemini-cli-bin
+          g2 lint app-misc/gemini-cli-bin
 
       - name: Remove duplicated ebuilds
         if: steps.update_check.outputs.updated == 'true'
