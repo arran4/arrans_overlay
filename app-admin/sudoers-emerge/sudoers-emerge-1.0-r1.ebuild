@@ -10,6 +10,6 @@ S="${WORKDIR}"
 
 src_install() {
     insinto /etc/sudoers.d
-    newins "${FILESDIR}"/00-emerge 00-emerge
-    fperms 0440 /etc/sudoers.d/00-emerge
+    newins "${FILESDIR}"/10-emerge 10-emerge
+    fperms 0440 /etc/sudoers.d/10-emerge
 }
