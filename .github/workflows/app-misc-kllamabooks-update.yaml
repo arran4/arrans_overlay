@@ -11,7 +11,7 @@ on:
   push:
     paths:
       - '.github/workflows/app-misc-kllamabooks-update.yaml'
-      - 'app-misc/kllamabooks/9999.ebuild'
+      - 'app-misc/kllamabooks/kllamabooks-9999.ebuild'
 
 concurrency:
   group: ci-${{ github.ref }}-kllamabooks
@@ -64,7 +64,7 @@ jobs:
             fi
             ebuild_file="${ebuild_dir}/${{ env.ebuild_name }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
-              cp "${ebuild_dir}/9999.ebuild" "$ebuild_file"
+              cp "${ebuild_dir}/${{ env.ebuild_name }}-9999.ebuild" "$ebuild_file"
               sed -i "s/Copyright [0-9]*/Copyright $(date +%Y)/" "$ebuild_file"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/archive/refs/tags/v${version}.tar.gz" "${{ env.ebuild_name }}-${version}.tar.gz" "${ebuild_dir}/Manifest"
             fi
