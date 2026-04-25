@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: app-text
   epn: mdsplit-bin
   description: "Splits markdown files into chunks suitable for processing with other tools or making into slides"

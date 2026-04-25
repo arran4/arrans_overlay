@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: app-text
   epn: mostcomm-bin
   description: "A cli utility for finding the most common and sorting by length, lines-sets in a text file"

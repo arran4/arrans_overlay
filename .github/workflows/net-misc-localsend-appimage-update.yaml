@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: net-misc
   epn: localsend-appimage
   description: "An open-source cross-platform alternative to AirDrop"

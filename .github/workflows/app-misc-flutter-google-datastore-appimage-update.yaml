@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: app-misc
   epn: flutter-google-datastore-appimage
   description: "Google Datastore and Datastore emulator client for \"easy\" modification of values"

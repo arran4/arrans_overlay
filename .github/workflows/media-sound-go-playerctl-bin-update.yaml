@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: media-sound
   epn: go-playerctl-bin
   description: "mpris media player command-line controller for vlc, mpv, RhythmBox, web browsers, cmus, mpd, spotify and others"

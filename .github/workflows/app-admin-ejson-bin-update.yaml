@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: app-admin
   epn: ejson-bin
   description: "EJSON is a small library to manage encrypted secrets using asymmetric encryption."

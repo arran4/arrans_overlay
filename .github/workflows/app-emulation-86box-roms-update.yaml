@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ebuild_category: app-emulation
   ebuild_name: 86box-roms
   github_owner: 86Box

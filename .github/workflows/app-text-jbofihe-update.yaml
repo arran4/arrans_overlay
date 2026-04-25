@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ebuild_category: app-text
   ebuild_name: jbofihe
   github_owner: lojban

@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: dev-util
   epn: im-hex-appimage
   description: "🔍 A Hex Editor for Reverse Engineers, Programmers and people who value their retinas when working at 3 AM."

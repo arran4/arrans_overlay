@@ -8,6 +8,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ebuild_category: "dev-lang"
   ebuild_name: "flutter-bin"
   description: "Flutter makes it easy and fast to build beautiful apps for mobile and beyond "

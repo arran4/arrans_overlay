@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: net-im
   epn: slackdump-bin
   description: "Save or export your private and public Slack messages, threads, files, and users locally without admin privileges."
