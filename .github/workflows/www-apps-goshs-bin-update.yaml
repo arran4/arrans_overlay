@@ -70,9 +70,9 @@ jobs:
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
-		<upstream>
-			<remote-id type="github">patrickhener/goshs</remote-id>
-		</upstream>
+            <upstream>
+              <remote-id type="github">patrickhener/goshs</remote-id>
+            </upstream>
           </pkgmetadata>
           EOF
           fi
@@ -112,8 +112,8 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goshs_linux_x86_64.tar.gz -> \${P}-goshs_linux_x86_64.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goshs_linux_arm64.tar.gz -> \${P}-goshs_linux_arm64.tar.gz  )  "
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goshs_linux_x86_64.tar.gz -> \${P}-goshs_linux_x86_64.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goshs_linux_arm64.tar.gz -> \${P}-goshs_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
