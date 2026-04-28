@@ -1,0 +1,11 @@
+SRC_URI=
+	amd64? (  https://github.com/openai/codex/releases/download/rust-v0.125.0/codex-x86_64-unknown-linux-gnu.tar.gz -> codex-bin-0.125.0-codex-x86_64-unknown-linux-gnu.tar.gz  )
+	arm64? (  https://github.com/openai/codex/releases/download/rust-v0.125.0/codex-aarch64-unknown-linux-gnu.tar.gz -> codex-bin-0.125.0-codex-aarch64-unknown-linux-gnu.tar.gz  )
+
+KEYWORDS=~amd64 ~arm64
+EAPI=8
+LICENSE=MIT
+SLOT=0
+HOMEPAGE=https://github.com/openai/codex
+DESCRIPTION=Lightweight coding agent that runs in your terminal
+_md5_=04d92e4d1e132a133225e373a9878001
