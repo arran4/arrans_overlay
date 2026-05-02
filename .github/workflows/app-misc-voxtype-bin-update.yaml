@@ -128,7 +128,7 @@ jobs:
                 echo '"'
                 echo ''
                 echo -n 'RDEPEND="'
-                echo -n ''
+                echo -n 'sys-libs/glibc gui-libs/wl-clipboard app-accessibility/ydotool x11-misc/dotool '
                 echo -n ''
                 echo '"'
                 echo ''
@@ -143,7 +143,7 @@ jobs:
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'
-                echo '    newexe "\${S}/voxtype" voxtype || die'
+                echo '    newexe "${S}/voxtype" voxtype || die'
                 echo '  fi'
                 echo '}'
               } > $ebuild_file
