@@ -20,10 +20,15 @@ S="${WORKDIR}"
 src_install() {
 	dobin "${FILESDIR}/portage-notifier"
 
-	dosym ../../../usr/bin/portage-notifier /etc/portage/postsync.d/portage-notifier
-	dosym ../../../usr/bin/portage-notifier /etc/portage/ebuild.postmerge.d/portage-notifier
-	dosym ../../../usr/bin/portage-notifier /etc/portage/ebuild.postfail.d/portage-notifier
-	dosym ../../../usr/bin/portage-notifier /etc/portage/ask.d/portage-notifier
-	dosym ../../../usr/bin/portage-notifier /etc/portage/postdepclean.d/portage-notifier
-	dosym ../../../usr/bin/portage-notifier /etc/portage/postemerge.d/portage-notifier
+	dosym "${EPREFIX}/usr/bin/portage-notifier" /etc/portage/postsync.d/portage-notifier
+	dosym "${EPREFIX}/usr/bin/portage-notifier" /etc/portage/ebuild.postmerge.d/portage-notifier
+	dosym "${EPREFIX}/usr/bin/portage-notifier" /etc/portage/ebuild.postfail.d/portage-notifier
+	dosym "${EPREFIX}/usr/bin/portage-notifier" /etc/portage/ask.d/portage-notifier
+	dosym "${EPREFIX}/usr/bin/portage-notifier" /etc/portage/postdepclean.d/portage-notifier
+	dosym "${EPREFIX}/usr/bin/portage-notifier" /etc/portage/postemerge.d/portage-notifier
+}
+
+pkg_postinst() {
+	elog "This package relies on non-standard Portage hooks provided by"
+	elog "arran4's fork of Portage (PR #2). Ensure you are using a compatible version."
 }
