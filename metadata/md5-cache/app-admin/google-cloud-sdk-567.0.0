@@ -1,0 +1,9 @@
+DEFINED_PHASES=install
+DESCRIPTION=Google Cloud SDK
+EAPI=8
+HOMEPAGE=https://cloud.google.com/sdk/
+KEYWORDS=~amd64 ~x86 ~arm64
+LICENSE=Apache-2.0
+SLOT=0
+SRC_URI=amd64? ( https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-567.0.0-linux-x86_64.tar.gz -> google-cloud-sdk-567.0.0-linux-x86_64.tar.gz ) x86? ( https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-567.0.0-linux-x86.tar.gz -> google-cloud-sdk-567.0.0-linux-x86.tar.gz ) arm64? ( https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-567.0.0-linux-arm.tar.gz -> google-cloud-sdk-567.0.0-linux-arm.tar.gz )
+_md5_=a1ad628d1b6544d1a1e1259e70d9f15c
