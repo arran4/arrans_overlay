@@ -69,6 +69,10 @@ jobs:
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
+            <maintainer type="person">
+              <email>gentoo@arran4.com</email>
+              <name>Arran Ubels</name>
+            </maintainer>
             <upstream>
               <remote-id type="github">peteonrails/voxtype</remote-id>
             </upstream>
@@ -111,46 +115,69 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/voxtype-\${PV}-linux-x86_64-avx2 -> \${P}-voxtype-\${PV}-linux-x86_64-avx2  )  "
+                echo '	amd64? ('
+                echo '		!onnx? ('
+                echo '			!cpu_flags_x86_avx512? ( !vulkan? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v${PV}/voxtype-${PV}-linux-x86_64-avx2 -> ${P}-voxtype-${PV}-linux-x86_64-avx2 ) )'
+                echo '			cpu_flags_x86_avx512? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v${PV}/voxtype-${PV}-linux-x86_64-avx512 -> ${P}-voxtype-${PV}-linux-x86_64-avx512 )'
+                echo '			vulkan? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v${PV}/voxtype-${PV}-linux-x86_64-vulkan -> ${P}-voxtype-${PV}-linux-x86_64-vulkan )'
+                echo '		)'
+                echo '		onnx? ('
+                echo '			!cpu_flags_x86_avx512? ( !cuda? ( !rocm? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v${PV}/voxtype-${PV}-linux-x86_64-onnx-avx2 -> ${P}-voxtype-${PV}-linux-x86_64-onnx-avx2 ) ) )'
+                echo '			cpu_flags_x86_avx512? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v${PV}/voxtype-${PV}-linux-x86_64-onnx-avx512 -> ${P}-voxtype-${PV}-linux-x86_64-onnx-avx512 )'
+                echo '			cuda? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v${PV}/voxtype-${PV}-linux-x86_64-onnx-cuda -> ${P}-voxtype-${PV}-linux-x86_64-onnx-cuda )'
+                echo '			rocm? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v${PV}/voxtype-${PV}-linux-x86_64-onnx-rocm -> ${P}-voxtype-${PV}-linux-x86_64-onnx-rocm )'
+                echo '		)'
+                echo '	)'
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
+                echo 'RESTRICT="strip"'
+                echo 'QA_PREBUILT="usr/bin/voxtype"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
-                echo -n 'IUSE="'
+                echo -n 'IUSE="cpu_flags_x86_avx512 vulkan cuda rocm onnx"'
                 echo -n ''
                 echo -n ''
                 echo -n ''
                 echo -n ''
                 echo '"'
                 echo ''
-                echo -n 'REQUIRED_USE="'
+                echo -n 'REQUIRED_USE="?? ( cpu_flags_x86_avx512 vulkan cuda rocm )"'
                 echo -n ''
                 echo '"'
                 echo ''
                 echo -n 'RDEPEND="'
-                echo -n 'sys-libs/glibc gui-libs/wl-clipboard app-accessibility/ydotool x11-misc/dotool '
+                echo -n 'gui-libs/wl-clipboard app-accessibility/ydotool x11-misc/dotool'
                 echo -n ''
                 echo '"'
                 echo ''
                 echo 'S="${WORKDIR}"'
                 echo ''
                 echo 'src_unpack() {'
-                echo '  if use amd64; then'
-                echo "    cp \"\${DISTDIR}/\${P}-voxtype-\${PV}-linux-x86_64-avx2\" \"\${S}/voxtype\" || die"
-                echo '  fi'
+                echo '	if use amd64; then'
+                echo '		local target="avx2"'
+                echo '		use cpu_flags_x86_avx512 && target="avx512"'
+                echo '		use vulkan && target="vulkan"'
+                echo '		use onnx && target="onnx-avx2"'
+                echo '		use onnx && use cpu_flags_x86_avx512 && target="onnx-avx512"'
+                echo '		use onnx && use cuda && target="onnx-cuda"'
+                echo '		use onnx && use rocm && target="onnx-rocm"'
+                echo '		cp "${DISTDIR}/${P}-voxtype-${PV}-linux-x86_64-${target}" "${S}/voxtype" || die'
+                echo '	fi'
                 echo '}'
                 echo ''
                 echo 'src_install() {'
-                echo '  exeinto /opt/bin'
-                echo '  if use amd64; then'
-                echo '    newexe "${S}/voxtype" voxtype || die'
-                echo '  fi'
+                echo '	exeinto /usr/bin'
+                echo '	if use amd64; then'
+                echo '		newexe "${S}/voxtype" voxtype || die'
+                echo '	fi'
                 echo '}'
               } > $ebuild_file
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/voxtype-${version}-linux-x86_64-avx2" "${{ env.epn }}-${version}-voxtype-${version}-linux-x86_64-avx2" "${ebuild_dir}/Manifest"
+              for variant in avx2 avx512 vulkan onnx-avx2 onnx-avx512 onnx-cuda onnx-rocm; do
+                g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/voxtype-${version}-linux-x86_64-${variant}" "${{ env.epn }}-${version}-voxtype-${version}-linux-x86_64-${variant}" "${ebuild_dir}/Manifest" || true
+              done
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
