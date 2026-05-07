@@ -1,0 +1,14 @@
+BDEPEND=sys-fs/squashfs-tools[zstd]
+DEFINED_PHASES=install postinst prepare unpack
+DESCRIPTION=Ente's 2FA solution
+EAPI=8
+HOMEPAGE=https://ente.io/blog/auth/
+INHERIT=xdg-utils
+KEYWORDS=~amd64
+LICENSE=MIT
+RDEPEND=sys-libs/glibc sys-libs/zlib
+RESTRICT=strip
+SLOT=0
+SRC_URI=amd64? ( https://github.com/ente-io/ente/releases/download/auth-v4.4.22/ente-auth-v4.4.22-x86_64.AppImage -> ente-auth-appimage-4.4.22-ente-auth-v4.4.22-x86_64.AppImage )
+_eclasses_=xdg-utils	42869b3c8d86a70ef3cf75165a395e09
+_md5_=6f978abd4a31885fbfc98b0c8a8d94e4
