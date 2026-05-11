@@ -1,6 +1,6 @@
 EAPI=8
 
-DESCRIPTION="Install 26-steam-nofile.conf for Steam file descriptor limits"
+DESCRIPTION="Sets high file descriptor limits for Steam"
 HOMEPAGE="https://github.com/arran4/arrans-overlay"
 SRC_URI=""
 
