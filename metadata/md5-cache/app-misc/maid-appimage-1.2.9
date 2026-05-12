@@ -1,0 +1,12 @@
+DEFINED_PHASES=install postinst prepare unpack
+DESCRIPTION=Maid is a cross-platform Flutter app for interfacing with GGUF / llama.cpp models locally, and with Ollama and OpenAI models remotely.
+EAPI=8
+INHERIT=xdg-utils
+KEYWORDS=~amd64
+LICENSE=MIT
+RDEPEND=sys-libs/glibc sys-libs/zlib
+RESTRICT=strip
+SLOT=0
+SRC_URI=amd64? ( https://github.com/Mobile-Artificial-Intelligence/maid/releases/download/1.2.9/maid.AppImage -> maid-appimage-1.2.9-maid.AppImage )
+_eclasses_=xdg-utils	42869b3c8d86a70ef3cf75165a395e09
+_md5_=a6fa65a0dddfac7ae24213f453494bd7
