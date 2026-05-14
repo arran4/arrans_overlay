@@ -21,6 +21,11 @@ DEPEND="
 "
 RDEPEND="${DEPEND}"
 
+src_prepare() {
+    ecm_src_prepare
+    sed -i -e 's/KDE_INSTALL_KXMLGUI6DIR/KDE_INSTALL_KXMLGUIDIR/g' CMakeLists.txt || die
+}
+
 src_configure() {
     local mycmakeargs=(
         -DBUILD_TESTING=OFF

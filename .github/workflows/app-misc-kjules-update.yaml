@@ -89,6 +89,11 @@ jobs:
                 echo '"'
                 echo 'RDEPEND="${DEPEND}"'
                 echo ""
+                echo "src_prepare() {"
+                echo "    ecm_src_prepare"
+                echo "    sed -i -e 's/KDE_INSTALL_KXMLGUI6DIR/KDE_INSTALL_KXMLGUIDIR/g' CMakeLists.txt || die"
+                echo "}"
+                echo ""
                 echo "src_configure() {"
                 echo "    local mycmakeargs=("
                 echo "        -DBUILD_TESTING=OFF"
