@@ -15,13 +15,15 @@ LICENSE="GPL-3.0-or-later"
 SLOT="0"
 KEYWORDS="~amd64"
 DEPEND="
+	dev-libs/qtkeychain:=[qt6]
 	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]
 	kde-frameworks/kcoreaddons:6
+	kde-frameworks/ki18n:6
 	kde-frameworks/kxmlgui:6
-	dev-libs/qtkeychain:=[qt6]
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
+	dev-qt/qttools:6[linguist]
 	virtual/pkgconfig
 "
 

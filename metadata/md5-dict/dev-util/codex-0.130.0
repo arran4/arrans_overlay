@@ -1,0 +1,17 @@
+BDEPEND=virtual/pkgconfig
+EAPI=8
+HOMEPAGE=https://github.com/openai/codex
+KEYWORDS=~amd64 ~arm64
+SLOT=0
+DEPEND=
+	dev-db/sqlite:3
+	dev-libs/openssl:=
+	dev-libs/wayland
+	media-libs/alsa-lib
+	sys-apps/dbus
+
+LICENSE=MIT
+INHERITED=cargo
+DESCRIPTION=Lightweight coding agent that runs in your terminal
+SRC_URI=https://github.com/openai/codex/archive/refs/tags/rust-v0.130.0.tar.gz -> codex-0.130.0.tar.gz
+_md5_=c5a5bdc8f1a8b99c1bb2f60d3e7911a7
