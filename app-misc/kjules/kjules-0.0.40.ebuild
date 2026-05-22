@@ -1,6 +1,8 @@
 # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-kjules-update.yaml
 EAPI=8
 
+KFMIN=6.0.0
+QTMIN=6.6.2
 inherit ecm
 
 DESCRIPTION="kjules KDE application"
@@ -13,22 +15,22 @@ SLOT="0"
 KEYWORDS="~amd64"
 
 DEPEND="
-    dev-qt/qtbase:6
-    dev-qt/qtdeclarative:6
-    kde-frameworks/kcoreaddons:6
-    kde-frameworks/ki18n:6
-    kde-frameworks/kxmlgui:6
+	dev-qt/qtbase:6
+	dev-qt/qtdeclarative:6
+	kde-frameworks/kcoreaddons:6
+	kde-frameworks/ki18n:6
+	kde-frameworks/kxmlgui:6
 "
 RDEPEND="${DEPEND}"
 
 src_prepare() {
-    ecm_src_prepare
-    sed -i -e 's/KDE_INSTALL_KXMLGUI6DIR/KDE_INSTALL_KXMLGUIDIR/g' CMakeLists.txt || die
+	ecm_src_prepare
+	sed -i -e 's/KDE_INSTALL_KXMLGUI6DIR/KDE_INSTALL_KXMLGUIDIR/g' CMakeLists.txt || die
 }
 
 src_configure() {
-    local mycmakeargs=(
-        -DBUILD_TESTING=OFF
-    )
-    ecm_src_configure
+	local mycmakeargs=(
+		-DBUILD_TESTING=OFF
+	)
+	ecm_src_configure
 }
