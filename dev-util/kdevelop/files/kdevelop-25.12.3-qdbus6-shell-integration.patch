@@ -1,0 +1,20 @@
+--- a/kdevplatform/util/kdevplatform_shell_environment.sh
++++ b/kdevplatform/util/kdevplatform_shell_environment.sh
+@@ -37,7 +37,7 @@
+ #
+ # - To explicitly set up a qdbus application path, the $KDEV_QDBUS environment
+ #   variable is used. Otherwise it falls back to calling $QDBUS_PATH. If
+-#   neither variable are set up, we will attempt to find qdbus-qt5 and qdbus.
++#   neither variable are set up, we will attempt to find qdbus-qt6, qdbus6 and qdbus.
+ #
+ # Usage example:
+ #
+@@ -62,7 +62,7 @@
+         return 1
+     fi
+
+-    local _qdbus_list=(qdbus-qt5 qdbus)
++    local _qdbus_list=(qdbus-qt6 qdbus6 qdbus)
+     local _qdbus=""
+
+     if [ -n "$KDEV_QDBUS" ]; then

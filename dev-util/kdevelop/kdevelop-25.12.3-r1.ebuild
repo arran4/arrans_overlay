@@ -100,6 +100,7 @@ PATCHES=(
 	# bug #963324 pt.1, git master
 	"${FILESDIR}/${PN}-25.12.1-file-collision.patch"
 	"${FILESDIR}/kdevelop-qdbus-remove.patch"
+	"${FILESDIR}/${PN}-25.12.3-qdbus6-shell-integration.patch"
 )
 
 src_prepare() {
