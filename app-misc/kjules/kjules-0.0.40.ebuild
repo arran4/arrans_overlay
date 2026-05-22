@@ -28,7 +28,7 @@ src_prepare() {
 
 src_configure() {
 	local mycmakeargs=(
-	    -DBUILD_TESTING=OFF
+		-DBUILD_TESTING=OFF
 	)
 	ecm_src_configure
 }
