@@ -93,7 +93,7 @@ jobs:
         run: |
           python3 scripts/remove_duplicate_ebuilds.py
           git add -A app-misc/gemini-cli-bin
-          git restore .
+          git checkout -- .
           g2 lint app-misc/gemini-cli-bin || true
 
       - name: Commit and push changes
