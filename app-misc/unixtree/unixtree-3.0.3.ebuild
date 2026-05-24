@@ -14,8 +14,11 @@ DEPEND="
 "
 RDEPEND="${DEPEND}"
 
+src_configure() {
+	sh build -r linux || die "build setup failed"
+}
+
 src_compile() {
-	. build -r linux || die "build setup failed"
 	emake
 }
 
