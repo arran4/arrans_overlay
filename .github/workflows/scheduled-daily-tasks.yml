@@ -72,7 +72,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           prs=$(gh pr list --state open --author "app/github-actions" --head "chore/scheduled-daily-tasks" --json number -q '.[].number')
-          for pr in "$prs"; do
+          mapfile -t pr_array <<< "$prs"
+          for pr in "${pr_array[@]}"; do
             echo "Closing old unmerged PR #$pr"
             gh pr close "$pr" -c "Closing in favor of newer daily tasks run" || true
           done
