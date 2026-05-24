@@ -59,7 +59,7 @@ jobs:
           mkdir -p "${{ env.CATEGORY }}/${{ env.PACKAGE }}"
 
           # Create the new ebuild
-          cat << "          EOF_EBUILD" > "${{ env.CATEGORY }}/${{ env.PACKAGE }}/${{ env.PACKAGE }}-${VERSION}.ebuild"
+          cat << "EOF_EBUILD" > "${{ env.CATEGORY }}/${{ env.PACKAGE }}/${{ env.PACKAGE }}-${VERSION}.ebuild"
           EAPI=8
 
           inherit ecm
