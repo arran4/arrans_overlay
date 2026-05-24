@@ -75,20 +75,20 @@ jobs:
           IUSE=""
 
           DEPEND="
-		dev-qt/qtbase:6
-		dev-qt/qtdeclarative:6
-		kde-frameworks/kcoreaddons:6
-		kde-frameworks/ki18n:6
-		kde-frameworks/kirigami:6
-		kde-frameworks/kpackage:6
-		kde-plasma/libplasma:6
-		virtual/libudev:=
+          \tdev-qt/qtbase:6
+          \tdev-qt/qtdeclarative:6
+          \tkde-frameworks/kcoreaddons:6
+          \tkde-frameworks/ki18n:6
+          \tkde-frameworks/kirigami:6
+          \tkde-frameworks/kpackage:6
+          \tkde-plasma/libplasma:6
+          \tvirtual/libudev:=
           "
           RDEPEND="${DEPEND}
-		kde-plasma/plasma-workspace:6
+          \tkde-plasma/plasma-workspace:6
           "
           BDEPEND="
-		virtual/pkgconfig
+          \tvirtual/pkgconfig
           "
           EOF_EBUILD
 
