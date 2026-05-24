@@ -1,0 +1,125 @@
+name: sys-apps/whatcable-linux update
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install g2
+        run: go install github.com/arran4/g2/cmd/g2@latest
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check for updates and update ebuild
+        id: update
+        env:
+          CATEGORY: "sys-apps"
+          PACKAGE: "whatcable-linux"
+          REPO: "Zetaphor/whatcable-linux"
+        run: |
+          LATEST_RELEASE=$(curl -s "https://api.github.com/repos/${{ env.REPO }}/releases/latest")
+          LATEST_TAG=$(echo "$LATEST_RELEASE" | jq -r '.tag_name')
+          VERSION=${LATEST_TAG#v}
+
+          if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+            echo "Failed to fetch latest version."
+            exit 1
+          fi
+
+          echo "Latest version: $VERSION"
+
+          # Check if the ebuild for this version already exists
+          if [ -f "${{ env.CATEGORY }}/${{ env.PACKAGE }}/${{ env.PACKAGE }}-${VERSION}.ebuild" ]; then
+            echo "Ebuild for version $VERSION already exists. Nothing to do."
+            echo "updated=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Updating to version $VERSION"
+          echo "updated=true" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          mkdir -p "${{ env.CATEGORY }}/${{ env.PACKAGE }}"
+
+          # Create the new ebuild
+          cat << "          EOF_EBUILD" > "${{ env.CATEGORY }}/${{ env.PACKAGE }}/${{ env.PACKAGE }}-${VERSION}.ebuild"
+          EAPI=8
+
+          inherit ecm
+
+          DESCRIPTION="Linux/KDE port of whatcable, tells what each USB connected cable can do"
+          HOMEPAGE="https://github.com/Zetaphor/whatcable-linux"
+          SRC_URI="https://github.com/Zetaphor/${PN}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+          S="${WORKDIR}/${PN}-${PV}"
+
+          LICENSE="MIT"
+          SLOT="0"
+          KEYWORDS="~amd64"
+          IUSE=""
+
+          DEPEND="
+		dev-qt/qtbase:6
+		dev-qt/qtdeclarative:6
+		kde-frameworks/kcoreaddons:6
+		kde-frameworks/ki18n:6
+		kde-frameworks/kirigami:6
+		kde-frameworks/kpackage:6
+		kde-plasma/libplasma:6
+		virtual/libudev:=
+          "
+          RDEPEND="${DEPEND}
+		kde-plasma/plasma-workspace:6
+          "
+          BDEPEND="
+		virtual/pkgconfig
+          "
+          EOF_EBUILD
+
+          sed -i 's/^          //' "${{ env.CATEGORY }}/${{ env.PACKAGE }}/${{ env.PACKAGE }}-${VERSION}.ebuild"
+
+          # Generate cache and update manifest
+          export PATH="$HOME/go/bin:$PATH"
+          g2 cache generate "${{ env.CATEGORY }}/${{ env.PACKAGE }}" || true
+          git checkout -- metadata/md5-dict/ || true
+
+          # Clean up old ebuilds
+          cd "${{ env.CATEGORY }}/${{ env.PACKAGE }}"
+          ls -1 *.ebuild | grep -v "${VERSION}" | xargs -r rm || true
+          cd -
+
+          g2 cache generate "${{ env.CATEGORY }}/${{ env.PACKAGE }}" || true
+          git checkout -- metadata/md5-dict/ || true
+          git add "metadata/md5-dict/${{ env.CATEGORY }}/${{ env.PACKAGE }}-${VERSION}"
+          g2 manifest upsert-from-url "https://github.com/${{ env.REPO }}/archive/refs/tags/${LATEST_TAG}.tar.gz" "${{ env.PACKAGE }}-${VERSION}.tar.gz" "${{ env.CATEGORY }}/${{ env.PACKAGE }}/Manifest"
+          rm -f "${{ env.PACKAGE }}-${VERSION}.tar.gz"
+          g2 lint "${{ env.CATEGORY }}/${{ env.PACKAGE }}"
+
+          git add "${{ env.CATEGORY }}/${{ env.PACKAGE }}/"
+          git add "metadata/md5-dict/${{ env.CATEGORY }}/${{ env.PACKAGE }}-${VERSION}"
+
+          # Clean up old metadata entries
+          ls -1 "metadata/md5-dict/${{ env.CATEGORY }}/${{ env.PACKAGE }}"* | grep -v "${VERSION}" | xargs -r git rm || true
+
+          git commit -m "${{ env.CATEGORY }}/${{ env.PACKAGE }}: bump to $VERSION"
+
+      - name: Push changes
+        if: steps.update.outputs.updated == 'true'
+        run: |
+          git push
