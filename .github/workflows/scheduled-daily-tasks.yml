@@ -76,7 +76,7 @@ jobs:
       - name: Check for unstaged changes
         id: check_changes
         run: |
-          git config --global --add safe.directory $(pwd) && git add .
+          git config --global --add safe.directory "$(pwd)" && git add .
           if git diff --staged --quiet; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
