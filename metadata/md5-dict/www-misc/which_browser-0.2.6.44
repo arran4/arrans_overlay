@@ -1,11 +1,11 @@
-INHERITED=unpacker
-SRC_URI=https://which-browser-site.pages.dev/downloads/v0.2.6.44/which_browser-0.2.6.44+${PV-linux.deb
-RESTRICT=mirror
 RDEPEND=|| ( dev-libs/libayatana-appindicator )
-EAPI=8
-KEYWORDS=~amd64
 LICENSE=All-rights-reserved
-HOMEPAGE=https://which-browser-site.pages.dev
 SLOT=0
+INHERITED=unpacker
 DESCRIPTION=Which Browser? A browser selecting tool with rules to automate.
+KEYWORDS=~amd64
+SRC_URI=https://which-browser-site.pages.dev/downloads/v${PV%.*}/which_browser-${PV%.*}+${PV-linux.deb
+EAPI=8
+HOMEPAGE=https://which-browser-site.pages.dev
+RESTRICT=mirror
 _md5_=941287f9da175a5954238e4e038e1933

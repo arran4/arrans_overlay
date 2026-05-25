@@ -1,0 +1,7 @@
+KEYWORDS=~amd64
+EAPI=8
+HOMEPAGE=https://github.com/arran4/arrans-overlay
+DESCRIPTION=Sets high file descriptor limits for Steam
+LICENSE=GPL-2
+SLOT=0
+_md5_=e2a23eb262edd2e4d569aefa1a01a1f4
