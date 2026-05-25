@@ -10,6 +10,7 @@ S="${WORKDIR}/${P}"
 
 LICENSE="MIT"
 SLOT="0"
+IUSE="debug"
 KEYWORDS="~amd64"
 
 DEPEND="

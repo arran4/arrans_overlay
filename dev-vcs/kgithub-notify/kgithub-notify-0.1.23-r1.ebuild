@@ -12,7 +12,7 @@ SRC_URI="https://github.com/arran4/kgithub-notify/archive/refs/tags/v${PV}.tar.g
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE=""
+IUSE="debug"
 
 DEPEND="
 	dev-qt/qtbase:6[dbus,gui,network,widgets]

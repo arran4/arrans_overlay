@@ -18,7 +18,7 @@ fi
 
 LICENSE="MIT"
 SLOT="0"
-IUSE=""
+IUSE="debug"
 
 DEPEND="
 	dev-qt/qtbase:6[dbus,gui,network,widgets]
