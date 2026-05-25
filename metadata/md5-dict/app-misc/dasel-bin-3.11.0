@@ -1,0 +1,12 @@
+LICENSE=MIT
+KEYWORDS=~amd64 ~arm64 ~x86
+EAPI=8
+DESCRIPTION=Unified querying, transformation, and modification of JSON, TOML, YAML, XML, INI, HCL, KDL and CSV.
+SRC_URI=
+	amd64? (  https://github.com/TomWright/dasel/releases/download/v3.11.0/dasel_linux_amd64.gz -> dasel-bin-3.11.0-dasel_linux_amd64.gz  )
+	arm64? (  https://github.com/TomWright/dasel/releases/download/v3.11.0/dasel_linux_arm64.gz -> dasel-bin-3.11.0-dasel_linux_arm64.gz  )
+	x86? (  https://github.com/TomWright/dasel/releases/download/v3.11.0/dasel_linux_386.gz -> dasel-bin-3.11.0-dasel_linux_386.gz  )
+
+SLOT=0
+HOMEPAGE=https://github.com/TomWright/dasel
+_md5_=2f5a0bc24ef03c68b15e7d907791a7ad
