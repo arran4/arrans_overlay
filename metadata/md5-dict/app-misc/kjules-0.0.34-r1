@@ -1,0 +1,23 @@
+LICENSE=MIT
+EAPI=8
+HOMEPAGE=https://github.com/arran4/kjules
+DEPEND=
+	dev-qt/qtbase:6
+	dev-qt/qtdeclarative:6
+	kde-frameworks/kcoreaddons:6
+	kde-frameworks/ki18n:6
+	kde-frameworks/kxmlgui:6
+
+DESCRIPTION=kjules KDE application
+SLOT=0
+SRC_URI=https://github.com/arran4/kjules/archive/refs/tags/v0.0.34-r1.tar.gz -> kjules-0.0.34-r1.tar.gz
+RDEPEND=
+	dev-qt/qtbase:6
+	dev-qt/qtdeclarative:6
+	kde-frameworks/kcoreaddons:6
+	kde-frameworks/ki18n:6
+	kde-frameworks/kxmlgui:6
+
+KEYWORDS=~amd64
+INHERITED=ecm
+_md5_=2251ef3fca2b659db51b011ca1110cf8

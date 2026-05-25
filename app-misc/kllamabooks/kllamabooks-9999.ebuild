@@ -3,7 +3,9 @@
 
 EAPI=8
 
-inherit cmake xdg
+KFMIN=6.0.0
+QTMIN=6.6.2
+inherit ecm
 
 DESCRIPTION="An AI LLM Desktop Client and Document Editor for KDE/Qt"
 HOMEPAGE="https://github.com/arran4/kllamabooks"
@@ -34,10 +36,9 @@ RDEPEND="${DEPEND}"
 BDEPEND="
 	dev-qt/qttools:6[linguist]
 	virtual/pkgconfig
-	kde-frameworks/extra-cmake-modules:0
 "
 
 src_prepare() {
 	sed -i -e 's/icon.svg/icon.png/g' CMakeLists.txt || die
-	cmake_src_prepare
+	ecm_src_prepare
 }
