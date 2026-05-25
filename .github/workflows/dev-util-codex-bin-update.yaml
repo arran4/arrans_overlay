@@ -30,9 +30,9 @@ env:
   workflow_filename: dev-util-codex-bin-update.yaml
   codex_binary_installed_name: 'codex'
   codex_binary_archived_name_amd64: 'codex'
-  codex_release_name_amd64: 'codex-x86_64-unknown-linux-gnu.tar.gz'
+  codex_release_name_amd64: 'codex-x86_64-unknown-linux-musl.tar.gz'
   codex_binary_archived_name_arm64: 'codex'
-  codex_release_name_arm64: 'codex-aarch64-unknown-linux-gnu.tar.gz'
+  codex_release_name_arm64: 'codex-aarch64-unknown-linux-musl.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -82,6 +82,7 @@ jobs:
             fi
             # shellcheck disable=SC2034
             originalVersion="${version}"
+            version=$(echo "$version" | sed -e 's/-\(\(alpha\|beta\|rc\|p\)[0-9]*\)\./_\1/')
             if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
                 echo "tag / $version doesn't match regexp";
                 continue;
@@ -107,8 +108,8 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/rust-v\${PV}/codex-x86_64-unknown-linux-gnu.tar.gz -> \${P}-codex-x86_64-unknown-linux-gnu.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/rust-v\${PV}/codex-aarch64-unknown-linux-gnu.tar.gz -> \${P}-codex-aarch64-unknown-linux-gnu.tar.gz  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/rust-v${originalVersion}/codex-x86_64-unknown-linux-musl.tar.gz -> \${P}-codex-x86_64-unknown-linux-musl.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/rust-v${originalVersion}/codex-aarch64-unknown-linux-musl.tar.gz -> \${P}-codex-aarch64-unknown-linux-musl.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -133,10 +134,10 @@ jobs:
                 echo ''
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-codex-x86_64-unknown-linux-gnu.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-codex-x86_64-unknown-linux-musl.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-codex-aarch64-unknown-linux-gnu.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-codex-aarch64-unknown-linux-musl.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '}'
                 echo ''
@@ -153,8 +154,8 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/codex-x86_64-unknown-linux-gnu.tar.gz" "${{ env.epn }}-${version}-codex-x86_64-unknown-linux-gnu.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/codex-aarch64-unknown-linux-gnu.tar.gz" "${{ env.epn }}-${version}-codex-aarch64-unknown-linux-gnu.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/rust-v${originalVersion}/codex-x86_64-unknown-linux-musl.tar.gz" "${{ env.epn }}-${version}-codex-x86_64-unknown-linux-musl.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/rust-v${originalVersion}/codex-aarch64-unknown-linux-musl.tar.gz" "${{ env.epn }}-${version}-codex-aarch64-unknown-linux-musl.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
