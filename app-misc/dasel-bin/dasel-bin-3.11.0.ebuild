@@ -12,27 +12,15 @@ SLOT="0"
 KEYWORDS="~amd64 ~arm64 ~x86"
 S="${WORKDIR}"
 
-src_unpack() {
-  if use amd64; then
-    unpack "${DISTDIR}/${P}-dasel_linux_amd64.gz" || die "Can't unpack archive file"
-  fi
-  if use arm64; then
-    unpack "${DISTDIR}/${P}-dasel_linux_arm64.gz" || die "Can't unpack archive file"
-  fi
-  if use x86; then
-    unpack "${DISTDIR}/${P}-dasel_linux_386.gz" || die "Can't unpack archive file"
-  fi
-}
+RESTRICT="strip"
+QA_PREBUILT="*"
 
 src_install() {
-  exeinto /opt/bin
-  if use amd64; then
-    newexe "${P}-dasel_linux_amd64" "dasel" || die "Failed to install Binary"
-  fi
-  if use arm64; then
-    newexe "${P}-dasel_linux_arm64" "dasel" || die "Failed to install Binary"
-  fi
-  if use x86; then
-    newexe "${P}-dasel_linux_386" "dasel" || die "Failed to install Binary"
-  fi
+	if use amd64; then
+		newbin "${P}-dasel_linux_amd64" dasel
+	elif use arm64; then
+		newbin "${P}-dasel_linux_arm64" dasel
+	elif use x86; then
+		newbin "${P}-dasel_linux_386" dasel
+	fi
 }

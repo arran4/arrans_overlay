@@ -68,7 +68,7 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat << "          EOF" > "$metadata_file"
+            cat <<EOF > "$metadata_file"
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
@@ -139,29 +139,19 @@ jobs:
                 echo ''
                 echo 'S="${WORKDIR}"'
                 echo ''
-                echo 'src_unpack() {'
-                echo '  if use amd64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-dasel_linux_amd64.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-dasel_linux_arm64.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use x86; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-dasel_linux_386.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '}'
+                echo 'RESTRICT="strip"'
+                echo 'QA_PREBUILT="*"'
+                echo ''
                 echo ''
                 echo 'src_install() {'
-                echo '  exeinto /opt/bin'
-                echo '  if use amd64; then'
-                echo '    newexe "${{ env.dasel_binary_archived_name_amd64 }}" "${{ env.dasel_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use arm64; then'
-                echo '    newexe "${{ env.dasel_binary_archived_name_arm64 }}" "${{ env.dasel_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use x86; then'
-                echo '    newexe "${{ env.dasel_binary_archived_name_x86 }}" "${{ env.dasel_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
+
+                echo '	if use amd64; then'
+                echo '		newbin "${P}-${{ env.dasel_binary_archived_name_amd64 }}" "${{ env.dasel_binary_installed_name }}"'
+                echo '	elif use arm64; then'
+                echo '		newbin "${P}-${{ env.dasel_binary_archived_name_arm64 }}" "${{ env.dasel_binary_installed_name }}"'
+                echo '	elif use x86; then'
+                echo '		newbin "${P}-${{ env.dasel_binary_archived_name_x86 }}" "${{ env.dasel_binary_installed_name }}"'
+                echo '	fi'
                 echo '}'
               } > $ebuild_file
 
