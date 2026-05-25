@@ -75,8 +75,8 @@ jobs:
                 echo ""
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
-                echo \'MY_PV="${PV%_r*}"\'
-                echo \'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${MY_PV}.tar.gz -> ${P}.tar.gz"\'
+                echo 'MY_PV="${PV%_r*}"'
+                echo 'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${MY_PV}.tar.gz -> ${P}.tar.gz"'
                 echo ""
                 echo 'LICENSE="GPL-3.0-or-later"'
                 echo 'SLOT="0"'
@@ -94,7 +94,7 @@ jobs:
                 echo '	virtual/pkgconfig'
                 echo '"'
                 echo ""
-                echo \'S="${WORKDIR}/${{env.github_repo}}-${MY_PV}"\'
+                echo 'S="${WORKDIR}/${{env.github_repo}}-${MY_PV}"'
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild

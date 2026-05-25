@@ -1,18 +1,18 @@
 HOMEPAGE=https://libimobiledevice.org/
-SRC_URI=https://github.com/libimobiledevice/libtatsu/releases/download/1.0.5/libtatsu-1.0.5.tar.bz2
 LICENSE=LGPL-2.1
 RDEPEND=
 	>=app-pda/libplist-2.3.0:=
 	net-misc/curl
 
-BDEPEND=virtual/pkgconfig
 SLOT=0/0
 IUSE=static-libs
-EAPI=8
-DESCRIPTION=Library to handle Apple's TSS protocol
-KEYWORDS=~amd64
 DEPEND=
 	>=app-pda/libplist-2.3.0:=
 	net-misc/curl
 
+KEYWORDS=~amd64
+EAPI=8
+DESCRIPTION=Library to handle Apple's TSS protocol
+SRC_URI=https://github.com/libimobiledevice/libtatsu/releases/download/1.0.5/libtatsu-1.0.5.tar.bz2
+BDEPEND=virtual/pkgconfig
 _md5_=ac5e7f963e0379786dcabc63c072c405

@@ -9,8 +9,7 @@ inherit ecm
 
 DESCRIPTION="Torrent file and Magnet link handler for routing to programs / services."
 HOMEPAGE="https://github.com/arran4/KMagMux"
-'MY_PV='
-'SRC_URI=https://github.com/arran4/KMagMux/archive/refs/tags/v.tar.gz -> .tar.gz'
+SRC_URI="https://github.com/arran4/KMagMux/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-3.0-or-later"
 SLOT="0"
@@ -28,4 +27,4 @@ BDEPEND="
 	virtual/pkgconfig
 "
 
-'S=/KMagMux-'
+S="${WORKDIR}/KMagMux-${PV}"

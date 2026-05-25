@@ -1,10 +1,10 @@
-DESCRIPTION=A font containing a large language model and inference engine.
+INHERITED=font
 KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
 RESTRICT=binchecks strip
-HOMEPAGE=https://github.com/fuglede/llama.ttf
-INHERITED=font
-EAPI=8
 SRC_URI=https://github.com/fuglede/llama.ttf/raw/master/llamattf/llama.ttf -> llama-9999.ttf
-LICENSE=unknown-license
+EAPI=8
+HOMEPAGE=https://github.com/fuglede/llama.ttf
 SLOT=0
+DESCRIPTION=A font containing a large language model and inference engine.
+LICENSE=unknown-license
 _md5_=b9b814a394bb307bc408c76228dd8640
