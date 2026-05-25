@@ -35,6 +35,7 @@ jobs:
         run: |
           mkdir -p /etc/portage
           echo 'ACCEPT_LICENSE="*"' > /etc/portage/make.conf
+          echo 'FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox"' >> /etc/portage/make.conf
           mkdir -p /var/db/repos/gentoo
           emerge-webrsync
           emerge --quiet app-portage/portage-utils dev-vcs/git dev-lang/python dev-python/packaging net-misc/curl app-misc/jq dev-util/github-cli
@@ -192,7 +193,7 @@ jobs:
 
           # Configure for binary packages
           # We append to make.conf to enable getbinpkg globally
-          echo 'FEATURES="${FEATURES} getbinpkg"' >> /etc/portage/make.conf
+          echo 'FEATURES="${FEATURES} -ipc-sandbox -network-sandbox -pid-sandbox getbinpkg"' >> /etc/portage/make.conf
           # Also set EMERGE_DEFAULT_OPTS to always use binaries if available and respect it
           # -g = --getbinpkg, -K = --usepkgonly (no, we want to build if bin missing), -k = --usepkg
           # User said: "install binary from upstream where possible"
