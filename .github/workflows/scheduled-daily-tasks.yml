@@ -98,7 +98,7 @@ jobs:
       - name: Generate Readable Diff
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          OUTPUT=$(git diff HEAD --word-diff=plain | head -c 60000 | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/\[-/~~/g' -e 's/-\]/~~/g' -e 's/{+/**/g' -e 's/+}/\*\*/g')
+          OUTPUT=$(git diff HEAD | head -c 60000)
           echo "READABLE_DIFF<<INNER_EOF" >> $GITHUB_ENV
           echo "$OUTPUT" >> $GITHUB_ENV
           echo "INNER_EOF" >> $GITHUB_ENV
@@ -132,7 +132,9 @@ jobs:
             <details>
             <summary>Readable Diff</summary>
 
+            ```diff
             ${{ env.READABLE_DIFF }}
+            ```
             </details>
           branch: "chore/scheduled-daily-tasks"
           delete-branch: true
