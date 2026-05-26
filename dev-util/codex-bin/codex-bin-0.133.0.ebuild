@@ -3,8 +3,8 @@ EAPI=8
 DESCRIPTION="Lightweight coding agent that runs in your terminal"
 HOMEPAGE="https://github.com/openai/codex"
 SRC_URI="
-	amd64? (  https://github.com/openai/codex/releases/download/rust-v${PV}/codex-x86_64-unknown-linux-gnu.tar.gz -> ${P}-codex-x86_64-unknown-linux-gnu.tar.gz  )  
-	arm64? (  https://github.com/openai/codex/releases/download/rust-v${PV}/codex-aarch64-unknown-linux-gnu.tar.gz -> ${P}-codex-aarch64-unknown-linux-gnu.tar.gz  )  
+	amd64? (  https://github.com/openai/codex/releases/download/rust-v${PV}/codex-x86_64-unknown-linux-musl.tar.gz -> ${P}-codex-x86_64-unknown-linux-musl.tar.gz  )
+	arm64? (  https://github.com/openai/codex/releases/download/rust-v${PV}/codex-aarch64-unknown-linux-musl.tar.gz -> ${P}-codex-aarch64-unknown-linux-musl.tar.gz  )
 "
 LICENSE="MIT"
 SLOT="0"
