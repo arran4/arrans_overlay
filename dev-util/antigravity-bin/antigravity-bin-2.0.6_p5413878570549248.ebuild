@@ -14,7 +14,7 @@ QA_PREBUILT="opt/antigravity/antigravity opt/antigravity/chrome-sandbox opt/anti
 
 SRC_URI="amd64? ( https://storage.googleapis.com/antigravity-public/antigravity-hub/2.0.6-5413878570549248/linux-x64/Antigravity.tar.gz -> ${P}.tar.gz )"
 
-S="${WORKDIR}/Antigravity"
+S="${WORKDIR}/Antigravity-x64"
 
 src_install() {
   insinto /opt/antigravity
