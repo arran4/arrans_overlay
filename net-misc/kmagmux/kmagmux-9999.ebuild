@@ -12,7 +12,7 @@ EGIT_REPO_URI="https://github.com/arran4/KMagMux.git"
 LICENSE="GPL-3.0-or-later"
 SLOT="0"
 KEYWORDS=""
-IUSE=""
+IUSE="debug"
 
 DEPEND="
 	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]

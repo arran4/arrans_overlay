@@ -13,6 +13,7 @@ SRC_URI="https://github.com/arran4/KMagMux/archive/refs/tags/v${PV}.tar.gz -> ${
 
 LICENSE="GPL-3.0-or-later"
 SLOT="0"
+IUSE="debug"
 KEYWORDS="~amd64"
 DEPEND="
 	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]

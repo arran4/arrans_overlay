@@ -79,6 +79,7 @@ jobs:
                 echo ""
                 echo 'LICENSE="GPL-3.0-or-later"'
                 echo 'SLOT="0"'
+                echo 'IUSE="debug"'
                 echo 'KEYWORDS="~amd64"'
                                 echo 'DEPEND="'
                 echo '	kde-frameworks/kwallet:6'

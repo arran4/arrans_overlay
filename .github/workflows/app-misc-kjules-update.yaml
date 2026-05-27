@@ -78,6 +78,7 @@ jobs:
                 echo ""
                 echo 'LICENSE="MIT"'
                 echo "SLOT=\"0\""
+                echo 'IUSE="debug"'
                 echo 'KEYWORDS="~amd64"'
                 echo ""
                 echo 'DEPEND="'
