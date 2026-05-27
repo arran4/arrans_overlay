@@ -18,7 +18,7 @@ src_install() {
 insinto /opt/${PN}
 doins -r *
 
-fperms +x /opt/${PN}/gemini.js
+fperms 0755 /opt/${PN}/gemini.js
 
 dosym -r /opt/${PN}/gemini.js /usr/bin/gemini
 }
