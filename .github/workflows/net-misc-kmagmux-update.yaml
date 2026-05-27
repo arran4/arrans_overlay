@@ -75,14 +75,14 @@ jobs:
                 echo ""
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
-                echo 'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
+                echo 'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${PV%_r*}.tar.gz -> ${P}.tar.gz"'
                 echo ""
                 echo 'LICENSE="GPL-3.0-or-later"'
                 echo 'SLOT="0"'
                 echo 'IUSE="debug"'
                 echo 'KEYWORDS="~amd64"'
                                 echo 'DEPEND="'
-                echo '	dev-libs/qtkeychain:=[qt6]'
+                echo '	kde-frameworks/kwallet:6'
                 echo '	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]'
                 echo '	kde-frameworks/kcoreaddons:6'
                 echo '	kde-frameworks/ki18n:6'
@@ -94,7 +94,7 @@ jobs:
                 echo '	virtual/pkgconfig'
                 echo '"'
                 echo ""
-                echo 'S="${WORKDIR}/${{env.github_repo}}-${PV}"'
+                echo 'S="${WORKDIR}/${{env.github_repo}}-${PV%_r*}"'
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild

@@ -19,7 +19,7 @@ DEPEND="
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kxmlgui:6
-	dev-libs/qtkeychain:=[qt6]
+	kde-frameworks/kwallet:6
 "
 RDEPEND="${DEPEND}"
 BDEPEND="

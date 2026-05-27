@@ -9,14 +9,14 @@ inherit ecm
 
 DESCRIPTION="Torrent file and Magnet link handler for routing to programs / services."
 HOMEPAGE="https://github.com/arran4/KMagMux"
-SRC_URI="https://github.com/arran4/KMagMux/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/arran4/KMagMux/archive/refs/tags/v${PV%_r*}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-3.0-or-later"
 SLOT="0"
 IUSE="debug"
 KEYWORDS="~amd64"
 DEPEND="
-	dev-libs/qtkeychain:=[qt6]
+	kde-frameworks/kwallet:6
 	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
@@ -28,4 +28,4 @@ BDEPEND="
 	virtual/pkgconfig
 "
 
-S="${WORKDIR}/KMagMux-${PV}"
+S="${WORKDIR}/KMagMux-${PV%_r*}"
