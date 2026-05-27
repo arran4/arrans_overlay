@@ -1,7 +1,3 @@
-LICENSE=MIT
-SLOT=0
-KEYWORDS=~amd64
-EAPI=8
 RDEPEND=
 	|| (
 		x11-libs/libnotify
@@ -11,4 +7,8 @@ RDEPEND=
 
 DESCRIPTION=A DBus notification agent for Portage sync completion
 HOMEPAGE=https://github.com/arran4/arrans_overlay
+KEYWORDS=~amd64
+EAPI=8
+LICENSE=MIT
+SLOT=0
 _md5_=d50267e7f8d5b6ca8615f1caf6770754

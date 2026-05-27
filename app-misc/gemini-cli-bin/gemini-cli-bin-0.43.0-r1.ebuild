@@ -2,7 +2,7 @@ EAPI=8
 
 DESCRIPTION="Gemini CLI"
 HOMEPAGE="https://github.com/google-gemini/gemini-cli"
-SRC_URI="https://github.com/google-gemini/gemini-cli/releases/download/v${PV}/gemini-cli-bundle.zip -> ${P}.zip"
+SRC_URI="https://github.com/google-gemini/gemini-cli/releases/download/v0.43.0/gemini-cli-bundle.zip -> gemini-cli-bin-0.43.0.zip"
 
 LICENSE="Apache-2.0"
 SLOT="0"
@@ -16,10 +16,9 @@ S="${WORKDIR}"
 
 src_install() {
 insinto /opt/${PN}
-doins gemini.js LICENSE README.md
+doins -r *
 
-exeinto /opt/${PN}
-doexe gemini.js
+fperms 0755 /opt/${PN}/gemini.js
 
 dosym -r /opt/${PN}/gemini.js /usr/bin/gemini
 }

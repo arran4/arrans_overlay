@@ -1,8 +1,3 @@
-KEYWORDS=~amd64 ~x86 ~arm ~arm64
-EAPI=8
-HOMEPAGE=https://github.com/AppImage/AppImageKit
-DESCRIPTION=AppImage tool to create AppImages (As an AppImage)
-INHERITED=xdg-utils
 LICENSE=MIT
 RESTRICT=strip
 SRC_URI=
@@ -11,5 +6,10 @@ SRC_URI=
   arm? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-armhf.AppImage -> appimagetool-appimage-0.0.171.arm )
   arm64? ( https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage -> appimagetool-appimage-0.0.171.arm64 )
 
+DESCRIPTION=AppImage tool to create AppImages (As an AppImage)
+HOMEPAGE=https://github.com/AppImage/AppImageKit
+KEYWORDS=~amd64 ~x86 ~arm ~arm64
+EAPI=8
+INHERITED=xdg-utils
 SLOT=0
 _md5_=f8205eca7ee9c7941ba88fe273e05eb2

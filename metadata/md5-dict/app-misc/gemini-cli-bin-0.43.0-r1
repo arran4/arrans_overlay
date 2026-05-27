@@ -1,10 +1,10 @@
-HOMEPAGE=https://github.com/google-gemini/gemini-cli
 SRC_URI=https://github.com/google-gemini/gemini-cli/releases/download/v0.43.0/gemini-cli-bundle.zip -> gemini-cli-bin-0.43.0.zip
+LICENSE=Apache-2.0
 BDEPEND=app-arch/unzip
 RDEPEND=>=net-libs/nodejs-20.0.0
-DESCRIPTION=Gemini CLI
-EAPI=8
-LICENSE=Apache-2.0
+HOMEPAGE=https://github.com/google-gemini/gemini-cli
 SLOT=0
 KEYWORDS=~amd64
-_md5_=54fa4414e912ab92c4b0d0b498ca36ca
+EAPI=8
+DESCRIPTION=Gemini CLI
+_md5_=13cab02412c4223e946f24d96c0010ee
