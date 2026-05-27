@@ -60,7 +60,7 @@ jobs:
           fi
           fi
 
-          curl -sL --compressed -A "Mozilla/5.0" https://antigravity.google/download/linux > /tmp/index.html
+          curl -sL --compressed -A "Mozilla/5.0" https://antigravity.google/download > /tmp/index.html
           main_js=$(grep -o 'main-[^"]*\.js' /tmp/index.html | head -n 1 | tr -d '\r')
           echo "main_js: $main_js"
           if [ -z "$main_js" ]; then
@@ -78,7 +78,7 @@ jobs:
             exit 1
           fi
 
-          version=$(echo "$download_url" | awk -F'/' '{for(i=1;i<=NF;i++) if($i=="stable") print $(i+1)}')
+          version=$(echo "$download_url" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+-[0-9]+' | head -n 1)
           echo "version: $version"
           if [ -z "$version" ]; then
             echo "Could not find version"
