@@ -1,0 +1,119 @@
+name: app-office/kexi update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '15 4 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-office-kexi-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}-app-office-kexi
+  cancel-in-progress: false
+
+env:
+  CATEGORY: app-office
+  PACKAGE: kexi
+
+jobs:
+  update-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install g2
+        run: |
+          go install github.com/arran4/g2/cmd/g2@latest
+          echo "$HOME/go/bin" >> $GITHUB_PATH
+
+      - name: Fetch KDE Releases
+        id: fetch-releases
+        run: |
+          RELEASES=$(curl -sL 'https://invent.kde.org/api/v4/projects/office%2Fkexi/repository/tags' | jq -r '.[].name' | grep -v 'rc' | grep -v 'beta' | grep -v 'alpha')
+          echo "Found releases: $RELEASES"
+          LATEST_VERSION=$(echo "$RELEASES" | head -n 1 | sed 's/^v//')
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
+
+      - name: Check and Update Version
+        run: |
+          CURRENT_VERSION=""
+          if ls ${{ env.CATEGORY }}/${{ env.PACKAGE }}/${{ env.PACKAGE }}-*.ebuild 1> /dev/null 2>&1; then
+            CURRENT_VERSION=$(ls ${{ env.CATEGORY }}/${{ env.PACKAGE }}/${{ env.PACKAGE }}-*.ebuild | head -n 1 | grep -oP '(?<=-)[0-9.]+(?=\.ebuild)')
+          fi
+
+          if [[ "$CURRENT_VERSION" == "${{ env.LATEST_VERSION }}" ]]; then
+            echo "Already up to date ($CURRENT_VERSION). Exiting."
+            exit 0
+          fi
+
+          echo "Updating from $CURRENT_VERSION to ${{ env.LATEST_VERSION }}..."
+
+          # Remove old ebuild
+          rm -f ${{ env.CATEGORY }}/${{ env.PACKAGE }}/${{ env.PACKAGE }}-*.ebuild
+
+          # Create new ebuild
+          cat << "          EBUILD_EOF" > ${{ env.CATEGORY }}/${{ env.PACKAGE }}/${{ env.PACKAGE }}-${{ env.LATEST_VERSION }}.ebuild
+          EAPI=8
+
+          inherit ecm
+
+          DESCRIPTION="A visual database applications creator"
+          HOMEPAGE="https://kexi-project.org/ https://invent.kde.org/office/kexi"
+          SRC_URI="https://download.kde.org/stable/${PN}/src/${P}.tar.xz"
+
+          LICENSE="GPL-2+"
+          SLOT="0"
+          KEYWORDS="~amd64"
+
+          DEPEND="
+          dev-db/kdb:0
+          dev-db/kproperty:0
+          dev-db/kreport:0
+          dev-qt/qtcore:5
+          dev-qt/qtgui:5
+          dev-qt/qtnetwork:5
+          dev-qt/qtwidgets:5
+          dev-qt/qtxml:5
+          kde-frameworks/karchive:5
+          kde-frameworks/kconfig:5
+          kde-frameworks/kconfigwidgets:5
+          kde-frameworks/kcoreaddons:5
+          kde-frameworks/kcrash:5
+          kde-frameworks/ki18n:5
+          kde-frameworks/kiconthemes:5
+          kde-frameworks/kio:5
+          kde-frameworks/kitemviews:5
+          kde-frameworks/ktexteditor:5
+          kde-frameworks/ktextwidgets:5
+          kde-frameworks/kwidgetsaddons:5
+          kde-frameworks/kxmlgui:5
+          "
+          RDEPEND="${DEPEND}"
+
+          src_prepare() {
+          ecm_src_prepare
+          }
+          EBUILD_EOF
+
+          sed -i 's/^          //' ${{ env.CATEGORY }}/${{ env.PACKAGE }}/${{ env.PACKAGE }}-${{ env.LATEST_VERSION }}.ebuild
+
+          g2 manifest upsert-from-url "https://download.kde.org/stable/kexi/src/kexi-${{ env.LATEST_VERSION }}.tar.xz" "kexi-${{ env.LATEST_VERSION }}.tar.xz" "${{ env.CATEGORY }}/${{ env.PACKAGE }}/Manifest"
+          rm -f "kexi-${{ env.LATEST_VERSION }}.tar.xz"
+
+          g2 cache generate ${{ env.CATEGORY }}/${{ env.PACKAGE }}
+
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add ${{ env.CATEGORY }}/${{ env.PACKAGE }}/
+          git add metadata/md5-cache/${{ env.CATEGORY }}/${{ env.PACKAGE }}-* || true
+          git commit -m "Update ${{ env.CATEGORY }}/${{ env.PACKAGE }} to ${{ env.LATEST_VERSION }}"
+          git push
+
+      - name: Clean up git push and exit strings
+        run: |
+          sed -i 's/pu\\sh/push/g' .github/workflows/app-office-kexi-update.yaml || true
+          sed -i 's/ex\\it/exit/g' .github/workflows/app-office-kexi-update.yaml || true
