@@ -12,7 +12,7 @@ RDEPEND="sys-libs/glibc"
 RESTRICT="strip"
 QA_PREBUILT="opt/antigravity/antigravity opt/antigravity/chrome-sandbox opt/antigravity/chrome_crashpad_handler"
 
-SRC_URI="amd64? ( https://storage.googleapis.com/antigravity-public/antigravity-hub/2.0.6-5413878570549248/linux-x64/Antigravity.tar.gz -> ${P}.tar.gz )"
+SRC_URI="amd64? ( https://storage.googleapis.com/antigravity-public/antigravity-hub/2.0.6-5413878570549248/linux-x64/Antigravity.tar.gz -> ${PN}-${PV}.tar.gz )"
 
 S="${WORKDIR}/Antigravity-x64"
 

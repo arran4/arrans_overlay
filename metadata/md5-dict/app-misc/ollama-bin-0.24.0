@@ -1,0 +1,18 @@
+HOMEPAGE=https://ollama.com
+DEPEND=acct-user/ollama acct-group/ollama
+BDEPEND=app-arch/zstd
+INHERITED=xdg-utils
+SRC_URI=
+  amd64? ( https://github.com/ollama/ollama/releases/download/v0.24.0/ollama-linux-amd64.tar.zst  -> ollama-bin-0.24.0.amd64.tar.zst  )
+  arm64? ( https://github.com/ollama/ollama/releases/download/v0.24.0/ollama-linux-arm64.tar.zst  -> ollama-bin-0.24.0.arm64.tar.zst  )
+  rocm? ( https://github.com/ollama/ollama/releases/download/v0.24.0/ollama-linux-amd64-rocm.tar.zst -> ollama-bin-0.24.0.rocm.tar.zst )
+
+SLOT=0
+EAPI=8
+KEYWORDS=~amd64 ~arm64
+LICENSE=MIT
+DESCRIPTION=Get up and running with Llama 3, Mistral, Gemma, and other large language models.
+IUSE=+systemd -rocm
+RDEPEND=acct-user/ollama acct-group/ollama
+RESTRICT=strip
+_md5_=334629aa96e5cfbfe33d6f8626960aeb
