@@ -2,54 +2,54 @@ LICENSE=GPL-2 LGPL-2
 DESCRIPTION=Integrated Development Environment, supporting KF6/Qt, C/C++ and much more
 HOMEPAGE=https://kdevelop.org/
 IUSE=gdbui plasma +qmake +share subversion
-SLOT=6/$(ver_cut 1-2)
+SLOT=6/25.12
 KEYWORDS=amd64 arm64
 EAPI=8
 RDEPEND=
-	>=dev-qt/qt5compat-${QTMIN}:6
-	>=dev-qt/qtbase-${QTMIN}:6[dbus,gui,network,widgets,xml]
-	>=dev-qt/qtdeclarative-${QTMIN}:6[widgets]
-	>=dev-qt/qttools-${QTMIN}:6[assistant]
-	>=dev-qt/qtwebengine-${QTMIN}:6[widgets]
+	>=dev-qt/qt5compat-6.10.1:6
+	>=dev-qt/qtbase-6.10.1:6[dbus,gui,network,widgets,xml]
+	>=dev-qt/qtdeclarative-6.10.1:6[widgets]
+	>=dev-qt/qttools-6.10.1:6[assistant]
+	>=dev-qt/qtwebengine-6.10.1:6[widgets]
 	>=dev-util/astyle-3.1:=
 	kde-apps/libkomparediff2:6
-	>=kde-frameworks/karchive-${KFMIN}:6
-	>=kde-frameworks/kbookmarks-${KFMIN}:6
-	>=kde-frameworks/kcmutils-${KFMIN}:6
-	>=kde-frameworks/kcodecs-${KFMIN}:6
-	>=kde-frameworks/kcompletion-${KFMIN}:6
-	>=kde-frameworks/kconfig-${KFMIN}:6
-	>=kde-frameworks/kconfigwidgets-${KFMIN}:6
-	>=kde-frameworks/kcoreaddons-${KFMIN}:6
-	>=kde-frameworks/kcrash-${KFMIN}:6
-	>=kde-frameworks/kguiaddons-${KFMIN}:6
-	>=kde-frameworks/ki18n-${KFMIN}:6
-	>=kde-frameworks/kiconthemes-${KFMIN}:6
-	>=kde-frameworks/kio-${KFMIN}:6
-	>=kde-frameworks/kitemmodels-${KFMIN}:6
-	>=kde-frameworks/kitemviews-${KFMIN}:6
-	>=kde-frameworks/kjobwidgets-${KFMIN}:6
-	>=kde-frameworks/knewstuff-${KFMIN}:6
-	>=kde-frameworks/knotifications-${KFMIN}:6
-	>=kde-frameworks/knotifyconfig-${KFMIN}:6
-	>=kde-frameworks/kparts-${KFMIN}:6
-	>=kde-frameworks/kservice-${KFMIN}:6
-	>=kde-frameworks/ktexteditor-${KFMIN}:6
-	>=kde-frameworks/ktexttemplate-${KFMIN}:6
-	>=kde-frameworks/ktextwidgets-${KFMIN}:6
-	>=kde-frameworks/kwidgetsaddons-${KFMIN}:6
-	>=kde-frameworks/kwindowsystem-${KFMIN}:6
-	>=kde-frameworks/kxmlgui-${KFMIN}:6
-	>=kde-frameworks/sonnet-${KFMIN}:6
-	>=kde-frameworks/threadweaver-${KFMIN}:6
-	$(llvm_gen_dep 'llvm-core/clang:${LLVM_SLOT}')
+	>=kde-frameworks/karchive-6.19.0:6
+	>=kde-frameworks/kbookmarks-6.19.0:6
+	>=kde-frameworks/kcmutils-6.19.0:6
+	>=kde-frameworks/kcodecs-6.19.0:6
+	>=kde-frameworks/kcompletion-6.19.0:6
+	>=kde-frameworks/kconfig-6.19.0:6
+	>=kde-frameworks/kconfigwidgets-6.19.0:6
+	>=kde-frameworks/kcoreaddons-6.19.0:6
+	>=kde-frameworks/kcrash-6.19.0:6
+	>=kde-frameworks/kguiaddons-6.19.0:6
+	>=kde-frameworks/ki18n-6.19.0:6
+	>=kde-frameworks/kiconthemes-6.19.0:6
+	>=kde-frameworks/kio-6.19.0:6
+	>=kde-frameworks/kitemmodels-6.19.0:6
+	>=kde-frameworks/kitemviews-6.19.0:6
+	>=kde-frameworks/kjobwidgets-6.19.0:6
+	>=kde-frameworks/knewstuff-6.19.0:6
+	>=kde-frameworks/knotifications-6.19.0:6
+	>=kde-frameworks/knotifyconfig-6.19.0:6
+	>=kde-frameworks/kparts-6.19.0:6
+	>=kde-frameworks/kservice-6.19.0:6
+	>=kde-frameworks/ktexteditor-6.19.0:6
+	>=kde-frameworks/ktexttemplate-6.19.0:6
+	>=kde-frameworks/ktextwidgets-6.19.0:6
+	>=kde-frameworks/kwidgetsaddons-6.19.0:6
+	>=kde-frameworks/kwindowsystem-6.19.0:6
+	>=kde-frameworks/kxmlgui-6.19.0:6
+	>=kde-frameworks/sonnet-6.19.0:6
+	>=kde-frameworks/threadweaver-6.19.0:6
+	|| ( llvm-core/clang:20 llvm-core/clang:19 llvm-core/clang:18 llvm-core/clang:17 llvm-core/clang:16 )
 	gdbui? ( kde-plasma/libksysguard:6= )
 	plasma? (
-		>=kde-frameworks/krunner-${KFMIN}:6
+		>=kde-frameworks/krunner-6.19.0:6
 		kde-plasma/libplasma:6=
 	)
 	qmake? ( >=dev-util/kdevelop-pg-qt-2.4.0:0 )
-	share? ( >=kde-frameworks/purpose-${KFMIN}:6 )
+	share? ( >=kde-frameworks/purpose-6.19.0:6 )
 	subversion? (
 		dev-libs/apr:1
 		dev-libs/apr-util:1
@@ -63,50 +63,50 @@ RDEPEND=
 	kde-apps/kio-extras:6
 
 DEPEND=
-	>=dev-qt/qt5compat-${QTMIN}:6
-	>=dev-qt/qtbase-${QTMIN}:6[dbus,gui,network,widgets,xml]
-	>=dev-qt/qtdeclarative-${QTMIN}:6[widgets]
-	>=dev-qt/qttools-${QTMIN}:6[assistant]
-	>=dev-qt/qtwebengine-${QTMIN}:6[widgets]
+	>=dev-qt/qt5compat-6.10.1:6
+	>=dev-qt/qtbase-6.10.1:6[dbus,gui,network,widgets,xml]
+	>=dev-qt/qtdeclarative-6.10.1:6[widgets]
+	>=dev-qt/qttools-6.10.1:6[assistant]
+	>=dev-qt/qtwebengine-6.10.1:6[widgets]
 	>=dev-util/astyle-3.1:=
 	kde-apps/libkomparediff2:6
-	>=kde-frameworks/karchive-${KFMIN}:6
-	>=kde-frameworks/kbookmarks-${KFMIN}:6
-	>=kde-frameworks/kcmutils-${KFMIN}:6
-	>=kde-frameworks/kcodecs-${KFMIN}:6
-	>=kde-frameworks/kcompletion-${KFMIN}:6
-	>=kde-frameworks/kconfig-${KFMIN}:6
-	>=kde-frameworks/kconfigwidgets-${KFMIN}:6
-	>=kde-frameworks/kcoreaddons-${KFMIN}:6
-	>=kde-frameworks/kcrash-${KFMIN}:6
-	>=kde-frameworks/kguiaddons-${KFMIN}:6
-	>=kde-frameworks/ki18n-${KFMIN}:6
-	>=kde-frameworks/kiconthemes-${KFMIN}:6
-	>=kde-frameworks/kio-${KFMIN}:6
-	>=kde-frameworks/kitemmodels-${KFMIN}:6
-	>=kde-frameworks/kitemviews-${KFMIN}:6
-	>=kde-frameworks/kjobwidgets-${KFMIN}:6
-	>=kde-frameworks/knewstuff-${KFMIN}:6
-	>=kde-frameworks/knotifications-${KFMIN}:6
-	>=kde-frameworks/knotifyconfig-${KFMIN}:6
-	>=kde-frameworks/kparts-${KFMIN}:6
-	>=kde-frameworks/kservice-${KFMIN}:6
-	>=kde-frameworks/ktexteditor-${KFMIN}:6
-	>=kde-frameworks/ktexttemplate-${KFMIN}:6
-	>=kde-frameworks/ktextwidgets-${KFMIN}:6
-	>=kde-frameworks/kwidgetsaddons-${KFMIN}:6
-	>=kde-frameworks/kwindowsystem-${KFMIN}:6
-	>=kde-frameworks/kxmlgui-${KFMIN}:6
-	>=kde-frameworks/sonnet-${KFMIN}:6
-	>=kde-frameworks/threadweaver-${KFMIN}:6
-	$(llvm_gen_dep 'llvm-core/clang:${LLVM_SLOT}')
+	>=kde-frameworks/karchive-6.19.0:6
+	>=kde-frameworks/kbookmarks-6.19.0:6
+	>=kde-frameworks/kcmutils-6.19.0:6
+	>=kde-frameworks/kcodecs-6.19.0:6
+	>=kde-frameworks/kcompletion-6.19.0:6
+	>=kde-frameworks/kconfig-6.19.0:6
+	>=kde-frameworks/kconfigwidgets-6.19.0:6
+	>=kde-frameworks/kcoreaddons-6.19.0:6
+	>=kde-frameworks/kcrash-6.19.0:6
+	>=kde-frameworks/kguiaddons-6.19.0:6
+	>=kde-frameworks/ki18n-6.19.0:6
+	>=kde-frameworks/kiconthemes-6.19.0:6
+	>=kde-frameworks/kio-6.19.0:6
+	>=kde-frameworks/kitemmodels-6.19.0:6
+	>=kde-frameworks/kitemviews-6.19.0:6
+	>=kde-frameworks/kjobwidgets-6.19.0:6
+	>=kde-frameworks/knewstuff-6.19.0:6
+	>=kde-frameworks/knotifications-6.19.0:6
+	>=kde-frameworks/knotifyconfig-6.19.0:6
+	>=kde-frameworks/kparts-6.19.0:6
+	>=kde-frameworks/kservice-6.19.0:6
+	>=kde-frameworks/ktexteditor-6.19.0:6
+	>=kde-frameworks/ktexttemplate-6.19.0:6
+	>=kde-frameworks/ktextwidgets-6.19.0:6
+	>=kde-frameworks/kwidgetsaddons-6.19.0:6
+	>=kde-frameworks/kwindowsystem-6.19.0:6
+	>=kde-frameworks/kxmlgui-6.19.0:6
+	>=kde-frameworks/sonnet-6.19.0:6
+	>=kde-frameworks/threadweaver-6.19.0:6
+	|| ( llvm-core/clang:20 llvm-core/clang:19 llvm-core/clang:18 llvm-core/clang:17 llvm-core/clang:16 )
 	gdbui? ( kde-plasma/libksysguard:6= )
 	plasma? (
-		>=kde-frameworks/krunner-${KFMIN}:6
+		>=kde-frameworks/krunner-6.19.0:6
 		kde-plasma/libplasma:6=
 	)
 	qmake? ( >=dev-util/kdevelop-pg-qt-2.4.0:0 )
-	share? ( >=kde-frameworks/purpose-${KFMIN}:6 )
+	share? ( >=kde-frameworks/purpose-6.19.0:6 )
 	subversion? (
 		dev-libs/apr:1
 		dev-libs/apr-util:1
