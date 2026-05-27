@@ -1,3 +1,4 @@
+# Manually maintained because overlay_workflow_builder_generator cannot handle version extraction from the non-standard filename correctly without arch.
 name: net-im/beeper-appimage update
 
 permissions:
@@ -57,7 +58,8 @@ jobs:
             exit 1
           fi
           base_name="${fname%.*}"
-          version="${base_name##*-}"
+          base_name_without_arch="${base_name%-x86_64}"
+          version="${base_name_without_arch##*-}"
           echo "appimage_url=$appimage_url" >> "$GITHUB_ENV"
           echo "appimage_extension=$artifact_ext" >> "$GITHUB_ENV"
           echo "version=$version" >> "$GITHUB_ENV"
