@@ -66,10 +66,9 @@ jobs:
 
           src_install() {
             insinto /opt/${PN}
-            doins gemini.js LICENSE README.md
+            doins -r *
 
-            exeinto /opt/${PN}
-            doexe gemini.js
+            fperms +x /opt/${PN}/gemini.js
 
             dosym -r /opt/${PN}/gemini.js /usr/bin/gemini
           }
