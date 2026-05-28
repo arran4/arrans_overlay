@@ -10,4 +10,4 @@ RESTRICT=strip
 SLOT=0
 SRC_URI=amd64? ( https://storage.googleapis.com/antigravity-public/antigravity-hub/2.0.6-5413878570549248/linux-x64/Antigravity.tar.gz -> antigravity-bin-2.0.6_p5413878570549248.tar.gz )
 _eclasses_=desktop	26d57169ca094c04be416993844ec8bc
-_md5_=4751d726f445390c64a9274a9be662cd
+_md5_=e8440ec5548289b5e32de20f630b72c2
