@@ -114,6 +114,14 @@ jobs:
               echo 'SRC_URI="amd64? ( '"${download_url}"' -> ${P}.tar.gz )"'
               echo ''
               echo 'S="${WORKDIR}/Antigravity"'
+              echo ""
+              echo "BDEPEND=\"app-arch/asar\""
+              echo ""
+              echo "src_prepare() {"
+              echo "  default"
+              echo "  asar extract-file resources/app.asar resources/linux/code.png \"\${WORKDIR}/icon.png\" || die"
+              echo "}"
+
               echo ''
               echo 'src_install() {'
               echo '  insinto /opt/antigravity'
@@ -122,7 +130,7 @@ jobs:
               echo '  fperms 4755 /opt/antigravity/chrome-sandbox'
               echo '  fperms +x /opt/antigravity/chrome_crashpad_handler'
               echo '  dosym ../antigravity/antigravity /opt/bin/antigravity'
-              echo '  newicon "resources/app/resources/linux/code.png" antigravity.png'
+              echo '  newicon "${WORKDIR}/icon.png" antigravity.png'
               echo '  domenu "${FILESDIR}/antigravity-bin.desktop"'
               echo '}'
             } > "$ebuild_file"

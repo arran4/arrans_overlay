@@ -16,6 +16,13 @@ SRC_URI="amd64? ( https://storage.googleapis.com/antigravity-public/antigravity-
 
 S="${WORKDIR}/Antigravity-x64"
 
+BDEPEND="app-arch/asar"
+
+src_prepare() {
+	default
+	asar extract-file resources/app.asar resources/linux/code.png "${WORKDIR}/icon.png" || die
+}
+
 src_install() {
   insinto /opt/antigravity
   doins -r *
@@ -23,6 +30,6 @@ src_install() {
   fperms 4755 /opt/antigravity/chrome-sandbox
   fperms +x /opt/antigravity/chrome_crashpad_handler
   dosym ../antigravity/antigravity /opt/bin/antigravity
-  newicon "resources/app/resources/linux/code.png" antigravity.png
+  newicon "${WORKDIR}/icon.png" antigravity.png
   domenu "${FILESDIR}/antigravity-bin.desktop"
 }
