@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-05-29 02:51:48.699018784 +0000 UTC m=+0.008634756
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-05-29 03:37:21.056619727 +0000 UTC m=+0.026922010
 
 name: app-misc/term39-bin update
 
@@ -66,15 +66,15 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<EOF > "$metadata_file"
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-<pkgmetadata>
-	<upstream>
-		<remote-id type="github">alejandroqh/term39</remote-id>
-	</upstream>
-</pkgmetadata>
-EOF
+            cat << "          EOF" > "$metadata_file"
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+          <pkgmetadata>
+		<upstream>
+			<remote-id type="github">alejandroqh/term39</remote-id>
+		</upstream>
+          </pkgmetadata>
+          EOF
           fi
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
