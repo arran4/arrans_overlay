@@ -20,7 +20,7 @@ BDEPEND="app-arch/asar"
 
 src_prepare() {
 	default
-	asar extract-file resources/app.asar icon.png "${WORKDIR}/icon.png" || die
+	asar extract-file resources/app.asar resources/linux/code.png "${WORKDIR}/icon.png" || die
 }
 
 src_install() {
