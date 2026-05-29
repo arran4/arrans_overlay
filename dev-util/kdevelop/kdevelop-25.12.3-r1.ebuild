@@ -98,7 +98,6 @@ CMAKE_SKIP_TESTS=(
 
 PATCHES=(
 	# bug #963324 pt.1, git master
-	"${FILESDIR}/${PN}-25.12.1-file-collision.patch"
 	"${FILESDIR}/kdevelop-qdbus-remove.patch"
 )
 
