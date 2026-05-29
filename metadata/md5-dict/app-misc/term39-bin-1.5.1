@@ -1,0 +1,13 @@
+SLOT=0
+HOMEPAGE=https://github.com/alejandroqh/term39
+RESTRICT=strip
+INHERITED=binchecks
+KEYWORDS=~amd64 ~arm64
+EAPI=8
+DESCRIPTION=A modern terminal multiplexer with classic MS-DOS aesthetic, built with Rust.
+SRC_URI=
+	amd64? ( https://github.com/alejandroqh/term39/releases/download/v1.5.1/term39-v1.5.1-linux-x86_64.tar.gz -> term39-bin-1.5.1-amd64.tar.gz )
+	arm64? ( https://github.com/alejandroqh/term39/releases/download/v1.5.1/term39-v1.5.1-linux-aarch64.tar.gz -> term39-bin-1.5.1-arm64.tar.gz )
+
+LICENSE=MIT
+_md5_=88877c59a0b828af17dff88448ca02c5
