@@ -1,0 +1,10 @@
+EAPI=8
+SRC_URI=https://github.com/GraphiteEditor/Graphite/releases/download/latest-stable/graphite-self-hosted-build.zip -> graphite-bin-20250920.zip
+BDEPEND=app-arch/unzip
+RDEPEND=dev-lang/python
+DESCRIPTION=A lightweight raster and vector graphics editor in your browser.
+HOMEPAGE=https://graphite.rs/
+LICENSE=Apache-2.0
+SLOT=0
+KEYWORDS=~amd64 ~arm64
+_md5_=20df2a9e8dd4dfe6ce9f666a719d6659
