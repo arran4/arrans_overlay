@@ -63,9 +63,9 @@ jobs:
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
-		<upstream>
-			<remote-id type="github">GraphiteEditor/Graphite</remote-id>
-		</upstream>
+              <upstream>
+                  <remote-id type="github">GraphiteEditor/Graphite</remote-id>
+              </upstream>
           </pkgmetadata>
           METADATA_EOF
           fi
@@ -107,18 +107,18 @@ jobs:
           S="\${WORKDIR}"
 
           src_install() {
-		insinto /opt/graphite
-		doins -r graphite-*/*
+              insinto /opt/graphite
+              doins -r graphite-*/*
 
-		cat > "\${T}/graphite" <<- 'SCRIPT_EOF'
-		#!/bin/sh
-		cd /opt/graphite
-		echo "Starting Graphite editor on http://localhost:8080"
-		exec python3 -m http.server 8080
-		SCRIPT_EOF
+              cat > "\${T}/graphite" <<- 'SCRIPT_EOF'
+              #!/bin/sh
+              cd /opt/graphite
+              echo "Starting Graphite editor on http://localhost:8080"
+              exec python3 -m http.server 8080
+              SCRIPT_EOF
 
-		exeinto /usr/bin
-		doexe "\${T}/graphite"
+              exeinto /usr/bin
+              doexe "\${T}/graphite"
           }
           EBUILD_EOF
 
