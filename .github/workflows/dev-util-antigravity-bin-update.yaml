@@ -119,7 +119,7 @@ jobs:
               echo ""
               echo "src_prepare() {"
               echo "  default"
-              echo "  asar extract-file resources/app.asar resources/linux/code.png \"\${WORKDIR}/icon.png\" || die"
+              echo "  asar extract-file resources/app.asar icon.png > \"\${WORKDIR}/icon.png\" || die"
               echo "}"
 
               echo ''
