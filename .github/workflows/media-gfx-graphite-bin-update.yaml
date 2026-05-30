@@ -130,6 +130,7 @@ jobs:
             # Since the zip file contents might change without the URL changing, we should regenerate the manifest if there's an older one
             touch "${ebuild_dir}/Manifest"
             sed -i "/${{ env.epn }}-/d" "${ebuild_dir}/Manifest"
+            export PATH=$PATH:~/go/bin
             g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/latest-stable/graphite-self-hosted-build.zip" "${{ env.epn }}-${version}.zip" "${ebuild_dir}"
 
             # Since the cache requires FEATURES to be set appropriately in unprivileged containers sometimes
