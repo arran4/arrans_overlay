@@ -185,7 +185,8 @@ def main(repo_root):
             cleanup(pkg_dir)
         print("Removed duplicated ebuilds:")
         for p in removed:
-            print(" -", p)
+            rel_p = os.path.relpath(p, repo_root)
+            print(f" - {rel_p}")
     else:
         print("No duplicates found")
 
