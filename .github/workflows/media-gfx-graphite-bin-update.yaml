@@ -1,0 +1,152 @@
+name: media-gfx/graphite-bin update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '40 13 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/media-gfx-graphite-bin-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ecn: media-gfx
+  epn: graphite-bin
+  description: "A lightweight raster and vector graphics editor in your browser."
+  homepage: "https://graphite.rs/"
+  github_owner: GraphiteEditor
+  github_repo: Graphite
+  keywords: "~amd64 ~arm64"
+  workflow_filename: media-gfx-graphite-bin-update.yaml
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y wget jq coreutils curl unzip
+            if command -v go &> /dev/null
+            then
+                go install github.com/arran4/g2@latest
+            else
+                url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+                echo "$url"
+                wget "${url}" -O /tmp/g2.deb
+                sudo dpkg -i /tmp/g2.deb
+                rm /tmp/g2.deb
+            fi
+
+      - name: Process release
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p "$ebuild_dir"
+          metadata_file="${ebuild_dir}/metadata.xml"
+          if [ ! -f "$metadata_file" ]; then
+            cat <<METADATA_EOF > "$metadata_file"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<upstream>
+		<remote-id type="github">GraphiteEditor/Graphite</remote-id>
+	</upstream>
+</pkgmetadata>
+METADATA_EOF
+          fi
+
+          # Graphite uses a rolling release tagged "latest-stable".
+          # We need to find the actual commit or date to use as a version.
+          release_info=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases/tags/latest-stable)
+
+          # We can use the date of the asset upload as a version, e.g., 20250920
+          upload_date=$(echo "$release_info" | jq -r '.assets[0].updated_at' | cut -d'T' -f1 | sed 's/-//g')
+
+          if [ -z "$upload_date" ] || [ "$upload_date" = "null" ]; then
+             echo "Failed to get upload date"
+             exit 1
+          fi
+
+          version="${upload_date}"
+          ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+
+          if [ ! -f "$ebuild_file" ]; then
+            # Clean up old ebuilds
+            rm -f "${ebuild_dir}/${{ env.epn }}"-*.ebuild
+
+            cat <<EBUILD_EOF > "$ebuild_file"
+# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}
+EAPI=8
+
+DESCRIPTION="${{ env.description }}"
+HOMEPAGE="${{ env.homepage }}"
+SRC_URI="https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/latest-stable/graphite-self-hosted-build.zip -> \${P}.zip"
+
+LICENSE="Apache-2.0"
+SLOT="0"
+KEYWORDS="${{ env.keywords }}"
+
+BDEPEND="app-arch/unzip"
+RDEPEND="dev-lang/python"
+
+S="\${WORKDIR}"
+
+src_install() {
+	insinto /opt/graphite
+	doins -r graphite-*/*
+
+	cat > "\${T}/graphite" <<- 'SCRIPT_EOF'
+	#!/bin/sh
+	cd /opt/graphite
+	echo "Starting Graphite editor on http://localhost:8080"
+	exec python3 -m http.server 8080
+	SCRIPT_EOF
+
+	exeinto /usr/bin
+	doexe "\${T}/graphite"
+}
+EBUILD_EOF
+
+            # We need to update the Manifest file for the new version
+            # Since the zip file contents might change without the URL changing, we should regenerate the manifest if there's an older one
+            touch "${ebuild_dir}/Manifest"
+            sed -i "/${{ env.epn }}-/d" "${ebuild_dir}/Manifest"
+            g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/latest-stable/graphite-self-hosted-build.zip" "${{ env.epn }}-${version}.zip" "${ebuild_dir}"
+
+            # Since the cache requires FEATURES to be set appropriately in unprivileged containers sometimes
+            g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+            echo "generated_tag=${version}" >> $GITHUB_OUTPUT
+          else
+            echo "Ebuild for version ${version} already exists."
+          fi
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          git add "${ebuild_dir}" "metadata/md5-dict/${{ env.ecn }}/${{ env.epn }}*" || true
+          # Restore extraneous md5-dict changes
+          git restore metadata/md5-dict/ || true
+          git clean -fd metadata/md5-dict/ || true
+          rm -f *.zip || true
+          if ! git diff --staged --quiet; then
+            if git commit -m "Add ebuild for new ${{ env.epn }} version ${{ steps.process_releases.outputs.generated_tag }}"; then
+              git pull --rebase &&
+              git push
+            fi
+          fi || true
+        if: steps.process_releases.outputs.generated_tag
