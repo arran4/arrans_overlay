@@ -1,0 +1,14 @@
+BDEPEND=app-arch/asar
+DEFINED_PHASES=install prepare
+DESCRIPTION=Google Antigravity AI-driven IDE (binary release)
+EAPI=8
+HOMEPAGE=https://antigravity.google/
+INHERIT=desktop
+KEYWORDS=~amd64
+LICENSE=Antigravity
+RDEPEND=sys-libs/glibc
+RESTRICT=strip
+SLOT=0
+SRC_URI=amd64? ( https://storage.googleapis.com/antigravity-public/antigravity-hub/2.0.10-5119448496078848/linux-x64/Antigravity.tar.gz -> antigravity-bin-2.0.10_p5119448496078848.tar.gz )
+_eclasses_=desktop	26d57169ca094c04be416993844ec8bc
+_md5_=1ad33a3998f9b074a9bcf1caef97332c
