@@ -122,7 +122,6 @@ jobs:
               echo '  fperms 4755 /opt/antigravity/chrome-sandbox'
               echo '  fperms +x /opt/antigravity/chrome_crashpad_handler'
               echo '  dosym ../antigravity/antigravity /opt/bin/antigravity'
-              echo '  newicon "resources/app/resources/linux/code.png" antigravity.png'
               echo '  domenu "${FILESDIR}/antigravity-bin.desktop"'
               echo '}'
             } > "$ebuild_file"
