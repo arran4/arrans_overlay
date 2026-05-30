@@ -59,15 +59,15 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<METADATA_EOF > "$metadata_file"
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-<pkgmetadata>
-	<upstream>
-		<remote-id type="github">GraphiteEditor/Graphite</remote-id>
-	</upstream>
-</pkgmetadata>
-METADATA_EOF
+            cat << "METADATA_EOF" > "$metadata_file"
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+          <pkgmetadata>
+		<upstream>
+			<remote-id type="github">GraphiteEditor/Graphite</remote-id>
+		</upstream>
+          </pkgmetadata>
+          METADATA_EOF
           fi
 
           # Graphite uses a rolling release tagged "latest-stable".
@@ -89,38 +89,42 @@ METADATA_EOF
             # Clean up old ebuilds
             rm -f "${ebuild_dir}/${{ env.epn }}"-*.ebuild
 
-            cat <<EBUILD_EOF > "$ebuild_file"
-# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}
-EAPI=8
+            cat << "EBUILD_EOF" > "$ebuild_file"
+          # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}
+          EAPI=8
 
-DESCRIPTION="${{ env.description }}"
-HOMEPAGE="${{ env.homepage }}"
-SRC_URI="https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/latest-stable/graphite-self-hosted-build.zip -> \${P}.zip"
+          DESCRIPTION="${{ env.description }}"
+          HOMEPAGE="${{ env.homepage }}"
+          SRC_URI="https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/latest-stable/graphite-self-hosted-build.zip -> \${P}.zip"
 
-LICENSE="Apache-2.0"
-SLOT="0"
-KEYWORDS="${{ env.keywords }}"
+          LICENSE="Apache-2.0"
+          SLOT="0"
+          KEYWORDS="${{ env.keywords }}"
 
-BDEPEND="app-arch/unzip"
-RDEPEND="dev-lang/python"
+          BDEPEND="app-arch/unzip"
+          RDEPEND="dev-lang/python"
 
-S="\${WORKDIR}"
+          S="\${WORKDIR}"
 
-src_install() {
-	insinto /opt/graphite
-	doins -r graphite-*/*
+          src_install() {
+		insinto /opt/graphite
+		doins -r graphite-*/*
 
-	cat > "\${T}/graphite" <<- 'SCRIPT_EOF'
-	#!/bin/sh
-	cd /opt/graphite
-	echo "Starting Graphite editor on http://localhost:8080"
-	exec python3 -m http.server 8080
-	SCRIPT_EOF
+		cat > "\${T}/graphite" <<- 'SCRIPT_EOF'
+		#!/bin/sh
+		cd /opt/graphite
+		echo "Starting Graphite editor on http://localhost:8080"
+		exec python3 -m http.server 8080
+		SCRIPT_EOF
 
-	exeinto /usr/bin
-	doexe "\${T}/graphite"
-}
-EBUILD_EOF
+		exeinto /usr/bin
+		doexe "\${T}/graphite"
+          }
+          EBUILD_EOF
+
+            # Unindent the files correctly
+            sed -i 's/^          //g' "$metadata_file"
+            sed -i 's/^          //g' "$ebuild_file"
 
             # We need to update the Manifest file for the new version
             # Since the zip file contents might change without the URL changing, we should regenerate the manifest if there's an older one
