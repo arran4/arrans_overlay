@@ -129,15 +129,8 @@ jobs:
               insinto /opt/graphite
               doins -r frontend/dist/*
 
-              cat > "\${T}/graphite" <<- 'SCRIPT_EOF'
-              #!/bin/sh
-              cd /opt/graphite
-              echo "Starting Graphite editor on http://localhost:8080"
-              exec python3 -m http.server 8080
-              SCRIPT_EOF
-
               exeinto /usr/bin
-              doexe "\${T}/graphite"
+              newexe "${FILESDIR}/graphite" graphite
           }
           EBUILD_EOF
 
