@@ -183,10 +183,44 @@ def main(repo_root):
     if removed:
         for pkg_dir in {os.path.dirname(p) for p in removed}:
             cleanup(pkg_dir)
-        print("Removed duplicated ebuilds:")
+
+        pkg_summary = defaultdict(lambda: {"removed": set(), "remaining": set()})
+
         for p in removed:
             rel_p = os.path.relpath(p, repo_root)
-            print(f" - {rel_p}")
+            pkg_dir = os.path.dirname(rel_p)
+            file_name = os.path.basename(rel_p)
+            try:
+                ver, rev = split_ebuild_name(file_name)
+                full_ver = ver if rev == "r0" else f"{ver}-{rev}"
+                pkg_summary[pkg_dir]["removed"].add(full_ver)
+            except ValueError:
+                pkg_summary[pkg_dir]["removed"].add(file_name)
+
+        for pkg_dir in pkg_summary:
+            full_pkg_dir = os.path.join(repo_root, pkg_dir)
+            try:
+                entries = os.listdir(full_pkg_dir)
+                for entry in entries:
+                    if entry.endswith(".ebuild"):
+                        try:
+                            ver, rev = split_ebuild_name(entry)
+                            full_ver = ver if rev == "r0" else f"{ver}-{rev}"
+                            pkg_summary[pkg_dir]["remaining"].add(full_ver)
+                        except ValueError:
+                            pkg_summary[pkg_dir]["remaining"].add(entry)
+            except FileNotFoundError:
+                pass
+
+        print("Removed duplicated ebuilds:")
+        for pkg_dir, data in sorted(pkg_summary.items()):
+            removed_str = " ".join([f"-{v}" for v in sorted(data["removed"], key=version_key)])
+            remaining_str = " ".join([f"+{v}" for v in sorted(data["remaining"], key=version_key)])
+
+            if remaining_str:
+                print(f" - {pkg_dir} ({removed_str} {remaining_str})")
+            else:
+                print(f" - {pkg_dir} ({removed_str})")
     else:
         print("No duplicates found")
 
