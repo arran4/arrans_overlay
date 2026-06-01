@@ -1,6 +1,6 @@
 # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/dev-util-antigravity-bin-update.yaml
 EAPI=8
-inherit desktop
+inherit desktop xdg
 DESCRIPTION="Google Antigravity AI-driven IDE (binary release)"
 HOMEPAGE="https://antigravity.google/"
 LICENSE="Antigravity"

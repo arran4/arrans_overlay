@@ -99,7 +99,7 @@ jobs:
             {
               echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
               echo 'EAPI=8'
-              echo 'inherit desktop'
+              echo 'inherit desktop xdg'
               echo "DESCRIPTION=\"${{ env.description }}\""
               echo "HOMEPAGE=\"${{ env.homepage }}\""
               echo 'LICENSE="Antigravity"'
