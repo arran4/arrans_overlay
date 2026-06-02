@@ -184,9 +184,24 @@ def main(repo_root):
         for pkg_dir in {os.path.dirname(p) for p in removed}:
             cleanup(pkg_dir)
         print("Removed duplicated ebuilds:")
+        grouped = defaultdict(list)
         for p in removed:
             rel_p = os.path.relpath(p, repo_root)
-            print(f" - {rel_p}")
+            parts = rel_p.split(os.sep)
+            if len(parts) >= 3:
+                cat = parts[-3]
+                pkg = parts[-2]
+                ebuild_file = parts[-1]
+                if ebuild_file.startswith(pkg):
+                    ver_part = ebuild_file[len(pkg):-7]
+                    grouped[f"{cat}/{pkg}"].append(ver_part)
+                else:
+                    grouped[f"{cat}/{pkg}"].append(ebuild_file)
+            else:
+                grouped["unknown"].append(rel_p)
+
+        for pkg, vers in grouped.items():
+            print(f" - {pkg} ({', '.join(sorted(vers))})")
     else:
         print("No duplicates found")
 
