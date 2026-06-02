@@ -112,9 +112,7 @@ jobs:
           if echo "${DEDUPE_OUTPUT}" | grep -q "Removed duplicated ebuilds:"; then
             SUMMARY="${SUMMARY}**Duplicate Ebuilds Removed:**\n\n"
             while IFS= read -r line; do
-              if [[ "$line" =~ ^[[:space:]]*-[[:space:]]+(.*)/([^/]+)\\.ebuild$ ]]; then
-                SUMMARY="${SUMMARY}- \`${BASH_REMATCH[1]}\` (\`${BASH_REMATCH[2]}\`)\n"
-              elif [[ "$line" =~ ^[[:space:]]*-[[:space:]]+(.*)$ ]]; then
+              if [[ "$line" =~ ^[[:space:]]*-[[:space:]]+(.*)$ ]]; then
                 SUMMARY="${SUMMARY}- \`${BASH_REMATCH[1]}\`\n"
               fi
             done <<< "${DEDUPE_OUTPUT}"
