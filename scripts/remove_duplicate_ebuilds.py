@@ -192,8 +192,8 @@ def main(repo_root):
                 cat = parts[-3]
                 pkg = parts[-2]
                 ebuild_file = parts[-1]
-                if ebuild_file.startswith(pkg):
-                    ver_part = ebuild_file[len(pkg):-7]
+                if ebuild_file.startswith(pkg + '-'):
+                    ver_part = ebuild_file[len(pkg) + 1:-7]
                     grouped[f"{cat}/{pkg}"].append(ver_part)
                 else:
                     grouped[f"{cat}/{pkg}"].append(ebuild_file)
@@ -201,7 +201,8 @@ def main(repo_root):
                 grouped["unknown"].append(rel_p)
 
         for pkg, vers in grouped.items():
-            print(f" - {pkg} ({', '.join(sorted(vers))})")
+            formatted_vers = ', '.join([f"-{v}" if not v.startswith('-') else v for v in sorted(vers)])
+            print(f" - {pkg} ({formatted_vers})")
     else:
         print("No duplicates found")
 
