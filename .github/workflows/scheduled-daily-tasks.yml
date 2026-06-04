@@ -159,6 +159,7 @@ jobs:
             </details>
           branch: "chore/scheduled-daily-tasks"
           delete-branch: true
+          base: main
 
   check-activity:
     runs-on: ubuntu-latest
