@@ -38,7 +38,7 @@ jobs:
           echo 'FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox"' >> /etc/portage/make.conf
           mkdir -p /var/db/repos/gentoo
           emerge-webrsync
-          emerge --quiet app-portage/portage-utils dev-vcs/git dev-lang/python dev-python/packaging net-misc/curl app-misc/jq dev-util/github-cli
+          emerge --quiet app-portage/portage-utils dev-vcs/git dev-lang/python net-misc/curl app-misc/jq dev-util/github-cli
 
       - name: Checkout repository
         uses: actions/checkout@v4
