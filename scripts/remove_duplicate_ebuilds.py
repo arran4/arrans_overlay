@@ -202,6 +202,7 @@ def main(repo_root):
                 grouped_removed["unknown"].append(rel_p)
 
         grouped_remaining = defaultdict(list)
+        removed_set = set(removed)
         for (pkg_root, slot), grades in packages.items():
             rel_p = os.path.relpath(pkg_root, repo_root)
             parts = rel_p.split(os.sep)
@@ -212,7 +213,7 @@ def main(repo_root):
                 if pkg_name in grouped_removed:
                     for grade, items in grades.items():
                         for itm in items:
-                            if itm["path"] not in removed:
+                            if itm["path"] not in removed_set:
                                 file_name = os.path.basename(itm["path"])
                                 if file_name.startswith(pkg + '-'):
                                     ver_part = file_name[len(pkg) + 1:-7]
@@ -222,9 +223,9 @@ def main(repo_root):
 
         for pkg, vers in grouped_removed.items():
             rem_vers = grouped_remaining.get(pkg, [])
-            formatted_removed = ', '.join([f"-{v}" if not v.startswith('-') else v for v in sorted(vers)])
+            formatted_removed = ', '.join([f"-{v}" if not v.startswith('-') else v for v in sorted(vers, key=version_key)])
 
-            formatted_remaining = ', '.join([v for v in sorted(rem_vers)])
+            formatted_remaining = ', '.join([v for v in sorted(rem_vers, key=version_key)])
             if formatted_remaining:
                 print(f" - {pkg} (Removed: {formatted_removed} | Remaining: {formatted_remaining})")
             else:
