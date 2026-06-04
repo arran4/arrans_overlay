@@ -184,7 +184,8 @@ def main(repo_root):
         for pkg_dir in {os.path.dirname(p) for p in removed}:
             cleanup(pkg_dir)
         print("Removed duplicated ebuilds:")
-        grouped = defaultdict(list)
+
+        grouped_removed = defaultdict(list)
         for p in removed:
             rel_p = os.path.relpath(p, repo_root)
             parts = rel_p.split(os.sep)
@@ -194,15 +195,41 @@ def main(repo_root):
                 ebuild_file = parts[-1]
                 if ebuild_file.startswith(pkg + '-'):
                     ver_part = ebuild_file[len(pkg) + 1:-7]
-                    grouped[f"{cat}/{pkg}"].append(ver_part)
+                    grouped_removed[f"{cat}/{pkg}"].append(ver_part)
                 else:
-                    grouped[f"{cat}/{pkg}"].append(ebuild_file)
+                    grouped_removed[f"{cat}/{pkg}"].append(ebuild_file)
             else:
-                grouped["unknown"].append(rel_p)
+                grouped_removed["unknown"].append(rel_p)
 
-        for pkg, vers in grouped.items():
-            formatted_vers = ', '.join([f"-{v}" if not v.startswith('-') else v for v in sorted(vers)])
-            print(f" - {pkg} ({formatted_vers})")
+        grouped_remaining = defaultdict(list)
+        removed_set = set(removed)
+        for (pkg_root, slot), grades in packages.items():
+            rel_p = os.path.relpath(pkg_root, repo_root)
+            parts = rel_p.split(os.sep)
+            if len(parts) >= 2:
+                cat = parts[-2]
+                pkg = parts[-1]
+                pkg_name = f"{cat}/{pkg}"
+                if pkg_name in grouped_removed:
+                    for grade, items in grades.items():
+                        for itm in items:
+                            if itm["path"] not in removed_set:
+                                file_name = os.path.basename(itm["path"])
+                                if file_name.startswith(pkg + '-'):
+                                    ver_part = file_name[len(pkg) + 1:-7]
+                                    grouped_remaining[pkg_name].append(ver_part)
+                                else:
+                                    grouped_remaining[pkg_name].append(file_name)
+
+        for pkg, vers in grouped_removed.items():
+            rem_vers = grouped_remaining.get(pkg, [])
+            formatted_removed = ', '.join([f"-{v}" if not v.startswith('-') else v for v in sorted(vers, key=version_key)])
+
+            formatted_remaining = ', '.join([v for v in sorted(rem_vers, key=version_key)])
+            if formatted_remaining:
+                print(f" - {pkg} (Removed: {formatted_removed} | Remaining: {formatted_remaining})")
+            else:
+                print(f" - {pkg} (Removed: {formatted_removed} | Remaining: None)")
     else:
         print("No duplicates found")
 
