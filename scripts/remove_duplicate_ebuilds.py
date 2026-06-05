@@ -84,10 +84,13 @@ def process_ebuild(args):
     full_ver = ver if rev == "r0" else f"{ver}-{rev}"
     grade = "release"
     v_lower = ver.lower()
-    for tag in ("alpha", "beta", "rc", "pre", "test"):
-        if tag in v_lower:
-            grade = tag
-            break
+    if ver == "9999":
+        grade = "9999"
+    else:
+        for tag in ("alpha", "beta", "rc", "pre", "test"):
+            if tag in v_lower:
+                grade = tag
+                break
 
     return ((root, slot), grade, {
         "version": full_ver,
@@ -223,13 +226,20 @@ def main(repo_root):
 
         for pkg, vers in grouped_removed.items():
             rem_vers = grouped_remaining.get(pkg, [])
+
+            normal_rem_vers = [v for v in rem_vers if v != "9999"]
+            has_9999 = "9999" in rem_vers
+
             formatted_removed = ', '.join([f"-{v}" if not v.startswith('-') else v for v in sorted(vers, key=version_key)])
 
-            formatted_remaining = ', '.join([v for v in sorted(rem_vers, key=version_key)])
+            formatted_remaining = ', '.join([v for v in sorted(normal_rem_vers, key=version_key)])
+
+            live_note = " [has live 9999]" if has_9999 else ""
+
             if formatted_remaining:
-                print(f" - {pkg} (Removed: {formatted_removed} | Remaining: {formatted_remaining})")
+                print(f" - {pkg} (Removed: {formatted_removed} | Remaining: {formatted_remaining}){live_note}")
             else:
-                print(f" - {pkg} (Removed: {formatted_removed} | Remaining: None)")
+                print(f" - {pkg} (Removed: {formatted_removed} | Remaining: None){live_note}")
     else:
         print("No duplicates found")
 
