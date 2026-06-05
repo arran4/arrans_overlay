@@ -227,8 +227,8 @@ def main(repo_root):
         for pkg, vers in grouped_removed.items():
             rem_vers = grouped_remaining.get(pkg, [])
 
-            normal_rem_vers = [v for v in rem_vers if v != "9999"]
-            has_9999 = "9999" in rem_vers
+            normal_rem_vers = [v for v in rem_vers if v.split('-r')[0] != "9999"]
+            has_9999 = any(v.split('-r')[0] == "9999" for v in rem_vers)
 
             formatted_removed = ', '.join([f"-{v}" if not v.startswith('-') else v for v in sorted(vers, key=version_key)])
 
