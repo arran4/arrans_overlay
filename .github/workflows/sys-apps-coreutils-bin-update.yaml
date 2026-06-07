@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-06-07 01:26:13.089007376 +0000 UTC m=+0.005623399
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-06-07 07:41:23.454605788 +0000 UTC m=+0.019252194
 
 name: sys-apps/coreutils-bin update
 
@@ -20,14 +20,17 @@ concurrency:
 env:
   ecn: sys-apps
   epn: coreutils-bin
-  description: "UNIX-style core utilities for Windows. The same commands and pipelines you use on Linux, macOS, and WSL - natively."
-  homepage: "https://github.com/microsoft/coreutils"
-  github_owner: microsoft
+  description: "Cross-platform Rust rewrite of the GNU coreutils"
+  homepage: "https://github.com/uutils/coreutils"
+  github_owner: uutils
   github_repo: coreutils
-  keywords: ~amd64
+  keywords: ~amd64 ~arm64
   workflow_filename: sys-apps-coreutils-bin-update.yaml
-  coreutils_binary_installed_name: 'coreutils.exe'
-  coreutils_release_name_amd64: 'coreutils-\${PV}-x64.exe'
+  coreutils_binary_installed_name: 'coreutils'
+  coreutils_binary_archived_name_amd64: 'coreutils-${VERSION}-x86_64-unknown-linux-gnu'
+  coreutils_release_name_amd64: 'coreutils-\${PV}-x86_64-unknown-linux-gnu.tar.gz'
+  coreutils_binary_archived_name_arm64: 'coreutils-${VERSION}-aarch64-unknown-linux-gnu'
+  coreutils_release_name_arm64: 'coreutils-\${PV}-aarch64-unknown-linux-gnu.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -60,16 +63,16 @@ jobs:
         id: process_releases
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-          mkdir -p "$ebuild_dir"
-          metadata_file="${ebuild_dir}/metadata.xml"
-          if [ ! -f "$metadata_file" ]; then
-                        cat << 'EOF' > "$metadata_file"
-            <?xml version="1.0" encoding="UTF-8"?>
-            <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-            <pkgmetadata>
-		<upstream>
-			<remote-id type="github">microsoft/coreutils</remote-id>
-		</upstream>
+                                  mkdir -p "$ebuild_dir"
+                                  metadata_file="${ebuild_dir}/metadata.xml"
+                                  if [ ! -f "$metadata_file" ]; then
+                                    cat << 'EOF' > "$metadata_file"
+                        <?xml version="1.0" encoding="UTF-8"?>
+                        <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+                        <pkgmetadata>
+                            <upstream>
+                                <remote-id type="github">uutils/coreutils</remote-id>
+                </upstream>
             </pkgmetadata>
             EOF
           fi
@@ -109,7 +112,8 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/coreutils-\${PV}-x64.exe -> \${P}-coreutils-\${PV}-x64.exe  )  "
+                echo "    amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/coreutils-\${PV}-x86_64-unknown-linux-gnu.tar.gz -> \${P}-coreutils-\${PV}-x86_64-unknown-linux-gnu.tar.gz  )  "
+                echo "    arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/coreutils-\${PV}-aarch64-unknown-linux-gnu.tar.gz -> \${P}-coreutils-\${PV}-aarch64-unknown-linux-gnu.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -132,19 +136,30 @@ jobs:
                 echo ''
                 echo 'S="${WORKDIR}"'
                 echo ''
-                echo 'src_unpack() { :; }'
+                echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-coreutils-\${PV}-x86_64-unknown-linux-gnu.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-coreutils-\${PV}-aarch64-unknown-linux-gnu.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '}'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'
-                echo '    newexe "${DISTDIR}/${P}-${{ env.coreutils_release_name_amd64 }}" "${{ env.coreutils_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.coreutils_binary_archived_name_amd64 }}" "${{ env.coreutils_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.coreutils_binary_archived_name_arm64 }}" "${{ env.coreutils_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '}'
               } > $ebuild_file
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/coreutils-${version}-x64.exe" "${{ env.epn }}-${version}-coreutils-${version}-x64.exe" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/coreutils-${version}-x86_64-unknown-linux-gnu.tar.gz" "${{ env.epn }}-${version}-coreutils-${version}-x86_64-unknown-linux-gnu.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/coreutils-${version}-aarch64-unknown-linux-gnu.tar.gz" "${{ env.epn }}-${version}-coreutils-${version}-aarch64-unknown-linux-gnu.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
