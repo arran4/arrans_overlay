@@ -3,7 +3,8 @@ EAPI=8
 
 KFMIN=6.0.0
 QTMIN=6.6.2
-inherit cmake xdg ecm
+ECM_TEST="true"
+inherit ecm
 
 DESCRIPTION="A sleek GitHub notification system tray application written natively in C++ using Qt6 and KDE Frameworks 6"
 HOMEPAGE="https://github.com/arran4/kgithub-notify"
