@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: dev-vcs
   epn: kgithub-notify
   description: "A sleek GitHub notification system tray application written natively in C++ using Qt6 and KDE Frameworks 6"
@@ -30,7 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
 
       - name: Set up Git
         run: |
@@ -41,16 +45,6 @@ jobs:
         run: |
             sudo apt-get update
             sudo apt-get install -y wget jq coreutils
-            if command -v go &> /dev/null
-            then
-                go install github.com/arran4/g2@latest
-            else
-                url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-                echo "$url"
-                wget "${url}" -O /tmp/g2.deb
-                sudo dpkg -i /tmp/g2.deb
-                rm /tmp/g2.deb
-            fi
 
       - name: Process each release
         id: process_releases
@@ -134,7 +128,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.process_releases.outputs.generated_tag
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.PAT_TOKEN }}
           commit-message: "Add ebuilds for new ${{ env.epn }} releases tag ${{ steps.process_releases.outputs.generated_tag }}"
