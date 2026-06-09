@@ -13,8 +13,6 @@ SRC_URI="https://github.com/arran4/kgithub-notify/archive/refs/tags/v${PV}.tar.g
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="test"
-RESTRICT="!test? ( test )"
 
 RDEPEND="
 	>=dev-qt/qtbase-${QTMIN}:6[gui,network,widgets,dbus]
@@ -25,12 +23,12 @@ RDEPEND="
 	>=kde-frameworks/kwallet-${KFMIN}:6
 	>=kde-frameworks/knotifications-${KFMIN}:6
 	>=kde-frameworks/ki18n-${KFMIN}:6
-	dev-libs/qtkeychain:=
+	dev-libs/qtkeychain[qt6(+)]:=
 "
 DEPEND="${RDEPEND}
 	test? ( >=dev-qt/qtbase-${QTMIN}:6[test] )
 "
 BDEPEND="
 	>=kde-frameworks/extra-cmake-modules-${KFMIN}:0
-	dev-qt/qttools:6[linguist]
+	dev-qt/qttools:6
 "
