@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-06-10 03:28:33.515556169 +0000 UTC m=+0.006266540
 
 name: dev-go/goreleaser-bin update
 
@@ -18,7 +18,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: dev-go
   epn: goreleaser-bin
   description: "Deliver Go binaries as fast and easily as possible"
@@ -44,10 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install g2
-        uses: arran4/g2-action@v1.2
+        uses: actions/checkout@v2
 
       - name: Set up Git
         run: |
@@ -58,6 +54,17 @@ jobs:
         run: |
             sudo apt-get update
             sudo apt-get install -y wget jq coreutils
+            if command -v go &> /dev/null
+            then
+                go install github.com/arran4/g2@latest
+            else
+                url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
+                echo "$url"
+                wget "${url}" -O /tmp/g2.deb
+                sudo dpkg -i /tmp/g2.deb
+                rm /tmp/g2.deb
+            fi
+
       - name: Process each release
         id: process_releases
         run: |
@@ -65,20 +72,20 @@ jobs:
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
           if [ ! -f "$metadata_file" ]; then
-            cat <<-"EOF" > "$metadata_file"
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-          <pkgmetadata>
-            <use>
-              <flag name="bash">Install bash completion</flag>
-              <flag name="fish">Install fish completion</flag>
-              <flag name="zsh">Install zsh completion</flag>
-            </use>
-            <upstream>
-              <remote-id type="github">goreleaser/goreleaser</remote-id>
-            </upstream>
-          </pkgmetadata>
-          EOF
+            cat <<EOF > "$metadata_file"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<use>
+		<flag name="bash">Install bash completion</flag>
+		<flag name="fish">Install fish completion</flag>
+		<flag name="zsh">Install zsh completion</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">goreleaser/goreleaser</remote-id>
+	</upstream>
+</pkgmetadata>
+EOF
           fi
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
@@ -116,11 +123,11 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_x86_64.tar.gz -> \${P}-goreleaser_Linux_x86_64.tar.gz  )  "
-                echo "  arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_armv7.tar.gz -> \${P}-goreleaser_Linux_armv7.tar.gz  )  "
-                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_arm64.tar.gz -> \${P}-goreleaser_Linux_arm64.tar.gz  )  "
-                echo "  ppc64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_ppc64.tar.gz -> \${P}-goreleaser_Linux_ppc64.tar.gz  )  "
-                echo "  x86? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_i386.tar.gz -> \${P}-goreleaser_Linux_i386.tar.gz  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_x86_64.tar.gz -> \${P}-goreleaser_Linux_x86_64.tar.gz  )  "
+                echo "	arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_armv7.tar.gz -> \${P}-goreleaser_Linux_armv7.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_arm64.tar.gz -> \${P}-goreleaser_Linux_arm64.tar.gz  )  "
+                echo "	ppc64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_ppc64.tar.gz -> \${P}-goreleaser_Linux_ppc64.tar.gz  )  "
+                echo "	x86? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/goreleaser_Linux_i386.tar.gz -> \${P}-goreleaser_Linux_i386.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -183,7 +190,7 @@ jobs:
                 echo '  fi'
                 echo '  if use bash; then'
                 echo '    insinto "/usr/share/bash-completion/completions"'
-                echo '    newins "completions/goreleaser.bash" "goreleaser.bash" || die "Failed to bash completion file"'
+                echo '    newins "completions/goreleaser.bash" "goreleaser" || die "Failed to bash completion file"'
                 echo '  fi'
                 echo '  if use fish; then'
                 echo '    insinto "/usr/share/fish/vendor_completions.d"'
@@ -191,7 +198,7 @@ jobs:
                 echo '  fi'
                 echo '  if use zsh; then'
                 echo '    insinto "/usr/share/zsh/site-functions"'
-                echo '    newins "completions/goreleaser.zsh" "goreleaser.zsh" || die "Failed to bash completion file"'
+                echo '    newins "completions/goreleaser.zsh" "_goreleaser" || die "Failed to bash completion file"'
                 echo '  fi'
                 echo '  if use man; then'
                 echo '    newman "manpages/goreleaser.1" "goreleaser.1" || die "Failed to install manual page goreleaser.1"'
