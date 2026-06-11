@@ -166,8 +166,6 @@ jobs:
                 echo "  sed -i 's:^Exec=.*:Exec=/opt/bin/${{ env.ente_auth_appimage_installed_name }}:' 'squashfs-root/${{ env.ente_auth_desktop_file }}'"
                 echo "  find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm {} \; "
                 echo "  find squashfs-root -type d -exec rmdir -p --ignore-fail-on-non-empty {} \; "
-                echo '  rm "squashfs-root/usr/lib/libcrypto.so.3" || die "Failed to remove bundled libcrypto.so.3"'
-                echo '  rm "squashfs-root/usr/lib/libssl.so.3" || die "Failed to remove bundled libssl.so.3"'
                 echo '  local offset=$(./"${{ env.ente_auth_appimage_installed_name }}" --appimage-offset) || die "Failed to get appimage offset"'
                 echo '  dd if="${{ env.ente_auth_appimage_installed_name }}" of=appimage_runtime bs=1 count=$offset || die "Failed to extract appimage runtime"'
                 echo '  mksquashfs squashfs-root new.sqfs -root-owned -noappend -comp zstd || die "Failed to create new squashfs image"'

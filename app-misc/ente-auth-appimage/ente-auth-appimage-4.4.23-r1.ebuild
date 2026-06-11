@@ -31,8 +31,6 @@ src_prepare() {
   sed -i 's:^Exec=.*:Exec=/opt/bin/ente_auth.AppImage:' 'squashfs-root/enteauth.desktop'
   find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm {} \; 
   find squashfs-root -type d -exec rmdir -p --ignore-fail-on-non-empty {} \; 
-  rm "squashfs-root/usr/lib/libcrypto.so.3" || die "Failed to remove bundled libcrypto.so.3"
-  rm "squashfs-root/usr/lib/libssl.so.3" || die "Failed to remove bundled libssl.so.3"
   local offset=$(./"ente_auth.AppImage" --appimage-offset) || die "Failed to get appimage offset"
   dd if="ente_auth.AppImage" of=appimage_runtime bs=1 count=$offset || die "Failed to extract appimage runtime"
   mksquashfs squashfs-root new.sqfs -root-owned -noappend -comp zstd || die "Failed to create new squashfs image"
