@@ -31,17 +31,12 @@ src_prepare() {
   sed -i 's:^Exec=.*:Exec=/opt/bin/ente_auth.AppImage:' 'squashfs-root/enteauth.desktop'
   find squashfs-root -type f \( -name index.theme -or -name icon-theme.cache \) -exec rm {} \; 
   find squashfs-root -type d -exec rmdir -p --ignore-fail-on-non-empty {} \; 
-  local offset=$(./"ente_auth.AppImage" --appimage-offset) || die "Failed to get appimage offset"
-  dd if="ente_auth.AppImage" of=appimage_runtime bs=1 count=$offset || die "Failed to extract appimage runtime"
-  mksquashfs squashfs-root new.sqfs -root-owned -noappend -comp zstd || die "Failed to create new squashfs image"
-  cat appimage_runtime new.sqfs > ente_auth_fixed.AppImage || die "Failed to create fixed appimage"
-  chmod a+x ente_auth_fixed.AppImage || die "Failed to chmod fixed appimage"
   eapply_user
 }
 
 src_install() {
   exeinto /opt/bin
-  newexe ente_auth_fixed.AppImage "ente_auth.AppImage" || die "Failed to install AppImage"
+  newexe ente_auth.AppImage "ente_auth.AppImage" || die "Failed to install AppImage"
   insinto /usr/share/applications
   doins "squashfs-root/enteauth.desktop" || die "Failed to install desktop file"
   insinto /usr/share/icons
