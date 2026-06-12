@@ -50,7 +50,6 @@ jobs:
           inherit ecm kde.org
 
           DESCRIPTION="Systemd management utility"
-          HOMEPAGE="https://invent.kde.org/system/systemdgenie"
           SRC_URI="https://invent.kde.org/system/\${PN}/-/archive/v\${PV}/\${PN}-v\${PV}.tar.bz2 -> \${P}.tar.bz2"
 
           LICENSE="GPL-2+"
@@ -71,6 +70,7 @@ jobs:
           RDEPEND="\${DEPEND}"
 
           S="\${WORKDIR}/\${PN}-v\${PV}"
+
           EBUILD_EOF
 
           # Remove old ebuilds

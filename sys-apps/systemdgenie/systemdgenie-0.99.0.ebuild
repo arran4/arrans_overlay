@@ -6,8 +6,6 @@ QTMIN=5.15.12
 inherit ecm kde.org
 
 DESCRIPTION="Systemd management utility"
-HOMEPAGE="https://invent.kde.org/system/systemdgenie"
-SRC_URI="https://invent.kde.org/system/${PN}/-/archive/v${PV}/${PN}-v${PV}.tar.bz2 -> ${P}.tar.bz2"
 
 LICENSE="GPL-2+"
 SLOT="0"
@@ -25,5 +23,3 @@ DEPEND="
 	sys-apps/systemd
 "
 RDEPEND="${DEPEND}"
-
-S="${WORKDIR}/${PN}-v${PV}"
