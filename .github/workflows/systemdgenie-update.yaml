@@ -1,0 +1,98 @@
+name: Update systemdgenie
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fetch latest version
+        id: fetch_version
+        run: |
+          latest_version=$(curl -s "https://invent.kde.org/api/v4/projects/system%2Fsystemdgenie/repository/tags" | jq -r '[.[] | select(.name | startswith("v"))] | .[0].name' | sed 's/^v//')
+          echo "version=${latest_version}" >> $GITHUB_OUTPUT
+      - name: Check if update needed
+        id: check_update
+        run: |
+          if [ -d "sys-apps/systemdgenie" ] && ls sys-apps/systemdgenie/systemdgenie-${{ steps.fetch_version.outputs.version }}.ebuild >/dev/null 2>&1; then
+            echo "update_needed=false" >> $GITHUB_OUTPUT
+          else
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+          fi
+      - name: Setup Go
+        if: steps.check_update.outputs.update_needed == 'true'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.20.0'
+      - name: Install g2
+        if: steps.check_update.outputs.update_needed == 'true'
+        run: go install github.com/arran4/g2@latest
+      - name: Create ebuild
+        if: steps.check_update.outputs.update_needed == 'true'
+        run: |
+          version="${{ steps.fetch_version.outputs.version }}"
+          mkdir -p sys-apps/systemdgenie
+          cat << 'EBUILD_EOF' > sys-apps/systemdgenie/systemdgenie-${version}.ebuild
+          EAPI=8
+
+          ECM_TEST="true"
+          KFMIN=5.115.0
+          QTMIN=5.15.12
+          inherit ecm kde.org
+
+          DESCRIPTION="Systemd management utility"
+          HOMEPAGE="https://invent.kde.org/system/systemdgenie"
+          SRC_URI="https://invent.kde.org/system/\${PN}/-/archive/v\${PV}/\${PN}-v\${PV}.tar.bz2 -> \${P}.tar.bz2"
+
+          LICENSE="GPL-2+"
+          SLOT="0"
+          KEYWORDS="~amd64"
+
+          DEPEND="
+		>=dev-qt/qtdbus-\${QTMIN}:5
+		>=dev-qt/qtgui-\${QTMIN}:5
+		>=dev-qt/qtwidgets-\${QTMIN}:5
+		>=kde-frameworks/kauth-\${KFMIN}:5
+		>=kde-frameworks/kcoreaddons-\${KFMIN}:5
+		>=kde-frameworks/kcrash-\${KFMIN}:5
+		>=kde-frameworks/ki18n-\${KFMIN}:5
+		>=kde-frameworks/kxmlgui-\${KFMIN}:5
+		sys-apps/systemd
+          "
+          RDEPEND="\${DEPEND}"
+
+          S="\${WORKDIR}/\${PN}-v\${PV}"
+          EBUILD_EOF
+
+          # Remove old ebuilds
+          for file in sys-apps/systemdgenie/*.ebuild; do
+            if [ "$file" != "sys-apps/systemdgenie/systemdgenie-${version}.ebuild" ]; then
+              rm -f "$file"
+            fi
+          done
+
+          # Update Manifest
+          cd sys-apps/systemdgenie
+          rm -f Manifest
+          ~/go/bin/g2 manifest upsert-from-url "https://invent.kde.org/system/systemdgenie/-/archive/v${version}/systemdgenie-v${version}.tar.bz2" systemdgenie-${version}.tar.bz2 .
+      - name: Create Pull Request
+        if: steps.check_update.outputs.update_needed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "sys-apps/systemdgenie: update to ${{ steps.fetch_version.outputs.version }}"
+          title: "sys-apps/systemdgenie: update to ${{ steps.fetch_version.outputs.version }}"
+          body: |
+            Updates sys-apps/systemdgenie to version ${{ steps.fetch_version.outputs.version }}
+          branch: "update-systemdgenie-${{ steps.fetch_version.outputs.version }}"
+          base: main
+          delete-branch: true
