@@ -158,8 +158,8 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/layerx_linux_amd64.tar.gz" "${{ env.epn }}-${version}-layerx_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/layerx_linux_arm64.tar.gz" "${{ env.epn }}-${version}-layerx_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/layerx_linux_amd64.tar.gz" "${{ env.epn }}-${version}-layerx_linux_amd64.tar.gz" "${ebuild_dir}"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/layerx_linux_arm64.tar.gz" "${{ env.epn }}-${version}-layerx_linux_arm64.tar.gz" "${ebuild_dir}"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
