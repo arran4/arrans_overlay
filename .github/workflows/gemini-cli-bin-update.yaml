@@ -84,6 +84,7 @@ jobs:
         if: steps.update_check.outputs.updated == 'true'
         run: |
           # The g2 tool automatically downloads SRC_URI from ebuilds and generates Manifest and cache
+          g2 manifest upsert-from-url "https://github.com/google-gemini/gemini-cli/releases/download/v${LATEST_VERSION}/gemini-cli-bundle.zip" "gemini-cli-bin-${LATEST_VERSION}.zip" "app-misc/gemini-cli-bin"
           g2 cache generate app-misc/gemini-cli-bin
           g2 lint app-misc/gemini-cli-bin
 
