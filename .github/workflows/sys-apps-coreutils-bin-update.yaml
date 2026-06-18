@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-06-07 07:41:23.454605788 +0000 UTC m=+0.019252194
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-06-18 04:02:53.216443436 +0000 UTC m=+0.005883027
 
 name: sys-apps/coreutils-bin update
 
@@ -27,9 +27,9 @@ env:
   keywords: ~amd64 ~arm64
   workflow_filename: sys-apps-coreutils-bin-update.yaml
   coreutils_binary_installed_name: 'coreutils'
-  coreutils_binary_archived_name_amd64: 'coreutils-${VERSION}-x86_64-unknown-linux-gnu'
+  coreutils_binary_archived_name_amd64: 'coreutils-${VERSION}-x86_64-unknown-linux-gnu/coreutils'
   coreutils_release_name_amd64: 'coreutils-\${PV}-x86_64-unknown-linux-gnu.tar.gz'
-  coreutils_binary_archived_name_arm64: 'coreutils-${VERSION}-aarch64-unknown-linux-gnu'
+  coreutils_binary_archived_name_arm64: 'coreutils-${VERSION}-aarch64-unknown-linux-gnu/coreutils'
   coreutils_release_name_arm64: 'coreutils-\${PV}-aarch64-unknown-linux-gnu.tar.gz'
 
 jobs:
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Git
         run: |
@@ -63,18 +63,18 @@ jobs:
         id: process_releases
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-                                  mkdir -p "$ebuild_dir"
-                                  metadata_file="${ebuild_dir}/metadata.xml"
-                                  if [ ! -f "$metadata_file" ]; then
-                                    cat << 'EOF' > "$metadata_file"
-                        <?xml version="1.0" encoding="UTF-8"?>
-                        <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-                        <pkgmetadata>
-                            <upstream>
-                                <remote-id type="github">uutils/coreutils</remote-id>
+          mkdir -p "$ebuild_dir"
+          metadata_file="${ebuild_dir}/metadata.xml"
+          if [ ! -f "$metadata_file" ]; then
+            cat << 'EOF' > "$metadata_file"
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+            <pkgmetadata>
+                <upstream>
+                    <remote-id type="github">uutils/coreutils</remote-id>
                 </upstream>
             </pkgmetadata>
-            EOF
+          EOF
           fi
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
@@ -148,10 +148,10 @@ jobs:
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'
-                echo '    newexe "${{ env.coreutils_binary_archived_name_amd64 }}" "${{ env.coreutils_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "coreutils-${PV}-x86_64-unknown-linux-gnu/coreutils" "${{ env.coreutils_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo '    newexe "${{ env.coreutils_binary_archived_name_arm64 }}" "${{ env.coreutils_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "coreutils-${PV}-aarch64-unknown-linux-gnu/coreutils" "${{ env.coreutils_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '}'
               } > $ebuild_file
