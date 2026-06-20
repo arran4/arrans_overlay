@@ -1,0 +1,90 @@
+name: Check and Update games-util/game-device-udev-rules ebuild
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-ebuild:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+
+      - name: Setup g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Check for new releases and create ebuild
+        run: |
+          set -e
+          LATEST_RELEASE=$(curl -s https://codeberg.org/api/v1/repos/fabiscafe/game-devices-udev/tags | jq -r '.[0].name' | sed 's/^v//')
+          EBUILD_FILE="games-util/game-device-udev-rules/game-device-udev-rules-${LATEST_RELEASE}.ebuild"
+
+          if [ -n "$LATEST_RELEASE" ] && [ "$LATEST_RELEASE" != "null" ]; then
+            if [ ! -f "$EBUILD_FILE" ]; then
+              echo "Creating ebuild for version $LATEST_RELEASE"
+
+              cat << 'EBUILD_EOF' > "$EBUILD_FILE"
+          # Copyright 2024 Gentoo Authors
+          # Distributed under the terms of the GNU General Public License v2
+
+          EAPI=8
+
+          inherit udev
+
+          DESCRIPTION="Udev rules for supported game controllers"
+          HOMEPAGE="https://codeberg.org/fabiscafe/game-devices-udev"
+          SRC_URI="https://codeberg.org/fabiscafe/game-devices-udev/archive/v\${PV}.tar.gz -> \${P}.tar.gz"
+
+          LICENSE="MIT"
+          SLOT="0"
+          KEYWORDS="~amd64"
+
+          DEPEND=""
+          RDEPEND="virtual/udev"
+
+          S="\${WORKDIR}/game-devices-udev"
+
+          src_install() {
+		udev_dorules *.rules
+          }
+
+          pkg_postinst() {
+		udev_reload
+          }
+          EBUILD_EOF
+
+              sed -i 's/^          //' "$EBUILD_FILE"
+              sed -i 's/\${PV}/${PV}/g' "$EBUILD_FILE"
+              sed -i 's/\${P}/${P}/g' "$EBUILD_FILE"
+              sed -i 's/\${WORKDIR}/${WORKDIR}/g' "$EBUILD_FILE"
+
+              echo "Updating manifest"
+              wget -q "https://codeberg.org/fabiscafe/game-devices-udev/archive/v${LATEST_RELEASE}.tar.gz" -O "game-device-udev-rules-${LATEST_RELEASE}.tar.gz"
+              g2 manifest upsert-from-url "https://codeberg.org/fabiscafe/game-devices-udev/archive/v${LATEST_RELEASE}.tar.gz" "game-device-udev-rules-${LATEST_RELEASE}.tar.gz" games-util/game-device-udev-rules
+            fi
+          fi
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update games-util/game-device-udev-rules"
+          title: "Update games-util/game-device-udev-rules"
+          body: |
+            Updates the ebuilds for `games-util/game-device-udev-rules`.
+          branch: "update-games-util-game-device-udev-rules"
+          base: "main"
+          delete-branch: true
