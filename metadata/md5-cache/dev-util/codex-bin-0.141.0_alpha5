@@ -1,9 +1,0 @@
-DEFINED_PHASES=install unpack
-DESCRIPTION=Lightweight coding agent that runs in your terminal
-EAPI=8
-HOMEPAGE=https://github.com/openai/codex
-KEYWORDS=~amd64 ~arm64
-LICENSE=MIT
-SLOT=0
-SRC_URI=amd64? ( https://github.com/openai/codex/releases/download/rust-v0.141.0-alpha.5/codex-x86_64-unknown-linux-musl.tar.gz -> codex-bin-0.141.0_alpha5-codex-x86_64-unknown-linux-musl.tar.gz ) arm64? ( https://github.com/openai/codex/releases/download/rust-v0.141.0-alpha.5/codex-aarch64-unknown-linux-musl.tar.gz -> codex-bin-0.141.0_alpha5-codex-aarch64-unknown-linux-musl.tar.gz )
-_md5_=c73f0570728d203a0cb2f33eac43a46a
