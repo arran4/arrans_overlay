@@ -37,6 +37,7 @@ src_install() {
   doexe "${WORKDIR}/bin/ollama" || die "Failed to install binary"
   insinto /opt/Ollama/lib/
   doins -r "${WORKDIR}/lib/ollama/" || die "Failed to install libraries"
+  fperms +x /opt/Ollama/lib/ollama/llama-server
   dosym /opt/Ollama/bin/ollama /opt/bin/ollama
 }
 

@@ -137,6 +137,7 @@ jobs:
                 echo '  doexe "${WORKDIR}/bin/ollama" || die "Failed to install binary"'
                 echo '  insinto /opt/Ollama/lib/'
                 echo '  doins -r "${WORKDIR}/lib/ollama/" || die "Failed to install libraries"'
+                echo '  fperms +x /opt/Ollama/lib/ollama/llama-server'
                 echo '  dosym /opt/Ollama/bin/ollama /opt/bin/ollama'
                 echo "}"
                 echo ""
