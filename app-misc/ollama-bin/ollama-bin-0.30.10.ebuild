@@ -35,9 +35,8 @@ src_unpack() {
 src_install() {
   exeinto /opt/Ollama/bin
   doexe "${WORKDIR}/bin/ollama" || die "Failed to install binary"
-  insinto /opt/Ollama/lib/
-  doins -r "${WORKDIR}/lib/ollama/" || die "Failed to install libraries"
-  fperms +x /opt/Ollama/lib/ollama/llama-server
+  dodir /opt/Ollama/lib
+  cp -RPp "${WORKDIR}/lib/ollama" "${ED}/opt/Ollama/lib/" || die "Failed to install libraries"
   dosym /opt/Ollama/bin/ollama /opt/bin/ollama
 }
 
