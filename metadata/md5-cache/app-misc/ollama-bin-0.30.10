@@ -13,4 +13,4 @@ RESTRICT=strip
 SLOT=0
 SRC_URI=amd64? ( https://github.com/ollama/ollama/releases/download/v0.30.10/ollama-linux-amd64.tar.zst -> ollama-bin-0.30.10.amd64.tar.zst ) arm64? ( https://github.com/ollama/ollama/releases/download/v0.30.10/ollama-linux-arm64.tar.zst -> ollama-bin-0.30.10.arm64.tar.zst ) rocm? ( https://github.com/ollama/ollama/releases/download/v0.30.10/ollama-linux-amd64-rocm.tar.zst -> ollama-bin-0.30.10.rocm.tar.zst )
 _eclasses_=xdg-utils	42869b3c8d86a70ef3cf75165a395e09
-_md5_=334629aa96e5cfbfe33d6f8626960aeb
+_md5_=789f61988c7efc45d3912e1f3b0c4a53
