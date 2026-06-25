@@ -1,0 +1,11 @@
+EAPI=8
+HOMEPAGE=https://antigravity.google/
+SLOT=0
+INHERITED=desktop
+DESCRIPTION=Google Antigravity AI-driven IDE (binary release)
+RDEPEND=sys-libs/glibc
+RESTRICT=strip
+SRC_URI=amd64? ( https://storage.googleapis.com/antigravity-public/antigravity-hub/2.0.6-5413878570549248/linux-x64/Antigravity.tar.gz -> antigravity-bin-2.0.6_p5413878570549248-r1.tar.gz )
+LICENSE=Antigravity
+KEYWORDS=~amd64
+_md5_=89f37bbd614fa58bd5dcace25c79fa1d
