@@ -60,15 +60,15 @@ src_install() {
   fi
   if use bash; then
     insinto "/usr/share/bash-completion/completions"
-    newins "completions/goreleaser.bash" "goreleaser.bash" || die "Failed to bash completion file"
+    newins "completions/goreleaser.bash" "goreleaser" || die "Failed to bash completion file"
   fi
   if use fish; then
     insinto "/usr/share/fish/vendor_completions.d"
-    newins "completions/goreleaser.fish" "goreleaser.fish" || die "Failed to bash completion file"
+    newins "completions/goreleaser.fish" "goreleaser.fish" || die "Failed to fish completion file"
   fi
   if use zsh; then
     insinto "/usr/share/zsh/site-functions"
-    newins "completions/goreleaser.zsh" "goreleaser.zsh" || die "Failed to bash completion file"
+    newins "completions/goreleaser.zsh" "_goreleaser" || die "Failed to zsh completion file"
   fi
   if use man; then
     newman "manpages/goreleaser.1" "goreleaser.1" || die "Failed to install manual page goreleaser.1"

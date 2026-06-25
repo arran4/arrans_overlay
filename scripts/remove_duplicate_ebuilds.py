@@ -84,10 +84,13 @@ def process_ebuild(args):
     full_ver = ver if rev == "r0" else f"{ver}-{rev}"
     grade = "release"
     v_lower = ver.lower()
-    for tag in ("alpha", "beta", "rc", "pre", "test"):
-        if tag in v_lower:
-            grade = tag
-            break
+    if ver == "9999":
+        grade = "9999"
+    else:
+        for tag in ("alpha", "beta", "rc", "pre", "test"):
+            if tag in v_lower:
+                grade = tag
+                break
 
     return ((root, slot), grade, {
         "version": full_ver,
@@ -184,8 +187,59 @@ def main(repo_root):
         for pkg_dir in {os.path.dirname(p) for p in removed}:
             cleanup(pkg_dir)
         print("Removed duplicated ebuilds:")
+
+        grouped_removed = defaultdict(list)
         for p in removed:
-            print(" -", p)
+            rel_p = os.path.relpath(p, repo_root)
+            parts = rel_p.split(os.sep)
+            if len(parts) >= 3:
+                cat = parts[-3]
+                pkg = parts[-2]
+                ebuild_file = parts[-1]
+                if ebuild_file.startswith(pkg + '-'):
+                    ver_part = ebuild_file[len(pkg) + 1:-7]
+                    grouped_removed[f"{cat}/{pkg}"].append(ver_part)
+                else:
+                    grouped_removed[f"{cat}/{pkg}"].append(ebuild_file)
+            else:
+                grouped_removed["unknown"].append(rel_p)
+
+        grouped_remaining = defaultdict(list)
+        removed_set = set(removed)
+        for (pkg_root, slot), grades in packages.items():
+            rel_p = os.path.relpath(pkg_root, repo_root)
+            parts = rel_p.split(os.sep)
+            if len(parts) >= 2:
+                cat = parts[-2]
+                pkg = parts[-1]
+                pkg_name = f"{cat}/{pkg}"
+                if pkg_name in grouped_removed:
+                    for grade, items in grades.items():
+                        for itm in items:
+                            if itm["path"] not in removed_set:
+                                file_name = os.path.basename(itm["path"])
+                                if file_name.startswith(pkg + '-'):
+                                    ver_part = file_name[len(pkg) + 1:-7]
+                                    grouped_remaining[pkg_name].append(ver_part)
+                                else:
+                                    grouped_remaining[pkg_name].append(file_name)
+
+        for pkg, vers in grouped_removed.items():
+            rem_vers = grouped_remaining.get(pkg, [])
+
+            normal_rem_vers = [v for v in rem_vers if v.split('-r')[0] != "9999"]
+            has_9999 = any(v.split('-r')[0] == "9999" for v in rem_vers)
+
+            formatted_removed = ', '.join([f"-{v}" if not v.startswith('-') else v for v in sorted(vers, key=version_key)])
+
+            formatted_remaining = ', '.join([v for v in sorted(normal_rem_vers, key=version_key)])
+
+            live_note = " [has live 9999]" if has_9999 else ""
+
+            if formatted_remaining:
+                print(f" - {pkg} (Removed: {formatted_removed} | Remaining: {formatted_remaining}){live_note}")
+            else:
+                print(f" - {pkg} (Removed: {formatted_removed} | Remaining: None){live_note}")
     else:
         print("No duplicates found")
 

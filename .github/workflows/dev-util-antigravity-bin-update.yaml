@@ -99,7 +99,7 @@ jobs:
             {
               echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
               echo 'EAPI=8'
-              echo 'inherit desktop'
+              echo 'inherit desktop xdg'
               echo "DESCRIPTION=\"${{ env.description }}\""
               echo "HOMEPAGE=\"${{ env.homepage }}\""
               echo 'LICENSE="Antigravity"'
@@ -113,7 +113,10 @@ jobs:
               echo ''
               echo 'SRC_URI="amd64? ( '"${download_url}"' -> ${P}.tar.gz )"'
               echo ''
-              echo 'S="${WORKDIR}/Antigravity"'
+              echo 'S="${WORKDIR}/Antigravity-x64"'
+              echo ""
+              echo ""
+
               echo ''
               echo 'src_install() {'
               echo '  insinto /opt/antigravity'
