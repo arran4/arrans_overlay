@@ -53,7 +53,7 @@ jobs:
           # Scrape the XML for .deb filenames to capture full version including build suffix
           # This looks for patterns like which_browser-0.2.6+44-linux.deb
           # And handles HTML entity &#43; for +
-          filenames=$(curl -s "${{ env.base_url }}/index.xml" | grep -o 'which_browser-[0-9.]\+\(&#43;\|+\)[0-9]\+-linux.deb' | sed 's/&#43;/+/g' | sort -Vr | uniq)
+          filenames=$(curl -s "${{ env.base_url }}/index.xml" | grep -o 'which_browser-[0-9.]\+\(&amp;#43;\|&#43;\|+\)[0-9]\+-linux.deb' | sed 's/&amp;#43;/+/g;s/&#43;/+/g' | sort -Vr | uniq)
 
           for filename in $filenames; do
             # Extract version from filename: which_browser-0.2.6+44-linux.deb -> 0.2.6+44
