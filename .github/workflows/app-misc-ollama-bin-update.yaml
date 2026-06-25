@@ -55,7 +55,7 @@ jobs:
           rm -f "${ebuild_dir}"/*.ebuild "${ebuild_dir}/Manifest"
 
           # Fetch only the latest non-prerelease tag
-          local tags; tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '[.[] | select(.prerelease==false)] | .[0].tag_name')
+          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '[.[] | select(.prerelease==false)] | .[0].tag_name')
 
           for tag in $tags; do
             version="${tag#v}"

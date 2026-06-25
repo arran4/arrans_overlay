@@ -46,7 +46,7 @@ jobs:
         id: find_appimage
         run: |
           set -euo pipefail
-          appimage_local url; url="$(curl -sIL -o /dev/null -w '%{url_effective}' 'https://api.beeper.com/desktop/download/linux/x64/stable/com.automattic.beeper.desktop')"
+          appimage_url=$(curl -sIL -o /dev/null -w '%{url_effective}' 'https://api.beeper.com/desktop/download/linux/x64/stable/com.automattic.beeper.desktop')"
           if [ -z "$appimage_url" ]; then
             echo "failed to resolve AppImage redirect" >&2
             exit 1

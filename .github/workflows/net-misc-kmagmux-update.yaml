@@ -49,7 +49,7 @@ jobs:
         run: |
           ebuild_dir="./${ebuild_category}/${ebuild_name}"
           mkdir -p $ebuild_dir
-          local tags; tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
+          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[].tag_name')
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
