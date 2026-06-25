@@ -39,7 +39,7 @@ jobs:
           ebuild_dir="./dev-util/junie-bin"
           mkdir -p "$ebuild_dir"
 
-          tags=$(curl -s "https://raw.githubusercontent.com/JetBrains/junie/main/update-info.jsonl" | grep '"platform":"linux-amd64"' | grep -o '"version":"[^"]*"' | sed 's/"version":"\([^"]*\)"/\1/' | sort -u -V -r)
+          local tags; tags=$(curl -s "https://raw.githubusercontent.com/JetBrains/junie/main/update-info.jsonl" | grep '"platform":"linux-amd64"' | grep -o '"version":"[^"]*"' | sed 's/"version":"\([^"]*\)"/\1/' | sort -u -V -r)
           for tag in $tags; do
             version="${tag}"
 

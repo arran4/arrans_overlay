@@ -80,8 +80,8 @@ jobs:
           </pkgmetadata>
           EOF
           fi
-          declare -A releaseTypes=()
-          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          local -A releaseTypes=()
+          local tags; tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
           for tag in $tags; do
             version="${tag#v}"
@@ -95,7 +95,7 @@ jobs:
                 echo "tag / $version doesn't match regexp";
                 continue;
             fi
-            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
+            local releaseType; releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
             if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
                 if [[ -v releaseTypes[release] ]]; then
                   echo "Already have a newer main release: ${releaseTypes[release]}"
