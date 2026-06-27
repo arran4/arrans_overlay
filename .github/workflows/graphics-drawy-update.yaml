@@ -1,6 +1,7 @@
 name: graphics/drawy Update
 
 permissions:
+  pull-requests: write
   contents: write
 
 on:
