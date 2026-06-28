@@ -33,6 +33,7 @@ inherit unpacker
 
 src_prepare() {
 	default
+	chmod +w usr/share/which_browser/lib/libtray_manager_plugin.so || die
 	patchelf --replace-needed libappindicator3.so.1 libayatana-appindicator3.so.1 usr/share/which_browser/lib/libtray_manager_plugin.so || die
 }
 
