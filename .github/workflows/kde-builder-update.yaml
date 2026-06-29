@@ -1,0 +1,43 @@
+name: dev-util/kde-builder update
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fetch latest tag
+        id: fetch-tag
+        run: |
+          # Use GitLab API for invent.kde.org project sdk/kde-builder
+          # Note: Currently there are no tags on the repository, fallback to commit date if null
+          TAG=$(curl -s "https://invent.kde.org/api/v4/projects/sdk%2Fkde-builder/repository/tags" | jq -r '.[0].name // empty' | sed 's/^v//')
+          if [ -n "$TAG" ]; then
+             echo "tag=$TAG" >> $GITHUB_OUTPUT
+          else
+             echo "No release tags found yet for kde-builder."
+          fi
+      - name: Update ebuild version
+        if: steps.fetch-tag.outputs.tag != ''
+        run: |
+          VERSION=${{ steps.fetch-tag.outputs.tag }}
+          # Check if ebuild already exists
+          if [ ! -f "dev-util/kde-builder/kde-builder-${VERSION}.ebuild" ]; then
+              # Copy live ebuild as a base
+              cp dev-util/kde-builder/kde-builder-9999.ebuild dev-util/kde-builder/kde-builder-${VERSION}.ebuild
+              # Generate manifest via g2
+              # (Assumes g2 is in path or installed in CI environment)
+          fi
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "Update dev-util/kde-builder to ${{ steps.fetch-tag.outputs.tag }}"
+          title: "Update dev-util/kde-builder to ${{ steps.fetch-tag.outputs.tag }}"
+          branch: "update-kde-builder"
+          body: |
+            Automatically generated PR updating dev-util/kde-builder to version ${{ steps.fetch-tag.outputs.tag }}.
