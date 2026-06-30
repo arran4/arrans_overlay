@@ -76,7 +76,7 @@ jobs:
           </pkgmetadata>
           EOF
           fi
-          declare -A releaseTypes=()
+          declare -A releaseTypes
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
           for tag in $tags; do
@@ -157,7 +157,7 @@ jobs:
               } > $ebuild_file
 
               # Manifest generation
-              export PATH="$(go env GOPATH)/bin:$PATH"
+              export PATH; PATH="$(go env GOPATH)/bin:$PATH"
 
 
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/layerx_linux_amd64.tar.gz" "${{ env.epn }}-${version}-layerx_linux_amd64.tar.gz" "${ebuild_dir}"
