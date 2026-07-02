@@ -22,6 +22,7 @@ SLOT="0"
 KEYWORDS="~amd64"
 IUSE=""
 
+BDEPEND="dev-util/patchelf"
 RDEPEND="|| ( dev-libs/libayatana-appindicator )"
 RESTRICT="mirror"
 
@@ -29,6 +30,12 @@ RESTRICT="mirror"
 S="${WORKDIR}"
 
 inherit unpacker
+
+src_prepare() {
+	default
+	chmod +w usr/share/which_browser/lib/libtray_manager_plugin.so || die
+	patchelf --replace-needed libappindicator3.so.1 libayatana-appindicator3.so.1 usr/share/which_browser/lib/libtray_manager_plugin.so || die
+}
 
 src_unpack() {
 	unpack_deb "${MY_DEB_ARCHIVE}"
