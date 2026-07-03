@@ -8,7 +8,7 @@ permissions:
 
 on:
   schedule:
-    - cron: '30 19 * * *'
+    - cron: '0 19 * * *'
   workflow_dispatch:
     inputs:
       g2_version:
@@ -19,10 +19,6 @@ on:
   push:
     paths:
       - '.github/workflows/scheduled-daily-tasks.yml'
-  workflow_run:
-    workflows: ["app-admin/g2-bin update"]
-    types:
-      - completed
 
 jobs:
   scheduled-tasks:
