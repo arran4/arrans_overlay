@@ -8,7 +8,7 @@ HOMEPAGE="https://github.com/arran4/arrans-overlay"
 SRC_URI=""
 S="${WORKDIR}"
 
-LICENSE="metapackage"
+LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64"
 
