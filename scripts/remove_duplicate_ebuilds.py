@@ -230,7 +230,10 @@ def main(repo_root):
             normal_rem_vers = [v for v in rem_vers if v.split('-r')[0] != "9999"]
             has_9999 = any(v.split('-r')[0] == "9999" for v in rem_vers)
 
-            formatted_removed = ', '.join([f"-{v}" if not v.startswith('-') else v for v in sorted(set(vers), key=version_key)])
+            formatted_removed = ', '.join(
+                f"-{v}" if not v.startswith('-') else v
+                for v in sorted(set(vers), key=version_key)
+            )
 
             formatted_remaining = ', '.join(sorted(set(normal_rem_vers), key=version_key))
 
