@@ -186,7 +186,7 @@ def main(repo_root):
     if removed:
         for pkg_dir in {os.path.dirname(p) for p in removed}:
             cleanup(pkg_dir)
-        print("Removed duplicated ebuilds:")
+        print("Removed duplicate ebuilds:")
 
         grouped_removed = defaultdict(list)
         for p in removed:
