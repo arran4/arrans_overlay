@@ -81,30 +81,92 @@ jobs:
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Generate Readable Diff
-        if: steps.check_changes.outputs.has_changes == 'true'
-        run: |
-          OUTPUT=$(git diff HEAD | head -c 60000)
-          echo "READABLE_DIFF<<INNER_EOF" >> $GITHUB_ENV
-          echo "$OUTPUT" >> $GITHUB_ENV
-          echo "INNER_EOF" >> $GITHUB_ENV
-
-
       - name: Generate PR Summary
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          SUMMARY=""
-          if echo "${DEDUPE_OUTPUT}" | grep -q "Removed duplicated ebuilds:"; then
-            SUMMARY="${SUMMARY}**Duplicate Ebuilds Removed:**\n\n"
-            while IFS= read -r line; do
-              if [[ "$line" =~ ^[[:space:]]*-[[:space:]]+(.*)$ ]]; then
-                SUMMARY="${SUMMARY}- \`${BASH_REMATCH[1]}\`\n"
-              fi
-            done <<< "${DEDUPE_OUTPUT}"
-            SUMMARY="${SUMMARY}\n"
-          fi
+          python3 <<'PY' > /tmp/pr_summary.md
+          import os
+          import subprocess
+          from collections import defaultdict
+
+          def run_git(*args):
+              return subprocess.check_output(["git", *args], text=True)
+
+          def changed_paths(name_status_args):
+              output = run_git("diff", "--staged", "--name-status", *name_status_args)
+              rows = []
+              for line in output.splitlines():
+                  parts = line.split("\t")
+                  if not parts:
+                      continue
+                  status = parts[0]
+                  path = parts[-1]
+                  rows.append((status, path))
+              return rows
+
+          def print_section(title, lines):
+              lines = [line for line in lines if line]
+              if not lines:
+                  return
+              print(f"**{title}:**")
+              print()
+              for line in lines:
+                  print(line)
+              print()
+
+          dedupe_output = os.environ.get("DEDUPE_OUTPUT", "").strip()
+          dedupe_lines = []
+          if "Removed duplicate ebuilds:" in dedupe_output or "Removed duplicated ebuilds:" in dedupe_output:
+              for raw_line in dedupe_output.splitlines():
+                  line = raw_line.strip()
+                  if line.startswith("- "):
+                      dedupe_lines.append(f"- `{line[2:]}`")
+          print_section("Duplicate ebuilds removed", dedupe_lines)
+
+          egencache_rows = changed_paths(["--", "metadata/md5-cache"])
+          egencache_summary = []
+          if egencache_rows:
+              counts = defaultdict(int)
+              paths = []
+              for status, path in egencache_rows:
+                  counts[status[0]] += 1
+                  paths.append(path)
+              label = {"A": "added", "M": "updated", "D": "removed", "R": "renamed", "C": "copied"}
+              count_text = ", ".join(
+                  f"{count} {label.get(status, status)}" for status, count in sorted(counts.items())
+              )
+              egencache_summary.append(f"- Metadata cache changes: {count_text}.")
+              for path in paths[:25]:
+                  egencache_summary.append(f"  - `{path}`")
+              if len(paths) > 25:
+                  egencache_summary.append(f"  - …and {len(paths) - 25} more metadata cache paths.")
+          elif os.environ.get("EGENCACHE_OUTPUT", "").strip():
+              first_lines = os.environ["EGENCACHE_OUTPUT"].strip().splitlines()[:20]
+              egencache_summary.append("- Egencache produced no staged metadata cache file changes, but logged:")
+              egencache_summary.extend(f"  - `{line}`" for line in first_lines)
+          print_section("Egencache update", egencache_summary)
+
+          other_rows = changed_paths(["--", ":!metadata/md5-cache"])
+          other_summary = []
+          if other_rows:
+              counts = defaultdict(int)
+              paths = []
+              for status, path in other_rows:
+                  counts[status[0]] += 1
+                  paths.append(path)
+              label = {"A": "added", "M": "updated", "D": "removed", "R": "renamed", "C": "copied"}
+              count_text = ", ".join(
+                  f"{count} {label.get(status, status)}" for status, count in sorted(counts.items())
+              )
+              other_summary.append(f"- Repository changes outside metadata cache: {count_text}.")
+              for path in paths[:25]:
+                  other_summary.append(f"  - `{path}`")
+              if len(paths) > 25:
+                  other_summary.append(f"  - …and {len(paths) - 25} more paths.")
+          print_section("Other scheduled task changes", other_summary)
+          PY
           echo "PR_SUMMARY<<INNER_EOF" >> $GITHUB_ENV
-          echo -e "$SUMMARY" >> $GITHUB_ENV
+          cat /tmp/pr_summary.md >> $GITHUB_ENV
           echo "INNER_EOF" >> $GITHUB_ENV
 
       - name: Create Pull Request
@@ -120,30 +182,6 @@ jobs:
             This PR was auto-generated by the daily tasks workflow.
 
             ${{ env.PR_SUMMARY }}
-
-            <details>
-            <summary>Duplicate Ebuilds Removal</summary>
-
-            ```text
-            ${{ env.DEDUPE_OUTPUT }}
-            ```
-            </details>
-
-            <details>
-            <summary>Egencache Update</summary>
-
-            ```text
-            ${{ env.EGENCACHE_OUTPUT }}
-            ```
-            </details>
-
-            <details>
-            <summary>Readable Diff</summary>
-
-            ```diff
-            ${{ env.READABLE_DIFF }}
-            ```
-            </details>
           branch: "chore/scheduled-daily-tasks"
           delete-branch: true
           base: main
