@@ -36,8 +36,8 @@ src_install() {
   exeinto /opt/Ollama/bin
   doexe "${WORKDIR}/bin/ollama" || die "Failed to install binary"
   insinto /opt/Ollama/lib
-  doins -r "${WORKDIR}/lib/ollama" || die "Failed to install libraries"
-  find "${ED}/opt/Ollama/lib/ollama" -type f -name "*.so*" -exec chmod +x {} + || die "Failed to make libraries executable"
+  doins -r "${WORKDIR}/lib/ollama/"
+  fperms -R +x /opt/Ollama/lib/ollama
   dosym /opt/Ollama/bin/ollama /opt/bin/ollama
 }
 

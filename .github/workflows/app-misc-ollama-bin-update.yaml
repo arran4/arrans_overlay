@@ -136,8 +136,8 @@ jobs:
                 echo '  exeinto /opt/Ollama/bin'
                 echo '  doexe "${WORKDIR}/bin/ollama" || die "Failed to install binary"'
                 echo '  insinto /opt/Ollama/lib'
-                echo '  doins -r "${WORKDIR}/lib/ollama" || die "Failed to install libraries"'
-                echo '  find "${ED}/opt/Ollama/lib/ollama" -type f -name "*.so*" -exec chmod +x {} + || die "Failed to make libraries executable"'
+                echo '  doins -r "${WORKDIR}/lib/ollama/"'
+                echo '  fperms -R +x /opt/Ollama/lib/ollama'
                 echo '  dosym /opt/Ollama/bin/ollama /opt/bin/ollama'
                 echo "}"
                 echo ""
