@@ -66,13 +66,13 @@ jobs:
           <?xml version="1.0" encoding="UTF-8"?>
             <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
-		<use>
-			<flag name="amd64">Enable amd64</flag>
-			<flag name="arm64">Enable arm64</flag>
-		</use>
-		<upstream>
-			<remote-id type="github">google-antigravity/antigravity-cli</remote-id>
-		</upstream>
+            <use>
+              <flag name="amd64">Enable amd64</flag>
+              <flag name="arm64">Enable arm64</flag>
+            </use>
+            <upstream>
+              <remote-id type="github">google-antigravity/antigravity-cli</remote-id>
+            </upstream>
           </pkgmetadata>
           EOF
           fi
@@ -108,8 +108,8 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/\${PV}/agy_cli_linux_x64.tar.gz -> \${P}-agy_cli_linux_x64.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/\${PV}/agy_cli_linux_arm64.tar.gz -> \${P}-agy_cli_linux_arm64.tar.gz  )  "
+                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/\${PV}/agy_cli_linux_x64.tar.gz -> \${P}-agy_cli_linux_x64.tar.gz  )  "
+                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/\${PV}/agy_cli_linux_arm64.tar.gz -> \${P}-agy_cli_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="Antigravity"'
                 echo 'SLOT="0"'
