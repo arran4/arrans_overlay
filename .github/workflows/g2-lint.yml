@@ -33,7 +33,15 @@ jobs:
 
           # Extract unique package directories (e.g., category/package)
           DIRS=$(echo "$CHANGED_FILES" | grep -E "^[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+/" | cut -d/ -f1,2 | sort -u | tr '\n' ' ' || true)
+          EXISTING_DIRS=""
+          for dir in $DIRS; do
+            if [ -d "$dir" ]; then
+              EXISTING_DIRS="$EXISTING_DIRS $dir"
+            fi
+          done
+          DIRS="$EXISTING_DIRS"
 
+          DIRS=$(echo "$DIRS" | xargs)
           if [ -z "$DIRS" ]; then
             echo "No package files changed. Skipping lint."
           else
