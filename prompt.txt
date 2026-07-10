@@ -1,0 +1,16 @@
+The `g2 lint` command currently doesn't support accepting multiple directory paths as positional arguments.
+In the GitHub workflows (like `g2-lint.yml`), we are passing changed directories like `g2 lint $DIRS` (where $DIRS might be `app-misc/foo dev-util/bar`).
+However, running `g2 lint --help` shows:
+```
+ Usage of lint:
+  -format string
+	Output format: text or json (default "text")
+  -only-source string
+	Only show warnings from this source (g2, pkgcheck)
+  -only-tag string
+	Only show warnings with this tag
+  -severity string
+	Only show warnings of this severity (error, warning, notice, info)
+```
+Currently, when `g2 lint <dir>` is run, it seems to ignore the directory and lint the whole repository anyway (as seen in the CI output).
+Please update `g2 lint` so that it accepts a list of directories as positional arguments, and if provided, it should *only* lint those specific directories instead of the entire overlay. This will prevent PRs from failing due to unrelated linting errors in other packages.
