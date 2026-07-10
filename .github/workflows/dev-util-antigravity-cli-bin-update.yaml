@@ -115,7 +115,7 @@ jobs:
                 echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/\${PV}/agy_cli_linux_x64.tar.gz -> \${P}-agy_cli_linux_x64.tar.gz  )  "
                 echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/\${PV}/agy_cli_linux_arm64.tar.gz -> \${P}-agy_cli_linux_arm64.tar.gz  )  "
                 echo '"'
-                echo 'LICENSE="Antigravity"'
+                echo 'LICENSE="Apache-2.0"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo -n 'IUSE="'
