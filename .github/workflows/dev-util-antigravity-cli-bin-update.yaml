@@ -1,0 +1,187 @@
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.25 Github Binary Release current.config 2026-07-10 02:18:48.258807218 +0000 UTC m=+0.005016886
+
+name: dev-util/antigravity-cli-bin update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '59 1 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/dev-util-antigravity-cli-bin-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ecn: dev-util
+  epn: antigravity-cli-bin
+  description: "Antigravity CLI"
+  homepage: "https://github.com/google-antigravity/antigravity-cli"
+  github_owner: google-antigravity
+  github_repo: antigravity-cli
+  keywords: ~amd64 ~arm64
+  workflow_filename: dev-util-antigravity-cli-bin-update.yaml
+  antigravity_binary_installed_name: 'antigravity'
+  antigravity_binary_archived_name_amd64: 'antigravity'
+  antigravity_release_name_amd64: 'agy_cli_linux_x64.tar.gz'
+  antigravity_binary_archived_name_arm64: 'antigravity'
+  antigravity_release_name_arm64: 'agy_cli_linux_arm64.tar.gz'
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y wget jq coreutils
+            url=$(curl -s --header "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/pkgcraft/pkgcraft/releases" | jq -r '[.[] | select(.tag_name | startswith("pkgcraft-tools-"))][0].assets[] | .browser_download_url' | grep "x86_64-unknown-linux-gnu.tar.xz")
+            curl -sL $url | tar xJ
+            sudo mv pk /usr/local/bin/
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p "$ebuild_dir"
+          metadata_file="${ebuild_dir}/metadata.xml"
+                    if [ ! -f "$metadata_file" ]; then
+                      cat << 'EOF' > "$metadata_file"
+          <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+          <pkgmetadata>
+		<use>
+			<flag name="amd64">Enable amd64</flag>
+			<flag name="arm64">Enable arm64</flag>
+		</use>
+		<upstream>
+			<remote-id type="github">google-antigravity/antigravity-cli</remote-id>
+		</upstream>
+          </pkgmetadata>
+          EOF
+          fi
+          declare -A releaseTypes=()
+          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          # shellcheck disable=SC2086
+          for tag in $tags; do
+            version="${tag#v}"
+            # shellcheck disable=SC2034
+            originalVersion="${version}"
+            if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                echo "tag / $version doesn't match regexp";
+                continue;
+            fi
+            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
+            if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
+                if [[ -v releaseTypes[release] ]]; then
+                  echo "Already have a newer main release: ${releaseTypes[release]}"
+                  continue
+                fi
+                releaseTypes[${releaseType:=release}]="${version}"
+            else
+                echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+                continue
+            fi
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+
+              # shellcheck disable=SC2016
+              {
+                echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'SRC_URI="'
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/\${PV}/agy_cli_linux_x64.tar.gz -> \${P}-agy_cli_linux_x64.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/\${PV}/agy_cli_linux_arm64.tar.gz -> \${P}-agy_cli_linux_arm64.tar.gz  )  "
+                echo '"'
+                echo 'LICENSE="Antigravity"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="${{ env.keywords }}"'
+                echo -n 'IUSE="'
+                echo -n ''
+                echo -n ''
+                echo -n ''
+                echo -n ''
+                echo -n ''
+                echo -n ' amd64 arm64'
+                echo '"'
+                echo ''
+                echo -n 'REQUIRED_USE="'
+                echo -n ''
+                echo '"'
+                echo ''
+                echo -n 'RDEPEND="'
+                echo -n ''
+                echo -n ''
+                echo '"'
+                echo ''
+                echo 'S="${WORKDIR}"'
+                echo ''
+                echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-agy_cli_linux_x64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-agy_cli_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '  exeinto /opt/bin'
+                echo '  if use amd64; then'
+                echo '    newexe "${{ env.antigravity_binary_archived_name_amd64 }}" "${{ env.antigravity_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm64; then'
+                echo '    newexe "${{ env.antigravity_binary_archived_name_arm64 }}" "${{ env.antigravity_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '}'
+              } > $ebuild_file
+
+              # Manifest generation
+
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/agy_cli_linux_x64.tar.gz" "${{ env.epn }}-${version}-agy_cli_linux_x64.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/agy_cli_linux_arm64.tar.gz" "${{ env.epn }}-${version}-agy_cli_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+            fi
+          done
+
+      - name: Generate Overlay
+        run: |
+          mkdir -p profiles
+          echo "overlay_name" > profiles/repo_name
+          echo "8" > profiles/eapi
+
+      - name: Lint output
+        uses: arran4/g2-action@v1.2
+        with:
+          mode: 'run'
+          action: 'lint .'
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; pk repo metadata regen .
+          git add "./${ebuild_dir}"
+          git add metadata/md5-cache/ || true
+          if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
+            git pull --rebase &&
+            git push
+          fi || true
+        if: steps.process_releases.outputs.generated_tag
