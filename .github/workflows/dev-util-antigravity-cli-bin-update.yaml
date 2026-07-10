@@ -66,10 +66,10 @@ jobs:
           <?xml version="1.0" encoding="UTF-8"?>
             <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
-    <maintainer type="person">
-      <email>gentoo@arran4.com</email>
-      <name>Arran Ubels</name>
-    </maintainer>
+            <maintainer type="person">
+              <email>gentoo@arran4.com</email>
+              <name>Arran Ubels</name>
+            </maintainer>
             <use>
               <flag name="amd64">Enable amd64</flag>
               <flag name="arm64">Enable arm64</flag>
