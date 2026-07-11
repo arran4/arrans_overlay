@@ -42,18 +42,18 @@ jobs:
       - name: Fetch latest release version
         id: get_version
         run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p "$ebuild_dir"
           tags=$(curl -s "https://api.github.com/repos/${github_owner}/${github_repo}/releases" | jq -r '.[].tag_name' | grep '^v[0-9]' || true)
           echo "Tags: $tags"
           for tag in $tags; do
             version="${tag#v}"
-            ebuild_file="${ecn}/${epn}/${epn}-${version}.ebuild"
+            ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
 
             if [ -f "$ebuild_file" ]; then
               echo "Ebuild for version $version already exists. Skipping."
               continue
             fi
-
-            mkdir -p "${ecn}/${epn}"
 
             cat <<- 'EBUILD' > "${ebuild_file}"
           EAPI=8
@@ -79,8 +79,8 @@ jobs:
 
             echo "Generated ebuild for version $version"
 
-            if [ ! -f "${ecn}/${epn}/metadata.xml" ]; then
-              cat <<- 'XML' > "${ecn}/${epn}/metadata.xml"
+            if [ ! -f "${ebuild_dir}/metadata.xml" ]; then
+              cat <<- 'XML' > "${ebuild_dir}/metadata.xml"
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
           <pkgmetadata>
@@ -95,7 +95,9 @@ jobs:
           XML
             fi
 
-            g2 cache generate -p "${ecn}/${epn}"
+            g2 manifest upsert-from-url "https://github.com/${github_owner}/${github_repo}/releases/download/v${version}/goshot_Linux_x86_64.tar.gz" "goshot-${version}_Linux_x86_64.tar.gz" "${ebuild_dir}/Manifest"
+            g2 manifest upsert-from-url "https://github.com/${github_owner}/${github_repo}/releases/download/v${version}/goshot_Linux_arm.tar.gz" "goshot-${version}_Linux_arm.tar.gz" "${ebuild_dir}/Manifest"
+            g2 manifest upsert-from-url "https://github.com/${github_owner}/${github_repo}/releases/download/v${version}/goshot_Linux_arm64.tar.gz" "goshot-${version}_Linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
 
             echo "version_added=true" >> "$GITHUB_ENV"
             break
