@@ -41,7 +41,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y wget jq coreutils
-          wget -qO- https://github.com/mgdm/htmlq/releases/download/v0.4.0/htmlq-x86_64-linux.tar.gz | tar xz -C /usr/local/bin htmlq
+          GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh release download v0.4.0 --repo mgdm/htmlq -p "htmlq-x86_64-linux.tar.gz" -O - | tar xz -C /usr/local/bin htmlq
       - name: Determine latest AppImage
         id: find_appimage
         run: |

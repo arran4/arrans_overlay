@@ -1,40 +1,36 @@
 # Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.26 Github Binary Release current.config 2026-07-11 04:44:28.007208443 +0000 UTC m=+0.004664393
 
-name: app-misc/tuios-bin update
+name: dev-util/antigravity-cli-bin update
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '24 9 * * *'
+    - cron: '59 1 * * *'
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/app-misc-tuios-bin-update.yaml'
+      - '.github/workflows/dev-util-antigravity-cli-bin-update.yaml'
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
 env:
-  ecn: app-misc
-  epn: tuios-bin
-  description: "Terminal UI OS (Terminal Multiplexer)"
-  homepage: "https://github.com/Gaurav-Gosain/tuios"
-  github_owner: Gaurav-Gosain
-  github_repo: tuios
-  keywords: ~amd64 ~arm ~arm64 ~x86
-  workflow_filename: app-misc-tuios-bin-update.yaml
-  tuios_binary_installed_name: 'tuios'
-  tuios_binary_archived_name_amd64: 'tuios'
-  tuios_release_name_amd64: 'tuios_\${PV}_Linux_x86_64.tar.gz'
-  tuios_binary_archived_name_arm: 'tuios'
-  tuios_release_name_arm: 'tuios_\${PV}_Linux_armv7.tar.gz'
-  tuios_binary_archived_name_arm64: 'tuios'
-  tuios_release_name_arm64: 'tuios_\${PV}_Linux_arm64.tar.gz'
-  tuios_binary_archived_name_x86: 'tuios'
-  tuios_release_name_x86: 'tuios_\${PV}_Linux_i386.tar.gz'
+  ecn: dev-util
+  epn: antigravity-cli-bin
+  description: "Antigravity CLI"
+  homepage: "https://github.com/google-antigravity/antigravity-cli"
+  github_owner: google-antigravity
+  github_repo: antigravity-cli
+  keywords: ~amd64 ~arm64
+  workflow_filename: dev-util-antigravity-cli-bin-update.yaml
+  antigravity_binary_installed_name: 'antigravity'
+  antigravity_binary_archived_name_amd64: 'antigravity'
+  antigravity_release_name_amd64: 'agy_cli_linux_x64.tar.gz'
+  antigravity_binary_archived_name_arm64: 'antigravity'
+  antigravity_release_name_arm64: 'agy_cli_linux_arm64.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -62,7 +58,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
-          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:Gaurav-Gosain/tuios" --use-add "amd64:Enable amd64" --use-add "arm:Enable arm" --use-add "arm64:Enable arm64" --use-add "x86:Enable x86" "$metadata_file"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:google-antigravity/antigravity-cli" --use-add "amd64:Enable amd64" --use-add "arm64:Enable arm64" "$metadata_file"
           declare -A releaseTypes=()
           tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
@@ -99,10 +95,8 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/tuios_\${PV}_Linux_x86_64.tar.gz -> \${P}-tuios_\${PV}_Linux_x86_64.tar.gz  )  "
-                echo "	arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/tuios_\${PV}_Linux_armv7.tar.gz -> \${P}-tuios_\${PV}_Linux_armv7.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/tuios_\${PV}_Linux_arm64.tar.gz -> \${P}-tuios_\${PV}_Linux_arm64.tar.gz  )  "
-                echo "	x86? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/tuios_\${PV}_Linux_i386.tar.gz -> \${P}-tuios_\${PV}_Linux_i386.tar.gz  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/agy_cli_linux_x64.tar.gz -> \${P}-agy_cli_linux_x64.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/agy_cli_linux_arm64.tar.gz -> \${P}-agy_cli_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -110,10 +104,10 @@ jobs:
                 echo -n 'IUSE="'
                 echo -n ''
                 echo -n ''
-                echo -n ' doc'
                 echo -n ''
                 echo -n ''
-                echo -n ' amd64 arm arm64 x86'
+                echo -n ''
+                echo -n ' amd64 arm64'
                 echo '"'
                 echo ''
                 echo -n 'REQUIRED_USE="'
@@ -129,36 +123,20 @@ jobs:
                 echo ''
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-tuios_\${PV}_Linux_x86_64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use arm; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-tuios_\${PV}_Linux_armv7.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-agy_cli_linux_x64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-tuios_\${PV}_Linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use x86; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-tuios_\${PV}_Linux_i386.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-agy_cli_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '}'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'
-                echo '    newexe "${{ env.tuios_binary_archived_name_amd64 }}" "${{ env.tuios_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use arm; then'
-                echo '    newexe "${{ env.tuios_binary_archived_name_arm }}" "${{ env.tuios_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.antigravity_binary_archived_name_amd64 }}" "${{ env.antigravity_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo '    newexe "${{ env.tuios_binary_archived_name_arm64 }}" "${{ env.tuios_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use x86; then'
-                echo '    newexe "${{ env.tuios_binary_archived_name_x86 }}" "${{ env.tuios_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use doc; then'
-                echo '    newdoc "LICENSE" "LICENSE" || die "Failed to install document LICENSE"'
-                echo '    newdoc "README.md" "README.md" || die "Failed to install document README.md"'
+                echo '    newexe "${{ env.antigravity_binary_archived_name_arm64 }}" "${{ env.antigravity_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '}'
               } > $ebuild_file
@@ -166,10 +144,8 @@ jobs:
               # Manifest generation
               failed=0
 
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/tuios_${version}_Linux_x86_64.tar.gz" "${{ env.epn }}-${version}-tuios_${version}_Linux_x86_64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/tuios_${version}_Linux_armv7.tar.gz" "${{ env.epn }}-${version}-tuios_${version}_Linux_armv7.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/tuios_${version}_Linux_arm64.tar.gz" "${{ env.epn }}-${version}-tuios_${version}_Linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/tuios_${version}_Linux_i386.tar.gz" "${{ env.epn }}-${version}-tuios_${version}_Linux_i386.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/agy_cli_linux_x64.tar.gz" "${{ env.epn }}-${version}-agy_cli_linux_x64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/agy_cli_linux_arm64.tar.gz" "${{ env.epn }}-${version}-agy_cli_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
               if [ "$failed" -eq 1 ]; then
                   echo "Failed to generate manifest for $tag. Skipping..."
                   rm -f "$ebuild_file"
