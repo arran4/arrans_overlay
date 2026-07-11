@@ -1,0 +1,87 @@
+name: app-misc-unixtree Update
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-unixtree:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install g2
+        run: |
+          go install github.com/arran4/g2/cmd/g2@latest
+
+      - name: Check for updates
+        id: check_update
+        run: |
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/dokakod/unixtree/releases/latest | grep tag_name | cut -d '"' -f 4 | sed 's/^v//')
+          CURRENT_VERSION=$(ls app-misc/unixtree/unixtree-*.ebuild 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -n 1)
+
+          if [ -z "$CURRENT_VERSION" ]; then
+            echo "No current ebuild found. Proceeding with version $LATEST_VERSION."
+            echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+          elif [ "$LATEST_VERSION" != "$CURRENT_VERSION" ]; then
+            echo "Update available: $CURRENT_VERSION -> $LATEST_VERSION"
+            echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Already up-to-date ($CURRENT_VERSION)"
+            echo "update_needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update ebuild and manifest
+        if: steps.check_update.outputs.update_needed == 'true'
+        run: |
+          VERSION="${{ steps.check_update.outputs.version }}"
+          export PATH="$HOME/go/bin:$PATH"
+
+          cat << EBUILD_EOF > app-misc/unixtree/unixtree-${VERSION}.ebuild
+          EAPI=8
+
+          DESCRIPTION="UnixTree is a powerful and versatile console-mode filemanager for Unix-style systems"
+          HOMEPAGE="https://github.com/dokakod/unixtree"
+          SRC_URI="https://github.com/dokakod/unixtree/archive/refs/tags/v\${PV}.tar.gz -> \${P}.tar.gz"
+
+          LICENSE="GPL-2"
+          SLOT="0"
+          KEYWORDS="~amd64 ~x86"
+
+          DEPEND="
+                    x11-libs/libX11
+                    x11-libs/libXt
+          "
+          RDEPEND="\${DEPEND}"
+
+          src_configure() {
+                    sh build -r linux || die "build setup failed"
+          }
+
+          src_compile() {
+                    emake
+          }
+
+          src_install() {
+                    INS_DIR="\${ED}/usr" emake install
+          }
+          EBUILD_EOF
+
+          g2 manifest upsert-from-url "https://github.com/dokakod/unixtree/archive/refs/tags/v${VERSION}.tar.gz" "unixtree-${VERSION}.tar.gz" app-misc/unixtree/Manifest
+          g2 cache generate app-misc/unixtree
+          rm -f "unixtree-${VERSION}.tar.gz"
+
+      - name: Create Pull Request
+        if: steps.check_update.outputs.update_needed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "Update app-misc/unixtree to version ${{ steps.check_update.outputs.version }}"
+          title: "Update app-misc/unixtree to version ${{ steps.check_update.outputs.version }}"
+          branch: "update-unixtree-${{ steps.check_update.outputs.version }}"
+          base: main
+          body: |
+            Automated update of `app-misc/unixtree` to version `${{ steps.check_update.outputs.version }}`.
