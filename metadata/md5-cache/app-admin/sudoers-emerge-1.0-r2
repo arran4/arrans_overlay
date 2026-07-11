@@ -4,5 +4,6 @@ EAPI=8
 HOMEPAGE=https://www.sudo.ws/
 KEYWORDS=~amd64 ~arm ~arm64
 LICENSE=public-domain
+RDEPEND=app-admin/sudo
 SLOT=0
-_md5_=fb2a13892c2166f39928fa7d55e1069f
+_md5_=ba8af7a7b7200105e7a0c0f4d3f44c71
