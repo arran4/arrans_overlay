@@ -69,6 +69,7 @@ jobs:
           SLOT="0"
           KEYWORDS="~amd64 ~arm ~arm64"
           RESTRICT="strip"
+          RDEPEND="x11-libs/libX11 sys-libs/glibc"
 
           S="${WORKDIR}"
 
