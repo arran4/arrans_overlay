@@ -86,6 +86,7 @@ jobs:
         run: |
           python3 <<'PY' > /tmp/pr_summary.md
           import os
+          import re
           import subprocess
           from collections import defaultdict
 
@@ -120,7 +121,21 @@ jobs:
               for raw_line in dedupe_output.splitlines():
                   line = raw_line.strip()
                   if line.startswith("- "):
-                      dedupe_lines.append(f"- `{line[2:]}`")
+                      m = re.match(r"- (.*?) \(Removed: (.*?) \| Remaining: (.*?)\)(.*)", line)
+                      if m:
+                          pkg = m.group(1)
+                          removed = m.group(2)
+                          remaining = m.group(3)
+                          rest = m.group(4)
+                          pkg_fmt = f"`{pkg}`"
+                          removed_fmt = ", ".join(f"`{v.strip()}`" for v in removed.split(","))
+                          if remaining == "None":
+                              remaining_fmt = "None"
+                          else:
+                              remaining_fmt = ", ".join(f"`{v.strip()}`" for v in remaining.split(","))
+                          dedupe_lines.append(f"- {pkg_fmt} (Removed: {removed_fmt} | Remaining: {remaining_fmt}){rest}")
+                      else:
+                          dedupe_lines.append(f"- `{line[2:]}`")
           print_section("Duplicate ebuilds removed", dedupe_lines)
 
           egencache_rows = changed_paths(["--", "metadata/md5-cache"])
