@@ -30,5 +30,5 @@ DEPEND="${RDEPEND}
 "
 BDEPEND="
 	>=kde-frameworks/extra-cmake-modules-${KFMIN}:0
-	dev-qt/qttools:6
+	dev-qt/qttools:6[qdbus]
 "

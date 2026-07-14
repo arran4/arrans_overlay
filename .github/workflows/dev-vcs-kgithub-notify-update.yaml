@@ -113,7 +113,7 @@ jobs:
                 echo '"'
                 echo 'BDEPEND="'
                 echo '	>=kde-frameworks/extra-cmake-modules-${KFMIN}:0'
-                echo '	dev-qt/qttools:6'
+                echo '	dev-qt/qttools:6[qdbus]'
                 echo '"'
               } > $ebuild_file
 
