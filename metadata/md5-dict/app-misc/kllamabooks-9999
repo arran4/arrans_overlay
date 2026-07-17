@@ -1,7 +1,15 @@
+INHERITED=cmake xdg git-r3
+HOMEPAGE=https://github.com/arran4/kllamabooks
+EAPI=8
+SRC_URI=https://github.com/arran4/kllamabooks/archive/refs/tags/v9999.tar.gz -> kllamabooks-9999.tar.gz
 LICENSE=MIT
 DESCRIPTION=An AI LLM Desktop Client and Document Editor for KDE/Qt
-SRC_URI=https://github.com/arran4/kllamabooks/archive/refs/tags/v9999.tar.gz -> kllamabooks-9999.tar.gz
-KEYWORDS=~amd64
+BDEPEND=
+	dev-qt/qttools:6[linguist]
+	virtual/pkgconfig
+	kde-frameworks/extra-cmake-modules:0
+
+SLOT=0
 IUSE=debug
 DEPEND=
 	dev-qt/qtbase:6[dbus,gui,network,widgets]
@@ -13,7 +21,6 @@ DEPEND=
 	kde-frameworks/kxmlgui:6
 	dev-db/sqlcipher
 
-INHERITED=cmake xdg git-r3
 RDEPEND=
 	dev-qt/qtbase:6[dbus,gui,network,widgets]
 	dev-qt/qtsvg:6
@@ -24,12 +31,5 @@ RDEPEND=
 	kde-frameworks/kxmlgui:6
 	dev-db/sqlcipher
 
-HOMEPAGE=https://github.com/arran4/kllamabooks
-SLOT=0
-EAPI=8
-BDEPEND=
-	dev-qt/qttools:6[linguist]
-	virtual/pkgconfig
-	kde-frameworks/extra-cmake-modules:0
-
+KEYWORDS=~amd64
 _md5_=077654bc754c3511b21c183754d4453c

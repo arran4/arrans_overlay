@@ -1,12 +1,12 @@
-KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
-EAPI=8
-DESCRIPTION=SUSE is a sans serif typeface designed by René Bieder, embodying a unique hybrid between geometric and monospaced features. It captures the essence of SUSE, a company renowned for its open-source solutions.
-RESTRICT=binchecks strip
-LICENSE=MIT
-SLOT=0
 INHERITED=font
+DESCRIPTION=SUSE is a sans serif typeface designed by René Bieder, embodying a unique hybrid between geometric and monospaced features. It captures the essence of SUSE, a company renowned for its open-source solutions.
+HOMEPAGE=https://fonts.google.com/specimen/SUSE
+RESTRICT=binchecks strip
+SLOT=0
 SRC_URI=
 	https://github.com/SUSE/suse-font/releases/download/v1.000/suse-font-v1.000.zip -> suse-font-1.0.zip
 
-HOMEPAGE=https://fonts.google.com/specimen/SUSE
+LICENSE=MIT
+KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
+EAPI=8
 _md5_=1291f619a5bfbb62e234febaf54d24ad

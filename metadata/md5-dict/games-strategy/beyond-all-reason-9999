@@ -1,0 +1,19 @@
+INHERITED=git-r3
+RESTRICT=network-sandbox
+RDEPEND=
+	dev-lang/lua:5.1
+
+LICENSE=GPL-2
+DESCRIPTION=Main game repository for Beyond All Reason
+BDEPEND=
+	net-misc/curl
+
+DEPEND=
+	dev-lang/lua:5.1
+
+HOMEPAGE=https://github.com/beyond-all-reason/Beyond-All-Reason
+PROPERTIES=live
+EAPI=8
+SLOT=0
+KEYWORDS=~amd64
+_md5_=4ea8063e245b30e2e1ef4ca5a2152e4f

@@ -1,0 +1,12 @@
+SLOT=0
+RDEPEND=|| ( dev-libs/libayatana-appindicator )
+LICENSE=All-rights-reserved
+EAPI=8
+DESCRIPTION=Which Browser? A browser selecting tool with rules to automate.
+BDEPEND=dev-util/patchelf
+HOMEPAGE=https://which-browser-site.pages.dev
+SRC_URI=https://which-browser-site.pages.dev/downloads/v0.2.6/which_browser-${PV%.*}+${PV-linux.deb
+KEYWORDS=~amd64
+INHERITED=unpacker
+RESTRICT=mirror
+_md5_=7cf3d6818e329b9811e7c4a2d9d4f58c

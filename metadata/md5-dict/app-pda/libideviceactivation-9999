@@ -1,20 +1,20 @@
+LICENSE=LGPL-3
+DESCRIPTION=A library to manage the activation process of Apple iOS devices
 DEPEND=
 	>=app-pda/libimobiledevice-1.3.0:=
 	>=app-pda/libplist-2.2.0:=
 	>=net-misc/curl-7.20:=
 	>=dev-libs/libxml2-2.9:=
 
-LICENSE=LGPL-3
+EAPI=8
+INHERITED=autotools git-r3
 SLOT=0
-BDEPEND=virtual/pkgconfig
-DESCRIPTION=A library to manage the activation process of Apple iOS devices
 RDEPEND=
 	>=app-pda/libimobiledevice-1.3.0:=
 	>=app-pda/libplist-2.2.0:=
 	>=net-misc/curl-7.20:=
 	>=dev-libs/libxml2-2.9:=
 
-INHERITED=autotools git-r3
+BDEPEND=virtual/pkgconfig
 HOMEPAGE=https://www.libimobiledevice.org/ https://github.com/libimobiledevice/libideviceactivation
-EAPI=8
 _md5_=c40922c622606c1e90e2bc4460a6028e

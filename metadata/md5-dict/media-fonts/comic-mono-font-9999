@@ -1,12 +1,12 @@
-KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
-LICENSE=MIT
-SLOT=0
-RESTRICT=binchecks strip
-DESCRIPTION= A legible monospace font... the very typeface you’ve been trained to recognize since childhood.
-HOMEPAGE=https://github.com/dtinth/comic-mono-font/
-EAPI=8
-INHERITED=font
 SRC_URI=
 	https://github.com/dtinth/comic-mono-font/archive/6a133be3235177801e2aaf80619afcd40071c9c0.zip -> comic-mono-font-9999.zip
 
+RESTRICT=binchecks strip
+HOMEPAGE=https://github.com/dtinth/comic-mono-font/
+LICENSE=MIT
+INHERITED=font
+DESCRIPTION= A legible monospace font... the very typeface you’ve been trained to recognize since childhood.
+SLOT=0
+KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
+EAPI=8
 _md5_=76bec47eeda110d2425ff7be42522ae2

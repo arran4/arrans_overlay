@@ -1,6 +1,5 @@
-DESCRIPTION=Static low-bandwidth search at scale
-KEYWORDS=~amd64 ~arm64
 EAPI=8
+HOMEPAGE=https://pagefind.app
 LICENSE=MIT
 SLOT=0
 SRC_URI=
@@ -9,5 +8,6 @@ SRC_URI=
   arm64? (  https://github.com/Pagefind/pagefind/releases/download/v1.3.0/pagefind-v1.3.0-aarch64-unknown-linux-musl.tar.gz -> pagefind-bin-1.3.0-pagefind-v1.3.0-aarch64-unknown-linux-musl.tar.gz  )
   arm64? (  https://github.com/Pagefind/pagefind/releases/download/v1.3.0/pagefind_extended-v1.3.0-aarch64-unknown-linux-musl.tar.gz -> pagefind-bin-1.3.0-pagefind_extended-v1.3.0-aarch64-unknown-linux-musl.tar.gz  )
 
-HOMEPAGE=https://pagefind.app
+KEYWORDS=~amd64 ~arm64
+DESCRIPTION=Static low-bandwidth search at scale
 _md5_=5cb5f17b5a6bb8c77ffe357694abbf52

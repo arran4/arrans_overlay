@@ -1,0 +1,14 @@
+EAPI=8
+DESCRIPTION=An open-source remote desktop application designed for self-hosting, as an alternative to TeamViewer.
+RESTRICT=strip
+SLOT=0
+KEYWORDS=~amd64 ~arm64
+RDEPEND=sys-libs/glibc sys-libs/glibc sys-libs/zlib sys-libs/zlib 
+INHERITED=xdg-utils
+HOMEPAGE=https://rustdesk.com
+SRC_URI=
+  arm64? ( https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-aarch64.AppImage -> rustdesk-appimage-1.4.9-rustdesk-1.4.9-aarch64.AppImage )
+  amd64? ( https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-x86_64.AppImage -> rustdesk-appimage-1.4.9-rustdesk-1.4.9-x86_64.AppImage )
+
+LICENSE=MIT
+_md5_=fc48cacfe03d0e8be3008398699dd729

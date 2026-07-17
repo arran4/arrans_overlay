@@ -1,10 +1,10 @@
-RESTRICT=binchecks strip
+LICENSE=CC-BY-4.0
 KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
 HOMEPAGE=https://www.education.vic.gov.au/school/teachers/teachingresources/discipline/english/Pages/handwriting.aspx
 EAPI=8
-SRC_URI=https://www.education.vic.gov.au/Documents/school/teachers/teachingresources/discipline/english/vicmodcursive.zip -> vicmodcursive-9999.zip
 DESCRIPTION=Victorian Modern Cursive Script font - Handwriting Educational font
-LICENSE=CC-BY-4.0
+RESTRICT=binchecks strip
 INHERITED=font
 SLOT=0
+SRC_URI=https://www.education.vic.gov.au/Documents/school/teachers/teachingresources/discipline/english/vicmodcursive.zip -> vicmodcursive-9999.zip
 _md5_=124cd65749048dbf341eecb3b2504749

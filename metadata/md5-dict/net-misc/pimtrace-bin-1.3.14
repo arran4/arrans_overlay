@@ -1,0 +1,11 @@
+KEYWORDS=~amd64 ~arm64
+SRC_URI=
+  amd64? (  https://github.com/arran4/pimtrace/releases/download/v1.3.14/pimtrace_1.3.14_linux_amd64.tar.gz -> pimtrace-bin-1.3.14-pimtrace_1.3.14_linux_amd64.tar.gz  )  
+  arm64? (  https://github.com/arran4/pimtrace/releases/download/v1.3.14/pimtrace_1.3.14_linux_arm64.tar.gz -> pimtrace-bin-1.3.14-pimtrace_1.3.14_linux_arm64.tar.gz  )  
+
+DESCRIPTION=A CLI tool for preforming queries on ical and csv files
+IUSE= doc
+EAPI=8
+LICENSE=MIT
+SLOT=0
+_md5_=e39aea3b5f278c05b5efcb7ab528e508

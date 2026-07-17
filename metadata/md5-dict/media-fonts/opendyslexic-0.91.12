@@ -1,10 +1,10 @@
-LICENSE=OFL-1.1
-INHERITED=font
+HOMEPAGE=https://opendyslexic.org/
+DESCRIPTION=OpenDyslexic, a typeface that uses typeface shapes & features to help offset some visual symptoms of Dyslexia. Now in SIL-OFL.
 SLOT=0
+SRC_URI=https://github.com/antijingoist/opendyslexic/releases/download/v0.91.12/opendyslexic-0.910.12-rc2-2019.10.17.zip -> opendyslexic-0.91.12-rc2-2019.10.17.zip
 RESTRICT=binchecks strip
 EAPI=8
-DESCRIPTION=OpenDyslexic, a typeface that uses typeface shapes & features to help offset some visual symptoms of Dyslexia. Now in SIL-OFL.
-SRC_URI=https://github.com/antijingoist/opendyslexic/releases/download/v0.91.12/opendyslexic-0.910.12-rc2-2019.10.17.zip -> opendyslexic-0.91.12-rc2-2019.10.17.zip
-HOMEPAGE=https://opendyslexic.org/
 KEYWORDS=amd64 arm arm64 ~loong ~ppc64 ~riscv x86
+INHERITED=font
+LICENSE=OFL-1.1
 _md5_=8e02a07149a746239909509f067c120a

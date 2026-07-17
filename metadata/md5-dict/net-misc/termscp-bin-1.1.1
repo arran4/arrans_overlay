@@ -1,0 +1,12 @@
+EAPI=8
+RDEPEND=net-fs/samba 
+DESCRIPTION=Feature rich terminal file transfer tool
+HOMEPAGE=https://termscp.veeso.dev
+LICENSE=MIT
+SLOT=0
+SRC_URI=
+  amd64? (  https://github.com/veeso/termscp/releases/download/v1.1.1/termscp-v1.1.1-x86_64-unknown-linux-gnu.tar.gz -> termscp-bin-1.1.1-termscp-v1.1.1-x86_64-unknown-linux-gnu.tar.gz  )  
+  arm64? (  https://github.com/veeso/termscp/releases/download/v1.1.1/termscp-v1.1.1-aarch64-unknown-linux-gnu.tar.gz -> termscp-bin-1.1.1-termscp-v1.1.1-aarch64-unknown-linux-gnu.tar.gz  )  
+
+KEYWORDS=~amd64 ~arm64
+_md5_=c50c9557e3e37b57922b8d5c47d4e9b5

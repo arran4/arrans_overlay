@@ -1,0 +1,13 @@
+KEYWORDS=~amd64
+INHERITED=xdg-utils
+SRC_URI=
+  amd64? ( https://github.com/LykosAI/StabilityMatrix/releases/download/v2.16.1/StabilityMatrix-linux-x64.zip -> stability-matrix-appimage-2.16.1-StabilityMatrix-linux-x64.zip )
+
+EAPI=8
+DESCRIPTION=Multi-Platform Package Manager for Stable Diffusion
+HOMEPAGE=https://lykos.ai
+SLOT=0
+RESTRICT=strip
+LICENSE=MIT
+RDEPEND=sys-libs/glibc sys-libs/zlib 
+_md5_=3c796d5a79768174a8b943470eb72b26

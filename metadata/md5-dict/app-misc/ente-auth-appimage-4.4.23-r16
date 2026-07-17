@@ -1,0 +1,14 @@
+DESCRIPTION=Ente's 2FA solution
+SRC_URI=
+  amd64? ( https://github.com/ente-io/ente/releases/download/auth-v4.4.23/ente-auth-v4.4.23-x86_64.AppImage -> ente-auth-appimage-4.4.23-r16-ente-auth-v4.4.23-x86_64.AppImage )
+
+HOMEPAGE=https://ente.io/blog/auth/
+EAPI=8
+BDEPEND=sys-fs/squashfs-tools[zstd]
+RDEPEND=sys-libs/glibc sys-libs/zlib
+INHERITED=xdg-utils
+RESTRICT=strip
+LICENSE=MIT
+SLOT=0
+KEYWORDS=~amd64
+_md5_=13a880e5b4926ae6347d3b5ae9a8def0
