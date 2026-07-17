@@ -61,3 +61,8 @@ To keep the overlay clean, we follow a **"One Version Per Grade"** policy.
 *   **Linting:** Be aware of `pkgcheck` and `actionlint` results in the PR checks.
 *   **Checksum & Manifest Errors:** If you encounter `VERIFY FAILED! Reason: Insufficient data for checksum verification` during an emerge/fetch operation, it is typically caused by a missing, empty, or outdated `Manifest` file.
     *   To resolve this, you must generate or update the `Manifest` file with the correct distfile entries and hashes. You can use tools such as `g2 manifest upsert-from-url <url> <filename> <path_to_manifest>` to fix these issues.
+
+## 6. Pull Request Scope
+
+*   **Scope Restriction:** All pull requests, unless otherwise specified, are to be restricted to changes strictly necessary to meet the primary goals of the PR.
+*   **CI Failures:** This restriction applies even if CI failures occur. Do not attempt to fix unrelated CI failures unless explicitly instructed by the user to do so.
