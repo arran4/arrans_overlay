@@ -1,13 +1,13 @@
+DESCRIPTION=🔍 A Hex Editor for Reverse Engineers, Programmers and people who value their retinas when working at 3 AM.
 KEYWORDS=~amd64
-INHERITED=xdg-utils
-HOMEPAGE=https://imhex.werwolv.net
-RESTRICT=strip
+LICENSE=MIT
 SLOT=0
+RESTRICT=strip
+INHERITED=xdg-utils
+EAPI=8
+RDEPEND=sys-libs/glibc sys-libs/zlib
+HOMEPAGE=https://imhex.werwolv.net
 SRC_URI=
   amd64? ( https://github.com/WerWolv/ImHex/releases/download/v1.38.1/imhex-1.38.1-x86_64.AppImage -> im-hex-appimage-1.38.1-imhex-1.38.1-x86_64.AppImage )
 
-RDEPEND=sys-libs/glibc sys-libs/zlib 
-EAPI=8
-LICENSE=MIT
-DESCRIPTION=🔍 A Hex Editor for Reverse Engineers, Programmers and people who value their retinas when working at 3 AM.
-_md5_=e2be3cb9b4f3505a64e1518d7090d943
+_md5_=c2a2c6c5d123fca032a595553936c605

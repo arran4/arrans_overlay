@@ -8,7 +8,6 @@ EGIT_REPO_URI="https://github.com/beyond-all-reason/Beyond-All-Reason.git"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="~amd64"
 PROPERTIES="live"
 RESTRICT="network-sandbox"
 
@@ -24,9 +23,9 @@ src_compile() {
 	einfo "Beyond All Reason uses lux for package management"
 	# Instead of using install.sh from curl, use the exact cargo-binstall release
 	# used for testing since the test unit specifically installs lux-cli via cargo-binstall
-	curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh > "${T}/install.sh"
-	sh "${T}/install.sh"
-	"${HOME}/.cargo/bin/cargo-binstall" --no-confirm --version 0.28.3 --install-path "${T}" lux-cli
+	curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh > "${T}/install.sh" || die "Failed to download cargo-binstall installer"
+	sh "${T}/install.sh" || die "Failed to run cargo-binstall installer"
+	"${HOME}/.cargo/bin/cargo-binstall" --no-confirm --version 0.28.3 --install-path "${T}" lux-cli || die "Failed to install lux-cli"
 
 	export PATH="${T}:${PATH}"
 	einfo "Updating Lux dependencies"

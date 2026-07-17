@@ -1,13 +1,13 @@
-HOMEPAGE=https://localsend.org
+RDEPEND=sys-libs/glibc sys-libs/zlib
 DESCRIPTION=An open-source cross-platform alternative to AirDrop
-EAPI=8
 LICENSE=MIT
+KEYWORDS=~amd64
+RESTRICT=strip
+HOMEPAGE=https://localsend.org
+SLOT=0
+INHERITED=xdg-utils
+EAPI=8
 SRC_URI=
   amd64? ( https://github.com/localsend/localsend/releases/download/v1.17.0/LocalSend-1.17.0-linux-x86-64.AppImage -> localsend-appimage-1.17.0-LocalSend-1.17.0-linux-x86-64.AppImage )
 
-RDEPEND=sys-libs/glibc sys-libs/zlib 
-RESTRICT=strip
-SLOT=0
-INHERITED=xdg-utils
-KEYWORDS=~amd64
 _md5_=5621c02b795c86ce392f6dc0e9564f1b

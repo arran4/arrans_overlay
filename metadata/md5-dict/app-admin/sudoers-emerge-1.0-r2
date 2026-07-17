@@ -1,8 +1,0 @@
-LICENSE=public-domain
-SLOT=0
-HOMEPAGE=https://www.sudo.ws/
-KEYWORDS=~amd64 ~arm ~arm64
-RDEPEND=app-admin/sudo
-EAPI=8
-DESCRIPTION=Installs a sudoers.d drop-in to enable emerge without password
-_md5_=ba8af7a7b7200105e7a0c0f4d3f44c71

@@ -46,8 +46,9 @@ jobs:
 
       - name: Commit changes
         run: |
-          if ! git diff --quiet; then
-            git add .
+          ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
+          if ! git diff --quiet "${ebuild_dir}"; then
+            git add "${ebuild_dir}"
             git commit -m "Update cache for ${{ env.ebuild_name }}" && git fetch && git rebase FETCH_HEAD
             git push || true
           fi
