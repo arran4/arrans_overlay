@@ -15,7 +15,9 @@ The list of affected applications being removed from this overlay:
 - ImHex
 
 These applications have valid flatpaks in the main flatpak repo (Flathub). You can search for flatpaks using `flatpak search <name>`.
-Example installation command:
+Example installation commands:
 flatpak install flathub io.anytype.anytype
+flatpak install flathub io.ente.auth
+flatpak install flathub net.werwolv.ImHex
 
 If you'd like to continue using ebuilds, you can take the workflows and config from the git history of this overlay and put them in your own overlay to continue support. Alternatively, you can log an issue on the arrans_overlay repo for assistance or requests.
