@@ -66,3 +66,8 @@ To keep the overlay clean, we follow a **"One Version Per Grade"** policy.
 
 *   **Scope Restriction:** All pull requests, unless otherwise specified, are to be restricted to changes strictly necessary to meet the primary goals of the PR.
 *   **CI Failures:** This restriction applies even if CI failures occur. Do not attempt to fix unrelated CI failures unless explicitly instructed by the user to do so.
+
+## 7. Major Changes & Ebuild Removal
+
+*   When removing entire ebuilds and workflows or making major changes to the repository or how things work, you must add Gentoo news.
+*   This news must be clearly authored from me and/or +ai.
