@@ -1,0 +1,23 @@
+Title: Migration to Flatpak for several applications
+Author: Arran <gentoo@arran4.com>
+Author: Jules <gentoo@arran4.com>
+Posted: 2024-07-22
+Revision: 1
+News-Item-Format: 2.0
+Display-If-Installed: app-text/anytype-ts-appimage
+Display-If-Installed: app-misc/ente-auth-appimage
+Display-If-Installed: dev-util/im-hex-appimage
+
+I am migrating a couple of apps from ebuilds to flatpak installed version and as a result will no longer be updating ebuilds for them.
+The list of affected applications being removed from this overlay:
+- Anytype
+- Ente Auth
+- ImHex
+
+These applications have valid flatpaks in the main flatpak repo (Flathub). You can search for flatpaks using `flatpak search <name>`.
+Example installation commands:
+flatpak install flathub io.anytype.anytype
+flatpak install flathub io.ente.auth
+flatpak install flathub net.werwolv.ImHex
+
+If you'd like to continue using ebuilds, you can take the workflows and config from the git history of this overlay and put them in your own overlay to continue support. Alternatively, you can log an issue on the arrans_overlay repo for assistance or requests.
