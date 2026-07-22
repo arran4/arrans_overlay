@@ -7,26 +7,15 @@ News-Item-Format: 2.0
 Display-If-Installed: app-text/anytype-ts-appimage
 Display-If-Installed: app-misc/ente-auth-appimage
 Display-If-Installed: dev-util/im-hex-appimage
-Display-If-Installed: games-util/steam-nofile
 
 I am migrating a couple of my apps from ebuilds to flatpak installed version and as a result will no longer be updating ebuilds for them.
 The list of affected applications being removed from this overlay:
-- AuthPass
-- Dropbox
-- Spotify
-- Steam
-- FluffyChat
-- nheko
-- Element
 - Anytype
 - Ente Auth
-- RSS Guard
 - ImHex
-- Drawy
-- Signal Desktop
 
 These applications have valid flatpaks in the main flatpak repo (Flathub). You can search for flatpaks using `flatpak search <name>`.
 Example installation command:
-flatpak install flathub com.valvesoftware.Steam
+flatpak install flathub io.anytype.anytype
 
 If you'd like to continue using ebuilds, you can take the workflows and config from the git history of this overlay and put them in your own overlay to continue support. Alternatively, you can log an issue on the arrans_overlay repo for assistance or requests.
