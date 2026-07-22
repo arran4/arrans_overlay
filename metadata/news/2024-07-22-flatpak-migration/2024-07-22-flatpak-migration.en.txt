@@ -8,7 +8,7 @@ Display-If-Installed: app-text/anytype-ts-appimage
 Display-If-Installed: app-misc/ente-auth-appimage
 Display-If-Installed: dev-util/im-hex-appimage
 
-I am migrating a couple of my apps from ebuilds to flatpak installed version and as a result will no longer be updating ebuilds for them.
+I am migrating a couple of apps from ebuilds to flatpak installed version and as a result will no longer be updating ebuilds for them.
 The list of affected applications being removed from this overlay:
 - Anytype
 - Ente Auth
