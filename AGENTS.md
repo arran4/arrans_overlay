@@ -69,5 +69,5 @@ To keep the overlay clean, we follow a **"One Version Per Grade"** policy.
 
 ## 7. Major Changes & Ebuild Removal
 
-*   When removing entire ebuilds and workflows or making major changes to the repository or how things work, you must add Gentoo news.
+*   When removing entire ebuilds and workflows or making major changes to the repository or how things work, you must add arrans_overlay news.
 *   This news must be clearly authored from me and/or +ai.
