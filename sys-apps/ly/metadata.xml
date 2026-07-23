@@ -2,8 +2,8 @@
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
     <maintainer type="person">
-        <email>jules@ai.agent</email>
-        <name>Jules</name>
+        <email>gentoo@arran4.com</email>
+        <name>Arran Ubels</name>
     </maintainer>
     <upstream>
         <remote-id type="github">fairyglade/ly</remote-id>
