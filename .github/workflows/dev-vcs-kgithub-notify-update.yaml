@@ -106,7 +106,7 @@ jobs:
                 echo '	>=kde-frameworks/kwallet-${KFMIN}:6'
                 echo '	>=kde-frameworks/knotifications-${KFMIN}:6'
                 echo '	>=kde-frameworks/ki18n-${KFMIN}:6'
-                echo '	dev-libs/qtkeychain[qt6(+)]:='
+                echo '	dev-libs/qtkeychain:=[qt6(+)]'
                 echo '"'
                 echo 'DEPEND="${RDEPEND}'
                 echo '	test? ( >=dev-qt/qtbase-${QTMIN}:6[test] )'
