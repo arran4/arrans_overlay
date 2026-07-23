@@ -1,0 +1,160 @@
+name: media-sound/voicebox update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '23 14 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/media-sound-voicebox-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ecn: media-sound
+  epn: voicebox
+  description: "Open source voice cloning. Local-first. Free forever."
+  homepage: "https://voicebox.sh"
+  github_owner: jamiepine
+  github_repo: voicebox
+  keywords: ~amd64 ~arm64
+  workflow_filename: media-sound-voicebox-update.yaml
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install required tools
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y wget jq coreutils
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p "$ebuild_dir"
+          metadata_file="${ebuild_dir}/metadata.xml"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:jamiepine/voicebox" --use-add "amd64:Enable amd64" --use-add "arm64:Enable arm64" "$metadata_file"
+          declare -A releaseTypes=()
+          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name") and .prerelease == false) | .tag_name')
+
+          for tag in $tags; do
+            version="${tag#v}"
+            if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                echo "tag / $version doesn't match regexp";
+                continue;
+            fi
+            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
+            if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
+                if [[ -v releaseTypes[release] ]]; then
+                  echo "Already have a newer main release: ${releaseTypes[release]}"
+                  continue
+                fi
+                releaseTypes[${releaseType:=release}]="${version}"
+            else
+                echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+                continue
+            fi
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+
+              cat << 'EBUILD_EOF' > "$ebuild_file"
+              # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}
+              EAPI=8
+
+              inherit desktop
+
+              DESCRIPTION="${{ env.description }}"
+              HOMEPAGE="${{ env.homepage }}"
+              SRC_URI="https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/archive/refs/tags/v\${PV}.tar.gz -> \${P}.tar.gz"
+
+              LICENSE="MIT"
+              SLOT="0"
+              KEYWORDS="${{ env.keywords }}"
+
+              PROPERTIES="live"
+
+              DEPEND="
+                dev-lang/rust
+                dev-lang/python
+                net-libs/webkit-gtk:4.1
+                x11-libs/gtk+:3
+                dev-libs/openssl
+                net-libs/nodejs
+              "
+              RDEPEND="\${DEPEND}"
+              BDEPEND="
+                sys-apps/just
+                sys-apps/bun
+              "
+
+              src_compile() {
+                export PATH="\${WORKDIR}/.cargo/bin:\${PATH}"
+                export CARGO_HOME="\${WORKDIR}/.cargo"
+
+                just setup || die "just setup failed"
+                bun run setup:dev || die "setup dev failed"
+                just build || die "just build failed"
+              }
+
+              src_install() {
+                dodir /opt/voicebox
+                cp -r tauri/src-tauri/target/release/bundle/* "\${ED}/opt/voicebox" || die "failed to copy bundle"
+                dosym /opt/voicebox/voicebox /usr/bin/voicebox
+                make_desktop_entry "/usr/bin/voicebox" "Voicebox" "/opt/voicebox/Contents/Resources/icon.icns" "AudioVideo"
+              }
+              EBUILD_EOF
+
+              # Manifest generation
+              failed=0
+
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/archive/refs/tags/${tag}.tar.gz" "${{ env.epn }}-${version}.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if [ "$failed" -eq 1 ]; then
+                  echo "Failed to generate manifest for $tag. Skipping..."
+                  rm -f "$ebuild_file"
+                  continue
+              fi
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+            fi
+          done
+
+      - name: Generate Overlay
+        run: |
+          mkdir -p profiles
+          echo "overlay_name" > profiles/repo_name
+          echo "8" > profiles/eapi
+
+      - name: Lint output
+        uses: arran4/g2-action@v1.2
+        with:
+          mode: 'run'
+          action: 'lint .'
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "Add ebuilds for new ${{ env.epn }} releases tag ${{ steps.process_releases.outputs.generated_tag }}"
+          branch: "update-${{ env.epn }}"
+          title: "Update ${{ env.epn }} to ${{ steps.process_releases.outputs.generated_tag }}"
+          assignees: arran4
+          reviewers: arran4
+        if: steps.process_releases.outputs.generated_tag
