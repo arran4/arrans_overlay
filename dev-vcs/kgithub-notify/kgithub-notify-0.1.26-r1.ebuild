@@ -23,7 +23,7 @@ RDEPEND="
 	>=kde-frameworks/kwallet-${KFMIN}:6
 	>=kde-frameworks/knotifications-${KFMIN}:6
 	>=kde-frameworks/ki18n-${KFMIN}:6
-	dev-libs/qtkeychain[qt6(+)]:=
+	dev-libs/qtkeychain:=[qt6(+)]
 "
 DEPEND="${RDEPEND}
 	test? ( >=dev-qt/qtbase-${QTMIN}:6[test] )
