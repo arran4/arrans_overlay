@@ -8,4 +8,7 @@
   <upstream>
     <remote-id type="github">arran4/kjules</remote-id>
   </upstream>
+  <use>
+    <flag name="debug">Enable debug mode</flag>
+  </use>
 </pkgmetadata>
