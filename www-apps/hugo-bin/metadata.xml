@@ -2,8 +2,8 @@
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<maintainer type="person">
-		<email>admin@example.com</email>
-		<name>Admin</name>
+		<email>gentoo@arran4.com</email>
+		<name>Arran Ubels</name>
 	</maintainer>
 	<use>
 		<flag name="extended">Enable extended version (Sass/SCSS support)</flag>
