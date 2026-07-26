@@ -1,0 +1,9 @@
+DEFINED_PHASES=install
+DESCRIPTION=Installs a sudoers.d drop-in to enable emerge without password
+EAPI=8
+HOMEPAGE=https://www.sudo.ws/
+KEYWORDS=~amd64 ~arm ~arm64
+LICENSE=public-domain
+RDEPEND=app-admin/sudo
+SLOT=0
+_md5_=ba8af7a7b7200105e7a0c0f4d3f44c71

@@ -1,0 +1,9 @@
+DEFINED_PHASES=install
+DESCRIPTION=Installs a sudoers.d drop-in to enable dispatch-conf without password
+EAPI=8
+HOMEPAGE=https://www.sudo.ws/
+KEYWORDS=~amd64 ~arm ~arm64
+LICENSE=public-domain
+RDEPEND=app-admin/sudo
+SLOT=0
+_md5_=37dd527c3378a3e39b9019597b2369a4
