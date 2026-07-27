@@ -77,10 +77,45 @@ jobs:
                 echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
                 continue
             fi
-            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-            if [ ! -f "$ebuild_file" ]; then
+            # Find latest revision
+
+            latest_ebuild=""
+
+            latest_rev=-1
+
+            for f in "${ebuild_dir}/${{ env.epn }}-${version}"*.ebuild; do
+
+              [ -e "$f" ] || continue
+
+              rev="${f##*-r}"
+
+              rev="${rev%.ebuild}"
+
+              if [[ "$f" == "${ebuild_dir}/${{ env.epn }}-${version}.ebuild" ]]; then
+
+                rev=0
+
+              elif ! [[ "$rev" =~ ^[0-9]+$ ]]; then
+
+                continue
+
+              fi
+
+              if (( rev > latest_rev )); then
+
+                latest_rev=$rev
+
+                latest_ebuild="$f"
+
+              fi
+
+            done
+
+
+            new_content=$(
 
               # shellcheck disable=SC2016
+
               {
                 echo '# Manually maintained ebuild logic.'
                 echo 'EAPI=8'
@@ -115,12 +150,43 @@ jobs:
                 echo '	>=kde-frameworks/extra-cmake-modules-${KFMIN}:0'
                 echo '	dev-qt/qttools:6'
                 echo '"'
-              } > $ebuild_file
+
+              }
+
+            )
+
+
+            needs_write=false
+
+            if [[ "$latest_rev" == -1 ]]; then
+
+              needs_write=true
+
+              ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+
+            else
+
+              if ! diff -q -I '^\s*#' "$latest_ebuild" <(echo "$new_content") >/dev/null; then
+
+                needs_write=true
+
+                ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}-r$((latest_rev + 1)).ebuild"
+
+              fi
+
+            fi
+
+
+            if $needs_write; then
+
+              echo "$new_content" > "$ebuild_file"
+
 
               # Manifest generation
 
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/archive/refs/tags/${tag}.tar.gz" "${{ env.epn }}-${version}.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+
             fi
           done
 

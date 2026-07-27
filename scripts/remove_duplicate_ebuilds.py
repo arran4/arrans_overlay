@@ -52,7 +52,7 @@ def parse_slot(lines):
 def digest(lines):
     content = []
     for line in lines:
-        if line.lstrip().startswith("# Generated via:"):
+        if line.lstrip().startswith("#"):
             continue
         content.append(line)
     data = "".join(content).encode()
