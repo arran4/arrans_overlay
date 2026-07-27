@@ -1,0 +1,13 @@
+SRC_URI=
+  amd64? ( https://github.com/anyproto/anytype-ts/releases/download/v0.54.28-alpha/Anytype-0.54.28-alpha.AppImage -> anytype-ts-appimage-0.54.28_alpha-Anytype-0.54.28_alpha.AppImage )
+
+RDEPEND=sys-libs/glibc sys-libs/zlib
+RESTRICT=strip
+HOMEPAGE=https://anytype.io
+SLOT=0
+LICENSE=MIT
+KEYWORDS=~amd64
+EAPI=8
+DESCRIPTION=Official Anytype client for MacOS, Linux, and Windows
+INHERITED=xdg-utils
+_md5_=35418f47b89ec3565b905d7221eac898

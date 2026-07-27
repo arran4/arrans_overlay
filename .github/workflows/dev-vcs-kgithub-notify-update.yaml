@@ -78,7 +78,7 @@ jobs:
                 continue
             fi
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-            if ! ls "${ebuild_dir}/${{ env.epn }}-${version}"*.ebuild 1> /dev/null 2>&1; then
+            if [ ! -f "$ebuild_file" ]; then
 
               # shellcheck disable=SC2016
               {
@@ -106,14 +106,14 @@ jobs:
                 echo '	>=kde-frameworks/kwallet-${KFMIN}:6'
                 echo '	>=kde-frameworks/knotifications-${KFMIN}:6'
                 echo '	>=kde-frameworks/ki18n-${KFMIN}:6'
-                echo '	dev-libs/qtkeychain:=[qt6(+)]'
+                echo '	dev-libs/qtkeychain[qt6(+)]:='
                 echo '"'
                 echo 'DEPEND="${RDEPEND}'
                 echo '	test? ( >=dev-qt/qtbase-${QTMIN}:6[test] )'
                 echo '"'
                 echo 'BDEPEND="'
                 echo '	>=kde-frameworks/extra-cmake-modules-${KFMIN}:0'
-                echo '	dev-qt/qttools:6[qdbus]'
+                echo '	dev-qt/qttools:6'
                 echo '"'
               } > $ebuild_file
 
