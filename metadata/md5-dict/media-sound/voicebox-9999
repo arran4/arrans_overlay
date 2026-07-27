@@ -1,0 +1,30 @@
+DEPEND=
+	dev-lang/rust
+	dev-lang/python
+	net-libs/webkit-gtk:4.1
+	x11-libs/gtk+:3
+	dev-libs/openssl
+	net-libs/nodejs
+
+RDEPEND=
+	dev-lang/rust
+	dev-lang/python
+	net-libs/webkit-gtk:4.1
+	x11-libs/gtk+:3
+	dev-libs/openssl
+	net-libs/nodejs
+
+SRC_URI=https://github.com/jamiepine/voicebox/archive/refs/tags/v9999.tar.gz -> voicebox-9999.tar.gz
+HOMEPAGE=https://voicebox.sh
+BDEPEND=
+	sys-apps/just
+	sys-apps/bun
+
+LICENSE=MIT
+PROPERTIES=live
+KEYWORDS=~amd64 ~arm64
+DESCRIPTION=Open source voice cloning. Local-first. Free forever.
+SLOT=0
+EAPI=8
+INHERITED=desktop git-r3
+_md5_=e462c6fdc4b63d709b20491ce56c23f2
