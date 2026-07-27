@@ -1,0 +1,34 @@
+DESCRIPTION=Linux/KDE port of whatcable, tells what each USB connected cable can do
+INHERITED=ecm
+BDEPEND=
+	virtual/pkgconfig
+
+LICENSE=MIT
+SLOT=0
+RDEPEND=
+	dev-qt/qtbase:6
+	dev-qt/qtdeclarative:6
+	kde-frameworks/kcoreaddons:6
+	kde-frameworks/ki18n:6
+	kde-frameworks/kirigami:6
+	kde-frameworks/kpackage:6
+	kde-plasma/libplasma:6
+	virtual/libudev:=
+
+	kde-plasma/plasma-workspace:6
+
+KEYWORDS=~amd64
+EAPI=8
+HOMEPAGE=https://github.com/Zetaphor/whatcable-linux
+SRC_URI=https://github.com/Zetaphor/whatcable-linux/archive/refs/tags/v0.1.1.tar.gz -> whatcable-linux-0.1.1.tar.gz
+DEPEND=
+	dev-qt/qtbase:6
+	dev-qt/qtdeclarative:6
+	kde-frameworks/kcoreaddons:6
+	kde-frameworks/ki18n:6
+	kde-frameworks/kirigami:6
+	kde-frameworks/kpackage:6
+	kde-plasma/libplasma:6
+	virtual/libudev:=
+
+_md5_=b447e3a25e4c99d50ecf60dec0a3cc59
