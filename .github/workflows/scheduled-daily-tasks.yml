@@ -16,6 +16,16 @@ on:
         required: false
         default: 'latest'
         type: string
+      run_egencache:
+        description: 'Run egencache update'
+        required: false
+        default: false
+        type: boolean
+      run_dedupe:
+        description: 'Run dedupe step'
+        required: false
+        default: true
+        type: boolean
   push:
     paths:
       - '.github/workflows/scheduled-daily-tasks.yml'
@@ -52,11 +62,23 @@ jobs:
 
       - name: Remove duplicate ebuilds
         id: dedupe
+        if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
         continue-on-error: true
         run: |
           chmod +x ./scripts/remove_duplicate_ebuilds.py
           OUTPUT=$(./scripts/remove_duplicate_ebuilds.py)
           echo "DEDUPE_OUTPUT<<INNER_EOF" >> $GITHUB_ENV
+          echo "$OUTPUT" >> $GITHUB_ENV
+          echo "INNER_EOF" >> $GITHUB_ENV
+          echo "$OUTPUT"
+
+      - name: Run egencache update
+        id: egencache
+        if: ${{ inputs.run_egencache == true }}
+        continue-on-error: true
+        run: |
+          OUTPUT=$(egencache --repo=arrans-overlay --update 2>&1 || true)
+          echo "EGENCACHE_OUTPUT<<INNER_EOF" >> $GITHUB_ENV
           echo "$OUTPUT" >> $GITHUB_ENV
           echo "INNER_EOF" >> $GITHUB_ENV
           echo "$OUTPUT"
@@ -128,7 +150,30 @@ jobs:
                           dedupe_lines.append(f"- `{line[2:]}`")
           print_section("Duplicate ebuilds removed", dedupe_lines)
 
-          other_rows = changed_paths([])
+          egencache_rows = changed_paths(["--", "metadata/md5-cache"])
+          egencache_summary = []
+          if egencache_rows:
+              counts = defaultdict(int)
+              paths = []
+              for status, path in egencache_rows:
+                  counts[status[0]] += 1
+                  paths.append(path)
+              label = {"A": "added", "M": "updated", "D": "removed", "R": "renamed", "C": "copied"}
+              count_text = ", ".join(
+                  f"{count} {label.get(status, status)}" for status, count in sorted(counts.items())
+              )
+              egencache_summary.append(f"- Metadata cache changes: {count_text}.")
+              for path in paths[:25]:
+                  egencache_summary.append(f"  - `{path}`")
+              if len(paths) > 25:
+                  egencache_summary.append(f"  - …and {len(paths) - 25} more metadata cache paths.")
+          elif os.environ.get("EGENCACHE_OUTPUT", "").strip():
+              first_lines = os.environ["EGENCACHE_OUTPUT"].strip().splitlines()[:20]
+              egencache_summary.append("- Egencache produced no staged metadata cache file changes, but logged:")
+              egencache_summary.extend(f"  - `{line}`" for line in first_lines)
+          print_section("Egencache update", egencache_summary)
+
+          other_rows = changed_paths(["--", ":!metadata/md5-cache"])
           other_summary = []
           if other_rows:
               counts = defaultdict(int)
@@ -146,10 +191,19 @@ jobs:
               if len(paths) > 25:
                   other_summary.append(f"  - …and {len(paths) - 25} more paths.")
           print_section("Other scheduled task changes", other_summary)
+
+          if egencache_summary:
+              pr_title = "Automated daily tasks (egencache & dedupe)"
+          else:
+              pr_title = "Automated daily tasks (dedupe)"
+
+          with open("/tmp/pr_title.txt", "w") as f:
+              f.write(pr_title)
           PY
           echo "PR_SUMMARY<<INNER_EOF" >> $GITHUB_ENV
           cat /tmp/pr_summary.md >> $GITHUB_ENV
           echo "INNER_EOF" >> $GITHUB_ENV
+          echo "PR_TITLE=$(cat /tmp/pr_title.txt)" >> $GITHUB_ENV
 
       - name: Create Pull Request
         if: steps.check_changes.outputs.has_changes == 'true'
@@ -157,7 +211,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: scheduled daily tasks"
-          title: "Automated daily tasks (dedupe)"
+          title: "${{ env.PR_TITLE }}"
           assignees: arran4
           reviewers: arran4
           body: |
