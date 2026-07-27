@@ -95,45 +95,10 @@ jobs:
                 echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
                 continue
             fi
-            # Find latest revision
-
-            latest_ebuild=""
-
-            latest_rev=-1
-
-            for f in "${ebuild_dir}/${{ env.epn }}-${version}"*.ebuild; do
-
-              [ -e "$f" ] || continue
-
-              rev="${f##*-r}"
-
-              rev="${rev%.ebuild}"
-
-              if [[ "$f" == "${ebuild_dir}/${{ env.epn }}-${version}.ebuild" ]]; then
-
-                rev=0
-
-              elif ! [[ "$rev" =~ ^[0-9]+$ ]]; then
-
-                continue
-
-              fi
-
-              if (( rev > latest_rev )); then
-
-                latest_rev=$rev
-
-                latest_ebuild="$f"
-
-              fi
-
-            done
-
-
-            new_content=$(
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
 
               # shellcheck disable=SC2016
-
               {
                 echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
                 echo 'EAPI=8'
@@ -182,44 +147,13 @@ jobs:
                 echo '    newexe "${{ env.fq_binary_archived_name_arm64 }}" "${{ env.fq_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '}'
-
-              }
-
-            )
-
-
-            needs_write=false
-
-            if [[ "$latest_rev" == -1 ]]; then
-
-              needs_write=true
-
-              ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-
-            else
-
-              if ! diff -q -I '^\s*#' "$latest_ebuild" <(echo "$new_content") >/dev/null; then
-
-                needs_write=true
-
-                ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}-r$((latest_rev + 1)).ebuild"
-
-              fi
-
-            fi
-
-
-            if $needs_write; then
-
-              echo "$new_content" > "$ebuild_file"
-
+              } > $ebuild_file
 
               # Manifest generation
 
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/fq_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-fq_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/fq_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-fq_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
-
             fi
           done
 
