@@ -1,0 +1,117 @@
+name: Update beyond-all-reason-appimage
+on:
+  schedule:
+    - cron: '30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fetch latest release
+        id: fetch-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_INFO=$(gh release view --repo beyond-all-reason/BYAR-Chobby --json tagName,assets)
+          TAG_NAME=$(echo "$RELEASE_INFO" | jq -r '.tagName')
+          VERSION=${TAG_NAME#v}
+          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Create or Update Ebuild
+        id: update-ebuild
+        env:
+          VERSION: ${{ steps.fetch-release.outputs.version }}
+          TAG: ${{ steps.fetch-release.outputs.tag }}
+        run: |
+          mkdir -p games-strategy/beyond-all-reason-appimage
+          EBUILD_PATH="games-strategy/beyond-all-reason-appimage/beyond-all-reason-appimage-${VERSION}.ebuild"
+
+          if [ -f "$EBUILD_PATH" ]; then
+            echo "Ebuild for version ${VERSION} already exists. Skipping."
+            echo "updated=false" >> $GITHUB_OUTPUT
+          else
+            cat << 'EOF2' > "$EBUILD_PATH"
+          EAPI=8
+
+          inherit desktop
+
+          DESCRIPTION="Open source RTS game built on top of the Recoil RTS Engine"
+          HOMEPAGE="https://www.beyondallreason.info/"
+
+          SRC_URI="amd64? ( https://github.com/beyond-all-reason/BYAR-Chobby/releases/download/v${PV}/Beyond-All-Reason-${PV}.AppImage )"
+
+          LICENSE="GPL-2+"
+          SLOT="0"
+          KEYWORDS="~amd64"
+
+          DEPEND="sys-libs/zlib sys-libs/glibc"
+          RDEPEND="${DEPEND}"
+          BDEPEND="sys-fs/squashfs-tools"
+
+          RESTRICT="strip"
+
+          QA_PREBUILT="opt/beyond-all-reason/*"
+
+          S="${WORKDIR}"
+
+          src_unpack() {
+              cp "${DISTDIR}/Beyond-All-Reason-${PV}.AppImage" "${S}/beyond-all-reason.AppImage" || die
+              chmod +x "${S}/beyond-all-reason.AppImage" || die
+              "${S}/beyond-all-reason.AppImage" --appimage-extract || die
+          }
+
+          src_install() {
+              insinto /opt/beyond-all-reason
+              doins -r squashfs-root/*
+              chmod +x -R "${ED}/opt/beyond-all-reason" || die
+
+              dosym ../../opt/beyond-all-reason/AppRun /usr/bin/beyond-all-reason
+
+              if [ -f "squashfs-root/beyond-all-reason.desktop" ]; then
+                  domenu squashfs-root/beyond-all-reason.desktop
+              fi
+              if [ -f "squashfs-root/beyond-all-reason.png" ]; then
+                  doicon -s 256 squashfs-root/beyond-all-reason.png
+              fi
+          }
+          EOF2
+            sed -i 's/^          //' "$EBUILD_PATH"
+            cat << 'EOF2' > games-strategy/beyond-all-reason-appimage/metadata.xml
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+          <pkgmetadata>
+              <maintainer type="person">
+                  <email>gentoo-overlay@arran4.com</email>
+                  <name>Arran Stewart</name>
+              </maintainer>
+          </pkgmetadata>
+          EOF2
+            sed -i 's/^          //' games-strategy/beyond-all-reason-appimage/metadata.xml
+            echo "updated=true" >> $GITHUB_OUTPUT
+          fi
+      - uses: arran4/g2-action@v1.2
+        if: steps.update-ebuild.outputs.updated == 'true'
+      - name: Generate Manifest
+        if: steps.update-ebuild.outputs.updated == 'true'
+        run: |
+          g2 manifest upsert-from-url "https://github.com/beyond-all-reason/BYAR-Chobby/releases/download/v${{ steps.fetch-release.outputs.version }}/Beyond-All-Reason-${{ steps.fetch-release.outputs.version }}.AppImage" "Beyond-All-Reason-${{ steps.fetch-release.outputs.version }}.AppImage" games-strategy/beyond-all-reason-appimage
+          g2 cache generate -repo .
+      - name: Create Pull Request
+        if: steps.update-ebuild.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "games-strategy/beyond-all-reason-appimage: bump to ${{ steps.fetch-release.outputs.version }}"
+          title: "games-strategy/beyond-all-reason-appimage: bump to ${{ steps.fetch-release.outputs.version }}"
+          branch: "update-beyond-all-reason-appimage"
+          base: main
+          assignees: arran4
+          reviewers: arran4
