@@ -19,9 +19,3 @@ The generator currently emits `uses: actions/checkout@v2`. This causes Node.js 2
 ### 3. HOMEPAGE Field Generation ([Issue #69](https://github.com/arran4/arrans_overlay_workflow_builder/issues/69))
 The generator lacks support for generating the `HOMEPAGE` field in `github-appimage` and `Github Binary Release` generated ebuilds based on `current.config`. We currently have to manually inject this using `sed` in the ebuild (or workflow template).
 **Proposed Feature:** Extract the `Homepage` variable from `current.config` and natively inject it into the generated ebuild templates.
-
-## `g2` Tool Gaps
-
-### 1. Manifest Cleanup Automation ([Issue #378](https://github.com/arran4/g2/issues/378))
-When ebuilds are removed or updated, the `Manifest` file often retains outdated `DIST` and `EBUILD` entries, requiring manual `sed` commands or deletion of the entire file followed by regeneration.
-**Proposed Feature:** Implement `g2 manifest clean <package-dir>` to automatically compare the current `.ebuild` files against the `Manifest` and remove any orphaned entries.
