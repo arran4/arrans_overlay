@@ -1,0 +1,31 @@
+name: Delete All Cache
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+
+jobs:
+  delete-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Delete cache directories
+        run: |
+          rm -rf metadata/md5-cache
+          rm -rf metadata/md5-dict
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A metadata/md5-cache metadata/md5-dict || true
+
+          if git diff --staged --quiet; then
+            echo "No cache files to delete."
+          else
+            git commit -m "chore: delete all cache"
+            git push
+          fi
