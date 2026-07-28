@@ -106,11 +106,11 @@ jobs:
                 echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
                 continue
             fi
-            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-            if [ ! -f "$ebuild_file" ]; then
+            temp_ebuild_file="/tmp/${{ env.epn }}-${version}.ebuild"
 
-              # shellcheck disable=SC2016
-              {
+            # shellcheck disable=SC2016
+
+            {
                 echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
                 echo 'EAPI=8'
                 echo "DESCRIPTION=\"${{ env.description }}\""
@@ -201,7 +201,23 @@ jobs:
                 echo '    newdoc "README.md" "README.md" || die "Failed to install document README.md"'
                 echo '  fi'
                 echo '}'
-              } > $ebuild_file
+
+            } > "$temp_ebuild_file"
+
+            target_ebuild=$(g2 ebuild next-revision --inspect "$temp_ebuild_file" "$ebuild_dir" "$version" || true)
+
+            if [ -n "$target_ebuild" ] && [ "$target_ebuild" != "${ebuild_dir}/${{ env.epn }}-${version}"*.ebuild ]; then
+
+              # Wait, if it exits 1, it might print the existing revision. We only want to proceed if it prints a NEW revision path, which ends in .ebuild and wasn't there before.
+
+              # Let's rely on the exit code instead!
+
+              if target_ebuild=$(g2 ebuild next-revision --inspect "$temp_ebuild_file" "$ebuild_dir" "$version"); then
+
+                mv "$temp_ebuild_file" "$target_ebuild"
+
+                ebuild_file="$target_ebuild"
+
 
               # Manifest generation
 
@@ -211,6 +227,17 @@ jobs:
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/goreleaser_Linux_ppc64.tar.gz" "${{ env.epn }}-${version}-goreleaser_Linux_ppc64.tar.gz" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/goreleaser_Linux_i386.tar.gz" "${{ env.epn }}-${version}-goreleaser_Linux_i386.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+
+              else
+
+                rm -f "$temp_ebuild_file"
+
+              fi
+
+            else
+
+              rm -f "$temp_ebuild_file"
+
             fi
           done
 
