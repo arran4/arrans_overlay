@@ -29,9 +29,9 @@ src_unpack() {
 src_install() {
   exeinto /opt/bin
   if use amd64; then
-    newexe "./dist/superfile-linux-v1.1.4-amd64/spf" "spf" || die "Failed to install Binary"
+    newexe "./dist/superfile-linux-v${PV}-amd64/spf" "spf" || die "Failed to install Binary"
   fi
   if use arm64; then
-    newexe "./dist/superfile-linux-v1.1.4-arm64/spf" "spf" || die "Failed to install Binary"
+    newexe "./dist/superfile-linux-v${PV}-arm64/spf" "spf" || die "Failed to install Binary"
   fi
 }

@@ -16,6 +16,16 @@ on:
         required: false
         default: 'latest'
         type: string
+      run_egencache:
+        description: 'Run egencache update'
+        required: false
+        default: false
+        type: boolean
+      run_dedupe:
+        description: 'Run dedupe step'
+        required: false
+        default: true
+        type: boolean
   push:
     paths:
       - '.github/workflows/scheduled-daily-tasks.yml'
@@ -52,6 +62,7 @@ jobs:
 
       - name: Remove duplicate ebuilds
         id: dedupe
+        if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
         continue-on-error: true
         run: |
           chmod +x ./scripts/remove_duplicate_ebuilds.py
@@ -63,6 +74,7 @@ jobs:
 
       - name: Run egencache update
         id: egencache
+        if: ${{ inputs.run_egencache == true }}
         continue-on-error: true
         run: |
           OUTPUT=$(egencache --repo=arrans-overlay --update 2>&1 || true)
@@ -86,6 +98,7 @@ jobs:
         run: |
           python3 <<'PY' > /tmp/pr_summary.md
           import os
+          import re
           import subprocess
           from collections import defaultdict
 
@@ -120,7 +133,21 @@ jobs:
               for raw_line in dedupe_output.splitlines():
                   line = raw_line.strip()
                   if line.startswith("- "):
-                      dedupe_lines.append(f"- `{line[2:]}`")
+                      m = re.match(r"- (.*?) \(Removed: (.*?) \| Remaining: (.*?)\)(.*)", line)
+                      if m:
+                          pkg = m.group(1)
+                          removed = m.group(2)
+                          remaining = m.group(3)
+                          rest = m.group(4)
+                          pkg_fmt = f"`{pkg}`"
+                          removed_fmt = ", ".join(f"`{v.strip()}`" for v in removed.split(","))
+                          if remaining == "None":
+                              remaining_fmt = "None"
+                          else:
+                              remaining_fmt = ", ".join(f"`{v.strip()}`" for v in remaining.split(","))
+                          dedupe_lines.append(f"- {pkg_fmt} (Removed: {removed_fmt} | Remaining: {remaining_fmt}){rest}")
+                      else:
+                          dedupe_lines.append(f"- `{line[2:]}`")
           print_section("Duplicate ebuilds removed", dedupe_lines)
 
           egencache_rows = changed_paths(["--", "metadata/md5-cache"])
@@ -164,10 +191,19 @@ jobs:
               if len(paths) > 25:
                   other_summary.append(f"  - …and {len(paths) - 25} more paths.")
           print_section("Other scheduled task changes", other_summary)
+
+          if egencache_summary:
+              pr_title = "Automated daily tasks (egencache & dedupe)"
+          else:
+              pr_title = "Automated daily tasks (dedupe)"
+
+          with open("/tmp/pr_title.txt", "w") as f:
+              f.write(pr_title)
           PY
           echo "PR_SUMMARY<<INNER_EOF" >> $GITHUB_ENV
           cat /tmp/pr_summary.md >> $GITHUB_ENV
           echo "INNER_EOF" >> $GITHUB_ENV
+          echo "PR_TITLE=$(cat /tmp/pr_title.txt)" >> $GITHUB_ENV
 
       - name: Create Pull Request
         if: steps.check_changes.outputs.has_changes == 'true'
@@ -175,7 +211,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: scheduled daily tasks"
-          title: "Automated daily tasks (egencache & dedupe)"
+          title: "${{ env.PR_TITLE }}"
           assignees: arran4
           reviewers: arran4
           body: |

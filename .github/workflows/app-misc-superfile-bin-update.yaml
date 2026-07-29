@@ -27,9 +27,9 @@ env:
   keywords: ~amd64 ~arm64
   workflow_filename: app-misc-superfile-bin-update.yaml
   spf_binary_installed_name: 'spf'
-  spf_binary_archived_name_amd64: './dist/superfile-linux-v1.1.4-amd64/spf'
+  spf_binary_archived_name_amd64: './dist/superfile-linux-${tag}-amd64/spf'
   spf_release_name_amd64: 'superfile-linux-${tag}-amd64.tar.gz'
-  spf_binary_archived_name_arm64: './dist/superfile-linux-v1.1.4-arm64/spf'
+  spf_binary_archived_name_arm64: './dist/superfile-linux-${tag}-arm64/spf'
   spf_release_name_arm64: 'superfile-linux-${tag}-arm64.tar.gz'
 
 jobs:
