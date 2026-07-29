@@ -26,7 +26,7 @@ In `app-misc/superfile-bin-update.yaml`, the generator emitted `${TAG}` inside t
 **Feature Request:** Introduce a configuration directive or templating mechanic (e.g., `CustomEbuildBlock` or recognizing `# BEGIN MANUAL EDIT` / `# END MANUAL EDIT` markers in existing workflows) to preserve manual bash script injections inside the ebuild string generation loop so that rerunning the generator does not result in a loss of functionality for edge-case packages.
 
 ### 2. Full Configuration Property Pass-through
-**Issue:** The generator currently hardcodes strings or misses parsing certain metadata fields specified in the config or originally managed manually. For example, it defaults to `--m "gentoo@arran4.com:Arran Ubels:person"` in the `g2 metadata` command, and it doesn't correctly export `HOMEPAGE` for AppImages if not fully supported.
+**Issue:** The generator currently hardcodes strings or misses parsing certain metadata fields specified in the config or originally managed manually. For example, it defaults to `--m "gentoo@arran4.com:Arran Ubels:person"` in the `g2 metadata` command, and it doesn't correctly export `HOMEPAGE` for AppImages if not fully supported. This is tracked in https://github.com/arran4/arrans_overlay_workflow_builder/issues/69
 **Feature Request:** Support comprehensive property assignments in `current.config` such as `MaintainerEmail`, `MaintainerName`, and ensure that `HOMEPAGE` and `LICENSE` properties correctly flow into all generated templates without defaulting to placeholders like `unknown`.
 
 ### 3. Bash Context Evaluation Handling for Binary Paths
