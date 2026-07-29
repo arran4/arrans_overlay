@@ -169,15 +169,7 @@ jobs:
 
             } > "$temp_ebuild_file"
 
-            target_ebuild=$(g2 ebuild next-revision --inspect "$temp_ebuild_file" "$ebuild_dir" "$version" || true)
-
-            if [ -n "$target_ebuild" ] && [ "$target_ebuild" != "${ebuild_dir}/${{ env.epn }}-${version}"*.ebuild ]; then
-
-              # Wait, if it exits 1, it might print the existing revision. We only want to proceed if it prints a NEW revision path, which ends in .ebuild and wasn't there before.
-
-              # Let's rely on the exit code instead!
-
-              if target_ebuild=$(g2 ebuild next-revision --inspect "$temp_ebuild_file" "$ebuild_dir" "$version"); then
+            if target_ebuild=$(g2 ebuild next-revision --inspect "$temp_ebuild_file" "$ebuild_dir" "$version"); then
 
                 mv "$temp_ebuild_file" "$target_ebuild"
 
@@ -191,12 +183,6 @@ jobs:
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/pagefind-${tag}-aarch64-unknown-linux-musl.tar.gz" "${{ env.epn }}-${version}-pagefind-${tag}-aarch64-unknown-linux-musl.tar.gz" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/pagefind_extended-${tag}-aarch64-unknown-linux-musl.tar.gz" "${{ env.epn }}-${version}-pagefind_extended-${tag}-aarch64-unknown-linux-musl.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
-
-              else
-
-                rm -f "$temp_ebuild_file"
-
-              fi
 
             else
 
