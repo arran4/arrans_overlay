@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.31 Github Binary Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
 
 name: app-misc/fq-bin update
 
@@ -58,19 +58,9 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
-          if [ ! -f "$metadata_file" ]; then
-            cat <<-"EOF" > "$metadata_file"
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-          <pkgmetadata>
-            <upstream>
-              <remote-id type="github">wader/fq</remote-id>
-            </upstream>
-          </pkgmetadata>
-          EOF
-          fi
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:wader/fq" --use-add "amd64:Enable amd64" --use-add "arm64:Enable arm64" "$metadata_file"
           declare -A releaseTypes=()
-          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
           for tag in $tags; do
             version="${tag#v}"
@@ -151,15 +141,34 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/fq_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-fq_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/fq_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-fq_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"
+              failed=0
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/fq_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-fq_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/fq_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-fq_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if [ "$failed" -eq 1 ]; then
+                echo "Failed to generate manifest for $tag. Skipping..."
+                rm -f "$ebuild_file"
+                continue
+              fi
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
 
+      - name: Generate Overlay
+        run: |
+          mkdir -p profiles
+          echo "overlay_name" > profiles/repo_name
+          echo "8" > profiles/eapi
+
+      - name: Lint output
+        uses: arran4/g2-action@v1.2
+        with:
+          mode: 'run'
+          action: 'lint .'
+
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
           git add "./${ebuild_dir}"
           if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
             git pull --rebase &&

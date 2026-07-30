@@ -13,27 +13,27 @@ Tracked in: https://github.com/arran4/arrans_overlay_workflow_builder/issues/73
 ## 3. Workarounds and manual edits overwrite
 The tool overwrites manual changes in the generated files. This causes severe regressions. Here are specific examples of what is broken, why it was there, and how we might fix it systemically:
 
-- **`app-misc/gocdm-bin`**:
+- **`app-misc/gocdm-bin`** ([Link](https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-gocdm-bin-update.yaml)):
   - **What:** Has a custom `pkg_postinst` block that warns the user they must add their user to the `video` group.
   - **Why:** The application requires specific system group permissions to function that the generic `bin` installation does not handle.
   - **Solution:** Add a config directive like `EbuildPostinst` or `EbuildInjectFile` that allows appending specific script content to the ebuild file.
 
-- **`dev-util/codex-bin`**:
+- **`dev-util/codex-bin`** ([Link](https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/dev-util-codex-bin-update.yaml)):
   - **What:** Uses a custom Bash snippet `version="${tag#rust-v}"` to strip the prefix instead of the default `v`.
   - **Why:** The upstream repository uses an unusual tag format (`rust-v0.1.0`) that isn't cleanly handled by standard version stripping.
   - **Solution:** Expand the `Workaround Tag Prefix => prefix-` to support stripping from the generated Gentoo PV logic.
 
-- **`media-sound/go-playerctl-bin`**:
+- **`media-sound/go-playerctl-bin`** ([Link](https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/media-sound-go-playerctl-bin-update.yaml)):
   - **What:** Contains a custom `dosym /usr/bin/go-playerctl-bin /usr/bin/go-playerctl` in `src_install`.
   - **Why:** The binary is packaged with a name that users don't typically want to type out in the CLI, so a symlink was provided.
   - **Solution:** Introduce a config directive `Symlink <target> <destination>` to automatically emit `dosym` commands.
 
-- **`app-misc/flutter-jules-bin`**:
+- **`app-misc/flutter-jules-bin`** ([Link](https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-flutter-jules-bin-update.yaml)):
   - **What:** Has custom `sed` statements in `src_install` and manually explicitly defines an accurate `LICENSE` field.
   - **Why:** Desktop files needed path adjustments for the icon and exec. The generator emitted `unknown` for the license.
   - **Solution:** Support specifying the `License` field properly (already requested) and add an `IconPatch` or `ExecPatch` directive for `.desktop` files.
 
-- **`www-misc/which_browser`**:
+- **`www-misc/which_browser`** ([Link](https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/www-misc-which_browser-update.yaml)):
   - **What:** Heavy modifications including `src_prepare` with `patchelf` execution to replace missing dependencies, custom extraction of build suffixes `+44`, and copying `/usr/` paths.
   - **Why:** This is a `.deb` package masquerading as a simple binary, requiring specialized unpacking and `.so` library path fixing.
   - **Solution:** This package is too complex for the current generic generator. The generator should perhaps have an `Ignore` flag in `current.config` to prevent it from ever attempting to regenerate specific workflows, or rely on injection files.
