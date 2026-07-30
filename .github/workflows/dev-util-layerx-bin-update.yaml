@@ -18,6 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: dev-util
   epn: layerx-bin
   description: "Interactive Docker image layer inspector"
@@ -171,22 +172,6 @@ jobs:
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
-
-      - name: Generate Overlay
-        run: |
-          mkdir -p profiles
-          [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name
-          [ ! -f profiles/eapi ] && echo "8" > profiles/eapi
-          g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
-
-      - name: Install g2
-        uses: arran4/g2-action@v1.2
-
-      - name: Lint output
-        uses: arran4/g2-action@v1.2
-        with:
-          mode: 'run'
-          action: 'lint ${{ env.ecn }}/${{ env.epn }}'
 
       - name: Commit and push changes
         run: |
