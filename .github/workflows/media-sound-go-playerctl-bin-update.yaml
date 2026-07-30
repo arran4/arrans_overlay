@@ -178,7 +178,7 @@ jobs:
         uses: arran4/g2-action@v1.2
         with:
           mode: 'run'
-          action: 'lint .'
+          action: 'lint . ${{ env.ecn }}/${{ env.epn }}'
 
       - name: Commit and push changes
         run: |
