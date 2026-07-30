@@ -174,7 +174,8 @@ jobs:
         uses: arran4/g2-action@v1.2
         with:
           mode: 'run'
-          action: 'lint .'
+          action: 'lint ${{ env.ecn }}/${{ env.epn }}'
+        if: steps.process_releases.outputs.generated_tag
 
       - name: Commit and push changes
         run: |
