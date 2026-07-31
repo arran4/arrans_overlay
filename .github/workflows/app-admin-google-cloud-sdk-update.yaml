@@ -91,7 +91,9 @@ jobs:
 
       - name: Remove Old Ebuilds
         if: steps.check_ebuild.outputs.exists == 'false'
-        run: python scripts/remove_duplicate_ebuilds.py || true
+        run: |
+          python scripts/remove_duplicate_ebuilds.py || true
+          g2 manifest clean app-admin/google-cloud-sdk
 
       - name: Commit Changes
         if: steps.check_ebuild.outputs.exists == 'false'
