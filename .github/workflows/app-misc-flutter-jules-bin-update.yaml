@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.32 Github Binary Release current.config 2026-07-30 09:04:19.177157275 +0000 UTC m=+0.006149846
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.31 Github Binary Release current.config 2026-07-30 09:04:19.177157275 +0000 UTC m=+0.006149846
 
 name: app-misc/flutter-jules-bin update
 
@@ -145,12 +145,19 @@ jobs:
         run: |
           mkdir -p profiles
           echo "overlay_name" > profiles/repo_name
-          echo "8" > profiles/eapi        if: steps.process_releases.outputs.generated_tag
+          echo "8" > profiles/eapi
+
+      - name: Lint output
+        uses: arran4/g2-action@v1.2
+        with:
+          mode: 'run'
+          action: 'lint ${{ env.ecn }}/${{ env.epn }}'
+        if: steps.process_releases.outputs.generated_tag
 
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi;
+          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
           git add "./${ebuild_dir}"
           if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
             git pull --rebase &&

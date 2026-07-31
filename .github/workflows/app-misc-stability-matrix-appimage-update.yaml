@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.32 Github AppImage Release current.config 2025-08-24 12:02:36.738002164 +0000 UTC m=+0.012028373
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.18 Github AppImage Release current.config 2025-08-24 12:02:36.738002164 +0000 UTC m=+0.012028373
 
 name: app-misc/stability-matrix-appimage update
 
@@ -57,7 +57,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p $ebuild_dir
           declare -A releaseTypes=()
-            tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+            tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
@@ -133,13 +133,7 @@ jobs:
 
               # Manifest generation
 
-              failed=0
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/StabilityMatrix-linux-x64.zip" "${{ env.epn }}-${version}-StabilityMatrix-linux-x64.zip" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if [ "$failed" -eq 1 ]; then
-                echo "Failed to generate manifest for $tag. Skipping..."
-                rm -f "$ebuild_file"
-                continue
-              fi
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/StabilityMatrix-linux-x64.zip" "${{ env.epn }}-${version}-StabilityMatrix-linux-x64.zip" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done

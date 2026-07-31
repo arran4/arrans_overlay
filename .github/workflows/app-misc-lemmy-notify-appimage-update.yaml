@@ -134,13 +134,7 @@ jobs:
 
               # Manifest generation
 
-              failed=0
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/lemmy_notify-linux-x86_64.AppImage" "${{ env.epn }}-${version}-lemmy_notify-linux-x86_64.AppImage" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if [ "$failed" -eq 1 ]; then
-                echo "Failed to generate manifest for $tag. Skipping..."
-                rm -f "$ebuild_file"
-                continue
-              fi
+              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/lemmy_notify-linux-x86_64.AppImage" "${{ env.epn }}-${version}-lemmy_notify-linux-x86_64.AppImage" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
