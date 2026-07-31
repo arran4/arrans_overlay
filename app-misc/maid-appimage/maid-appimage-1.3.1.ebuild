@@ -1,7 +1,7 @@
 # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-maid-appimage-update.yaml
 EAPI=8
 DESCRIPTION="Maid is a cross-platform Flutter app for interfacing with GGUF / llama.cpp models locally, and with Ollama and OpenAI models remotely."
-HOMEPAGE=""
+HOMEPAGE="https://github.com/Mobile-Artificial-Intelligence/maid"
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"

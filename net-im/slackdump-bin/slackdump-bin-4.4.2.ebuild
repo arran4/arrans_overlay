@@ -1,7 +1,7 @@
 # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/net-im-slackdump-bin-update.yaml
 EAPI=8
 DESCRIPTION="Save or export your private and public Slack messages, threads, files, and users locally without admin privileges."
-HOMEPAGE=""
+HOMEPAGE="https://github.com/rusq/slackdump"
 SRC_URI="
   amd64? (  https://github.com/rusq/slackdump/releases/download/v${PV}/slackdump_Linux_x86_64.tar.gz -> ${P}-slackdump_Linux_x86_64.tar.gz  )  
   arm64? (  https://github.com/rusq/slackdump/releases/download/v${PV}/slackdump_Linux_arm64.tar.gz -> ${P}-slackdump_Linux_arm64.tar.gz  )  

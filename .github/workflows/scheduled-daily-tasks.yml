@@ -52,6 +52,11 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+        with:
+          version: ${{ inputs.g2_version || 'latest' }}
+
       - name: Configure Overlay
         run: |
           mkdir -p /etc/portage/repos.conf
@@ -71,6 +76,11 @@ jobs:
           echo "$OUTPUT" >> $GITHUB_ENV
           echo "INNER_EOF" >> $GITHUB_ENV
           echo "$OUTPUT"
+
+      - name: Clean manifests
+        continue-on-error: true
+        run: |
+          g2 manifest clean .
 
       - name: Run egencache update
         id: egencache

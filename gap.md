@@ -1,4 +1,4 @@
-# Gaps and Issues in Overlay Workflow Builder Generator v0.1.31
+# Gaps and Issues in Overlay Workflow Builder Generator v0.1.32
 
 ## 1. Unwanted inclusion of `metadata/md5-cache` in git add
 The generated workflow includes `git add metadata/md5-cache/ || true` in the commit step. The repository no longer tracks the `metadata/md5-cache` or `metadata/md5-dict` directories in version control. Therefore, the tool should not automatically stage and commit `metadata/md5-cache/`. Tracked in: https://github.com/arran4/arrans_overlay_workflow_builder/issues/72

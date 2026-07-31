@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.31 Github Binary Release current.config 2026-06-12 00:12:54.421454853 +0000 UTC m=+0.005987182
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.32 Github Binary Release current.config 2026-07-30 09:04:19.177157275 +0000 UTC m=+0.006149846
 
 name: dev-util/layerx-bin update
 
@@ -45,20 +45,8 @@ jobs:
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-      - name: Install required tools
-        run: |
-            sudo apt-get update
-            sudo apt-get install -y wget jq coreutils
-            if command -v go &> /dev/null
-            then
-                go install github.com/arran4/g2/cmd/g2@latest
-            else
-                url="$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/arran4/g2/releases/latest | jq -r '.assets[].browser_download_url | select(endswith("_linux_amd64.deb"))')"
-                echo "$url"
-                wget "${url}" -O /tmp/g2.deb
-                sudo dpkg -i /tmp/g2.deb
-                rm /tmp/g2.deb
-            fi
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
 
       - name: Process each release
         id: process_releases
@@ -66,18 +54,8 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
-          if [ ! -f "$metadata_file" ]; then
-            cat <<- 'EOF' > "$metadata_file"
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
-          <pkgmetadata>
-            <upstream>
-              <remote-id type="github">deveshctl/layerx</remote-id>
-            </upstream>
-          </pkgmetadata>
-          EOF
-          fi
-          declare -A releaseTypes
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:deveshctl/layerx" --use-add "amd64:Enable amd64" --use-add "arm64:Enable arm64" "$metadata_file"
+          declare -A releaseTypes=()
           tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
           for tag in $tags; do
@@ -92,7 +70,7 @@ jobs:
                 echo "tag / $version doesn't match regexp";
                 continue;
             fi
-            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')" || true
+            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
             if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
                 if [[ -v releaseTypes[release] ]]; then
                   echo "Already have a newer main release: ${releaseTypes[release]}"
@@ -103,8 +81,7 @@ jobs:
                 echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
                 continue
             fi
-            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-            if [ ! -f "$ebuild_file" ]; then
+            tmp_ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild.tmp"
 
               # shellcheck disable=SC2016
               {
@@ -113,26 +90,20 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/layerx_linux_amd64.tar.gz -> \${P}-layerx_linux_amd64.tar.gz  )  "
-                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/layerx_linux_arm64.tar.gz -> \${P}-layerx_linux_arm64.tar.gz  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/layerx_linux_amd64.tar.gz -> \${P}-layerx_linux_amd64.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/layerx_linux_arm64.tar.gz -> \${P}-layerx_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo -n 'IUSE="'
-                echo -n ''
-                echo -n ''
-                echo -n ''
-                echo -n ''
+                echo -n ' amd64 arm64'
                 echo '"'
                 echo ''
                 echo -n 'REQUIRED_USE="'
-                echo -n ''
                 echo '"'
                 echo ''
                 echo -n 'RDEPEND="'
-                echo -n ''
-                echo -n ''
                 echo '"'
                 echo ''
                 echo 'S="${WORKDIR}"'
@@ -155,27 +126,40 @@ jobs:
                 echo '    newexe "${{ env.layerx_binary_archived_name_arm64 }}" "${{ env.layerx_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '}'
-              } > $ebuild_file
-
+              } > "$tmp_ebuild_file"
+              next_version=$(g2 ebuild next-revision --inspect "$tmp_ebuild_file" "${ebuild_dir}" "${version}")
+              if [ $? -eq 0 ]; then
+                  next_ebuild_file="${ebuild_dir}/${{ env.epn }}-${next_version}.ebuild"
+                  echo "Content changed or new version for $version. Writing $next_ebuild_file"
+                  mv "$tmp_ebuild_file" "$next_ebuild_file"
+                  ebuild_file="$next_ebuild_file"
+              else
+                  echo "Matches existing ebuild. Skipping."
+                  rm -f "$tmp_ebuild_file"
+                  continue
+              fi
               # Manifest generation
-              export PATH; PATH="$(go env GOPATH)/bin:$PATH"
-
-
               failed=0
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/layerx_linux_amd64.tar.gz" "${{ env.epn }}-${version}-layerx_linux_amd64.tar.gz" "${ebuild_dir}"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/layerx_linux_arm64.tar.gz" "${{ env.epn }}-${version}-layerx_linux_arm64.tar.gz" "${ebuild_dir}"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/layerx_linux_amd64.tar.gz" "${{ env.epn }}-${version}-layerx_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/layerx_linux_arm64.tar.gz" "${{ env.epn }}-${version}-layerx_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
               if [ "$failed" -eq 1 ]; then
-                echo "Failed to generate manifest for $tag. Skipping..."
-                rm -f "$ebuild_file"
-                continue
+                  echo "Failed to generate manifest for $tag. Skipping..."
+                  rm -f "$ebuild_file"
+                  continue
               fi
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
-            fi
           done
+
+      - name: Generate Overlay
+        run: |
+          mkdir -p profiles
+          echo "overlay_name" > profiles/repo_name
+          echo "8" > profiles/eapi        if: steps.process_releases.outputs.generated_tag
 
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi;
           git add "./${ebuild_dir}"
           if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
             git pull --rebase &&
