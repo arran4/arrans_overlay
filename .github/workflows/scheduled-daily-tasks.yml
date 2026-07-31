@@ -44,13 +44,18 @@ jobs:
           echo 'FEATURES="-ipc-sandbox -network-sandbox -pid-sandbox"' >> /etc/portage/make.conf
           mkdir -p /var/db/repos/gentoo
           emerge-webrsync
-          emerge --quiet app-portage/portage-utils dev-vcs/git net-misc/curl app-misc/jq dev-util/github-cli
+          emerge --quiet app-portage/portage-utils dev-vcs/git net-misc/curl app-misc/jq dev-util/github-cli app-admin/sudo
 
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+        with:
+          version: ${{ inputs.g2_version || 'latest' }}
 
       - name: Configure Overlay
         run: |
@@ -71,6 +76,11 @@ jobs:
           echo "$OUTPUT" >> $GITHUB_ENV
           echo "INNER_EOF" >> $GITHUB_ENV
           echo "$OUTPUT"
+
+      - name: Clean manifests
+        continue-on-error: true
+        run: |
+          g2 manifest clean .
 
       - name: Run egencache update
         id: egencache
