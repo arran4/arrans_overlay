@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>gentoo@arran4.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
+	<use lang="en">
+		<flag name="amd64">Enable amd64</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">servo/servo</remote-id>
+	</upstream>
+</pkgmetadata>
