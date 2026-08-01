@@ -1,16 +1,14 @@
 # Gaps and Issues in Overlay Workflow Builder Generator v0.1.32
 
-## 1. Unwanted inclusion of `metadata/md5-cache` in git add
-The generated workflow includes `git add metadata/md5-cache/ || true` in the commit step. The repository no longer tracks the `metadata/md5-cache` or `metadata/md5-dict` directories in version control. Therefore, the tool should not automatically stage and commit `metadata/md5-cache/`. Tracked in: https://github.com/arran4/arrans_overlay_workflow_builder/issues/72
 
-## 2. Variable regression in `superfile-bin`
+## 1. Variable regression in `superfile-bin`
 In `app-misc/superfile-bin-update.yaml`, the generator emitted `${TAG}` inside the `Binary` path string (e.g., `Binary amd64=>superfile-linux-amd64.tar.gz > superfile > superfile`), but bash evaluates `${TAG}` as empty. The manual edit used `${tag}` which resolves to the correctly extracted version in the bash loop.
 - **What:** The `Binary` directive processing fails to correctly pass through the lower-case `${tag}` variable.
 - **Why:** `current.config` was updated to use `${TAG}`, but the generator doesn't substitute it with the bash-safe variable name during the loop emission.
 - **Solution:** Standardize and explicitly translate `${TAG}` in config files to the `${tag}` variable used inside the bash loop.
 Tracked in: https://github.com/arran4/arrans_overlay_workflow_builder/issues/73
 
-## 3. Workarounds and manual edits overwrite
+## 2. Workarounds and manual edits overwrite
 The tool overwrites manual changes in the generated files. This causes severe regressions. Here are specific examples of what is broken, why it was there, and how we might fix it systemically:
 
 - **`app-misc/gocdm-bin`** ([Link](https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-gocdm-bin-update.yaml)):
