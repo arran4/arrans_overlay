@@ -59,5 +59,7 @@ jobs:
             echo "No package files changed. Skipping lint."
           else
             echo "Running g2 lint on changed directories: $DIRS"
+            mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ github.event.repository.name }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi
+            for dir in $DIRS; do g2 cache generate "$dir" || true; done
             g2 lint $DIRS
           fi
