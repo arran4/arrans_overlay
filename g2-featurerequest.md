@@ -21,3 +21,6 @@ We request a new command (e.g., `g2 ebuild deduplicate` or `g2 repo clean`) that
 
 ## Motivation
 The current approach requires external Python scripting. Implementing this logic directly in `g2` would ensure a consistent, safe, and integrated workflow for repository maintenance, cleaning up ebuilds, manifests, metadata.xml, and caches without needing multiple steps or external scripts.
+
+## Related Issues
+- https://github.com/arran4/g2/issues/389
