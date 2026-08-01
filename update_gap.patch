@@ -1,0 +1,9 @@
+--- gap.md	2024-05-24 12:00:00.000000000 -0700
++++ gap_new.md	2024-05-24 12:05:00.000000000 -0700
+@@ -19,7 +19,7 @@
+ 4.  **Global `lint .`**: The linting step was changed from `action: 'lint ${{ env.ecn }}/${{ env.epn }}'` to `action: 'lint . ${{ env.ecn }}/${{ env.epn }}'`. Running a global lint (`lint .`) on every update workflow may take too long or trigger errors on unrelated packages. Furthermore, the `if: steps.process_releases.outputs.generated_tag` condition was removed.
+     *   **Status**: Unaddressed. No open issue found.
+ 5.  **`metadata/md5-cache/` tracking**: The generator adds `git add metadata/md5-cache/ || true` to the commit step. Since `metadata/md5-cache` is no longer tracked in version control, this line is incorrect and can lead to unexpected behavior.
+     *   **Status**: Open. See issue [arran4/arrans_overlay_workflow_builder#72](https://github.com/arran4/arrans_overlay_workflow_builder/issues/72).
+
+ Would it be possible to address these regressions in a future version of `overlay_workflow_builder_generator`?
