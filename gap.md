@@ -42,10 +42,6 @@ The tool overwrites manual changes in the generated files. This causes severe re
 **Issue:** The generator completely replaces the entire `.github/workflows/*-update.yaml` file on generation. Many workflows have critical custom bash scripts injected into the ebuild `cat <<EOT` block.
 **Feature Request:** Instead of inline workarounds for every single edge case, update the config to point to injection files. For example, a directive like `EbuildInclude src_install => patches/flutter-jules-install.sh`. The tool would read the external file and inject its contents directly into the generated `cat <<EOT` block at the appropriate section. This keeps the config clean and fully supports arbitrarily complex ebuild logic (like `patchelf` or `dosym`) without losing it on regeneration.
 
-### 2. Full Configuration Property Pass-through
-**Issue:** The generator currently hardcodes strings or misses parsing certain metadata fields specified in the config or originally managed manually. For example, it defaults to `--m "gentoo@arran4.com:Arran Ubels:person"` in the `g2 metadata` command, and it doesn't correctly export `HOMEPAGE` for AppImages if not fully supported. This is tracked in: https://github.com/arran4/arrans_overlay_workflow_builder/issues/69
-**Feature Request:** Support comprehensive property assignments in `current.config` such as `MaintainerEmail`, `MaintainerName`, and ensure that `HOMEPAGE` and `LICENSE` properties correctly flow into all generated templates without defaulting to placeholders like `unknown`.
-
-### 3. Bash Context Evaluation Handling for Binary Paths
+### 2. Bash Context Evaluation Handling for Binary Paths
 **Issue:** The generator writes `${TAG}` instead of `${tag}` in the `SRC_URI` and manifest download urls strings if defined in the config. Because `cat <<EOT` natively disables bash evaluation, and `${TAG}` is not explicitly declared inside the Bash workflow loop (`${tag}` is), the evaluation resolves to an empty string breaking the manifest upserter.
 **Feature Request:** Standardize and explicitly document internal variable mapping (`${tag}` vs `${TAG}`) for the `Binary` directive in `current.config`, and ensure the tool emits correct shell variables matching the Bash environment variable scope loop declarations. Tracked in: https://github.com/arran4/arrans_overlay_workflow_builder/issues/74
