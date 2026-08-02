@@ -1,12 +1,14 @@
-# Feedback and Feature Requests for overlay_workflow_builder_generator v0.1.31
+## Missing Features / Workarounds Required in `arrans_overlay_workflow_builder`
 
-I have encountered a few issues while using version 0.1.31 of `overlay_workflow_builder_generator` and I wanted to file these feature requests/issues to help improve the tool.
+1. **Preservation of Manual Workflow Adjustments:**
+   Currently, the generator overwrites any manual modifications made to the workflows. Examples of broken functionality include:
+   - Dropping custom `pkg_postinst()` functions injected into the ebuild generation blocks (e.g., in `gocdm-bin`).
+   - Reverting custom metadata usage (e.g., in `gocdm-bin`, the target uses `g2 metadata ... --use-add ...` but the generator drops it).
+   - Overwriting custom `LICENSE`, `IUSE`, and `RDEPEND` arrays configured outside of `current.config`.
+   - Modifying standard GitHub Actions syntax such as dropping `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24` and downgrading/upgrading checkout action versions incorrectly.
+   - Modifying the custom loop for `g2 ebuild next-revision` and `g2 manifest upsert-from-url`.
 
-## Issues with generated `.github/workflows/*-update.yaml` workflows
-1.  **Missing `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`**: The generator no longer outputs the `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` environment variable in the generated workflows, which was present in previously generated files (e.g. from version 0.1.28). This causes issues with certain runners.
-2.  **Invalid `actions/checkout` version**: The generated workflows use `uses: actions/checkout@v7`, which is an invalid version of the action (the latest major version is `v4`). It should use `uses: actions/checkout@v4` instead.
-3.  **Invalid `g2 ebuild next-revision` syntax**: The generator changed the `g2 ebuild next-revision` command call. It used to be `g2 ebuild next-revision --inspect "$tmp_ebuild_file" "${ebuild_dir}" "${version}"` which outputs the `next_version` (e.g., `-r1`). It was changed to `g2 ebuild next-revision "${ebuild_dir}/${{ env.epn }}-${version}" -inspect "$tmp_ebuild_file"` which assigns to `next_ebuild_file` directly. This change uses an invalid flag structure.
-4.  **Global `lint .`**: The linting step was changed from `action: 'lint ${{ env.ecn }}/${{ env.epn }}'` to `action: 'lint . ${{ env.ecn }}/${{ env.epn }}'`. Running a global lint (`lint .`) on every update workflow may take too long or trigger errors on unrelated packages. Furthermore, the `if: steps.process_releases.outputs.generated_tag` condition was removed.
-5.  **`metadata/md5-cache/` tracking**: The generator adds `git add metadata/md5-cache/ || true` to the commit step. Since `metadata/md5-cache` is no longer tracked in version control, this line is incorrect and can lead to unexpected behavior.
+   **Recommendation:** Support a templating override mechanism or preserve blocks marked with `# MANUAL OVERRIDE START` ... `# MANUAL OVERRIDE END`.
 
-Would it be possible to address these regressions in a future version of `overlay_workflow_builder_generator`?
+2. **Malformed SRC_URI URLs in v0.1.33:**
+   The `v0.1.33` release generates malformed `SRC_URI` fields containing invalid variables. For example, it substitutes parts of the URL with `${originalVersion}` and unescaped `\${PV}` in ways that lead to 404 Not Found errors during download.
