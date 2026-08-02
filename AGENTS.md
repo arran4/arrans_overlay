@@ -40,7 +40,7 @@ To keep the overlay clean, we follow a **"One Version Per Grade"** policy.
 *   **The Rule:** Keep only the **latest** version for *each* grade that exists.
     *   *Example:* You can have `1.0.0` (release) AND `1.1.0_alpha2` (alpha).
     *   *Cleanup:* If `1.1.0_alpha3` is released, `1.1.0_alpha2` should be removed.
-*   **Tooling:** This logic is enforced by `scripts/remove_duplicate_ebuilds.py`. Run this script (or ensure the CI runs it) after adding new versions.
+*   **Tooling:** This logic is enforced by `g2 ebuild deduplicate`. Run this script (or ensure the CI runs it) after adding new versions.
 
 ## 4. Safety & Readme
 
