@@ -66,6 +66,41 @@ Instead of generating the entire bash script that builds the `.ebuild` file dire
   ```
   *(The workflow generator would output a step to source any `custom_*.sh` scripts found in the package directory before finalizing the ebuild.)*
 
+### Proposal D: Diff-based Patch Application (Post-Generation Hook)
+Allow repository maintainers to maintain standard `.patch` or `.diff` files for specific packages that the workflow builder automatically applies *after* generating the workflow files, but *before* the CI job considers them final.
+- **Implementation:** The workflow generator could output a final step in its own execution that runs `git apply config/patches/<package>.patch` if the file exists.
+- **Pros:** Completely isolates the generator code from having to understand or parse manual overrides; patch files are a well-understood, standard tool for applying overrides to generated or upstream code.
+- **Cons:** Patch files can become brittle if the underlying generated workflow structure changes significantly, requiring frequent manual rebasing.
+- **Example:**
+  ```diff
+  # config/patches/gocdm-bin.patch
+  @@ -97,6 +97,7 @@
+   echo 'LICENSE="MIT"'
+  -echo 'RDEPEND=""'
+  +echo 'RDEPEND="sys-fs/fuse:0"'
+  ```
+
+### Proposal E: JSON/YAML Config Object Merging
+Transition `current.config` from its current custom plaintext format to a structured format like YAML or JSON, which natively supports multi-line strings, nested objects, and arrays.
+- **Implementation:** The `overlay_workflow_builder_generator` is rewritten to accept a `config.yaml` file. The generator deep-merges default configurations with any package-specific overrides provided in the YAML object.
+- **Pros:** Completely eliminates the custom config parser limitations. Natively supports multi-line scripts (like `pkg_postinst`) as string literals within the YAML file.
+- **Cons:** Requires users to migrate their entire `current.config` to the new format and entails a significant rewrite of the generator's config parsing logic.
+- **Example:**
+  ```yaml
+  # config.yaml
+  packages:
+    - type: Github Binary Release
+      projectUrl: https://github.com/arran4/gocdm
+      ebuildName: gocdm-bin
+      overrides:
+        license: MIT
+        rdepend: sys-fs/fuse:0
+        postinst: |
+          pkg_postinst() {
+            einfo "To run GoCDM directly from tty1 under systemd..."
+          }
+  ```
+
 ---
 
 ## Current Immediate Workarounds
