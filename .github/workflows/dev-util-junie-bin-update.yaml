@@ -53,7 +53,7 @@ jobs:
               g2 manifest upsert-from-url "https://github.com/JetBrains/junie/releases/download/${tag}/junie-release-${version}-linux-amd64.zip" "junie-bin-${version}-junie-release-${version}-linux-amd64.zip" "${ebuild_dir}/Manifest"
               g2 manifest upsert-from-url "https://github.com/JetBrains/junie/releases/download/${tag}/junie-release-${version}-linux-aarch64.zip" "junie-bin-${version}-junie-release-${version}-linux-aarch64.zip" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
-              python3 scripts/remove_duplicate_ebuilds.py dev-util/junie-bin
+              g2 ebuild deduplicate dev-util/junie-bin
               break
             fi
           done

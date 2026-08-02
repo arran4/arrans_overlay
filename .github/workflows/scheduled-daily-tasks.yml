@@ -70,8 +70,7 @@ jobs:
         if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
         continue-on-error: true
         run: |
-          chmod +x ./scripts/remove_duplicate_ebuilds.py
-          OUTPUT=$(./scripts/remove_duplicate_ebuilds.py)
+          OUTPUT=$(g2 ebuild deduplicate .)
           echo "DEDUPE_OUTPUT<<INNER_EOF" >> $GITHUB_ENV
           echo "$OUTPUT" >> $GITHUB_ENV
           echo "INNER_EOF" >> $GITHUB_ENV

@@ -91,7 +91,7 @@ jobs:
 
       - name: Remove Old Ebuilds
         if: steps.check_ebuild.outputs.exists == 'false'
-        run: python scripts/remove_duplicate_ebuilds.py || true
+        run: g2 ebuild deduplicate . || true
 
       - name: Commit Changes
         if: steps.check_ebuild.outputs.exists == 'false'
