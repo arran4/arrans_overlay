@@ -33,25 +33,22 @@ Support a mechanism within the generated GitHub Action workflows that protects s
   echo '}'
   # MANUAL OVERRIDE END
   ```
+  *(This relies on the generator's source code being updated to detect these markers during generation and inject the enclosed content instead of default generation for that block.)*
 
 ### Proposal B: Templating / Partial Overrides via Config
-Expand the `current.config` syntax (or allow adjacent partial template files) to allow defining custom blocks that override the default generated output for a specific package.
-- **Implementation:** Introduce new directives in `current.config` (e.g., `CustomEbuildBlock`, `CustomG2LintAction`, `CustomEnvVars`) or allow specifying an external template file per package that the generator merges with the base template.
-- **Pros:** Keeps the source of truth cleanly separated from the generated artifacts, ensuring the generator doesn't need to parse its own previous output.
-- **Cons:** Increases the complexity of `current.config` and forces contributors to learn a new templating syntax instead of just modifying standard bash scripts in the workflows.
+Expand the `current.config` syntax to support specific single-line directives that map to external script files, avoiding the need for multi-line block parsing in the config parser.
+- **Implementation:** Introduce directives that point to a relative file path (e.g., `CustomEbuildScript`, `CustomMetadataArgs`, `CustomEnvVars`). The generator reads these external files and injects their contents directly into the generated workflow.
+- **Pros:** Avoids extending the config parser to handle multi-line blocks while cleanly separating concerns.
+- **Cons:** Still requires creating additional files in the repository.
 - **Example:**
   ```text
   # In current.config
   Type Github Binary Release
   GithubProjectUrl https://github.com/arran4/gocdm
   EbuildName gocdm-bin
-  ...
-  CustomEbuildBlock <<EOT
-  pkg_postinst() {
-    einfo "To run GoCDM directly from tty1 under systemd..."
-  }
-  EOT
+  CustomEbuildScript config/gocdm-bin/postinst.sh
   ```
+  *(Alternatively, more specific single-line overrides like `OverrideLicense MIT` or `OverrideRDepend "sys-fs/fuse:0"` could be added to avoid external files entirely.)*
 
 ### Proposal C: Extensible Ebuild Generation Script (Hook System)
 Instead of generating the entire bash script that builds the `.ebuild` file directly into the workflow YAML, the generator could output calls to modular bash scripts (or hooks) stored in the repository.
@@ -67,7 +64,7 @@ Instead of generating the entire bash script that builds the `.ebuild` file dire
   }
   EOM
   ```
-  The workflow generator would output a step to source any `custom_*.sh` scripts found in the package directory before finalizing the ebuild.
+  *(The workflow generator would output a step to source any `custom_*.sh` scripts found in the package directory before finalizing the ebuild.)*
 
 ---
 
