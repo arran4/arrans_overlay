@@ -22,15 +22,62 @@ Support a mechanism within the generated GitHub Action workflows that protects s
 - **Implementation:** The generator would parse existing `.yaml` files before overwriting them. Any content found between specific marker comments (e.g., `# MANUAL OVERRIDE START` and `# MANUAL OVERRIDE END`) would be extracted and injected into the newly generated file at the exact same location.
 - **Pros:** Keeps all logic inside the GitHub Actions YAML file, making it easy for contributors to read and modify directly.
 - **Cons:** Requires the generator to parse existing output files which adds complexity to the generation logic.
+- **Example:**
+  ```yaml
+  # In the generated .github/workflows/gocdm-bin-update.yaml
+
+  # MANUAL OVERRIDE START - Custom pkg_postinst
+  echo 'pkg_postinst() {'
+  echo '  einfo "To run GoCDM directly from tty1 under systemd, override getty@tty1.service:"'
+  echo '  einfo "sudo systemctl edit getty@tty1.service"'
+  echo '}'
+  # MANUAL OVERRIDE END
+  ```
 
 ### Proposal B: Templating / Partial Overrides via Config
 Expand the `current.config` syntax (or allow adjacent partial template files) to allow defining custom blocks that override the default generated output for a specific package.
 - **Implementation:** Introduce new directives in `current.config` (e.g., `CustomEbuildBlock`, `CustomG2LintAction`, `CustomEnvVars`) or allow specifying an external template file per package that the generator merges with the base template.
 - **Pros:** Keeps the source of truth cleanly separated from the generated artifacts, ensuring the generator doesn't need to parse its own previous output.
 - **Cons:** Increases the complexity of `current.config` and forces contributors to learn a new templating syntax instead of just modifying standard bash scripts in the workflows.
+- **Example:**
+  ```text
+  # In current.config
+  Type Github Binary Release
+  GithubProjectUrl https://github.com/arran4/gocdm
+  EbuildName gocdm-bin
+  ...
+  CustomEbuildBlock <<EOT
+  pkg_postinst() {
+    einfo "To run GoCDM directly from tty1 under systemd..."
+  }
+  EOT
+  ```
 
 ### Proposal C: Extensible Ebuild Generation Script (Hook System)
 Instead of generating the entire bash script that builds the `.ebuild` file directly into the workflow YAML, the generator could output calls to modular bash scripts (or hooks) stored in the repository.
 - **Implementation:** The workflow calls `generate_ebuild.sh <package>`. The `generate_ebuild.sh` script provides a framework that allows repository maintainers to drop in a `custom_postinst.sh` or `custom_metadata.sh` file into a package directory, which the main script automatically executes during the generation process.
 - **Pros:** Highly flexible; leverages standard bash instead of custom config directives or YAML parsing.
 - **Cons:** Requires a significant architectural rewrite of how the workflow builder integrates with the repository's CI pipeline.
+- **Example:**
+  ```bash
+  # Inside a new repository file: ./app-misc/gocdm-bin/custom_postinst.sh
+  cat << 'EOM' >> "$tmp_ebuild_file"
+  pkg_postinst() {
+    einfo "To run GoCDM directly from tty1 under systemd, override getty@tty1.service:"
+  }
+  EOM
+  ```
+  The workflow generator would output a step to source any `custom_*.sh` scripts found in the package directory before finalizing the ebuild.
+
+---
+
+## Current Immediate Workarounds
+
+Until one of the above proposals is implemented, the current workaround is to write a script that updates the generated workflows but restores the manual overrides using text replacement.
+
+1. Generate the workflows into a temporary directory:
+   ```bash
+   ./overlay_workflow_builder_generator generate workflows -input-file current.config -output-dir /tmp/workflows
+   ```
+2. Write a Python script (`update_workflows.py`) that reads the new templates from `/tmp/workflows`, manually replaces the broken URLs using regex (e.g., swapping `${originalVersion}` for `\${PV}`), injects the custom logic (like `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true`), and then overwrites the files in `.github/workflows/`.
+3. For heavily customized files (like `gocdm-bin-update.yaml` or `codex-bin-update.yaml`), add a comment `# This workflow was originally generated but is now manually maintained` to the top of the file in the repository, and instruct the Python script to skip updating those specific files entirely.
