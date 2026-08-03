@@ -1,7 +1,7 @@
 # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/net-im-lemmy-notify-appimage-update.yaml
 EAPI=8
 DESCRIPTION="Lemmy Notification app - for desktop atm"
-HOMEPAGE=""
+HOMEPAGE="https://github.com/arran4/lemmy_notify"
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"

@@ -1,0 +1,13 @@
+INHERITED=xdg-utils
+DESCRIPTION=Lemmy Notification app - for desktop atm
+EAPI=8
+SLOT=0
+KEYWORDS=~amd64
+LICENSE=MIT
+RDEPEND=sys-libs/glibc sys-libs/zlib
+SRC_URI=
+  amd64? ( https://github.com/arran4/lemmy_notify/releases/download/v0.0.4/lemmy_notify-linux-x86_64.AppImage -> lemmy-notify-appimage-0.0.4-lemmy_notify-linux-x86_64.AppImage )
+
+HOMEPAGE=https://github.com/arran4/lemmy_notify
+RESTRICT=strip
+_md5_=a440b77b671ef8c29e9db8658f263c08

@@ -22,7 +22,7 @@ env:
   ecn: net-im
   epn: lemmy-notify-appimage
   description: "Lemmy Notification app - for desktop atm"
-  homepage: ""
+  homepage: "https://github.com/arran4/lemmy_notify"
   github_owner: arran4
   github_repo: lemmy_notify
   keywords: ~amd64
