@@ -153,7 +153,7 @@ jobs:
                 echo '  fi'
                 echo '}'
               } > "$tmp_ebuild_file"
-              next_version=$(g2 ebuild deduplicate --inspect "$tmp_ebuild_file" "${ebuild_dir}" "${version}")
+              next_version=$(g2 ebuild deduplicate "${ebuild_dir}" "${version}" --inspect "$tmp_ebuild_file")
               if [ $? -eq 0 ]; then
                   next_ebuild_file="${ebuild_dir}/${{ env.epn }}-${next_version}.ebuild"
                   echo "Content changed or new version for $version. Writing $next_ebuild_file"

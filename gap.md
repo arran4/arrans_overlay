@@ -4,7 +4,7 @@ I have encountered a few issues while using version 0.1.31 of `overlay_workflow_
 
 ## Issues with generated `.github/workflows/*-update.yaml` workflows
 1.  **Missing `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`**: The generator no longer outputs the `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` environment variable in the generated workflows, which was present in previously generated files (e.g. from version 0.1.28). This causes issues with certain runners.
-    *   **Status**: Closed. We don't need this workaround anymore.
+    *   **Status**: Closed. This was a workaround for getting v4 going, and we don't need it anymore.
 2.  **Invalid `actions/checkout` version**: The generated workflows use `uses: actions/checkout@v7`.
     *   **Status**: Closed. The action version has been resolved in the workflows.
 3.  **Invalid `g2 ebuild next-revision` syntax**: The generator changed the `g2 ebuild next-revision` command call. It used to be `g2 ebuild next-revision --inspect "$tmp_ebuild_file" "${ebuild_dir}" "${version}"` which outputs the `next_version` (e.g., `-r1`). It was changed to `g2 ebuild next-revision "${ebuild_dir}/${{ env.epn }}-${version}" -inspect "$tmp_ebuild_file"` which assigns to `next_ebuild_file` directly. This change uses an invalid flag structure.
