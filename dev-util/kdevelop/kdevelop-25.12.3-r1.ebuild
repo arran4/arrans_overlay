@@ -16,7 +16,7 @@ DESCRIPTION="Integrated Development Environment, supporting KF6/Qt, C/C++ and mu
 HOMEPAGE="https://kdevelop.org/"
 
 LICENSE="GPL-2 LGPL-2"
-SLOT="6/$(ver_cut 1-2)"
+SLOT="6"
 KEYWORDS="amd64 arm64"
 IUSE="gdbui plasma +qmake +share subversion"
 
