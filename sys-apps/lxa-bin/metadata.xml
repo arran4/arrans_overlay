@@ -8,4 +8,7 @@
         <email>gentoo@arran4.com</email>
         <name>Arran Ubels</name>
     </maintainer>
+    <use>
+        <flag name="doc">Install documentation</flag>
+    </use>
 </pkgmetadata>
