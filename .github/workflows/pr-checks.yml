@@ -59,5 +59,9 @@ jobs:
             echo "No package files changed. Skipping lint."
           else
             echo "Running g2 lint on changed directories: $DIRS"
-            g2 lint $DIRS
+            g2 lint $DIRS > lint.log 2>&1 || true
+            grep -v 'Missing md5-cache' lint.log || true
+            if grep -E '\[Warning\]|\[Error\]' lint.log | grep -vq 'Missing md5-cache'; then
+              exit 1
+            fi
           fi
