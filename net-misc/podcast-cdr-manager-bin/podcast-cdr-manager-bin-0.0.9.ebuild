@@ -1,7 +1,7 @@
 # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/net-misc-podcast-cdr-manager-bin-update.yaml
 EAPI=8
 DESCRIPTION="CLI tool to help manage podcast subscriptions for burning to CDROMs / CDR / CDRW"
-HOMEPAGE=""
+HOMEPAGE="https://github.com/arran4/podcast-cdr-manager"
 SRC_URI="
   amd64? (  https://github.com/arran4/podcast-cdr-manager/releases/download/v${PV}/podcastcdrmanager_${PV}_linux_amd64.tar.gz -> ${P}-podcastcdrmanager_${PV}_linux_amd64.tar.gz  )  
   arm? (  https://github.com/arran4/podcast-cdr-manager/releases/download/v${PV}/podcastcdrmanager_${PV}_linux_armv6.tar.gz -> ${P}-podcastcdrmanager_${PV}_linux_armv6.tar.gz  )  
