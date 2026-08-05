@@ -56,3 +56,6 @@ The generator completely fails to generate workflows from configurations utilizi
    - *Pros:* Native support for README/LICENSE extraction.
    - *Cons:* Requires generator structural changes.
    - *Rating:* 5/5 - Necessary for feature parity with `current.config`.
+
+### Update: G2 v0.0.91 Addresses Some Linting Issues
+Note that the recent `g2` release `v0.0.91` has introduced proper QA policy support and the `-ignore-tag` and `-disable-rule` flags. This means that the linting issue (where `g2 lint` didn't respect ignores or required `. `) may soon be resolvable via configuration rather than manual workflow script hacks, mitigating one of the manual fix overwriting problems listed above.
