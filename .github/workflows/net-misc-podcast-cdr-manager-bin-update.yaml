@@ -55,7 +55,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
-          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:arran4/podcast-cdr-manager" --use-add "amd64:Enable amd64" --use-add "arm:Enable arm" --use-add "arm64:Enable arm64" --use-add "doc:Install documentation" "$metadata_file"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:arran4/podcast-cdr-manager" --use-add "amd64:Enable amd64" --use-add "arm:Enable arm" --use-add "arm64:Enable arm64" --use-add "doc:Install documentation" --use-add "doc:Install documentation" "$metadata_file"
           declare -A releaseTypes=()
           tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
