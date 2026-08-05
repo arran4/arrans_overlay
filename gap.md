@@ -59,3 +59,13 @@ The generator completely fails to generate workflows from configurations utilizi
 
 ### Update: G2 v0.0.91 Addresses Some Linting Issues
 Note that the recent `g2` release `v0.0.91` has introduced proper QA policy support and the `-ignore-tag` and `-disable-rule` flags. This means that the linting issue (where `g2 lint` didn't respect ignores or required `. `) may soon be resolvable via configuration rather than manual workflow script hacks, mitigating one of the manual fix overwriting problems listed above.
+
+## Missing feature: generator does not use g2 ebuild deduplicate natively
+The generator currently lacks native code blocks for utilizing `g2 ebuild deduplicate`. It was manually injected into the previous CI scripts as an important step immediately following tag fetching and processing to safely clean up duplicate manifest/ebuild artifacts in the repository. Without it, the CI loop must either manually re-add this step or face repos blowing out with stale/identical revisions.
+
+### Potential Solutions:
+1. **Add `g2 ebuild deduplicate` Step After Release Processing Loop (Recommended)**
+   - *How it works:* After the `process_releases` for-loop in the generated workflow file completes and all tags/versions are generated, inject a standalone execution step `g2 ebuild deduplicate "${ebuild_dir}"`.
+   - *Pros:* Fully automates cleaning old ebuilds, aligning exactly with original manual hacks.
+   - *Cons:* N/A - Straightforward injection.
+   - *Rating:* 5/5
