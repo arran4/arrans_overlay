@@ -46,3 +46,13 @@ The generator fails to substitute `v${PV}` or correctly use the parsed `original
    - *Pros:* Easy fix within the current Go templates without changing the config format.
    - *Cons:* It's a band-aid. It doesn't solve the fact that the generator is incorrectly stripping the suffix (like `.tar.gz`) and replacing it indiscriminately.
    - *Rating:* 2/5 - Fixes the bash error but not the logical URL destruction.
+
+## Missing feature: generator breaks Document extraction syntax
+The generator completely fails to generate workflows from configurations utilizing the `Document` keyword introduced in the `current.config` (e.g. `Document amd64=>reddit-tui_Linux_x86_64.tar.gz > LICENSE.txt > LICENSE.txt`). Workflows for packages using this syntax simply aren't generated.
+
+### Potential Solutions:
+1. **Extend Parser & Generator Logic for Document Artifacts (Recommended)**
+   - *How it works:* Ensure the `overlay_workflow_builder_generator` correctly parses the `Document` prefix inside `Github Binary Release` blocks and emits `dodoc` instructions alongside `dobin` inside the ebuild string block.
+   - *Pros:* Native support for README/LICENSE extraction.
+   - *Cons:* Requires generator structural changes.
+   - *Rating:* 5/5 - Necessary for feature parity with `current.config`.
