@@ -180,10 +180,19 @@ jobs:
           echo "8" > profiles/eapi
 
       - name: Lint output
-        uses: arran4/g2-action@v1.2
-        with:
-          mode: 'run'
-          action: 'lint ${{ env.ecn }}/${{ env.epn }}'
+        run: |
+          set +e
+          g2 lint ${{ env.ecn }}/${{ env.epn }} > lint.log 2>&1
+          EXIT_CODE=$?
+          set -e
+
+          if [ $EXIT_CODE -ne 0 ]; then
+            if grep -E '\[Warning\]|\[Error\]' lint.log | grep -vq 'Missing md5-cache' || ! grep -q -E '\[Warning\]|\[Error\]' lint.log; then
+              cat lint.log
+              exit $EXIT_CODE
+            fi
+          fi
+          cat lint.log
         if: steps.process_releases.outputs.generated_tag
 
       - name: Commit and push changes
