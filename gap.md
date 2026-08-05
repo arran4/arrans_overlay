@@ -1,6 +1,6 @@
 ## Feature Request: Ignore specific rules in g2 lint via flags
 
-There is currently no open issue for this in the `arran4/g2` repository.
+This feature request is tracked in upstream issue: https://github.com/arran4/g2/issues/409
 
 **Description:**
 The `g2 lint` tool currently lacks a mechanism to disable specific checks (such as `PG0802` for `Missing md5-cache`) via command-line flags. While there is an `-only-tag` flag to restrict output to a specific tag, there is no corresponding `-ignore-tag` or `-disable-rule` flag to exclude them.
