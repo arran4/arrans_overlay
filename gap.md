@@ -1,4 +1,4 @@
-## Missing tooling feature: generator overwrites manual fixes
+## Missing tooling feature: generator overwrites manual fixes - see https://github.com/arran4/arrans_overlay_workflow_builder/issues/96
 
 The `overlay_workflow_builder_generator` overwrites manual customizations made to the output GitHub Actions workflow files when it regenerates them. This relates to preserving manually edited code segments within the generated outputs. See related discussion in issue: [https://github.com/arran4/arrans_overlay_workflow_builder/issues/72](https://github.com/arran4/arrans_overlay_workflow_builder/issues/72) (if applicable to file overwrites).
 
@@ -47,7 +47,7 @@ The generator fails to substitute `v${PV}` or correctly use the parsed `original
    - *Cons:* It's a band-aid. It doesn't solve the fact that the generator is incorrectly stripping the suffix (like `.tar.gz`) and replacing it indiscriminately.
    - *Rating:* 2/5 - Fixes the bash error but not the logical URL destruction.
 
-## Missing feature: generator breaks Document extraction syntax
+## Missing feature: generator breaks Document extraction syntax - see https://github.com/arran4/arrans_overlay_workflow_builder/issues/98
 The generator completely fails to generate workflows from configurations utilizing the `Document` keyword introduced in the `current.config` (e.g. `Document amd64=>reddit-tui_Linux_x86_64.tar.gz > LICENSE.txt > LICENSE.txt`). Workflows for packages using this syntax simply aren't generated.
 
 ### Potential Solutions:
@@ -60,7 +60,7 @@ The generator completely fails to generate workflows from configurations utilizi
 ### Update: G2 v0.0.91 Addresses Some Linting Issues
 Note that the recent `g2` release `v0.0.91` has introduced proper QA policy support and the `-ignore-tag` and `-disable-rule` flags. This means that the linting issue (where `g2 lint` didn't respect ignores or required `. `) may soon be resolvable via configuration rather than manual workflow script hacks, mitigating one of the manual fix overwriting problems listed above.
 
-## Missing feature: generator does not use g2 ebuild deduplicate natively
+## Missing feature: generator does not use g2 ebuild deduplicate natively - see https://github.com/arran4/arrans_overlay_workflow_builder/issues/99
 The generator currently lacks native code blocks for utilizing `g2 ebuild deduplicate`. It was manually injected into the previous CI scripts as an important step immediately following tag fetching and processing to safely clean up duplicate manifest/ebuild artifacts in the repository. Without it, the CI loop must either manually re-add this step or face repos blowing out with stale/identical revisions.
 
 ### Potential Solutions:
