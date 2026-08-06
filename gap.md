@@ -69,3 +69,13 @@ The generator currently lacks native code blocks for utilizing `g2 ebuild dedupl
    - *Pros:* Fully automates cleaning old ebuilds, aligning exactly with original manual hacks.
    - *Cons:* N/A - Straightforward injection.
    - *Rating:* 5/5
+
+### Update: overlay_workflow_builder v0.1.36 Assessment
+Testing against the newest generator (`v0.1.36`):
+- `SRC_URI` bash variables logic (e.g. replacing `${version}` and `v${originalVersion}`) seems to still lack parity with the manually modified workflows. `pagefind` and others still generate structurally broken URL templates like `https://github.com/.../download/${tag}/\${PV} -> \${P}-pagefind_extended-${tag}-...`.
+- `Document` extraction (e.g. `reddit-tui-bin`) generates workflows now, but the actual ebuild templates generated within them need verification for correctness.
+- The `g2 ebuild deduplicate` invocation is still missing and gets stripped out.
+- The `checkout` action still forcefully upgrades to `@v7`.
+- The legacy `g2 ebuild next-revision` syntax is still enforced over the desired `-inspect` flag structure.
+
+Thus, the manual patch scripting (`patch_new.sh`) remains necessary to apply on top of the generator output to avoid breaking the CI process for these packages.
