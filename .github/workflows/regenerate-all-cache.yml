@@ -22,7 +22,7 @@ jobs:
           emerge-webrsync
           emerge --quiet app-portage/portage-utils dev-vcs/git net-misc/curl app-misc/jq dev-util/github-cli
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

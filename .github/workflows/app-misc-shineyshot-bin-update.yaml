@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.31 Github Binary Release current.config 2026-07-30 09:04:19.177157275 +0000 UTC m=+0.006149846
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.35 Github Binary Release current.config 2026-08-04 04:47:33.897143457 +0000 UTC m=+0.006809721
 
 name: app-misc/shineyshot-bin update
 
@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Git
         run: |

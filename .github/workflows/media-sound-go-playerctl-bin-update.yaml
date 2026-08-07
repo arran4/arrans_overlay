@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-14 07:05:49.55494487 +0000 UTC m=+0.007290831
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.35 Github Binary Release current.config 2026-08-04 04:47:33.897143457 +0000 UTC m=+0.006809721
 
 name: media-sound/go-playerctl-bin update
 
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install g2
         uses: arran4/g2-action@v1.2

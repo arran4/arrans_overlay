@@ -11,7 +11,7 @@ jobs:
   pkgcheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # needed for commits check
       - name: Configure git remote
@@ -24,7 +24,7 @@ jobs:
   g2-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: arran4/g2-action@v1.2

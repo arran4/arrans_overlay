@@ -47,7 +47,7 @@ jobs:
           emerge --quiet app-portage/portage-utils dev-vcs/git net-misc/curl app-misc/jq dev-util/github-cli app-admin/sudo
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
@@ -236,7 +236,7 @@ jobs:
     outputs:
       has_changes: ${{ steps.check.outputs.has_changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Check for commits in last 24 hours
@@ -274,7 +274,7 @@ jobs:
              emerge --quiet dev-vcs/git app-admin/sudo
            fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -341,7 +341,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install g2
         uses: arran4/g2-action@v1.2
