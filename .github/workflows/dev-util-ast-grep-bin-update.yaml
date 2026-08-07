@@ -1,0 +1,154 @@
+# Generated manually to fix overlay_workflow_builder_generator limitations
+
+name: dev-util/ast-grep-bin update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '23 13 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/dev-util-ast-grep-bin-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ecn: dev-util
+  epn: ast-grep-bin
+  description: "A CLI tool for code structural search, lint and rewriting. Written in Rust"
+  homepage: "https://ast-grep.github.io/"
+  github_owner: ast-grep
+  github_repo: ast-grep
+  keywords: ~amd64
+  workflow_filename: dev-util-ast-grep-bin-update.yaml
+  release_name_amd64: 'app-x86_64-unknown-linux-gnu.zip'
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p "$ebuild_dir"
+          metadata_file="${ebuild_dir}/metadata.xml"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:ast-grep/ast-grep" --use-add "amd64:Enable amd64" "$metadata_file"
+          declare -A releaseTypes=()
+          tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          # shellcheck disable=SC2086
+          for tag in $tags; do
+            version="${tag#v}"
+            if [ "${version}" = "${tag}" ]; then
+                echo "$version == $tag so there is no v removed skipping"
+                continue
+            fi
+            # shellcheck disable=SC2034
+            originalVersion="${version}"
+            if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                echo "tag / $version doesn't match regexp";
+                continue;
+            fi
+            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+\_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
+            if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
+                if [[ -v releaseTypes[release] ]]; then
+                  echo "Already have a newer main release: ${releaseTypes[release]}"
+                  continue
+                fi
+                releaseTypes[${releaseType:=release}]="${version}"
+            else
+                echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+                continue
+            fi
+            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
+            if [ ! -f "$ebuild_file" ]; then
+
+              # shellcheck disable=SC2016
+              {
+                echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
+                echo 'EAPI=8'
+                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'SRC_URI="'
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/app-x86_64-unknown-linux-gnu.zip -> \${P}-app-x86_64-unknown-linux-gnu.zip  )  "
+                echo '"'
+                echo 'LICENSE="MIT"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="${{ env.keywords }}"'
+                echo -n 'IUSE="'
+                echo -n ' amd64'
+                echo '"'
+                echo ''
+                echo -n 'REQUIRED_USE="'
+                echo '"'
+                echo ''
+                echo -n 'RDEPEND="'
+                echo '"'
+                echo ''
+                echo 'S="${WORKDIR}"'
+                echo ''
+                echo 'src_unpack() {'
+                echo '  if use amd64; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-app-x86_64-unknown-linux-gnu.zip\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '  exeinto /opt/bin'
+                echo '  if use amd64; then'
+                echo '    newexe "ast-grep" "ast-grep" || die "Failed to install ast-grep"'
+                echo '    newexe "sg" "sg" || die "Failed to install sg"'
+                echo '  fi'
+                echo '}'
+              } > $ebuild_file
+              # Manifest generation
+              failed=0
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/app-x86_64-unknown-linux-gnu.zip" "${{ env.epn }}-${version}-app-x86_64-unknown-linux-gnu.zip" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if [ "$failed" -eq 1 ]; then
+                  echo "Failed to generate manifest for $tag. Skipping..."
+                  rm -f "$ebuild_file"
+                  continue
+              fi
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+            fi
+          done
+
+      - name: Generate Overlay
+        run: |
+          mkdir -p profiles
+          echo "overlay_name" > profiles/repo_name
+          echo "8" > profiles/eapi
+
+      - name: Lint output
+        uses: arran4/g2-action@v1.2
+        with:
+          mode: 'run'
+          action: 'lint .'
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+          git add "./${ebuild_dir}"
+          git add metadata/md5-cache/ || true
+          if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
+            git pull --rebase &&
+            git push
+          fi || true
+        if: steps.process_releases.outputs.generated_tag
