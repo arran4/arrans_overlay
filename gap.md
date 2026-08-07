@@ -79,3 +79,8 @@ Testing against the newest generator (`v0.1.36`):
 - The legacy `g2 ebuild next-revision` syntax is still enforced over the desired `-inspect` flag structure.
 
 Thus, the manual patch scripting (`patch_new.sh`) remains necessary to apply on top of the generator output to avoid breaking the CI process for these packages.
+
+### Update: overlay_workflow_builder v0.1.37 Assessment
+Testing against the newest generator (`v0.1.37`):
+- `SRC_URI` bash variable logic still incorrectly templates parts of the download URI in various Edge Cases resulting in workflows like `www-apps/pagefind-bin-update.yaml` breaking.
+- Manual overwrites like `checkout` and `g2 ebuild deduplicate` are still overridden/omitted. The mentioned `Inline Marker Preservation` (e.g. `CustomJobSteps`) from the release notes appears to require structural `current.config` updates to utilize, or is simply not fully integrating with the generated pipeline logic to prevent regressions yet.
