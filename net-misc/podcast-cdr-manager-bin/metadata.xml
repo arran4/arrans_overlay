@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-  <upstream>
-    <remote-id type="github">arran4/podcast-cdr-manager</remote-id>
-  </upstream>
-    <maintainer type="person">
-        <email>gentoo@arran4.com</email>
-        <name>Arran Ubels</name>
-    </maintainer>
+	<maintainer type="person">
+		<email>gentoo@arran4.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
+	<use lang="en">
+		<flag name="amd64">Enable amd64</flag>
+		<flag name="arm">Enable arm</flag>
+		<flag name="arm64">Enable arm64</flag>
+		<flag name="doc">Install documentation</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">arran4/podcast-cdr-manager</remote-id>
+	</upstream>
 </pkgmetadata>

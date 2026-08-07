@@ -48,8 +48,6 @@ jobs:
 
       - name: Install g2
         uses: arran4/g2-action@v1.2
-        with:
-          version: "v0.0.91"
 
       - name: Process each release
         id: process_releases
@@ -172,13 +170,11 @@ jobs:
           echo "8" > profiles/eapi
 
       - name: Lint output
-        run: |
-          g2 lint ${{ env.ecn }}/${{ env.epn }} > lint.log 2>&1 || true
-          cat lint.log
-          if grep -E "\[Warning\]|\[Error\]" lint.log | grep -vq "Missing md5-cache"; then
-            echo "Linting failed"
-            bash -c "exit 1"
-          fi
+        uses: arran4/g2-action@v1.2
+        with:
+          version: v0.0.91
+          mode: run
+          action: "lint -disable-rule PG0802 . ${{ env.ecn }}/${{ env.epn }}"
         if: steps.process_releases.outputs.generated_tag
       - name: Commit and push changes
         run: |
