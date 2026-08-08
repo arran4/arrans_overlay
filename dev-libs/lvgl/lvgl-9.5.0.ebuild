@@ -26,6 +26,9 @@ PATCHES=(
 )
 
 src_prepare() {
+	# Fix CMake QA Notice for < 3.10
+	sed -i -e 's/cmake_minimum_required(VERSION 3.5)/cmake_minimum_required(VERSION 3.10)/' "${S}/env_support/esp/rlottie/CMakeLists.txt" || die
+
 	cmake_src_prepare
 
 	cp "${S}/lv_conf_template.h" "${S}/lv_conf.h" || die
