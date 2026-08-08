@@ -1,38 +1,36 @@
 # Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.37 Github Binary Release current.config 2026-08-08 02:35:08.559460192 +0000 UTC m=+0.006964152
 
-name: net-misc/abc-justin-rss-bin update
+name: dev-go/txtar-bin update
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '17 23 * * *'
+    - cron: '23 9 * * *'
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/net-misc-abc-justin-rss-bin-update.yaml'
+      - '.github/workflows/dev-go-txtar-bin-update.yaml'
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
 env:
-  ecn: net-misc
-  epn: abc-justin-rss-bin
-  description: "ABC news just-in to rss converter - generated"
-  homepage: "https://github.com/arran4/abc-justin-rss"
+  ecn: dev-go
+  epn: txtar-bin
+  description: "txtar enhanced and with a cli tool"
+  homepage: "https://github.com/arran4/txtar"
   github_owner: arran4
-  github_repo: abc-justin-rss
-  keywords: ~amd64 ~arm64 ~x86
-  workflow_filename: net-misc-abc-justin-rss-bin-update.yaml
-  abcjustinrss_binary_installed_name: 'abcjustinrss'
-  abcjustinrss_binary_archived_name_amd64: 'abcjustinrss'
-  abcjustinrss_release_name_amd64: 'abcjustinrss_${version}_linux_amd64.tar.gz'
-  abcjustinrss_binary_archived_name_arm64: 'abcjustinrss'
-  abcjustinrss_release_name_arm64: 'abcjustinrss_${version}_linux_arm64.tar.gz'
-  abcjustinrss_binary_archived_name_x86: 'abcjustinrss'
-  abcjustinrss_release_name_x86: 'abcjustinrss_${version}_linux_386.tar.gz'
+  github_repo: txtar
+  keywords: ~amd64 ~arm64
+  workflow_filename: dev-go-txtar-bin-update.yaml
+  txtar_binary_installed_name: 'txtar'
+  txtar_binary_archived_name_amd64: 'txtar'
+  txtar_release_name_amd64: 'txtar_${tag}_linux_amd64.tar.gz'
+  txtar_binary_archived_name_arm64: 'txtar'
+  txtar_release_name_arm64: 'txtar_${tag}_linux_arm64.tar.gz'
 
 jobs:
   check-and-create-ebuild:
@@ -55,7 +53,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
-          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:arran4/abc-justin-rss" --use-add "amd64:Enable amd64" --use-add "arm64:Enable arm64" --use-add "x86:Enable x86" "$metadata_file"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:arran4/txtar" --use-add "amd64:Enable amd64" --use-add "arm64:Enable arm64" "$metadata_file"
           declare -A releaseTypes=()
           tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
@@ -91,16 +89,15 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-abcjustinrss_\${PV}_linux_amd64.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-abcjustinrss_\${PV}_linux_arm64.tar.gz  )  "
-                echo "	x86? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-abcjustinrss_\${PV}_linux_386.tar.gz  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-txtar_${tag}_linux_amd64.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-txtar_${tag}_linux_arm64.tar.gz  )  "
                 echo '"'
-                echo 'LICENSE="GPL-3"'
+                echo 'LICENSE="BSD-3-Clause"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo -n 'IUSE="'
                 echo -n ' doc'
-                echo -n ' amd64 arm64 x86'
+                echo -n ' amd64 arm64'
                 echo '"'
                 echo ''
                 echo -n 'REQUIRED_USE="'
@@ -113,35 +110,32 @@ jobs:
                 echo ''
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-abcjustinrss_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-txtar_${tag}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-abcjustinrss_\${PV}_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use x86; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-abcjustinrss_\${PV}_linux_386.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-txtar_${tag}_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '}'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'
-                echo '    newexe "${{ env.abcjustinrss_binary_archived_name_amd64 }}" "${{ env.abcjustinrss_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.txtar_binary_archived_name_amd64 }}" "${{ env.txtar_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo '    newexe "${{ env.abcjustinrss_binary_archived_name_arm64 }}" "${{ env.abcjustinrss_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use x86; then'
-                echo '    newexe "${{ env.abcjustinrss_binary_archived_name_x86 }}" "${{ env.abcjustinrss_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.txtar_binary_archived_name_arm64 }}" "${{ env.txtar_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use doc; then'
-                echo '    newdoc "LICENSE" "LICENSE" || die "Failed to install document LICENSE"'
-                echo '    newdoc "readme.md" "README.md" || die "Failed to install document README.md"'
+                echo '    if use amd64; then'
+                echo '      newdoc "LICENSE" "LICENSE" || die "Failed to install document LICENSE"'
+                echo '      newdoc "README.md" "README.md" || die "Failed to install document README.md"'
+                echo '    fi'
                 echo '  fi'
                 echo '}'
               } > "$tmp_ebuild_file"
-              next_ebuild_file=$(g2 ebuild next-revision "${ebuild_dir}/${{ env.epn }}-${version}" -inspect "$tmp_ebuild_file")
+              next_version=$(g2 ebuild next-revision --inspect "$tmp_ebuild_file" "${ebuild_dir}" "${version}")
               if [ $? -eq 0 ]; then
+                  next_ebuild_file="${ebuild_dir}/${{ env.epn }}-${next_version}.ebuild"
                   echo "Content changed or new version for $version. Writing $next_ebuild_file"
                   mv "$tmp_ebuild_file" "$next_ebuild_file"
                   ebuild_file="$next_ebuild_file"
@@ -151,9 +145,8 @@ jobs:
                   continue
               fi
               failed=0
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-abcjustinrss_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-abcjustinrss_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-abcjustinrss_${version}_linux_386.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-txtar_${tag}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-txtar_${tag}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
               if [ "$failed" -eq 1 ]; then
                   echo "Failed to generate manifest for $tag. Skipping..."
                   rm -f "$ebuild_file"
