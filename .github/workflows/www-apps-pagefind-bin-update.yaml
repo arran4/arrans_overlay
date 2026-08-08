@@ -17,7 +17,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: www-apps
   epn: pagefind-bin
   description: "Static low-bandwidth search at scale"

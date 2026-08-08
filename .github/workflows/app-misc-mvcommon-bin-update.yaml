@@ -17,7 +17,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: app-misc
   epn: mvcommon-bin
   description: "Tool for moving files into a folder where they have a common prefix"

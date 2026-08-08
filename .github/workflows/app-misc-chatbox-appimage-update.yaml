@@ -17,7 +17,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: app-misc
   epn: chatbox-appimage
   description: "User-friendly Desktop Client App for AI Models/LLMs (GPT, Claude, Gemini, Ollama...)"

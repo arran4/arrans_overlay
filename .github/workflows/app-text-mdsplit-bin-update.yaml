@@ -17,7 +17,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: app-text
   epn: mdsplit-bin
   description: "Splits markdown files into chunks suitable for processing with other tools or making into slides"

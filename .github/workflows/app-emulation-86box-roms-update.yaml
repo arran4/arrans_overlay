@@ -15,7 +15,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ebuild_category: app-emulation
   ebuild_name: 86box-roms
   github_owner: 86Box

@@ -17,7 +17,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: dev-util
   epn: editorconfig-guesser-bin
   description: "Generates reasonable .editorconfig files for source files."

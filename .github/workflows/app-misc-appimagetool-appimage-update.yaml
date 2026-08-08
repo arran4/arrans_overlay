@@ -15,7 +15,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: app-misc
   epn: appimagetool-appimage
   description: "AppImage tool to create AppImages (As an AppImage)"

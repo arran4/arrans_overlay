@@ -17,7 +17,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: net-im
   epn: caprine-appimage
   description: "Elegant Facebook Messenger desktop app"

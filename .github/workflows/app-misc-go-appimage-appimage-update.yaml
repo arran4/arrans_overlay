@@ -15,7 +15,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: app-misc
   epn: go-appimage-appimage
   description: " Go implementation of AppImage tools "

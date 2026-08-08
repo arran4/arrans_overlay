@@ -15,7 +15,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ebuild_category: net-misc
   ebuild_name: kmagmux
   github_owner: arran4

@@ -17,7 +17,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: app-misc
   epn: superfile-bin
   description: "Pretty fancy and modern terminal file manager"

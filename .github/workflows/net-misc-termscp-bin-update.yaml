@@ -17,7 +17,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: net-misc
   epn: termscp-bin
   description: "Feature rich terminal file transfer tool"

@@ -17,7 +17,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: net-misc
   epn: localsend-appimage
   description: "An open-source cross-platform alternative to AirDrop"

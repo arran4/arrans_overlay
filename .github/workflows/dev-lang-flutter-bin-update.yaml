@@ -7,7 +7,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ebuild_category: "dev-lang"
   ebuild_name: "flutter-bin"
   description: "Flutter makes it easy and fast to build beautiful apps for mobile and beyond "

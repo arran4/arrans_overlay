@@ -18,7 +18,6 @@ concurrency:
   group: ci-${{ github.ref }}-codex
   cancel-in-progress: false
 
-env:
   ecn: dev-util
   epn: codex
   description: "Lightweight coding agent that runs in your terminal"

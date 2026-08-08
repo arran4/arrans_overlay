@@ -17,7 +17,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: dev-util
   epn: antigravity-cli-bin
   description: "Antigravity CLI"

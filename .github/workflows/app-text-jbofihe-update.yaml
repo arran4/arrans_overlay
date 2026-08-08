@@ -15,7 +15,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ebuild_category: app-text
   ebuild_name: jbofihe
   github_owner: lojban

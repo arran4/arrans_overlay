@@ -17,7 +17,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-env:
   ecn: net-misc
   epn: rustdesk-appimage
   description: "An open-source remote desktop application designed for self-hosting, as an alternative to TeamViewer."

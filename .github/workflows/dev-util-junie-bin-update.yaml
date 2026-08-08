@@ -11,7 +11,6 @@ on:
     paths:
       - '.github/workflows/dev-util-junie-bin-update.yaml'
 
-env:
 
 concurrency:
   group: ci-${{ github.ref }}
