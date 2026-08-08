@@ -1,6 +1,6 @@
 --- a/lvgl.pc.in
 +++ b/lvgl.pc.in
-@@ -1,10 +1,12 @@
+@@ -1,10 +1,11 @@
  prefix="@CMAKE_INSTALL_PREFIX@"
  includedir="${prefix}/@INC_INSTALL_DIR@"
 -libdir=${prefix}/lib
