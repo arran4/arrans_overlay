@@ -1,0 +1,17 @@
+--- a/lvgl.pc.in
++++ b/lvgl.pc.in
+@@ -1,10 +1,12 @@
+ prefix="@CMAKE_INSTALL_PREFIX@"
+ includedir="${prefix}/@INC_INSTALL_DIR@"
+-libdir=${prefix}/lib
++libdir="${prefix}/@LIB_INSTALL_DIR@"
+
+ Name: lvgl
+ Description: Light and Versatile Graphics Library
+ URL: https://lvgl.io/
+ Version: @LVGL_VERSION@
+-Cflags: -I${includedir}
+-Libs: -L${libdir} -llvgl
++Requires: @LVGL_PKGCONFIG_REQUIRES@
++Cflags: -I${includedir} -DLV_CONF_INCLUDE_SIMPLE
++Libs: -L${libdir} -llvgl -lm

@@ -1,3 +1,10 @@
 /scratch/
 /output
 site_out
+/*.tar.gz
+/*.zip
+/*.tmp
+/*.ttf
+/g2*
+*.onnx
+Makefile
