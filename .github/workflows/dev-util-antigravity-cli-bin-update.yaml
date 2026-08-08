@@ -18,7 +18,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: dev-util
   epn: antigravity-cli-bin
   description: "Antigravity CLI"

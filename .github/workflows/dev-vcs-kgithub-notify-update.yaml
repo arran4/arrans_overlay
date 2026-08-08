@@ -16,7 +16,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ecn: dev-vcs
   epn: kgithub-notify
   description: "A sleek GitHub notification system tray application written natively in C++ using Qt6 and KDE Frameworks 6"
