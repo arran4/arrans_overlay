@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>maintainer@example.invalid</email>
+		<name>Overlay maintainer</name>
+	</maintainer>
+
+	<use>
+		<flag name="sdl">
+			Enable LVGL's SDL2 desktop display and input drivers
+		</flag>
+	</use>
+
+	<upstream>
+		<remote-id type="github">lvgl/lvgl</remote-id>
+		<bugs-to>https://github.com/lvgl/lvgl/issues</bugs-to>
+	</upstream>
+</pkgmetadata>
