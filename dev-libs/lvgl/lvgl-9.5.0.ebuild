@@ -23,6 +23,7 @@ DEPEND="${RDEPEND}"
 
 PATCHES=(
 	"${FILESDIR}/${P}-pkgconfig.patch"
+	"${FILESDIR}/${P}-cmake-qa-notice.patch"
 )
 
 src_prepare() {

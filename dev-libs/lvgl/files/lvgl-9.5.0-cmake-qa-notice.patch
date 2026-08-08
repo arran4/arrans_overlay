@@ -1,0 +1,8 @@
+--- a/env_support/esp/rlottie/CMakeLists.txt
++++ b/env_support/esp/rlottie/CMakeLists.txt
+@@ -1,5 +1,5 @@
+-cmake_minimum_required(VERSION 3.5)
++cmake_minimum_required(VERSION 3.10)
+
+ if (0)
+ if (LV_USE_RLOTTIE)
