@@ -1,5 +1,7 @@
 # Bug Report: `overlay_workflow_builder_generator` Generates Broken Workflow Syntax and Configuration
 
+**Related Issue:** [arran4/arrans_overlay_workflow_builder#103](https://github.com/arran4/arrans_overlay_workflow_builder/issues/103)
+
 ## Describe the Bug
 The `overlay_workflow_builder_generator` currently generates invalid GitHub Actions workflow code for Gentoo overlays in two specific areas:
 
@@ -50,4 +52,15 @@ if [ $? -eq 0 ]; then
 ```
 
 ### For Issue 2:
-The workflow builder should respect the overlay's configuration natively. If the overlay has explicitly disabled cache generation, the workflow builder should not generate steps or enforce lint rules that rely on it. A potential fix could be allowing `current.config` to specify `disable_md5_cache_lint: true`, which would append `-disable-rule PG0802` to the `g2 lint` command.
+The workflow builder should respect the overlay's configuration natively. If the overlay has explicitly disabled cache generation, the workflow builder should not generate steps or enforce lint rules that rely on it.
+
+Specifically, the workflow builder should parse the repository's `metadata/layout.conf` during generation. If `cache-formats = ` (empty) or if `md5-dict` is omitted, the builder should format the `g2 lint` command appropriately to disable the `PG0802` rule.
+
+Expected generated workflow syntax when `cache-formats` is empty:
+```yaml
+      - name: Lint output
+        uses: arran4/g2-action@v1.2
+        with:
+          mode: 'run'
+          action: 'lint -disable-rule PG0802 . ${{ env.ecn }}/${{ env.epn }}'
+```
