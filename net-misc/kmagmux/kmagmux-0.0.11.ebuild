@@ -1,4 +1,4 @@
-# Copyright 2024 Gentoo Authors
+# Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -17,16 +17,29 @@ IUSE="debug"
 KEYWORDS="~amd64"
 DEPEND="
 	kde-frameworks/kwallet:6
-	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent,test]
+	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kxmlgui:6
+	kde-plasma/plasma-workspace:6
+	kde-frameworks/kio:6
+	kde-frameworks/knotifications:6
+	kde-plasma/plasma-workspace:6
+	kde-frameworks/kio:6
+	kde-frameworks/knotifications:6
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
 	dev-qt/qttools:6[linguist]
 	virtual/pkgconfig
-	kde-frameworks/extra-cmake-modules:0
 "
 
 S="${WORKDIR}/KMagMux-${PV%_r*}"
+
+src_install() {
+	ecm_src_install
+}
+
+src_install() {
+	ecm_src_install
+}
