@@ -5,24 +5,9 @@ name: app-admin/chezmoi-bin update
 permissions:
   contents: write
 
-on:
-  schedule:
-    - cron: '31 12 * * *'
-  workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/app-admin-chezmoi-bin-update.yaml'
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: false
-
+env:
   ecn: app-admin
   epn: chezmoi-bin
-  description: "Manage your dotfiles across multiple diverse machines, securely."
-  homepage: "https://www.chezmoi.io/"
-  github_owner: twpayne
-  github_repo: chezmoi
   keywords: ~amd64 ~arm ~arm64 ~ppc64 ~riscv ~s390 ~x86
   workflow_filename: app-admin-chezmoi-bin-update.yaml
   android_binary_installed_name: 'chezmoi'
@@ -52,6 +37,24 @@ concurrency:
   loong64_binary_installed_name: 'chezmoi'
   loong64_binary_archived_name_amd64: 'chezmoi'
   loong64_release_name_amd64: 'chezmoi_\${PV}_linux_loong64.tar.gz'
+  description: "Manage your dotfiles across multiple diverse machines, securely."
+  homepage: "https://www.chezmoi.io/"
+  github_owner: twpayne
+  github_repo: chezmoi
+
+on:
+  schedule:
+    - cron: '31 12 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-admin-chezmoi-bin-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+
 
 jobs:
   check-and-create-ebuild:

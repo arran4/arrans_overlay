@@ -5,6 +5,19 @@ name: app-misc/maid-appimage update
 permissions:
   contents: write
 
+env:
+  ecn: app-misc
+  epn: maid-appimage
+  keywords: ~amd64
+  workflow_filename: app-misc-maid-appimage-update.yaml
+  maid_desktop_file: 'maid.desktop'
+  maid_appimage_installed_name: 'maid.AppImage'
+  maid_release_name_amd64: 'maid.AppImage'
+  description: "Maid is a cross-platform Flutter app for interfacing with GGUF / llama.cpp models locally, and with Ollama and OpenAI models remotely."
+  homepage: ""
+  github_owner: Mobile-Artificial-Intelligence
+  github_repo: maid
+
 on:
   schedule:
     - cron: '51 6 * * *'
@@ -17,17 +30,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-misc
-  epn: maid-appimage
-  description: "Maid is a cross-platform Flutter app for interfacing with GGUF / llama.cpp models locally, and with Ollama and OpenAI models remotely."
-  homepage: ""
-  github_owner: Mobile-Artificial-Intelligence
-  github_repo: maid
-  keywords: ~amd64
-  workflow_filename: app-misc-maid-appimage-update.yaml
-  maid_desktop_file: 'maid.desktop'
-  maid_appimage_installed_name: 'maid.AppImage'
-  maid_release_name_amd64: 'maid.AppImage'
+
 
 jobs:
   check-and-create-ebuild:

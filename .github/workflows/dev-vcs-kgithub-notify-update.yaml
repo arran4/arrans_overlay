@@ -3,6 +3,16 @@ name: dev-vcs/kgithub-notify update
 permissions:
   contents: write
 
+env:
+  ecn: dev-vcs
+  epn: kgithub-notify
+  keywords: ~amd64 ~x86
+  workflow_filename: dev-vcs-kgithub-notify-update.yaml
+  description: "A sleek GitHub notification system tray application written natively in C++ using Qt6 and KDE Frameworks 6"
+  homepage: "https://github.com/arran4/kgithub-notify"
+  github_owner: arran4
+  github_repo: kgithub-notify
+
 on:
   schedule:
     - cron: '20 0 * * *'
@@ -15,14 +25,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: dev-vcs
-  epn: kgithub-notify
-  description: "A sleek GitHub notification system tray application written natively in C++ using Qt6 and KDE Frameworks 6"
-  homepage: "https://github.com/arran4/kgithub-notify"
-  github_owner: arran4
-  github_repo: kgithub-notify
-  keywords: ~amd64 ~x86
-  workflow_filename: dev-vcs-kgithub-notify-update.yaml
+
 
 jobs:
   check-and-create-ebuild:

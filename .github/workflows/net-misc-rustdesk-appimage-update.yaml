@@ -5,6 +5,20 @@ name: net-misc/rustdesk-appimage update
 permissions:
   contents: write
 
+env:
+  ecn: net-misc
+  epn: rustdesk-appimage
+  keywords: ~amd64 ~arm64
+  workflow_filename: net-misc-rustdesk-appimage-update.yaml
+  rustdesk_desktop_file: 'rustdesk.desktop'
+  rustdesk_appimage_installed_name: 'rustdesk.AppImage'
+  rustdesk_release_name_amd64: 'rustdesk-${tag}-x86_64.AppImage'
+  rustdesk_release_name_arm64: 'rustdesk-${tag}-aarch64.AppImage'
+  description: "An open-source remote desktop application designed for self-hosting, as an alternative to TeamViewer."
+  homepage: "https://rustdesk.com"
+  github_owner: rustdesk
+  github_repo: rustdesk
+
 on:
   schedule:
     - cron: '45 14 * * *'
@@ -17,18 +31,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: net-misc
-  epn: rustdesk-appimage
-  description: "An open-source remote desktop application designed for self-hosting, as an alternative to TeamViewer."
-  homepage: "https://rustdesk.com"
-  github_owner: rustdesk
-  github_repo: rustdesk
-  keywords: ~amd64 ~arm64
-  workflow_filename: net-misc-rustdesk-appimage-update.yaml
-  rustdesk_desktop_file: 'rustdesk.desktop'
-  rustdesk_appimage_installed_name: 'rustdesk.AppImage'
-  rustdesk_release_name_amd64: 'rustdesk-${tag}-x86_64.AppImage'
-  rustdesk_release_name_arm64: 'rustdesk-${tag}-aarch64.AppImage'
+
 
 jobs:
   check-and-create-ebuild:

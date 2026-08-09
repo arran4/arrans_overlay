@@ -3,6 +3,14 @@ name: app-misc/go-appimage-appimage update
 permissions:
   contents: write
 
+env:
+  ecn: app-misc
+  epn: go-appimage-appimage
+  description: " Go implementation of AppImage tools "
+  homepage: "https://github.com/probonopd/go-appimage"
+  github_owner: probonopd
+  github_repo: go-appimage
+
 on:
   schedule:
     - cron: '35 2 * * *'
@@ -15,12 +23,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-misc
-  epn: go-appimage-appimage
-  description: " Go implementation of AppImage tools "
-  homepage: "https://github.com/probonopd/go-appimage"
-  github_owner: probonopd
-  github_repo: go-appimage
 
 jobs:
   check-and-create-ebuild:

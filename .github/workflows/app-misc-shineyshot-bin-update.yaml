@@ -5,6 +5,25 @@ name: app-misc/shineyshot-bin update
 permissions:
   contents: write
 
+env:
+  ecn: app-misc
+  epn: shineyshot-bin
+  keywords: ~amd64 ~arm ~arm64 ~x86
+  workflow_filename: app-misc-shineyshot-bin-update.yaml
+  shineyshot_binary_installed_name: 'shineyshot'
+  shineyshot_binary_archived_name_amd64: 'shineyshot'
+  shineyshot_release_name_amd64: 'shineyshot_\${PV}_Linux_x86_64.tar.gz'
+  shineyshot_binary_archived_name_arm: 'shineyshot'
+  shineyshot_release_name_arm: 'shineyshot_\${PV}_Linux_armv7.tar.gz'
+  shineyshot_binary_archived_name_arm64: 'shineyshot'
+  shineyshot_release_name_arm64: 'shineyshot_\${PV}_Linux_arm64.tar.gz'
+  shineyshot_binary_archived_name_x86: 'shineyshot'
+  shineyshot_release_name_x86: 'shineyshot_\${PV}_Linux_i386.tar.gz'
+  description: "A simple screenshotting tool with several user modes"
+  homepage: "https://github.com/arran4/shineyshot"
+  github_owner: arran4
+  github_repo: shineyshot
+
 on:
   schedule:
     - cron: '22 18 * * *'
@@ -17,23 +36,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-misc
-  epn: shineyshot-bin
-  description: "A simple screenshotting tool with several user modes"
-  homepage: "https://github.com/arran4/shineyshot"
-  github_owner: arran4
-  github_repo: shineyshot
-  keywords: ~amd64 ~arm ~arm64 ~x86
-  workflow_filename: app-misc-shineyshot-bin-update.yaml
-  shineyshot_binary_installed_name: 'shineyshot'
-  shineyshot_binary_archived_name_amd64: 'shineyshot'
-  shineyshot_release_name_amd64: 'shineyshot_\${PV}_Linux_x86_64.tar.gz'
-  shineyshot_binary_archived_name_arm: 'shineyshot'
-  shineyshot_release_name_arm: 'shineyshot_\${PV}_Linux_armv7.tar.gz'
-  shineyshot_binary_archived_name_arm64: 'shineyshot'
-  shineyshot_release_name_arm64: 'shineyshot_\${PV}_Linux_arm64.tar.gz'
-  shineyshot_binary_archived_name_x86: 'shineyshot'
-  shineyshot_release_name_x86: 'shineyshot_\${PV}_Linux_i386.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

@@ -5,6 +5,19 @@ name: net-misc/localsend-appimage update
 permissions:
   contents: write
 
+env:
+  ecn: net-misc
+  epn: localsend-appimage
+  keywords: ~amd64
+  workflow_filename: net-misc-localsend-appimage-update.yaml
+  localsend_desktop_file: 'org.localsend.localsend_app.desktop'
+  localsend_appimage_installed_name: 'localsend.AppImage'
+  localsend_release_name_amd64: 'LocalSend-\${PV}-linux-x86-64.AppImage'
+  description: "An open-source cross-platform alternative to AirDrop"
+  homepage: "https://localsend.org"
+  github_owner: localsend
+  github_repo: localsend
+
 on:
   schedule:
     - cron: '49 15 * * *'
@@ -17,17 +30,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: net-misc
-  epn: localsend-appimage
-  description: "An open-source cross-platform alternative to AirDrop"
-  homepage: "https://localsend.org"
-  github_owner: localsend
-  github_repo: localsend
-  keywords: ~amd64
-  workflow_filename: net-misc-localsend-appimage-update.yaml
-  localsend_desktop_file: 'org.localsend.localsend_app.desktop'
-  localsend_appimage_installed_name: 'localsend.AppImage'
-  localsend_release_name_amd64: 'LocalSend-\${PV}-linux-x86-64.AppImage'
+
 
 jobs:
   check-and-create-ebuild:

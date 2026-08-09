@@ -5,6 +5,20 @@ name: app-misc/stability-matrix-appimage update
 permissions:
   contents: write
 
+env:
+  ecn: app-misc
+  epn: stability-matrix-appimage
+  keywords: ~amd64
+  workflow_filename: app-misc-stability-matrix-appimage-update.yaml
+  StabilityMatrix_desktop_file: 'zone.lykos.stabilitymatrix.desktop'
+  StabilityMatrix_appimage_installed_name: 'StabilityMatrix.AppImage'
+  StabilityMatrix_appimage_archived_name_amd64: 'StabilityMatrix.AppImage'
+  StabilityMatrix_release_name_amd64: 'StabilityMatrix-linux-x64.zip'
+  description: "Multi-Platform Package Manager for Stable Diffusion"
+  homepage: "https://lykos.ai"
+  github_owner: LykosAI
+  github_repo: StabilityMatrix
+
 on:
   schedule:
     - cron: '18 2 * * *'
@@ -17,18 +31,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-misc
-  epn: stability-matrix-appimage
-  description: "Multi-Platform Package Manager for Stable Diffusion"
-  homepage: "https://lykos.ai"
-  github_owner: LykosAI
-  github_repo: StabilityMatrix
-  keywords: ~amd64
-  workflow_filename: app-misc-stability-matrix-appimage-update.yaml
-  StabilityMatrix_desktop_file: 'zone.lykos.stabilitymatrix.desktop'
-  StabilityMatrix_appimage_installed_name: 'StabilityMatrix.AppImage'
-  StabilityMatrix_appimage_archived_name_amd64: 'StabilityMatrix.AppImage'
-  StabilityMatrix_release_name_amd64: 'StabilityMatrix-linux-x64.zip'
+
 
 jobs:
   check-and-create-ebuild:

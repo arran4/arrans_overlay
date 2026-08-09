@@ -5,6 +5,23 @@ name: net-misc/abc-justin-rss-bin update
 permissions:
   contents: write
 
+env:
+  ecn: net-misc
+  epn: abc-justin-rss-bin
+  keywords: ~amd64 ~arm64 ~x86
+  workflow_filename: net-misc-abc-justin-rss-bin-update.yaml
+  abcjustinrss_binary_installed_name: 'abcjustinrss'
+  abcjustinrss_binary_archived_name_amd64: 'abcjustinrss'
+  abcjustinrss_release_name_amd64: 'abcjustinrss_\${PV}_linux_amd64.tar.gz'
+  abcjustinrss_binary_archived_name_arm64: 'abcjustinrss'
+  abcjustinrss_release_name_arm64: 'abcjustinrss_\${PV}_linux_arm64.tar.gz'
+  abcjustinrss_binary_archived_name_x86: 'abcjustinrss'
+  abcjustinrss_release_name_x86: 'abcjustinrss_\${PV}_linux_386.tar.gz'
+  description: "ABC news just-in to rss converter - generated"
+  homepage: "https://github.com/arran4/abc-justin-rss"
+  github_owner: arran4
+  github_repo: abc-justin-rss
+
 on:
   schedule:
     - cron: '17 23 * * *'
@@ -17,21 +34,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: net-misc
-  epn: abc-justin-rss-bin
-  description: "ABC news just-in to rss converter - generated"
-  homepage: "https://github.com/arran4/abc-justin-rss"
-  github_owner: arran4
-  github_repo: abc-justin-rss
-  keywords: ~amd64 ~arm64 ~x86
-  workflow_filename: net-misc-abc-justin-rss-bin-update.yaml
-  abcjustinrss_binary_installed_name: 'abcjustinrss'
-  abcjustinrss_binary_archived_name_amd64: 'abcjustinrss'
-  abcjustinrss_release_name_amd64: 'abcjustinrss_\${PV}_linux_amd64.tar.gz'
-  abcjustinrss_binary_archived_name_arm64: 'abcjustinrss'
-  abcjustinrss_release_name_arm64: 'abcjustinrss_\${PV}_linux_arm64.tar.gz'
-  abcjustinrss_binary_archived_name_x86: 'abcjustinrss'
-  abcjustinrss_release_name_x86: 'abcjustinrss_\${PV}_linux_386.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

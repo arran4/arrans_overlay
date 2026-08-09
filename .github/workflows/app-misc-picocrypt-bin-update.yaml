@@ -5,6 +5,18 @@ name: app-misc/picocrypt-bin update
 permissions:
   contents: write
 
+env:
+  ecn: app-misc
+  epn: picocrypt-bin
+  keywords: ~amd64
+  workflow_filename: app-misc-picocrypt-bin-update.yaml
+  Picocrypt_binary_installed_name: 'Picocrypt'
+  Picocrypt_release_name_amd64: 'Picocrypt'
+  description: "A very small, very simple, yet very secure encryption tool."
+  homepage: ""
+  github_owner: Picocrypt
+  github_repo: Picocrypt
+
 on:
   schedule:
     - cron: '57 15 * * *'
@@ -17,16 +29,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-misc
-  epn: picocrypt-bin
-  description: "A very small, very simple, yet very secure encryption tool."
-  homepage: ""
-  github_owner: Picocrypt
-  github_repo: Picocrypt
-  keywords: ~amd64
-  workflow_filename: app-misc-picocrypt-bin-update.yaml
-  Picocrypt_binary_installed_name: 'Picocrypt'
-  Picocrypt_release_name_amd64: 'Picocrypt'
+
 
 jobs:
   check-and-create-ebuild:

@@ -5,6 +5,21 @@ name: app-misc/fq-bin update
 permissions:
   contents: write
 
+env:
+  ecn: app-misc
+  epn: fq-bin
+  keywords: ~amd64 ~arm64
+  workflow_filename: app-misc-fq-bin-update.yaml
+  fq_binary_installed_name: 'fq'
+  fq_binary_archived_name_amd64: 'fq'
+  fq_release_name_amd64: 'fq_\${PV}_linux_amd64.tar.gz'
+  fq_binary_archived_name_arm64: 'fq'
+  fq_release_name_arm64: 'fq_\${PV}_linux_arm64.tar.gz'
+  description: "jq for binary formats - tool, language and decoders for working with binary and text formats"
+  homepage: "https://github.com/wader/fq"
+  github_owner: wader
+  github_repo: fq
+
 on:
   schedule:
     - cron: '35 3 * * *'
@@ -17,19 +32,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-misc
-  epn: fq-bin
-  description: "jq for binary formats - tool, language and decoders for working with binary and text formats"
-  homepage: "https://github.com/wader/fq"
-  github_owner: wader
-  github_repo: fq
-  keywords: ~amd64 ~arm64
-  workflow_filename: app-misc-fq-bin-update.yaml
-  fq_binary_installed_name: 'fq'
-  fq_binary_archived_name_amd64: 'fq'
-  fq_release_name_amd64: 'fq_\${PV}_linux_amd64.tar.gz'
-  fq_binary_archived_name_arm64: 'fq'
-  fq_release_name_arm64: 'fq_\${PV}_linux_arm64.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

@@ -5,6 +5,23 @@ name: app-misc/dua-cli-bin update
 permissions:
   contents: write
 
+env:
+  ecn: app-misc
+  epn: dua-cli-bin
+  keywords: ~amd64 ~arm ~arm64
+  workflow_filename: app-misc-dua-cli-bin-update.yaml
+  dua_binary_installed_name: 'dua'
+  dua_binary_archived_name_amd64: 'dua-v2.29.2-x86_64-unknown-linux-musl/dua'
+  dua_release_name_amd64: 'dua-${tag}-x86_64-unknown-linux-musl.tar.gz'
+  dua_binary_archived_name_arm: 'dua-v2.29.2-arm-unknown-linux-gnueabihf/dua'
+  dua_release_name_arm: 'dua-${tag}-arm-unknown-linux-gnueabihf.tar.gz'
+  dua_binary_archived_name_arm64: 'dua-v2.29.2-aarch64-unknown-linux-musl/dua'
+  dua_release_name_arm64: 'dua-${tag}-aarch64-unknown-linux-musl.tar.gz'
+  description: "View disk space usage and delete unwanted data, fast."
+  homepage: "https://lib.rs/crates/dua-cli"
+  github_owner: Byron
+  github_repo: dua-cli
+
 on:
   schedule:
     - cron: '11 11 * * *'
@@ -17,21 +34,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-misc
-  epn: dua-cli-bin
-  description: "View disk space usage and delete unwanted data, fast."
-  homepage: "https://lib.rs/crates/dua-cli"
-  github_owner: Byron
-  github_repo: dua-cli
-  keywords: ~amd64 ~arm ~arm64
-  workflow_filename: app-misc-dua-cli-bin-update.yaml
-  dua_binary_installed_name: 'dua'
-  dua_binary_archived_name_amd64: 'dua-v2.29.2-x86_64-unknown-linux-musl/dua'
-  dua_release_name_amd64: 'dua-${tag}-x86_64-unknown-linux-musl.tar.gz'
-  dua_binary_archived_name_arm: 'dua-v2.29.2-arm-unknown-linux-gnueabihf/dua'
-  dua_release_name_arm: 'dua-${tag}-arm-unknown-linux-gnueabihf.tar.gz'
-  dua_binary_archived_name_arm64: 'dua-v2.29.2-aarch64-unknown-linux-musl/dua'
-  dua_release_name_arm64: 'dua-${tag}-aarch64-unknown-linux-musl.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

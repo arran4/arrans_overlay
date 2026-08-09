@@ -5,6 +5,19 @@ name: net-im/caprine-appimage update
 permissions:
   contents: write
 
+env:
+  ecn: net-im
+  epn: caprine-appimage
+  keywords: ~amd64
+  workflow_filename: net-im-caprine-appimage-update.yaml
+  caprine_desktop_file: 'caprine.desktop'
+  caprine_appimage_installed_name: 'caprine.AppImage'
+  caprine_release_name_amd64: 'Caprine-\${PV}.AppImage'
+  description: "Elegant Facebook Messenger desktop app"
+  homepage: "https://sindresorhus.com/caprine"
+  github_owner: sindresorhus
+  github_repo: caprine
+
 on:
   schedule:
     - cron: '18 12 * * *'
@@ -17,17 +30,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: net-im
-  epn: caprine-appimage
-  description: "Elegant Facebook Messenger desktop app"
-  homepage: "https://sindresorhus.com/caprine"
-  github_owner: sindresorhus
-  github_repo: caprine
-  keywords: ~amd64
-  workflow_filename: net-im-caprine-appimage-update.yaml
-  caprine_desktop_file: 'caprine.desktop'
-  caprine_appimage_installed_name: 'caprine.AppImage'
-  caprine_release_name_amd64: 'Caprine-\${PV}.AppImage'
+
 
 jobs:
   check-and-create-ebuild:

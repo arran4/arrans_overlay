@@ -5,6 +5,14 @@ name: app-misc/ollama-bin update
 permissions:
   contents: write
 
+env:
+  ecn: app-misc
+  epn: ollama-bin
+  description: "Get up and running with Llama 3, Mistral, Gemma, and other large language models."
+  homepage: "https://ollama.com"
+  github_owner: ollama
+  github_repo: ollama
+
 on:
   schedule:
     - cron: '45 0 * * *'
@@ -17,12 +25,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-misc
-  epn: ollama-bin
-  description: "Get up and running with Llama 3, Mistral, Gemma, and other large language models."
-  homepage: "https://ollama.com"
-  github_owner: ollama
-  github_repo: ollama
 
 jobs:
   check-and-create-ebuild:

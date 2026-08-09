@@ -5,6 +5,19 @@ name: app-misc/flutter-google-datastore-appimage update
 permissions:
   contents: write
 
+env:
+  ecn: app-misc
+  epn: flutter-google-datastore-appimage
+  keywords: ~amd64
+  workflow_filename: app-misc-flutter-google-datastore-appimage-update.yaml
+  flutter_google_datastore_desktop_file: 'flutter_google_datastore.desktop'
+  flutter_google_datastore_appimage_installed_name: 'flutter_google_datastore.AppImage'
+  flutter_google_datastore_release_name_amd64: 'flutter_google_datastore-\${PV}-linux.AppImage'
+  description: "Google Datastore and Datastore emulator client for \"easy\" modification of values"
+  homepage: "https://github.com/arran4/flutter_google_datastore"
+  github_owner: arran4
+  github_repo: flutter_google_datastore
+
 on:
   schedule:
     - cron: '48 18 * * *'
@@ -17,17 +30,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-misc
-  epn: flutter-google-datastore-appimage
-  description: "Google Datastore and Datastore emulator client for \"easy\" modification of values"
-  homepage: "https://github.com/arran4/flutter_google_datastore"
-  github_owner: arran4
-  github_repo: flutter_google_datastore
-  keywords: ~amd64
-  workflow_filename: app-misc-flutter-google-datastore-appimage-update.yaml
-  flutter_google_datastore_desktop_file: 'flutter_google_datastore.desktop'
-  flutter_google_datastore_appimage_installed_name: 'flutter_google_datastore.AppImage'
-  flutter_google_datastore_release_name_amd64: 'flutter_google_datastore-\${PV}-linux.AppImage'
+
 
 jobs:
   check-and-create-ebuild:

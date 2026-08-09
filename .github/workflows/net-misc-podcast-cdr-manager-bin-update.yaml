@@ -5,6 +5,23 @@ name: net-misc/podcast-cdr-manager-bin update
 permissions:
   contents: write
 
+env:
+  ecn: net-misc
+  epn: podcast-cdr-manager-bin
+  keywords: ~amd64 ~arm ~arm64
+  workflow_filename: net-misc-podcast-cdr-manager-bin-update.yaml
+  podcastcdrmanager_binary_installed_name: 'podcastcdrmanager'
+  podcastcdrmanager_binary_archived_name_amd64: 'podcastcdrmanager'
+  podcastcdrmanager_release_name_amd64: 'podcastcdrmanager_\${PV}_linux_amd64.tar.gz'
+  podcastcdrmanager_binary_archived_name_arm: 'podcastcdrmanager'
+  podcastcdrmanager_release_name_arm: 'podcastcdrmanager_\${PV}_linux_armv6.tar.gz'
+  podcastcdrmanager_binary_archived_name_arm64: 'podcastcdrmanager'
+  podcastcdrmanager_release_name_arm64: 'podcastcdrmanager_\${PV}_linux_arm64.tar.gz'
+  description: "CLI tool to help manage podcast subscriptions for burning to CDROMs / CDR / CDRW"
+  homepage: ""
+  github_owner: arran4
+  github_repo: podcast-cdr-manager
+
 on:
   schedule:
     - cron: '24 7 * * *'
@@ -17,21 +34,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: net-misc
-  epn: podcast-cdr-manager-bin
-  description: "CLI tool to help manage podcast subscriptions for burning to CDROMs / CDR / CDRW"
-  homepage: ""
-  github_owner: arran4
-  github_repo: podcast-cdr-manager
-  keywords: ~amd64 ~arm ~arm64
-  workflow_filename: net-misc-podcast-cdr-manager-bin-update.yaml
-  podcastcdrmanager_binary_installed_name: 'podcastcdrmanager'
-  podcastcdrmanager_binary_archived_name_amd64: 'podcastcdrmanager'
-  podcastcdrmanager_release_name_amd64: 'podcastcdrmanager_\${PV}_linux_amd64.tar.gz'
-  podcastcdrmanager_binary_archived_name_arm: 'podcastcdrmanager'
-  podcastcdrmanager_release_name_arm: 'podcastcdrmanager_\${PV}_linux_armv6.tar.gz'
-  podcastcdrmanager_binary_archived_name_arm64: 'podcastcdrmanager'
-  podcastcdrmanager_release_name_arm64: 'podcastcdrmanager_\${PV}_linux_arm64.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

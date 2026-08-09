@@ -3,6 +3,14 @@ name: app-emulation/86box-roms Update
 permissions:
   contents: write
 
+env:
+  ebuild_category: app-emulation
+  ebuild_name: 86box-roms
+  github_owner: 86Box
+  github_repo: roms
+  description: "ROMs for the 86Box emulator."
+  homepage: "https://github.com/86Box/roms/"
+
 on:
   schedule:
     - cron: '25 2 * * *'
@@ -14,13 +22,6 @@ on:
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
-
-  ebuild_category: app-emulation
-  ebuild_name: 86box-roms
-  github_owner: 86Box
-  github_repo: roms
-  description: "ROMs for the 86Box emulator."
-  homepage: "https://github.com/86Box/roms/"
 
 jobs:
   check-and-create-ebuild:

@@ -6,6 +6,21 @@ name: dev-util/codex-bin update
 permissions:
   contents: write
 
+env:
+  ecn: dev-util
+  epn: codex-bin
+  keywords: ~amd64 ~arm64
+  workflow_filename: dev-util-codex-bin-update.yaml
+  codex_binary_installed_name: 'codex'
+  codex_binary_archived_name_amd64: 'codex'
+  codex_release_name_amd64: 'codex-x86_64-unknown-linux-musl.tar.gz'
+  codex_binary_archived_name_arm64: 'codex'
+  codex_release_name_arm64: 'codex-aarch64-unknown-linux-musl.tar.gz'
+  description: "Lightweight coding agent that runs in your terminal"
+  homepage: "https://github.com/openai/codex"
+  github_owner: openai
+  github_repo: codex
+
 on:
   schedule:
     - cron: '51 8 * * *'
@@ -18,19 +33,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: dev-util
-  epn: codex-bin
-  description: "Lightweight coding agent that runs in your terminal"
-  homepage: "https://github.com/openai/codex"
-  github_owner: openai
-  github_repo: codex
-  keywords: ~amd64 ~arm64
-  workflow_filename: dev-util-codex-bin-update.yaml
-  codex_binary_installed_name: 'codex'
-  codex_binary_archived_name_amd64: 'codex'
-  codex_release_name_amd64: 'codex-x86_64-unknown-linux-musl.tar.gz'
-  codex_binary_archived_name_arm64: 'codex'
-  codex_release_name_arm64: 'codex-aarch64-unknown-linux-musl.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

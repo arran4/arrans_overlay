@@ -6,6 +6,16 @@ name: dev-util/codex update
 permissions:
   contents: write
 
+env:
+  ecn: dev-util
+  epn: codex
+  keywords: ~amd64 ~arm64
+  workflow_filename: dev-util-codex-update.yaml
+  description: "Lightweight coding agent that runs in your terminal"
+  homepage: "https://github.com/openai/codex"
+  github_owner: openai
+  github_repo: codex
+
 on:
   schedule:
     - cron: '51 8 * * *'
@@ -18,14 +28,7 @@ concurrency:
   group: ci-${{ github.ref }}-codex
   cancel-in-progress: false
 
-  ecn: dev-util
-  epn: codex
-  description: "Lightweight coding agent that runs in your terminal"
-  homepage: "https://github.com/openai/codex"
-  github_owner: openai
-  github_repo: codex
-  keywords: ~amd64 ~arm64
-  workflow_filename: dev-util-codex-update.yaml
+
 
 jobs:
   check-and-create-ebuild:

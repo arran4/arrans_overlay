@@ -5,6 +5,21 @@ name: media-sound/go-playerctl-bin update
 permissions:
   contents: write
 
+env:
+  ecn: media-sound
+  epn: go-playerctl-bin
+  keywords: ~amd64 ~arm64
+  workflow_filename: media-sound-go-playerctl-bin-update.yaml
+  go-playerctl_binary_installed_name: 'go-playerctl'
+  go-playerctl_binary_archived_name_amd64: 'goplayerctl'
+  go-playerctl_release_name_amd64: 'go-playerctl_\${PV}_linux_amd64.tar.gz'
+  go-playerctl_binary_archived_name_arm64: 'goplayerctl'
+  go-playerctl_release_name_arm64: 'go-playerctl_\${PV}_linux_arm64.tar.gz'
+  description: "mpris media player command-line controller for vlc, mpv, RhythmBox, web browsers, cmus, mpd, spotify and others"
+  homepage: "https://github.com/arran4/go-playerctl"
+  github_owner: arran4
+  github_repo: go-playerctl
+
 on:
   schedule:
     - cron: '35 20 * * *'
@@ -17,19 +32,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: media-sound
-  epn: go-playerctl-bin
-  description: "mpris media player command-line controller for vlc, mpv, RhythmBox, web browsers, cmus, mpd, spotify and others"
-  homepage: "https://github.com/arran4/go-playerctl"
-  github_owner: arran4
-  github_repo: go-playerctl
-  keywords: ~amd64 ~arm64
-  workflow_filename: media-sound-go-playerctl-bin-update.yaml
-  go-playerctl_binary_installed_name: 'go-playerctl'
-  go-playerctl_binary_archived_name_amd64: 'goplayerctl'
-  go-playerctl_release_name_amd64: 'go-playerctl_\${PV}_linux_amd64.tar.gz'
-  go-playerctl_binary_archived_name_arm64: 'goplayerctl'
-  go-playerctl_release_name_arm64: 'go-playerctl_\${PV}_linux_arm64.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

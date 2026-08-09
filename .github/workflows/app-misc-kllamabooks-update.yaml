@@ -4,6 +4,12 @@ name: app-misc/kllamabooks Update
 permissions:
   contents: write
 
+env:
+  ebuild_category: app-misc
+  ebuild_name: kllamabooks
+  github_owner: arran4
+  github_repo: kllamabooks
+
 on:
   schedule:
     - cron: '30 0 * * *'
@@ -16,11 +22,6 @@ on:
 concurrency:
   group: ci-${{ github.ref }}-kllamabooks
   cancel-in-progress: false
-
-  ebuild_category: app-misc
-  ebuild_name: kllamabooks
-  github_owner: arran4
-  github_repo: kllamabooks
 
 jobs:
   check-and-create-ebuild:

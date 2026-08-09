@@ -5,24 +5,9 @@ name: dev-go/goreleaser-bin update
 permissions:
   contents: write
 
-on:
-  schedule:
-    - cron: '45 17 * * *'
-  workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/dev-go-goreleaser-bin-update.yaml'
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: false
-
+env:
   ecn: dev-go
   epn: goreleaser-bin
-  description: "Deliver Go binaries as fast and easily as possible"
-  homepage: "https://goreleaser.com"
-  github_owner: goreleaser
-  github_repo: goreleaser
   keywords: ~amd64 ~arm ~arm64 ~ppc64 ~x86
   workflow_filename: dev-go-goreleaser-bin-update.yaml
   goreleaser_binary_installed_name: 'goreleaser'
@@ -36,6 +21,24 @@ concurrency:
   goreleaser_release_name_ppc64: 'goreleaser_Linux_ppc64.tar.gz'
   goreleaser_binary_archived_name_x86: 'goreleaser'
   goreleaser_release_name_x86: 'goreleaser_Linux_i386.tar.gz'
+  description: "Deliver Go binaries as fast and easily as possible"
+  homepage: "https://goreleaser.com"
+  github_owner: goreleaser
+  github_repo: goreleaser
+
+on:
+  schedule:
+    - cron: '45 17 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/dev-go-goreleaser-bin-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+
 
 jobs:
   check-and-create-ebuild:

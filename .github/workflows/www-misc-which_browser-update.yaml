@@ -3,6 +3,16 @@ name: www-misc/which_browser update
 permissions:
   contents: write
 
+env:
+  license: "All-rights-reserved"
+  keywords: "~amd64"
+  base_url: https://which-browser-site.pages.dev/releases
+  workflow_filename: www-misc-which_browser-update.yaml
+  ebuild_category: www-misc
+  ebuild_name: which_browser
+  description: "Which Browser? A browser selecting tool with rules to automate."
+  homepage: "https://which-browser-site.pages.dev"
+
 on:
   schedule:
     - cron: '15 12 * * *'
@@ -15,14 +25,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ebuild_category: www-misc
-  ebuild_name: which_browser
-  description: "Which Browser? A browser selecting tool with rules to automate."
-  homepage: "https://which-browser-site.pages.dev"
-  license: "All-rights-reserved"
-  keywords: "~amd64"
-  base_url: https://which-browser-site.pages.dev/releases
-  workflow_filename: www-misc-which_browser-update.yaml
 
 jobs:
   check-and-create-ebuild:

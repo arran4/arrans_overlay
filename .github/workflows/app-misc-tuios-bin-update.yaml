@@ -5,6 +5,25 @@ name: app-misc/tuios-bin update
 permissions:
   contents: write
 
+env:
+  ecn: app-misc
+  epn: tuios-bin
+  keywords: ~amd64 ~arm ~arm64 ~x86
+  workflow_filename: app-misc-tuios-bin-update.yaml
+  tuios_binary_installed_name: 'tuios'
+  tuios_binary_archived_name_amd64: 'tuios'
+  tuios_release_name_amd64: 'tuios_\${PV}_Linux_x86_64.tar.gz'
+  tuios_binary_archived_name_arm: 'tuios'
+  tuios_release_name_arm: 'tuios_\${PV}_Linux_armv7.tar.gz'
+  tuios_binary_archived_name_arm64: 'tuios'
+  tuios_release_name_arm64: 'tuios_\${PV}_Linux_arm64.tar.gz'
+  tuios_binary_archived_name_x86: 'tuios'
+  tuios_release_name_x86: 'tuios_\${PV}_Linux_i386.tar.gz'
+  description: "Terminal UI OS (Terminal Multiplexer)"
+  homepage: "https://github.com/Gaurav-Gosain/tuios"
+  github_owner: Gaurav-Gosain
+  github_repo: tuios
+
 on:
   schedule:
     - cron: '24 9 * * *'
@@ -17,23 +36,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-misc
-  epn: tuios-bin
-  description: "Terminal UI OS (Terminal Multiplexer)"
-  homepage: "https://github.com/Gaurav-Gosain/tuios"
-  github_owner: Gaurav-Gosain
-  github_repo: tuios
-  keywords: ~amd64 ~arm ~arm64 ~x86
-  workflow_filename: app-misc-tuios-bin-update.yaml
-  tuios_binary_installed_name: 'tuios'
-  tuios_binary_archived_name_amd64: 'tuios'
-  tuios_release_name_amd64: 'tuios_\${PV}_Linux_x86_64.tar.gz'
-  tuios_binary_archived_name_arm: 'tuios'
-  tuios_release_name_arm: 'tuios_\${PV}_Linux_armv7.tar.gz'
-  tuios_binary_archived_name_arm64: 'tuios'
-  tuios_release_name_arm64: 'tuios_\${PV}_Linux_arm64.tar.gz'
-  tuios_binary_archived_name_x86: 'tuios'
-  tuios_release_name_x86: 'tuios_\${PV}_Linux_i386.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

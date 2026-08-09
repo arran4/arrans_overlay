@@ -5,6 +5,21 @@ name: net-misc/termscp-bin update
 permissions:
   contents: write
 
+env:
+  ecn: net-misc
+  epn: termscp-bin
+  keywords: ~amd64 ~arm64
+  workflow_filename: net-misc-termscp-bin-update.yaml
+  termscp_binary_installed_name: 'termscp'
+  termscp_binary_archived_name_amd64: 'termscp'
+  termscp_release_name_amd64: 'termscp-${tag}-x86_64-unknown-linux-gnu.tar.gz'
+  termscp_binary_archived_name_arm64: 'termscp'
+  termscp_release_name_arm64: 'termscp-${tag}-aarch64-unknown-linux-gnu.tar.gz'
+  description: "Feature rich terminal file transfer tool"
+  homepage: "https://termscp.veeso.dev"
+  github_owner: veeso
+  github_repo: termscp
+
 on:
   schedule:
     - cron: '46 12 * * *'
@@ -17,19 +32,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: net-misc
-  epn: termscp-bin
-  description: "Feature rich terminal file transfer tool"
-  homepage: "https://termscp.veeso.dev"
-  github_owner: veeso
-  github_repo: termscp
-  keywords: ~amd64 ~arm64
-  workflow_filename: net-misc-termscp-bin-update.yaml
-  termscp_binary_installed_name: 'termscp'
-  termscp_binary_archived_name_amd64: 'termscp'
-  termscp_release_name_amd64: 'termscp-${tag}-x86_64-unknown-linux-gnu.tar.gz'
-  termscp_binary_archived_name_arm64: 'termscp'
-  termscp_release_name_arm64: 'termscp-${tag}-aarch64-unknown-linux-gnu.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

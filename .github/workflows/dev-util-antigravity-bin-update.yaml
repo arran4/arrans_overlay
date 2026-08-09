@@ -4,6 +4,13 @@ permissions:
   contents: write
   pull-requests: write
 
+env:
+  ecn: dev-util
+  epn: antigravity-bin
+  workflow_filename: dev-util-antigravity-bin-update.yaml
+  description: "Google Antigravity AI-driven IDE (binary release)"
+  homepage: "https://antigravity.google/"
+
 on:
   schedule:
     - cron: '0 0 * * *'
@@ -12,11 +19,7 @@ on:
     paths:
       - '.github/workflows/dev-util-antigravity-bin-update.yaml'
 
-  ecn: dev-util
-  epn: antigravity-bin
-  description: "Google Antigravity AI-driven IDE (binary release)"
-  homepage: "https://antigravity.google/"
-  workflow_filename: dev-util-antigravity-bin-update.yaml
+
 
 jobs:
   check-and-create-ebuild:

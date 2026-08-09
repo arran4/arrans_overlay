@@ -3,6 +3,14 @@ name: app-misc/kjules Update
 permissions:
   contents: write
 
+env:
+  ebuild_category: app-misc
+  ebuild_name: kjules
+  github_owner: arran4
+  github_repo: kjules
+  description: "kjules KDE application"
+  homepage: "https://github.com/arran4/kjules"
+
 on:
   schedule:
     - cron: '30 0 * * *'
@@ -14,13 +22,6 @@ on:
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
-
-  ebuild_category: app-misc
-  ebuild_name: kjules
-  github_owner: arran4
-  github_repo: kjules
-  description: "kjules KDE application"
-  homepage: "https://github.com/arran4/kjules"
 
 jobs:
   check-and-create-ebuild:

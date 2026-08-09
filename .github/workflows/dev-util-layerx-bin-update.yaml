@@ -5,6 +5,21 @@ name: dev-util/layerx-bin update
 permissions:
   contents: write
 
+env:
+  ecn: dev-util
+  epn: layerx-bin
+  keywords: ~amd64 ~arm64
+  workflow_filename: dev-util-layerx-bin-update.yaml
+  layerx_binary_installed_name: 'layerx'
+  layerx_binary_archived_name_amd64: 'layerx'
+  layerx_release_name_amd64: 'layerx_linux_amd64.tar.gz'
+  layerx_binary_archived_name_arm64: 'layerx'
+  layerx_release_name_arm64: 'layerx_linux_arm64.tar.gz'
+  description: "Interactive Docker image layer inspector"
+  homepage: "https://github.com/deveshctl/layerx"
+  github_owner: deveshctl
+  github_repo: layerx
+
 on:
   schedule:
     - cron: '1 11 * * *'
@@ -17,19 +32,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: dev-util
-  epn: layerx-bin
-  description: "Interactive Docker image layer inspector"
-  homepage: "https://github.com/deveshctl/layerx"
-  github_owner: deveshctl
-  github_repo: layerx
-  keywords: ~amd64 ~arm64
-  workflow_filename: dev-util-layerx-bin-update.yaml
-  layerx_binary_installed_name: 'layerx'
-  layerx_binary_archived_name_amd64: 'layerx'
-  layerx_release_name_amd64: 'layerx_linux_amd64.tar.gz'
-  layerx_binary_archived_name_arm64: 'layerx'
-  layerx_release_name_arm64: 'layerx_linux_arm64.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

@@ -3,6 +3,14 @@ name: net-misc/kmagmux Update
 permissions:
   contents: write
 
+env:
+  ebuild_category: net-misc
+  ebuild_name: kmagmux
+  github_owner: arran4
+  github_repo: KMagMux
+  description: "Torrent file and Magnet link handler for routing to programs / services."
+  homepage: "https://github.com/arran4/KMagMux"
+
 on:
   schedule:
     - cron: '30 0 * * *'
@@ -14,13 +22,6 @@ on:
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
-
-  ebuild_category: net-misc
-  ebuild_name: kmagmux
-  github_owner: arran4
-  github_repo: KMagMux
-  description: "Torrent file and Magnet link handler for routing to programs / services."
-  homepage: "https://github.com/arran4/KMagMux"
 
 jobs:
   check-and-create-ebuild:

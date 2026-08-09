@@ -5,6 +5,21 @@ name: app-admin/ejson-bin update
 permissions:
   contents: write
 
+env:
+  ecn: app-admin
+  epn: ejson-bin
+  keywords: ~amd64 ~arm64
+  workflow_filename: app-admin-ejson-bin-update.yaml
+  ejson_binary_installed_name: 'ejson'
+  ejson_binary_archived_name_amd64: 'ejson'
+  ejson_release_name_amd64: 'ejson_\${PV}_linux_amd64.tar.gz'
+  ejson_binary_archived_name_arm64: 'ejson'
+  ejson_release_name_arm64: 'ejson_\${PV}_linux_arm64.tar.gz'
+  description: "EJSON is a small library to manage encrypted secrets using asymmetric encryption."
+  homepage: "https://github.com/Shopify/ejson"
+  github_owner: Shopify
+  github_repo: ejson
+
 on:
   schedule:
     - cron: '3 9 * * *'
@@ -17,19 +32,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-admin
-  epn: ejson-bin
-  description: "EJSON is a small library to manage encrypted secrets using asymmetric encryption."
-  homepage: "https://github.com/Shopify/ejson"
-  github_owner: Shopify
-  github_repo: ejson
-  keywords: ~amd64 ~arm64
-  workflow_filename: app-admin-ejson-bin-update.yaml
-  ejson_binary_installed_name: 'ejson'
-  ejson_binary_archived_name_amd64: 'ejson'
-  ejson_release_name_amd64: 'ejson_\${PV}_linux_amd64.tar.gz'
-  ejson_binary_archived_name_arm64: 'ejson'
-  ejson_release_name_arm64: 'ejson_\${PV}_linux_arm64.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

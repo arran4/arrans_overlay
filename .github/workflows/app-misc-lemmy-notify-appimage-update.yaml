@@ -5,6 +5,19 @@ name: app-misc/lemmy-notify-appimage update
 permissions:
   contents: write
 
+env:
+  ecn: app-misc
+  epn: lemmy-notify-appimage
+  keywords: ~amd64
+  workflow_filename: app-misc-lemmy-notify-appimage-update.yaml
+  lemmy_notify_desktop_file: 'lemmy_notify.desktop'
+  lemmy_notify_appimage_installed_name: 'lemmy_notify.AppImage'
+  lemmy_notify_release_name_amd64: 'lemmy_notify-linux-x86_64.AppImage'
+  description: "Lemmy Notification app - for desktop atm"
+  homepage: ""
+  github_owner: arran4
+  github_repo: lemmy_notify
+
 on:
   schedule:
     - cron: '48 21 * * *'
@@ -17,17 +30,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-misc
-  epn: lemmy-notify-appimage
-  description: "Lemmy Notification app - for desktop atm"
-  homepage: ""
-  github_owner: arran4
-  github_repo: lemmy_notify
-  keywords: ~amd64
-  workflow_filename: app-misc-lemmy-notify-appimage-update.yaml
-  lemmy_notify_desktop_file: 'lemmy_notify.desktop'
-  lemmy_notify_appimage_installed_name: 'lemmy_notify.AppImage'
-  lemmy_notify_release_name_amd64: 'lemmy_notify-linux-x86_64.AppImage'
+
 
 jobs:
   check-and-create-ebuild:

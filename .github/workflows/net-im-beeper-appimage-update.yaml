@@ -4,6 +4,15 @@ name: net-im/beeper-appimage update
 permissions:
   contents: write
 
+env:
+  beeper_appimage_installed_name: 'beeper.AppImage'
+  ecn: net-im
+  epn: beeper-appimage
+  keywords: ~amd64
+  workflow_filename: net-im-beeper-appimage-update.yaml
+  description: "Unified chat client bridging multiple networks"
+  homepage: "https://www.beeper.com"
+
 on:
   schedule:
     - cron: '8 1 * * *'
@@ -12,13 +21,7 @@ on:
     paths:
       - '.github/workflows/net-im-beeper-appimage-update.yaml'
 
-  ecn: net-im
-  epn: beeper-appimage
-  description: "Unified chat client bridging multiple networks"
-  homepage: "https://www.beeper.com"
-  keywords: ~amd64
-  workflow_filename: net-im-beeper-appimage-update.yaml
-  beeper_appimage_installed_name: 'beeper.AppImage'
+
 
 jobs:
   fetch-latest:

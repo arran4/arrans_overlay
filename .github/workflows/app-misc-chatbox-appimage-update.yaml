@@ -5,6 +5,20 @@ name: app-misc/chatbox-appimage update
 permissions:
   contents: write
 
+env:
+  ecn: app-misc
+  epn: chatbox-appimage
+  keywords: ~amd64 ~arm64
+  workflow_filename: app-misc-chatbox-appimage-update.yaml
+  chatbox_desktop_file: 'xyz.chatboxapp.app.desktop'
+  chatbox_appimage_installed_name: 'chatbox.AppImage'
+  chatbox_release_name_amd64: 'Chatbox.CE-\${PV}-x86_64.AppImage'
+  chatbox_release_name_arm64: 'Chatbox.CE-\${PV}-arm64.AppImage'
+  description: "User-friendly Desktop Client App for AI Models/LLMs (GPT, Claude, Gemini, Ollama...)"
+  homepage: "https://chatboxai.app"
+  github_owner: Bin-Huang
+  github_repo: chatbox
+
 on:
   schedule:
     - cron: '25 12 * * *'
@@ -17,18 +31,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-misc
-  epn: chatbox-appimage
-  description: "User-friendly Desktop Client App for AI Models/LLMs (GPT, Claude, Gemini, Ollama...)"
-  homepage: "https://chatboxai.app"
-  github_owner: Bin-Huang
-  github_repo: chatbox
-  keywords: ~amd64 ~arm64
-  workflow_filename: app-misc-chatbox-appimage-update.yaml
-  chatbox_desktop_file: 'xyz.chatboxapp.app.desktop'
-  chatbox_appimage_installed_name: 'chatbox.AppImage'
-  chatbox_release_name_amd64: 'Chatbox.CE-\${PV}-x86_64.AppImage'
-  chatbox_release_name_arm64: 'Chatbox.CE-\${PV}-arm64.AppImage'
+
 
 jobs:
   check-and-create-ebuild:

@@ -5,6 +5,23 @@ name: net-im/slackdump-bin update
 permissions:
   contents: write
 
+env:
+  ecn: net-im
+  epn: slackdump-bin
+  keywords: ~amd64 ~arm64 ~x86
+  workflow_filename: net-im-slackdump-bin-update.yaml
+  binary_installed_name: 'slackdump'
+  binary_archived_name_amd64: 'slackdump'
+  release_name_amd64: 'slackdump_Linux_x86_64.tar.gz'
+  binary_archived_name_arm64: 'slackdump'
+  release_name_arm64: 'slackdump_Linux_arm64.tar.gz'
+  binary_archived_name_x86: 'slackdump'
+  release_name_x86: 'slackdump_Linux_i386.tar.gz'
+  description: "Save or export your private and public Slack messages, threads, files, and users locally without admin privileges."
+  homepage: ""
+  github_owner: rusq
+  github_repo: slackdump
+
 on:
   schedule:
     - cron: '4 16 * * *'
@@ -17,21 +34,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: net-im
-  epn: slackdump-bin
-  description: "Save or export your private and public Slack messages, threads, files, and users locally without admin privileges."
-  homepage: ""
-  github_owner: rusq
-  github_repo: slackdump
-  keywords: ~amd64 ~arm64 ~x86
-  workflow_filename: net-im-slackdump-bin-update.yaml
-  binary_installed_name: 'slackdump'
-  binary_archived_name_amd64: 'slackdump'
-  release_name_amd64: 'slackdump_Linux_x86_64.tar.gz'
-  binary_archived_name_arm64: 'slackdump'
-  release_name_arm64: 'slackdump_Linux_arm64.tar.gz'
-  binary_archived_name_x86: 'slackdump'
-  release_name_x86: 'slackdump_Linux_i386.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

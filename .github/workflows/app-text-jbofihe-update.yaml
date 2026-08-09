@@ -3,6 +3,16 @@ name: app-text/jbofi'e Update
 permissions:
   contents: write
 
+env:
+  PFN: "jbofihe"
+  EFN: "jbofihe"
+  ebuild_category: app-text
+  ebuild_name: jbofihe
+  github_owner: lojban
+  github_repo: jbofihe
+  description: "The de facto standard parser and glosser for Lojban."
+  homepage: "https://github.com/lojban/jbofihe"
+
 on:
   schedule:
     - cron: '30 0 * * *'
@@ -15,14 +25,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ebuild_category: app-text
-  ebuild_name: jbofihe
-  github_owner: lojban
-  github_repo: jbofihe
-  description: "The de facto standard parser and glosser for Lojban."
-  PFN: "jbofihe"
-  EFN: "jbofihe"
-  homepage: "https://github.com/lojban/jbofihe"
 
 jobs:
   check-and-create-ebuild:

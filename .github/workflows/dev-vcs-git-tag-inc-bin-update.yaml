@@ -5,6 +5,23 @@ name: dev-vcs/git-tag-inc-bin update
 permissions:
   contents: write
 
+env:
+  ecn: dev-vcs
+  epn: git-tag-inc-bin
+  keywords: ~amd64 ~arm ~arm64
+  workflow_filename: dev-vcs-git-tag-inc-bin-update.yaml
+  git-tag-inc_binary_installed_name: 'git-tag-inc'
+  git-tag-inc_binary_archived_name_amd64: 'git-tag-inc'
+  git-tag-inc_release_name_amd64: 'git-tag-inc_\${PV}_linux_amd64.tar.gz'
+  git-tag-inc_binary_archived_name_arm: 'git-tag-inc'
+  git-tag-inc_release_name_arm: 'git-tag-inc_\${PV}_linux_armv7.tar.gz'
+  git-tag-inc_binary_archived_name_arm64: 'git-tag-inc'
+  git-tag-inc_release_name_arm64: 'git-tag-inc_\${PV}_linux_arm64.tar.gz'
+  description: "Yet another semantic version incrementor and tagger for git"
+  homepage: ""
+  github_owner: arran4
+  github_repo: git-tag-inc
+
 on:
   schedule:
     - cron: '24 17 * * *'
@@ -17,21 +34,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: dev-vcs
-  epn: git-tag-inc-bin
-  description: "Yet another semantic version incrementor and tagger for git"
-  homepage: ""
-  github_owner: arran4
-  github_repo: git-tag-inc
-  keywords: ~amd64 ~arm ~arm64
-  workflow_filename: dev-vcs-git-tag-inc-bin-update.yaml
-  git-tag-inc_binary_installed_name: 'git-tag-inc'
-  git-tag-inc_binary_archived_name_amd64: 'git-tag-inc'
-  git-tag-inc_release_name_amd64: 'git-tag-inc_\${PV}_linux_amd64.tar.gz'
-  git-tag-inc_binary_archived_name_arm: 'git-tag-inc'
-  git-tag-inc_release_name_arm: 'git-tag-inc_\${PV}_linux_armv7.tar.gz'
-  git-tag-inc_binary_archived_name_arm64: 'git-tag-inc'
-  git-tag-inc_release_name_arm64: 'git-tag-inc_\${PV}_linux_arm64.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

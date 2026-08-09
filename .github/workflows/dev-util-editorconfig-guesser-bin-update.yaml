@@ -5,6 +5,23 @@ name: dev-util/editorconfig-guesser-bin update
 permissions:
   contents: write
 
+env:
+  ecn: dev-util
+  epn: editorconfig-guesser-bin
+  keywords: ~amd64 ~arm ~arm64
+  workflow_filename: dev-util-editorconfig-guesser-bin-update.yaml
+  binary_installed_name: 'ecguess'
+  binary_archived_name_amd64: 'ecguess'
+  release_name_amd64: 'ecguess_\${PV}_linux_amd64.tar.gz'
+  binary_archived_name_arm: 'ecguess'
+  release_name_arm: 'ecguess_\${PV}_linux_armv7.tar.gz'
+  binary_archived_name_arm64: 'ecguess'
+  release_name_arm64: 'ecguess_\${PV}_linux_arm64.tar.gz'
+  description: "Generates reasonable .editorconfig files for source files."
+  homepage: ""
+  github_owner: arran4
+  github_repo: editorconfig-guesser
+
 on:
   schedule:
     - cron: '48 10 * * *'
@@ -17,21 +34,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: dev-util
-  epn: editorconfig-guesser-bin
-  description: "Generates reasonable .editorconfig files for source files."
-  homepage: ""
-  github_owner: arran4
-  github_repo: editorconfig-guesser
-  keywords: ~amd64 ~arm ~arm64
-  workflow_filename: dev-util-editorconfig-guesser-bin-update.yaml
-  binary_installed_name: 'ecguess'
-  binary_archived_name_amd64: 'ecguess'
-  release_name_amd64: 'ecguess_\${PV}_linux_amd64.tar.gz'
-  binary_archived_name_arm: 'ecguess'
-  release_name_arm: 'ecguess_\${PV}_linux_armv7.tar.gz'
-  binary_archived_name_arm64: 'ecguess'
-  release_name_arm64: 'ecguess_\${PV}_linux_arm64.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

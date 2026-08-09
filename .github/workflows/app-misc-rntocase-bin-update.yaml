@@ -5,24 +5,9 @@ name: app-misc/rntocase-bin update
 permissions:
   contents: write
 
-on:
-  schedule:
-    - cron: '23 14 * * *'
-  workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/app-misc-rntocase-bin-update.yaml'
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: false
-
+env:
   ecn: app-misc
   epn: rntocase-bin
-  description: "Some utilities to rename files, to upper, lower, title, camel, kebab, darwin case and many more"
-  homepage: ""
-  github_owner: arran4
-  github_repo: rntocase
   keywords: ~amd64 ~arm64
   workflow_filename: app-misc-rntocase-bin-update.yaml
   rnacronym_binary_installed_name: 'rnacronym'
@@ -96,6 +81,24 @@ concurrency:
   rntrim_release_name_amd64: 'rntocase_\${PV}_linux_amd64.tar.gz'
   rntrim_binary_archived_name_arm64: 'rntrim'
   rntrim_release_name_arm64: 'rntocase_\${PV}_linux_arm64.tar.gz'
+  description: "Some utilities to rename files, to upper, lower, title, camel, kebab, darwin case and many more"
+  homepage: ""
+  github_owner: arran4
+  github_repo: rntocase
+
+on:
+  schedule:
+    - cron: '23 14 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-misc-rntocase-bin-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+
 
 jobs:
   check-and-create-ebuild:

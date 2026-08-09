@@ -5,6 +5,19 @@ name: app-admin/arrans-overlay-workflow-builder-bin update
 permissions:
   contents: write
 
+env:
+  ecn: app-admin
+  epn: arrans-overlay-workflow-builder-bin
+  keywords: ~amd64
+  workflow_filename: app-admin-arrans-overlay-workflow-builder-bin-update.yaml
+  arrans_overlay_workflow_builder_binary_installed_name: 'overlay_workflow_builder_generator'
+  arrans_overlay_workflow_builder_binary_archived_name_amd64: 'overlay_workflow_builder_generator'
+  arrans_overlay_workflow_builder_release_name_amd64: 'arrans_overlay_workflow_builder_\${PV}_linux_amd64.tar.gz'
+  description: "A gentoo overlay ebuild workflow builder generator for -bin with a special purpose handler for .appimage binary files"
+  homepage: ""
+  github_owner: arran4
+  github_repo: arrans_overlay_workflow_builder
+
 on:
   schedule:
     - cron: '36 7 * * *'
@@ -17,17 +30,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: app-admin
-  epn: arrans-overlay-workflow-builder-bin
-  description: "A gentoo overlay ebuild workflow builder generator for -bin with a special purpose handler for .appimage binary files"
-  homepage: ""
-  github_owner: arran4
-  github_repo: arrans_overlay_workflow_builder
-  keywords: ~amd64
-  workflow_filename: app-admin-arrans-overlay-workflow-builder-bin-update.yaml
-  arrans_overlay_workflow_builder_binary_installed_name: 'overlay_workflow_builder_generator'
-  arrans_overlay_workflow_builder_binary_archived_name_amd64: 'overlay_workflow_builder_generator'
-  arrans_overlay_workflow_builder_release_name_amd64: 'arrans_overlay_workflow_builder_\${PV}_linux_amd64.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:

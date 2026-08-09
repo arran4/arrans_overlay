@@ -5,6 +5,21 @@ name: dev-go/txtar-bin update
 permissions:
   contents: write
 
+env:
+  ecn: dev-go
+  epn: txtar-bin
+  keywords: ~amd64 ~arm64
+  workflow_filename: dev-go-txtar-bin-update.yaml
+  txtar_binary_installed_name: 'txtar'
+  txtar_binary_archived_name_amd64: 'txtar'
+  txtar_release_name_amd64: 'txtar_${tag}_linux_amd64.tar.gz'
+  txtar_binary_archived_name_arm64: 'txtar'
+  txtar_release_name_arm64: 'txtar_${tag}_linux_arm64.tar.gz'
+  description: "txtar enhanced and with a cli tool"
+  homepage: "https://github.com/arran4/txtar"
+  github_owner: arran4
+  github_repo: txtar
+
 on:
   schedule:
     - cron: '23 9 * * *'
@@ -17,19 +32,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
-  ecn: dev-go
-  epn: txtar-bin
-  description: "txtar enhanced and with a cli tool"
-  homepage: "https://github.com/arran4/txtar"
-  github_owner: arran4
-  github_repo: txtar
-  keywords: ~amd64 ~arm64
-  workflow_filename: dev-go-txtar-bin-update.yaml
-  txtar_binary_installed_name: 'txtar'
-  txtar_binary_archived_name_amd64: 'txtar'
-  txtar_release_name_amd64: 'txtar_${tag}_linux_amd64.tar.gz'
-  txtar_binary_archived_name_arm64: 'txtar'
-  txtar_release_name_arm64: 'txtar_${tag}_linux_arm64.tar.gz'
+
 
 jobs:
   check-and-create-ebuild:
