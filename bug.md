@@ -52,6 +52,8 @@ if [ $? -eq 0 ]; then
 ```
 
 ### For Issue 2:
+**Related Issue:** [arran4/arrans_overlay_workflow_builder#106](https://github.com/arran4/arrans_overlay_workflow_builder/issues/106)
+
 The workflow builder should respect the overlay's configuration natively. If the overlay has explicitly disabled cache generation, the workflow builder should not generate steps or enforce lint rules that rely on it.
 
 Specifically, the workflow builder should parse the repository's `metadata/layout.conf` during generation. If `cache-formats = ` (empty) or if `md5-dict` is omitted, the builder should format the `g2 lint` command appropriately to disable the `PG0802` rule.
