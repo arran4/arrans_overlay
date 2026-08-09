@@ -1,5 +1,7 @@
 # Bug Report: `g2 lint` is overly strict regarding `md5-cache` (Rule PG0802)
 
+**Related Issue:** [arran4/g2#415](https://github.com/arran4/g2/issues/415)
+
 ## Describe the Bug
 The `g2 lint` command enforces rule PG0802 (`Missing md5-cache`) by default. In many modern or lightweight Gentoo overlays, the `md5-cache` directory is not tracked in version control, and cache generation might be completely disabled or managed by standard Portage tools rather than committed.
 
