@@ -8,4 +8,7 @@
 	<upstream>
 		<remote-id type="github">arran4/KMagMux</remote-id>
 	</upstream>
+	<use>
+		<flag name="debug">Enable debug output</flag>
+	</use>
 </pkgmetadata>
