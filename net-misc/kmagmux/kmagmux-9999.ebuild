@@ -15,7 +15,7 @@ KEYWORDS=""
 IUSE="debug"
 
 DEPEND="
-	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]
+	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent,test]
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kxmlgui:6
