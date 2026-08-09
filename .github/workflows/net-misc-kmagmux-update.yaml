@@ -87,6 +87,12 @@ jobs:
                 echo '	kde-frameworks/kcoreaddons:6'
                 echo '	kde-frameworks/ki18n:6'
                 echo '	kde-frameworks/kxmlgui:6'
+                echo '	kde-plasma/plasma-workspace:6'
+                echo '	kde-frameworks/kio:6'
+                echo '	kde-frameworks/knotifications:6'
+                echo '	kde-plasma/plasma-workspace:6'
+                echo '	kde-frameworks/kio:6'
+                echo '	kde-frameworks/knotifications:6'
                 echo '"'
                 echo 'RDEPEND="${DEPEND}"'
                 echo 'BDEPEND="'
@@ -95,6 +101,14 @@ jobs:
                 echo '"'
                 echo ""
                 echo 'S="${WORKDIR}/${{env.github_repo}}-${PV%_r*}"'
+                echo ''
+                echo 'src_install() {'
+                echo '	ecm_src_install'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '	ecm_src_install'
+                echo '}'
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild

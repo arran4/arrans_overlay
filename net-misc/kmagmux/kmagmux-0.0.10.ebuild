@@ -21,6 +21,12 @@ DEPEND="
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kxmlgui:6
+	kde-plasma/plasma-workspace:6
+	kde-frameworks/kio:6
+	kde-frameworks/knotifications:6
+	kde-plasma/plasma-workspace:6
+	kde-frameworks/kio:6
+	kde-frameworks/knotifications:6
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
@@ -29,3 +35,7 @@ BDEPEND="
 "
 
 S="${WORKDIR}/KMagMux-${PV%_r*}"
+
+src_install() {
+	ecm_src_install
+}

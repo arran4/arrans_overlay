@@ -19,6 +19,12 @@ DEPEND="
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kxmlgui:6
+	kde-plasma/plasma-workspace:6
+	kde-frameworks/kio:6
+	kde-frameworks/knotifications:6
+	kde-plasma/plasma-workspace:6
+	kde-frameworks/kio:6
+	kde-frameworks/knotifications:6
 	kde-frameworks/kwallet:6
 "
 RDEPEND="${DEPEND}"
@@ -27,3 +33,7 @@ BDEPEND="
 	virtual/pkgconfig
 	kde-frameworks/extra-cmake-modules:0
 "
+
+src_install() {
+	ecm_src_install
+}
