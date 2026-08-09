@@ -153,20 +153,24 @@ jobs:
           echo "overlay_name" > profiles/repo_name
           echo "8" > profiles/eapi
 
+      - name: Cache Generation
+        run: |
+          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p metadata/md5-cache
+          cp -r metadata/md5-dict/* metadata/md5-cache/ || true
+
       - name: Lint output
         uses: arran4/g2-action@v1.2
         with:
           mode: 'run'
-          action: 'lint ${{ env.ecn }}/${{ env.epn }}'
-        if: steps.process_releases.outputs.generated_tag
+          action: 'lint . ${{ env.ecn }}/${{ env.epn }}'
+
 
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
           git add "./${ebuild_dir}"
           if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
             git pull --rebase &&
             git push
           fi || true
-        if: steps.process_releases.outputs.generated_tag
