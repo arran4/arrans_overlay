@@ -3,23 +3,24 @@
 
 EAPI=8
 
-inherit ecm git-r3
+KFMIN=6.0.0
+QTMIN=6.6.2
+inherit ecm
 
 DESCRIPTION="Torrent file and Magnet link handler for routing to programs / services."
 HOMEPAGE="https://github.com/arran4/KMagMux"
-EGIT_REPO_URI="https://github.com/arran4/KMagMux.git"
+SRC_URI="https://github.com/arran4/KMagMux/archive/refs/tags/v${PV%_r*}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-3.0-or-later"
 SLOT="0"
-KEYWORDS=""
 IUSE="debug"
-
+KEYWORDS="~amd64"
 DEPEND="
+	kde-frameworks/kwallet:6
 	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent,test]
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kxmlgui:6
-	kde-frameworks/kwallet:6
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
@@ -27,3 +28,5 @@ BDEPEND="
 	virtual/pkgconfig
 	kde-frameworks/extra-cmake-modules:0
 "
+
+S="${WORKDIR}/KMagMux-${PV%_r*}"
