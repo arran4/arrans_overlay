@@ -8,3 +8,5 @@ site_out
 /g2*
 *.onnx
 Makefile
+actionlint
+xtensa-esp-elf-bin-15.2.0_p20251204.tar.xz
