@@ -1,0 +1,18 @@
+Title: Migration of lemmy-notify-appimage to net-im category
+Author: Arran <gentoo@arran4.com>
+Author: Jules <gentoo@arran4.com>
+Posted: 2024-08-10
+Revision: 1
+News-Item-Format: 2.0
+Display-If-Installed: app-misc/lemmy-notify-appimage
+
+The lemmy-notify-appimage package has been migrated from the `app-misc` category to the `net-im` category to better reflect its function as an instant messaging notification application.
+
+The duplicate package in `app-misc` has been completely removed from this overlay, and updates will no longer be provided under that category.
+
+If you have the package installed from `app-misc/lemmy-notify-appimage`, please update your system to use the new category path: `net-im/lemmy-notify-appimage`.
+
+Example migration command:
+emerge --deselect app-misc/lemmy-notify-appimage
+emerge --ask net-im/lemmy-notify-appimage
+emerge --depclean app-misc/lemmy-notify-appimage
