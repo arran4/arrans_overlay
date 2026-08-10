@@ -71,23 +71,17 @@ src_compile() {
 }
 
 src_install() {
-	dodir /usr/share/esp-idf
-	cp -a . "${ED}/usr/share/esp-idf/" || die
-	chmod +x "${ED}/usr/share/esp-idf/tools/idf.py" || die
+	insinto /usr/share/esp-idf
+	doins -r .
+
+	fperms +x /usr/share/esp-idf/tools/idf.py
 
 	# Provide an idf.py wrapper
 	newbin "${FILESDIR}/idf.py" idf.py
 
 	# Provide a sourcable export.sh
-	cat > "${ED}/usr/share/esp-idf/export.sh" <<-EOF
-		export IDF_PATH="/usr/share/esp-idf"
-		export ESP_ROM_ELF_DIR="/usr/share/esp-rom-elfs"
-		export OPENOCD_SCRIPTS="/opt/openocd-esp32/share/openocd/scripts"
-		export IDF_PYTHON_ENV_PATH="/usr"
-		export IDF_TOOLS_PATH="/usr/share/esp-idf"
-		export IDF_VIRTUAL_ENV_DISABLED="1"
-		export PATH="/usr/share/esp-idf/tools:/opt/openocd-esp32/bin:\$PATH"
-	EOF
+	insinto /usr/share/esp-idf
+	doins "${FILESDIR}/export.sh"
 }
 
 pkg_postinst() {
