@@ -1,0 +1,26 @@
+Title: Migration to Flatpak for RustDesk, Caprine, LocalSend, and Picocrypt
+Author: Arran <gentoo@arran4.com>
+Author: Jules <gentoo@arran4.com>
+Posted: 2026-08-10
+Revision: 2
+News-Item-Format: 2.0
+Display-If-Installed: net-misc/rustdesk-appimage
+Display-If-Installed: net-im/caprine-appimage
+Display-If-Installed: net-misc/localsend-appimage
+Display-If-Installed: app-misc/picocrypt-bin
+
+I am migrating RustDesk, Caprine, LocalSend, and Picocrypt from ebuild to flatpak installed version and as a result will no longer be updating ebuilds for them.
+The list of affected applications being removed from this overlay:
+- RustDesk
+- Caprine
+- LocalSend
+- Picocrypt
+
+These applications have valid flatpaks in the main flatpak repo (Flathub). You can search for flatpaks using `flatpak search <name>`.
+Example installation commands:
+flatpak install flathub com.rustdesk.RustDesk
+flatpak install flathub com.sindresorhus.Caprine
+flatpak install flathub org.localsend.localsend_app
+flatpak install flathub io.github.picocrypt.Picocrypt
+
+If you'd like to continue using ebuilds, you can take the workflows and config from the git history of this overlay and put them in your own overlay to continue support. Alternatively, you can log an issue on the arrans_overlay repo for assistance or requests.
