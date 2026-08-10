@@ -73,21 +73,25 @@ src_compile() {
 src_install() {
 	dodir /usr/share/esp-idf
 	cp -a . "${ED}/usr/share/esp-idf/" || die
+	chmod +x "${ED}/usr/share/esp-idf/tools/idf.py" || die
 
 	# Provide an idf.py wrapper
 	newbin "${FILESDIR}/idf.py" idf.py
 
-	# Provide env.d file
-	cat > "${T}/99esp-idf" <<-EOENV
-		IDF_PATH="/usr/share/esp-idf"
-		ESP_ROM_ELF_DIR="/usr/share/esp-rom-elfs"
-		OPENOCD_SCRIPTS="/opt/openocd-esp32/share/openocd/scripts"
-		IDF_PYTHON_ENV_PATH="/usr"
-		IDF_TOOLS_PATH="/usr/share/esp-idf"
-	EOENV
-	doenvd "${T}/99esp-idf"
+	# Provide a sourcable export.sh
+	cat > "${ED}/usr/share/esp-idf/export.sh" <<-EOF
+		export IDF_PATH="/usr/share/esp-idf"
+		export ESP_ROM_ELF_DIR="/usr/share/esp-rom-elfs"
+		export OPENOCD_SCRIPTS="/opt/openocd-esp32/share/openocd/scripts"
+		export IDF_PYTHON_ENV_PATH="/usr"
+		export IDF_TOOLS_PATH="/usr/share/esp-idf"
+		export IDF_VIRTUAL_ENV_DISABLED="1"
+		export PATH="/usr/share/esp-idf/tools:/opt/openocd-esp32/bin:\$PATH"
+	EOF
 }
 
 pkg_postinst() {
     elog "ESP-IDF openocd is available in PATH for esp-idf, or via /opt/openocd-esp32/bin/openocd."
+    elog "To use ESP-IDF, source the environment script:"
+    elog "  source /usr/share/esp-idf/export.sh"
 }
