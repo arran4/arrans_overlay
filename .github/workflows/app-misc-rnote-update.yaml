@@ -1,0 +1,50 @@
+name: Check and Update app-misc/rnote
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-rnote:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+      - name: Check for updates
+        id: check_update
+        run: |
+          latest_tag=$(curl -sL https://api.github.com/repos/flxzt/rnote/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+          if [ -z "$latest_tag" ] || [ "$latest_tag" == "null" ]; then
+            echo "Could not fetch latest release tag"
+            false
+          fi
+          current_version=$(find app-misc/rnote -name "rnote-*.ebuild" 2>/dev/null | sed -E 's/.*rnote-(.+)\.ebuild/\1/' | head -n 1)
+          echo "Latest tag: $latest_tag"
+          echo "Current version: $current_version"
+          if [ "$latest_tag" != "$current_version" ]; then
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+            echo "latest_version=$latest_tag" >> $GITHUB_OUTPUT
+            echo "current_version=$current_version" >> $GITHUB_OUTPUT
+          else
+            echo "update_needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update ebuild
+        if: steps.check_update.outputs.update_needed == 'true'
+        run: |
+          latest_version=${{ steps.check_update.outputs.latest_version }}
+          current_version=${{ steps.check_update.outputs.current_version }}
+          git mv app-misc/rnote/rnote-${current_version}.ebuild app-misc/rnote/rnote-${latest_version}.ebuild
+          url="https://github.com/flxzt/rnote/releases/download/v${latest_version}/rnote-${latest_version}.tar.xz"
+          filename="rnote-${latest_version}.tar.xz"
+          manifest_path="app-misc/rnote/Manifest"
+          g2 manifest upsert-from-url "$url" "$filename" "$manifest_path"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add app-misc/rnote/
+          git commit -m "Bump app-misc/rnote to ${latest_version}"
+          git push
