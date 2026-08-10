@@ -71,3 +71,6 @@ To keep the overlay clean, we follow a **"One Version Per Grade"** policy.
 
 *   When removing entire ebuilds and workflows or making major changes to the repository or how things work, you must add arrans_overlay news.
 *   This news must be clearly authored from me and/or +ai.
+
+## 8. Package Migration
+* When removing an ebuild because it is moving to another category, create a news article instructing users to migrate to the new category path. Use the `metadata/news/` directory and format it according to GLEP 42 (News-Item-Format: 2.0).
