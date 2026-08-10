@@ -15,6 +15,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ebuild_category: www-misc
   ebuild_name: which_browser
   description: "Which Browser? A browser selecting tool with rules to automate."

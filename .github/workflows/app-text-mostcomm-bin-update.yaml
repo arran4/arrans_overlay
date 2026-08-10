@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: app-text
   epn: mostcomm-bin
   description: "A cli utility for finding the most common and sorting by length, lines-sets in a text file"

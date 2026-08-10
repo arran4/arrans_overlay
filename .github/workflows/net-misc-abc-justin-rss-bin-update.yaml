@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: net-misc
   epn: abc-justin-rss-bin
   description: "ABC news just-in to rss converter - generated"

@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: app-admin
   epn: g2-bin
   description: "g2 Gentoo Tools"

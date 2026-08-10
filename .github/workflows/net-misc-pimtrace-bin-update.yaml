@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: net-misc
   epn: pimtrace-bin
   description: "A CLI tool for preforming queries on ical and csv files"

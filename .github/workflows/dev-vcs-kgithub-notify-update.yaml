@@ -15,6 +15,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: dev-vcs
   epn: kgithub-notify
   description: "A sleek GitHub notification system tray application written natively in C++ using Qt6 and KDE Frameworks 6"

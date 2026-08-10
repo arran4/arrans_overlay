@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: app-misc
   epn: shineyshot-bin
   description: "A simple screenshotting tool with several user modes"

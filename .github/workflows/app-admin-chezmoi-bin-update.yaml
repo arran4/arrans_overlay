@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: app-admin
   epn: chezmoi-bin
   description: "Manage your dotfiles across multiple diverse machines, securely."

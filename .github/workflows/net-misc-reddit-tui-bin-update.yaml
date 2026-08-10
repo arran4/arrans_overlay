@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: net-misc
   epn: reddit-tui-bin
   description: "A lightweight terminal application for browsing Reddit from your command line."

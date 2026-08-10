@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: sys-apps
   epn: lxa-bin
   description: "A Linux-first file listing and inspection tool focused on extended attributes"

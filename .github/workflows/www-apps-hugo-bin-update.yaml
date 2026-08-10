@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: www-apps
   epn: hugo-bin
   description: "The world’s fastest framework for building websites."

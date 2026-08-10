@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: net-im
   epn: lemmy-notify-appimage
   description: "Lemmy Notification app - for desktop atm"

@@ -12,6 +12,7 @@ on:
     paths:
       - '.github/workflows/net-im-beeper-appimage-update.yaml'
 
+env:
   ecn: net-im
   epn: beeper-appimage
   description: "Unified chat client bridging multiple networks"

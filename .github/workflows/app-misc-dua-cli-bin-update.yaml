@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: app-misc
   epn: dua-cli-bin
   description: "View disk space usage and delete unwanted data, fast."

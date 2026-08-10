@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: app-misc
   epn: flutter-google-datastore-appimage
   description: "Google Datastore and Datastore emulator client for \"easy\" modification of values"
