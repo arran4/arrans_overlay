@@ -21,12 +21,13 @@ jobs:
             echo "Failed to get latest version"
             exit 1
           fi
-          wget "https://github.com/arran4/arrans_overlay_workflow_builder/releases/download/${LATEST_VERSION}/arrans_overlay_workflow_builder_${LATEST_VERSION}_linux_amd64.tar.gz"
-          tar -xzf "arrans_overlay_workflow_builder_${LATEST_VERSION}_linux_amd64.tar.gz" overlay_workflow_builder_generator
+          VERSION_NUM=${LATEST_VERSION#v}
+          wget "https://github.com/arran4/arrans_overlay_workflow_builder/releases/download/${LATEST_VERSION}/arrans_overlay_workflow_builder_${VERSION_NUM}_linux_amd64.tar.gz"
+          tar -xzf "arrans_overlay_workflow_builder_${VERSION_NUM}_linux_amd64.tar.gz" overlay_workflow_builder_generator
           chmod +x overlay_workflow_builder_generator
           ./overlay_workflow_builder_generator
           rm overlay_workflow_builder_generator
-          rm "arrans_overlay_workflow_builder_${LATEST_VERSION}_linux_amd64.tar.gz"
+          rm "arrans_overlay_workflow_builder_${VERSION_NUM}_linux_amd64.tar.gz"
 
       - name: Discard non-substantive changes
         run: |

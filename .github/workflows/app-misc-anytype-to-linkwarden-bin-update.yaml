@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: app-misc
   epn: anytype-to-linkwarden-bin
   description: "Simple application for migrating AnyType bookmarks to Linkwarden"

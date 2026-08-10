@@ -12,6 +12,7 @@ on:
     paths:
       - '.github/workflows/dev-util-antigravity-bin-update.yaml'
 
+env:
   ecn: dev-util
   epn: antigravity-bin
   description: "Google Antigravity AI-driven IDE (binary release)"

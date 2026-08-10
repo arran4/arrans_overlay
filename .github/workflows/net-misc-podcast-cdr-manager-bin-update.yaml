@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: net-misc
   epn: podcast-cdr-manager-bin
   description: "CLI tool to help manage podcast subscriptions for burning to CDROMs / CDR / CDRW"

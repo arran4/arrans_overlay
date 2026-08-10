@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}-kllamabooks
   cancel-in-progress: false
 
+env:
   ebuild_category: app-misc
   ebuild_name: kllamabooks
   github_owner: arran4

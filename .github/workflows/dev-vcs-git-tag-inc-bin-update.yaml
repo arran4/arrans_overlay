@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: dev-vcs
   epn: git-tag-inc-bin
   description: "Yet another semantic version incrementor and tagger for git"

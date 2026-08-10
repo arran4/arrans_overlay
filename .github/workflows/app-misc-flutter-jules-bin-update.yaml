@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: app-misc
   epn: flutter-jules-bin
   description: "A comprehensive Flutter-based client application for interacting with the Google Jules API."

@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: dev-go
   epn: txtar-bin
   description: "txtar enhanced and with a cli tool"

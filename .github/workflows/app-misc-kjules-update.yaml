@@ -15,6 +15,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ebuild_category: app-misc
   ebuild_name: kjules
   github_owner: arran4

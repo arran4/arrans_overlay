@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: dev-util
   epn: layerx-bin
   description: "Interactive Docker image layer inspector"

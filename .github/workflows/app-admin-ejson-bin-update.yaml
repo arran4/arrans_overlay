@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: app-admin
   epn: ejson-bin
   description: "EJSON is a small library to manage encrypted secrets using asymmetric encryption."

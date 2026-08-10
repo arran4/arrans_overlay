@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: dev-go
   epn: goreleaser-bin
   description: "Deliver Go binaries as fast and easily as possible"

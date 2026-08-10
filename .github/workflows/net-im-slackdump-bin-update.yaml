@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: net-im
   epn: slackdump-bin
   description: "Save or export your private and public Slack messages, threads, files, and users locally without admin privileges."

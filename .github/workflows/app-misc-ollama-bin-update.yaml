@@ -17,6 +17,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: false
 
+env:
   ecn: app-misc
   epn: ollama-bin
   description: "Get up and running with Llama 3, Mistral, Gemma, and other large language models."
