@@ -64,6 +64,7 @@ jobs:
           echo "version=$version" >> "$GITHUB_ENV"
 
       - name: Update ebuild
+        id: update_ebuild
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
@@ -118,4 +119,4 @@ jobs:
             git pull --rebase &&
             git push
           fi || true
-        if: steps.find_appimage.outputs.version
+        if: steps.update_ebuild.outputs.generated_tag
