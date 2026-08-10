@@ -1,7 +1,7 @@
 # Copyright 1999-2023 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-# Latest version found here: https://github.com/corretto/corretto-24/releases
+# Latest version found here: https://github.com/corretto/corretto-25/releases
 
 EAPI=8
 
@@ -17,7 +17,7 @@ SRC_URI="
 
 S="${WORKDIR}/amazon-corretto-${MY_PV}-linux-x64"
 LICENSE="GPL-2-with-classpath-exception"
-SLOT="24"
+SLOT="25"
 KEYWORDS="~amd64"
 IUSE="alsa cups headless-awt selinux source"
 
