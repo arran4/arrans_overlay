@@ -7,3 +7,6 @@ This caused the workflow files to fail validation with "Unexpected value" errors
 I verified this by downloading the latest version of `arrans_overlay_workflow_builder_generator` (v0.1.37) and regenerating the workflows using `current.config`. The output still produced workflows with stray variables (such as `ecn: dev-lang`, `epn: dart-bin`) indented incorrectly under `concurrency:` block or hanging loosely without an `env:` block.
 
 Additionally, some types are not correctly supported or have case sensitivity issues. For example, `github-appimage` in `current.config` fails with `uknown type: github-appimage`, while `Github AppImage Release` works.
+
+
+Related issue: https://github.com/arran4/arrans_overlay_workflow_builder/issues/103
