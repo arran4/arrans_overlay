@@ -1,0 +1,15 @@
+Title: Removal of app-misc/fq-bin in favor of dev-util/fq
+Author: Arran <gentoo@arran4.com>
+Author: Jules <gentoo@arran4.com>
+Posted: 2024-08-10
+Revision: 1
+News-Item-Format: 2.0
+Display-If-Installed: app-misc/fq-bin
+
+The `app-misc/fq-bin` package has been removed from this overlay because an equivalent package, `dev-util/fq`, is now available in the main Gentoo tree. The main tree version tracks the same upstream releases (including 0.17.0), so maintaining the binary package here is no longer necessary.
+
+Please migrate your installation to the main tree package:
+
+emerge --deselect app-misc/fq-bin
+emerge --ask dev-util/fq
+emerge --depclean app-misc/fq-bin
