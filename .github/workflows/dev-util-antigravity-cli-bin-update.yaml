@@ -150,6 +150,8 @@ jobs:
           echo "overlay_name" > profiles/repo_name
           echo "8" > profiles/eapi
           g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p metadata/md5-cache
+          cp -r metadata/md5-dict/* metadata/md5-cache/ || true
 
       - name: Lint output
         uses: arran4/g2-action@v1.2
