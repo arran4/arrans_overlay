@@ -149,6 +149,7 @@ jobs:
           mkdir -p profiles
           echo "overlay_name" > profiles/repo_name
           echo "8" > profiles/eapi
+          g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
 
       - name: Lint output
         uses: arran4/g2-action@v1.2
@@ -160,7 +161,7 @@ jobs:
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi
           git add "./${ebuild_dir}"
           if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
             git pull --rebase &&
