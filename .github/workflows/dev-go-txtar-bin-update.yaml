@@ -166,6 +166,7 @@ jobs:
         with:
           mode: 'run'
           action: 'lint . ${{ env.ecn }}/${{ env.epn }}'
+        if: steps.process_releases.outputs.generated_tag
 
       - name: Commit and push changes
         run: |
