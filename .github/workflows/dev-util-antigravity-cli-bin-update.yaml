@@ -59,10 +59,6 @@ jobs:
           # shellcheck disable=SC2086
           for tag in $tags; do
             version="${tag#v}"
-            if [ "${version}" = "${tag}" ]; then
-                echo "$version == $tag so there is no v removed skipping"
-                continue
-            fi
             # shellcheck disable=SC2034
             originalVersion="${version}"
             if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
@@ -89,8 +85,8 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/agy_cli_linux_x64.tar.gz -> \${P}-agy_cli_linux_x64.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/agy_cli_linux_arm64.tar.gz -> \${P}-agy_cli_linux_arm64.tar.gz  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/\${PV}/agy_cli_linux_x64.tar.gz -> \${P}-agy_cli_linux_x64.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/\${PV}/agy_cli_linux_arm64.tar.gz -> \${P}-agy_cli_linux_arm64.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="Apache-2.0"'
                 echo 'SLOT="0"'
@@ -153,6 +149,9 @@ jobs:
           mkdir -p profiles
           echo "overlay_name" > profiles/repo_name
           echo "8" > profiles/eapi
+          g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p metadata/md5-cache
+          cp -r metadata/md5-dict/* metadata/md5-cache/ || true
 
       - name: Lint output
         uses: arran4/g2-action@v1.2
@@ -164,7 +163,7 @@ jobs:
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi
           git add "./${ebuild_dir}"
           if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
             git pull --rebase &&
