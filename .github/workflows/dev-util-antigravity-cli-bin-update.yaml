@@ -61,10 +61,10 @@ jobs:
             version="${tag#v}"
             # shellcheck disable=SC2034
             originalVersion="${version}"
-            if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
-                echo "tag / $version doesn't match regexp";
-                continue;
-            fi
+            #if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                #echo "tag / $version doesn't match regexp";
+                #continue;
+            #fi
             releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
             if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
                 if [[ -v releaseTypes[release] ]]; then
