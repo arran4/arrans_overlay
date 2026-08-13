@@ -26,7 +26,7 @@ env:
   github_repo: antigravity-cli
   keywords: ~amd64 ~arm64
   workflow_filename: dev-util-antigravity-cli-bin-update.yaml
-  antigravity_binary_installed_name: 'antigravity'
+  antigravity_binary_installed_name: 'agy'
   antigravity_binary_archived_name_amd64: 'antigravity'
   antigravity_release_name_amd64: 'agy_cli_linux_x64.tar.gz'
   antigravity_binary_archived_name_arm64: 'antigravity'
