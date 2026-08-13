@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.39 Github Binary Release current.config 2026-08-13 09:21:15.269769781 +0000 UTC m=+0.006636584
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.39 Github Binary Release current.config 2026-08-13 10:17:27.544184187 +0000 UTC m=+0.007535417
 
 name: dev-util/antigravity-cli-bin update
 
@@ -23,9 +23,9 @@ env:
   keywords: ~amd64 ~arm64
   workflow_filename: dev-util-antigravity-cli-bin-update.yaml
   agy_binary_installed_name: 'agy'
-  agy_binary_archived_name_amd64: 'antigravity'
+  agy_binary_archived_name_amd64: 'agy'
   agy_release_name_amd64: 'agy_cli_linux_x64.tar.gz'
-  agy_binary_archived_name_arm64: 'antigravity'
+  agy_binary_archived_name_arm64: 'agy'
   agy_release_name_arm64: 'agy_cli_linux_arm64.tar.gz'
 
 concurrency:
