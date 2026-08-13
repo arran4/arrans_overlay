@@ -55,7 +55,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
-          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:arran4/abc-justin-rss" --use-add "amd64:Enable amd64" --use-add "arm64:Enable arm64" --use-add "x86:Enable x86" "$metadata_file"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:arran4/abc-justin-rss" --use-add "amd64:Enable amd64" --use-add "arm64:Enable arm64" --use-add "x86:Enable x86" --use-add "doc:Add documentation" "$metadata_file"
           declare -A releaseTypes=()
           tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
@@ -166,8 +166,11 @@ jobs:
       - name: Generate Overlay
         run: |
           mkdir -p profiles
-          echo "overlay_name" > profiles/repo_name
-          echo "8" > profiles/eapi
+          [ ! -f profiles/repo_name ] && echo "overlay_name" > profiles/repo_name || true
+          [ ! -f profiles/eapi ] && echo "8" > profiles/eapi || true
+          g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p metadata/md5-cache
+          cp -r metadata/md5-dict/* metadata/md5-cache/ || true
 
       - name: Lint output
         uses: arran4/g2-action@v1.2
