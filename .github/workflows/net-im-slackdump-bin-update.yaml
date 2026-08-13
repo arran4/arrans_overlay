@@ -162,8 +162,8 @@ jobs:
       - name: Generate Overlay
         run: |
           mkdir -p profiles
-          [ ! -f profiles/repo_name ] && echo "overlay_name" > profiles/repo_name
-          [ ! -f profiles/eapi ] && echo "8" > profiles/eapi
+          [ ! -f profiles/repo_name ] && echo "overlay_name" > profiles/repo_name || true
+          [ ! -f profiles/eapi ] && echo "8" > profiles/eapi || true
 
       - name: Lint output
         uses: arran4/g2-action@v1.2
