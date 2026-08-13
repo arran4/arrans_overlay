@@ -77,7 +77,8 @@ jobs:
           EOF
           fi
           ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-          if [ ! -f "$ebuild_file" ]; then
+          if [ ! -f "$ebuild_file" ] &&
+             ! compgen -G "${ebuild_dir}/${{ env.epn }}-${version}-r[0-9]*.ebuild" > /dev/null; then
             # shellcheck disable=SC2016
             {
               echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
@@ -92,16 +93,16 @@ jobs:
               echo 'RDEPEND=""'
               echo 'S="${WORKDIR}"'
               echo 'RESTRICT="strip"'
-              echo "SRC_URI=\"${appimage_url} -> \\${P}.${appimage_extension}\""
+              printf 'SRC_URI="%s -> ${P}.%s"\n' "$appimage_url" "$appimage_extension"
 
               echo ''
               echo 'src_install() {'
-              echo '  cp "${DISTDIR}/${P}.${appimage_extension}" "${P}.${appimage_extension}" || die "Failed to copy AppImage"'
-              echo '  chmod a+x "${P}.${appimage_extension}" || die "Can'"'"'t chmod archive file"'
+              printf '  cp "${DISTDIR}/${P}.%s" "${P}.%s" || die "Failed to copy AppImage"\n' "$appimage_extension" "$appimage_extension"
+              printf '  chmod a+x "${P}.%s" || die "Can'"'"'t chmod archive file"\n' "$appimage_extension"
 
               echo '  exeinto /opt/bin'
 
-              echo '  newexe "${P}.${appimage_extension}" "${{ env.beeper_appimage_installed_name }}" || die "Failed to install AppImage"'
+              printf '  newexe "${P}.%s" "${{ env.beeper_appimage_installed_name }}" || die "Failed to install AppImage"\n' "$appimage_extension"
 
               echo '}'
 
