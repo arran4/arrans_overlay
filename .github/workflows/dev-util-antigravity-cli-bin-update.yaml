@@ -147,8 +147,8 @@ jobs:
       - name: Generate Overlay
         run: |
           mkdir -p profiles
-          echo "overlay_name" > profiles/repo_name
-          echo "8" > profiles/eapi
+          [ ! -f profiles/repo_name ] && echo "overlay_name" > profiles/repo_name || true
+          [ ! -f profiles/eapi ] && echo "8" > profiles/eapi || true
           g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
           mkdir -p metadata/md5-cache
           cp -r metadata/md5-dict/* metadata/md5-cache/ || true
