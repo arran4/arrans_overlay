@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.31 Github AppImage Release current.config 2026-07-30 09:04:19.177157275 +0000 UTC m=+0.006149846
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.39 Github AppImage Release current.config 2026-08-13 09:21:15.269769781 +0000 UTC m=+0.006636584
 
 name: app-misc/flutter-google-datastore-appimage update
 
@@ -13,10 +13,6 @@ on:
     paths:
       - '.github/workflows/app-misc-flutter-google-datastore-appimage-update.yaml'
 
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: false
-
 env:
   ecn: app-misc
   epn: flutter-google-datastore-appimage
@@ -28,14 +24,18 @@ env:
   workflow_filename: app-misc-flutter-google-datastore-appimage-update.yaml
   flutter_google_datastore_desktop_file: 'flutter_google_datastore.desktop'
   flutter_google_datastore_appimage_installed_name: 'flutter_google_datastore.AppImage'
-  flutter_google_datastore_release_name_amd64: 'flutter_google_datastore-\${PV}-linux.AppImage'
+  flutter_google_datastore_release_name_amd64: 'flutter_google_datastore-${version}-linux.AppImage'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   check-and-create-ebuild:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Git
         run: |
@@ -88,14 +88,14 @@ jobs:
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo 'IUSE=""'
                 echo 'DEPEND=""'
-                echo 'RDEPEND="sys-fs/fuse:0 sys-fs/fuse:0 sys-libs/glibc sys-libs/zlib"'
+                echo 'RDEPEND="sys-fs/fuse:0 sys-libs/glibc sys-libs/zlib"'
                 echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
                 echo ''
                 echo "inherit xdg-utils"
                 echo ''
                 echo 'SRC_URI="'
-                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/flutter_google_datastore-${originalVersion}-linux.AppImage -> \${P}-flutter_google_datastore-\${PV}-linux.AppImage )"
+                echo "  amd64? ( https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-flutter_google_datastore-\${PV}-linux.AppImage )"
                 echo '"'
                 echo ''
                 echo 'src_unpack() {'
@@ -142,9 +142,8 @@ jobs:
                   rm -f "$tmp_ebuild_file"
                   continue
               fi
-              # Manifest generation
               failed=0
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/flutter_google_datastore-${originalVersion}-linux.AppImage" "${{ env.epn }}-${version}-flutter_google_datastore-${version}-linux.AppImage" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${P}" "${{ env.epn }}-${version}-flutter_google_datastore-${version}-linux.AppImage" "${ebuild_dir}/Manifest"; then failed=1; fi
               if [ "$failed" -eq 1 ]; then
                   echo "Failed to generate manifest for $tag. Skipping..."
                   rm -f "$ebuild_file"
@@ -153,26 +152,30 @@ jobs:
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
           done
 
+      - name: Deduplicate ebuilds
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          g2 ebuild deduplicate "${ebuild_dir}"
+
       - name: Generate Overlay
         run: |
-          mkdir -p profiles
-          [ ! -f profiles/repo_name ] && echo "overlay_name" > profiles/repo_name || true
-          [ ! -f profiles/eapi ] && echo "8" > profiles/eapi || true
-          g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
-          mkdir -p metadata/md5-cache
-          cp -r metadata/md5-dict/* metadata/md5-cache/ || true
+          mkdir -p profiles metadata
+          [ ! -f profiles/repo_name ] && echo "overlay_name" > profiles/repo_name
+          [ ! -f profiles/eapi ] && echo "8" > profiles/eapi
+          [ ! -f metadata/layout.conf ] && wget -qO - https://raw.githubusercontent.com/gentoo/gentoo/master/metadata/layout.conf > metadata/layout.conf || true
+          if ! grep -q "^cache-formats" metadata/layout.conf; then echo "cache-formats = md5-dict" >> metadata/layout.conf; else echo "::warning title=Layout.conf check::cache-formats is already defined in layout.conf, skipping generation."; fi
 
       - name: Lint output
+        if: steps.process_releases.outputs.generated_tag
         uses: arran4/g2-action@v1.2
         with:
           mode: 'run'
-          action: 'lint ${{ env.ecn }}/${{ env.epn }}'
-        if: steps.process_releases.outputs.generated_tag
+          action: 'lint -disable-rule PG0802 . ${{ env.ecn }}/${{ env.epn }}'
 
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p profiles metadata; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; [ ! -f metadata/layout.conf ] && wget -qO - https://raw.githubusercontent.com/gentoo/gentoo/master/metadata/layout.conf > metadata/layout.conf || true; if ! grep -q "^cache-formats" metadata/layout.conf; then echo "cache-formats = md5-dict" >> metadata/layout.conf; else echo "::warning title=Layout.conf check::cache-formats is already defined in layout.conf, skipping generation."; fi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
           git add "./${ebuild_dir}"
           if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
             git pull --rebase &&
