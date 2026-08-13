@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.31 Github Binary Release current.config 2026-07-30 09:04:19.177157275 +0000 UTC m=+0.006149846
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.39 Github Binary Release current.config 2026-08-13 09:21:15.269769781 +0000 UTC m=+0.006636584
 
 name: net-im/slackdump-bin update
 
@@ -12,10 +12,6 @@ on:
   push:
     paths:
       - '.github/workflows/net-im-slackdump-bin-update.yaml'
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: false
 
 env:
   ecn: net-im
@@ -34,12 +30,16 @@ env:
   binary_archived_name_x86: 'slackdump'
   release_name_x86: 'slackdump_Linux_i386.tar.gz'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   check-and-create-ebuild:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Git
         run: |
@@ -92,9 +92,9 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/slackdump_Linux_x86_64.tar.gz -> \${P}-slackdump_Linux_x86_64.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/slackdump_Linux_arm64.tar.gz -> \${P}-slackdump_Linux_arm64.tar.gz  )  "
-                echo "	x86? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/slackdump_Linux_i386.tar.gz -> \${P}-slackdump_Linux_i386.tar.gz  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-slackdump_Linux_x86_64.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-slackdump_Linux_arm64.tar.gz  )  "
+                echo "	x86? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-slackdump_Linux_i386.tar.gz  )  "
                 echo '"'
                 echo 'LICENSE="GNU General Public License v3.0"'
                 echo 'SLOT="0"'
@@ -146,11 +146,10 @@ jobs:
                   rm -f "$tmp_ebuild_file"
                   continue
               fi
-              # Manifest generation
               failed=0
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/slackdump_Linux_x86_64.tar.gz" "${{ env.epn }}-${version}-slackdump_Linux_x86_64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/slackdump_Linux_arm64.tar.gz" "${{ env.epn }}-${version}-slackdump_Linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/slackdump_Linux_i386.tar.gz" "${{ env.epn }}-${version}-slackdump_Linux_i386.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${P}" "${{ env.epn }}-${version}-slackdump_Linux_x86_64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${P}" "${{ env.epn }}-${version}-slackdump_Linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${P}" "${{ env.epn }}-${version}-slackdump_Linux_i386.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
               if [ "$failed" -eq 1 ]; then
                   echo "Failed to generate manifest for $tag. Skipping..."
                   rm -f "$ebuild_file"
@@ -159,26 +158,30 @@ jobs:
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
           done
 
+      - name: Deduplicate ebuilds
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          g2 ebuild deduplicate "${ebuild_dir}"
+
       - name: Generate Overlay
         run: |
-          mkdir -p profiles
-          [ ! -f profiles/repo_name ] && echo "overlay_name" > profiles/repo_name || true
-          [ ! -f profiles/eapi ] && echo "8" > profiles/eapi || true
-          g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
-          mkdir -p metadata/md5-cache
-          cp -r metadata/md5-dict/* metadata/md5-cache/ || true
+          mkdir -p profiles metadata
+          [ ! -f profiles/repo_name ] && echo "overlay_name" > profiles/repo_name
+          [ ! -f profiles/eapi ] && echo "8" > profiles/eapi
+          [ ! -f metadata/layout.conf ] && wget -qO - https://raw.githubusercontent.com/gentoo/gentoo/master/metadata/layout.conf > metadata/layout.conf || true
+          if ! grep -q "^cache-formats" metadata/layout.conf; then echo "cache-formats = md5-dict" >> metadata/layout.conf; else echo "::warning title=Layout.conf check::cache-formats is already defined in layout.conf, skipping generation."; fi
 
       - name: Lint output
+        if: steps.process_releases.outputs.generated_tag
         uses: arran4/g2-action@v1.2
         with:
           mode: 'run'
-          action: 'lint ${{ env.ecn }}/${{ env.epn }}'
-        if: steps.process_releases.outputs.generated_tag
+          action: 'lint -disable-rule PG0802 . ${{ env.ecn }}/${{ env.epn }}'
 
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p profiles metadata; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; [ ! -f metadata/layout.conf ] && wget -qO - https://raw.githubusercontent.com/gentoo/gentoo/master/metadata/layout.conf > metadata/layout.conf || true; if ! grep -q "^cache-formats" metadata/layout.conf; then echo "cache-formats = md5-dict" >> metadata/layout.conf; else echo "::warning title=Layout.conf check::cache-formats is already defined in layout.conf, skipping generation."; fi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
           git add "./${ebuild_dir}"
           if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
             git pull --rebase &&

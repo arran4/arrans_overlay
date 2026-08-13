@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.23 Github Binary Release current.config 2026-03-03 10:16:15.640186701 +0000 UTC m=+0.016826779
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.39 Github Binary Release current.config 2026-08-13 09:21:15.269769781 +0000 UTC m=+0.006636584
 
 name: app-misc/gocdm-bin update
 
@@ -12,10 +12,6 @@ on:
   push:
     paths:
       - '.github/workflows/app-misc-gocdm-bin-update.yaml'
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: false
 
 env:
   ecn: app-misc
@@ -32,32 +28,32 @@ env:
   gocdm_binary_archived_name_arm64: 'gocdm'
   gocdm_release_name_arm64: 'gocdm_${version}_linux_arm64.tar.gz'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   check-and-create-ebuild:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install g2
-        uses: arran4/g2-action@v1.2
+        uses: actions/checkout@v7
 
       - name: Set up Git
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-      - name: Install required tools
-        run: |
-            sudo apt-get update
-            sudo apt-get install -y wget jq coreutils
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
       - name: Process each release
         id: process_releases
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
-          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:${{ env.github_owner }}/${{ env.github_repo }}" "$metadata_file"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:arran4/gocdm" --use-add "amd64:Enable amd64" --use-add "arm64:Enable arm64" "$metadata_file"
           declare -A releaseTypes=()
           tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
@@ -85,6 +81,7 @@ jobs:
                 continue
             fi
             tmp_ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild.tmp"
+
               # shellcheck disable=SC2016
               {
                 echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
@@ -92,26 +89,20 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "  amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/gocdm_\${PV}_linux_amd64.tar.gz -> \${P}-gocdm_\${PV}_linux_amd64.tar.gz  )  "
-                echo "  arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v\${PV}/gocdm_\${PV}_linux_arm64.tar.gz -> \${P}-gocdm_\${PV}_linux_arm64.tar.gz  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-gocdm_\${PV}_linux_amd64.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-gocdm_\${PV}_linux_arm64.tar.gz  )  "
                 echo '"'
-                echo 'LICENSE="MIT"'
+                echo 'LICENSE="GNU General Public License v2.0"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo -n 'IUSE="'
-                echo -n ''
-                echo -n ''
-                echo -n ''
-                echo -n ''
+                echo -n ' amd64 arm64'
                 echo '"'
                 echo ''
                 echo -n 'REQUIRED_USE="'
-                echo -n ''
                 echo '"'
                 echo ''
                 echo -n 'RDEPEND="'
-                echo -n ''
-                echo -n ''
                 echo '"'
                 echo ''
                 echo 'S="${WORKDIR}"'
@@ -134,34 +125,6 @@ jobs:
                 echo '    newexe "${{ env.gocdm_binary_archived_name_arm64 }}" "${{ env.gocdm_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '}'
-                echo ''
-                echo 'pkg_postinst() {'
-                echo '  einfo "To autostart gocdm when you log in your account, append this to ~/.profile:"'
-                echo '  einfo "if [ -z \"\${DISPLAY:-}\" ] && [ \"\$(tty)\" = \"/dev/tty1\" ]; then"'
-                echo '  einfo "  exec /opt/bin/gocdm"'
-                echo '  einfo "fi"'
-                echo '  einfo ""'
-                echo '  einfo "To run GoCDM directly from tty1 under systemd, override getty@tty1.service:"'
-                echo '  einfo "sudo systemctl edit getty@tty1.service"'
-                echo '  einfo "Use this override:"'
-                echo '  einfo "[Service]"'
-                echo '  einfo "ExecStart="'
-                echo '  einfo "ExecStart=-/opt/bin/gocdm -login"'
-                echo '  einfo "StandardInput=tty"'
-                echo '  einfo "StandardOutput=tty"'
-                echo '  einfo "StandardError=tty"'
-                echo '  einfo "TTYPath=/dev/%I"'
-                echo '  einfo "TTYReset=yes"'
-                echo '  einfo "TTYVHangup=yes"'
-                echo '  einfo "TTYVTDisallocate=yes"'
-                echo '  einfo ""'
-                echo '  einfo "Then reload and restart:"'
-                echo '  einfo "sudo systemctl daemon-reload"'
-                echo '  einfo "sudo systemctl restart getty@tty1.service"'
-                echo '  einfo ""'
-                echo '  einfo "Note: The binary release might not have PAM support compiled in."'
-                echo '  einfo "See https://github.com/arran4/gocdm for more details."'
-                echo '}'
               } > "$tmp_ebuild_file"
               if next_version=$(g2 ebuild next-revision --inspect "$tmp_ebuild_file" "${ebuild_dir}" "${version}"); then
                   next_ebuild_file="${ebuild_dir}/${{ env.epn }}-${next_version}.ebuild"
@@ -173,12 +136,9 @@ jobs:
                   rm -f "$tmp_ebuild_file"
                   continue
               fi
-
-              # Manifest generation
-
               failed=0
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/gocdm_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-gocdm_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/gocdm_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-gocdm_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-gocdm_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-gocdm_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
               if [ "$failed" -eq 1 ]; then
                   echo "Failed to generate manifest for $tag. Skipping..."
                   rm -f "$ebuild_file"
@@ -187,10 +147,30 @@ jobs:
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
           done
 
+      - name: Deduplicate ebuilds
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          g2 ebuild deduplicate "${ebuild_dir}"
+
+      - name: Generate Overlay
+        run: |
+          mkdir -p profiles metadata
+          [ ! -f profiles/repo_name ] && echo "overlay_name" > profiles/repo_name
+          [ ! -f profiles/eapi ] && echo "8" > profiles/eapi
+          [ ! -f metadata/layout.conf ] && wget -qO - https://raw.githubusercontent.com/gentoo/gentoo/master/metadata/layout.conf > metadata/layout.conf || true
+          if ! grep -q "^cache-formats" metadata/layout.conf; then echo "cache-formats = md5-dict" >> metadata/layout.conf; else echo "::warning title=Layout.conf check::cache-formats is already defined in layout.conf, skipping generation."; fi
+
+      - name: Lint output
+        if: steps.process_releases.outputs.generated_tag
+        uses: arran4/g2-action@v1.2
+        with:
+          mode: 'run'
+          action: 'lint -disable-rule PG0802 . ${{ env.ecn }}/${{ env.epn }}'
+
       - name: Commit and push changes
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p profiles metadata; [ ! -f profiles/repo_name ] && echo "${{ env.github_repo }}" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; [ ! -f metadata/layout.conf ] && wget -qO - https://raw.githubusercontent.com/gentoo/gentoo/master/metadata/layout.conf > metadata/layout.conf || true; if ! grep -q "^cache-formats" metadata/layout.conf; then echo "cache-formats = md5-dict" >> metadata/layout.conf; else echo "::warning title=Layout.conf check::cache-formats is already defined in layout.conf, skipping generation."; fi; g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
           git add "./${ebuild_dir}"
           if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
             git pull --rebase &&
