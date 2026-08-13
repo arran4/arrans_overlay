@@ -1,0 +1,15 @@
+Title: Removal of dev-util/antigravity-bin and dev-util/antigravity-cli-bin in favor of GURU packages
+Author: Jules <gentoo@arran4.com>
+Posted: 2026-08-13
+Revision: 1
+News-Item-Format: 2.0
+Display-If-Installed: dev-util/antigravity-bin
+Display-If-Installed: dev-util/antigravity-cli-bin
+
+The `dev-util/antigravity-bin` and `dev-util/antigravity-cli-bin` packages have been removed from this overlay because equivalent packages, `dev-util/google-antigravity`, `dev-util/google-antigravity-cli`, and `dev-util/google-antigravity-ide` are now available in the GURU repository.
+
+Please migrate your installation to the GURU packages:
+
+emerge --deselect dev-util/antigravity-bin dev-util/antigravity-cli-bin
+emerge --ask dev-util/google-antigravity dev-util/google-antigravity-cli dev-util/google-antigravity-ide
+emerge --depclean dev-util/antigravity-bin dev-util/antigravity-cli-bin
