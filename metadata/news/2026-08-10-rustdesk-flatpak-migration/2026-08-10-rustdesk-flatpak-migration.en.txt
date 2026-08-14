@@ -1,6 +1,5 @@
 Title: Migration to Flatpak for RustDesk, Caprine, LocalSend, and Picocrypt
 Author: Arran <gentoo@arran4.com>
-Author: Jules <gentoo@arran4.com>
 Posted: 2026-08-10
 Revision: 2
 News-Item-Format: 2.0

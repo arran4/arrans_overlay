@@ -1,6 +1,5 @@
 Title: Migration of lemmy-notify-appimage to net-im category
 Author: Arran <gentoo@arran4.com>
-Author: Jules <gentoo@arran4.com>
 Posted: 2024-08-10
 Revision: 1
 News-Item-Format: 2.0
