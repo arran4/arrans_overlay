@@ -25,7 +25,7 @@ jobs:
           wget "https://github.com/arran4/arrans_overlay_workflow_builder/releases/download/${LATEST_VERSION}/arrans_overlay_workflow_builder_${VERSION_NUM}_linux_amd64.tar.gz"
           tar -xzf "arrans_overlay_workflow_builder_${VERSION_NUM}_linux_amd64.tar.gz" overlay_workflow_builder_generator
           chmod +x overlay_workflow_builder_generator
-          ./overlay_workflow_builder_generator
+          ./overlay_workflow_builder_generator generate workflows -input-file current.config -output-dir .github/workflows
           rm overlay_workflow_builder_generator
           rm "arrans_overlay_workflow_builder_${VERSION_NUM}_linux_amd64.tar.gz"
 
