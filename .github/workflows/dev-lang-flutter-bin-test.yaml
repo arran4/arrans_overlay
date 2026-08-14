@@ -1,0 +1,99 @@
+name: dev-lang/flutter-bin Integration
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'dev-lang/flutter-bin/**'
+      - '.github/workflows/dev-lang-flutter-bin-test.yaml'
+      - '.github/workflows/dev-lang-flutter-bin-update.yaml'
+
+concurrency:
+  group: flutter-bin-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install-and-build-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start Gentoo stage3
+        run: |
+          docker pull gentoo/stage3:latest
+          docker pull gentoo/portage:latest
+          docker create --name flutter-portage gentoo/portage:latest
+          docker run --detach \
+            --name flutter-gentoo \
+            --volumes-from flutter-portage \
+            --volume "${GITHUB_WORKSPACE}:/var/db/repos/arrans_overlay:ro" \
+            gentoo/stage3:latest \
+            sleep infinity
+
+      - name: Install flutter-bin
+        run: |
+          docker exec flutter-gentoo bash -euxo pipefail -c '
+            mkdir -p /etc/portage/repos.conf
+            printf "%s\n" \
+              "[arrans_overlay]" \
+              "location = /var/db/repos/arrans_overlay" \
+              "masters = gentoo" \
+              "auto-sync = no" \
+              > /etc/portage/repos.conf/arrans_overlay.conf
+
+            ACCEPT_KEYWORDS="~amd64" emerge --oneshot =dev-lang/flutter-bin-3.47.0
+
+            useradd --create-home --shell /bin/bash fluttertest
+            install -d -o fluttertest -g fluttertest /home/fluttertest/.cache
+
+            # Make the package-managed SDK deliberately unwritable. The test
+            # must only succeed through the per-user XDG cache.
+            chmod -R a-w /opt/flutter
+            find /opt/flutter -xdev -printf "%P %y %m\n" | sort > /tmp/flutter-tree.before
+            find /opt/flutter -xdev -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/flutter-files.before
+          '
+
+      - name: Disconnect network
+        run: docker network disconnect bridge flutter-gentoo
+
+      - name: Run Flutter and build sample app offline
+        run: |
+          docker exec \
+            --user fluttertest \
+            --env HOME=/home/fluttertest \
+            --env XDG_CACHE_HOME=/home/fluttertest/.cache \
+            --env CI=true \
+            --workdir /home/fluttertest \
+            flutter-gentoo \
+            bash -euxo pipefail -c '
+              flutter --version
+
+              test -x "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/dart-sdk/bin/dart"
+              test -f "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/flutter_tools.snapshot"
+              test ! -w /opt/flutter
+
+              flutter create --empty --platforms=web app
+              cd app
+              flutter build web
+              test -f build/web/index.html
+            '
+
+      - name: Verify package-managed SDK was unchanged
+        run: |
+          docker exec flutter-gentoo bash -euxo pipefail -c '
+            find /opt/flutter -xdev -printf "%P %y %m\n" | sort > /tmp/flutter-tree.after
+            diff -u /tmp/flutter-tree.before /tmp/flutter-tree.after
+            sha256sum --check /tmp/flutter-files.before
+          '
+
+      - name: Clean up containers
+        if: always()
+        run: |
+          docker rm --force flutter-gentoo || true
+          docker rm --force flutter-portage || true
