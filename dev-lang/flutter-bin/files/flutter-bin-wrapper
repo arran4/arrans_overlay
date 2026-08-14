@@ -1,0 +1,59 @@
+#!/bin/sh
+set -eu
+
+flutter_root=/opt/flutter
+
+if [ -n "${XDG_CACHE_HOME:-}" ]; then
+	cache_home=${XDG_CACHE_HOME}
+elif [ -n "${HOME:-}" ]; then
+	cache_home=${HOME}/.cache
+else
+	echo "flutter: XDG_CACHE_HOME or HOME must be set" >&2
+	exit 1
+fi
+
+if [ -z "${FLUTTER_CACHE_DIR:-}" ]; then
+	FLUTTER_CACHE_DIR="${cache_home}/flutter/@PV@/bin-cache"
+	export FLUTTER_CACHE_DIR
+fi
+
+if [ -z "${PUB_CACHE:-}" ]; then
+	PUB_CACHE="${cache_home}/flutter/pub-cache"
+	export PUB_CACHE
+fi
+
+seed_dir() {
+	source_dir=$1
+	destination_dir=$2
+	stamp_name=$3
+
+	mkdir -p "${destination_dir}"
+
+	# Multiple Flutter processes can be started together by IDEs.  Serialize the
+	# initial copy so none of them sees a half-populated Dart/artifact cache.
+	exec 9>"${destination_dir}/.gentoo-seed.lock"
+	flock 9
+
+	if [ ! -f "${destination_dir}/${stamp_name}" ] || \
+		[ "$(cat "${destination_dir}/${stamp_name}" 2>/dev/null || true)" != "@PV@" ]; then
+		cp -a --reflink=auto --no-preserve=ownership "${source_dir}/." "${destination_dir}/"
+		printf '%s\n' '@PV@' > "${destination_dir}/${stamp_name}"
+	fi
+
+	flock -u 9
+}
+
+# The official Flutter archive is already populated with the Dart SDK and
+# binary artifacts.  Treat the package-managed copy as an immutable seed and
+# give every user a writable cache of their own.
+seed_dir "${flutter_root}/bin/cache" "${FLUTTER_CACHE_DIR}" .gentoo-flutter-seed-version
+
+# Release bundles may also contain a pre-populated pub cache.  Seed it when
+# available; otherwise merely ensure the XDG-backed PUB_CACHE is writable.
+if [ -d "${flutter_root}/.pub-cache" ]; then
+	seed_dir "${flutter_root}/.pub-cache" "${PUB_CACHE}" .gentoo-flutter-seed-version
+else
+	mkdir -p "${PUB_CACHE}"
+fi
+
+exec "${flutter_root}/bin/flutter" "$@"
