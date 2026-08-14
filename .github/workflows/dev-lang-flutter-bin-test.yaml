@@ -47,7 +47,15 @@ jobs:
               "auto-sync = no" \
               > /etc/portage/repos.conf/arrans-overlay.conf
 
-            ACCEPT_KEYWORDS="~amd64" emerge --oneshot =dev-lang/flutter-bin-3.47.0
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --oneshot =dev-lang/flutter-bin-3.47.0; then
+              build_log=$(find /var/tmp/portage/dev-lang/flutter-bin-3.47.0 -path "*/temp/build.log" -print -quit 2>/dev/null || true)
+              if [ -n "${build_log}" ]; then
+                echo "===== flutter-bin Portage build.log ====="
+                cat "${build_log}"
+                echo "===== end flutter-bin Portage build.log ====="
+              fi
+              exit 1
+            fi
 
             useradd --create-home --shell /bin/bash fluttertest
             install -d -o fluttertest -g fluttertest /home/fluttertest/.cache
