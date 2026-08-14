@@ -1,0 +1,12 @@
+Title: which_browser package rename
+Author: Arran Ubels <gentoo@arran4.com>
+Posted: 2026-08-14
+Revision: 1
+News-Item-Format: 2.0
+Display-If-Installed: www-misc/which_browser
+
+The www-misc/which_browser package has been renamed to www-misc/which_browser-bin
+to properly reflect that it installs a pre-compiled binary package.
+
+Users should update their systems and change their world file or package use flags
+to point to www-misc/which_browser-bin instead of the old package.
