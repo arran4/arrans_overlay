@@ -1,5 +1,5 @@
 Title: Removal of dev-util/antigravity-bin and dev-util/antigravity-cli-bin in favor of GURU packages
-Author: Jules <gentoo@arran4.com>
+Author: Arran <gentoo@arran4.com>
 Posted: 2026-08-13
 Revision: 1
 News-Item-Format: 2.0

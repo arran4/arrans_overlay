@@ -1,6 +1,5 @@
 Title: Migration to Flatpak for several applications
 Author: Arran <gentoo@arran4.com>
-Author: Jules <gentoo@arran4.com>
 Posted: 2026-07-22
 Revision: 1
 News-Item-Format: 2.0
