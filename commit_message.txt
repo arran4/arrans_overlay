@@ -1,0 +1,3 @@
+Address PR feedback on gap.md
+
+- Expanded gap.md to include detailed bug reports and feature requests regarding Cloudflare Pages and bash parameter expansions parsing issues.
