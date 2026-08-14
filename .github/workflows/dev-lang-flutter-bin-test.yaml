@@ -41,11 +41,11 @@ jobs:
           docker exec flutter-gentoo bash -euxo pipefail -c '
             mkdir -p /etc/portage/repos.conf
             printf "%s\n" \
-              "[arrans_overlay]" \
+              "[arrans-overlay]" \
               "location = /var/db/repos/arrans_overlay" \
               "masters = gentoo" \
               "auto-sync = no" \
-              > /etc/portage/repos.conf/arrans_overlay.conf
+              > /etc/portage/repos.conf/arrans-overlay.conf
 
             ACCEPT_KEYWORDS="~amd64" emerge --oneshot =dev-lang/flutter-bin-3.47.0
 
