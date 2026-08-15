@@ -3,9 +3,15 @@ EAPI=8
 
 DESCRIPTION="Flutter makes it easy and fast to build beautiful apps for mobile and beyond"
 HOMEPAGE="https://flutter.dev/"
+
+# g2 <= 0.0.97 treats the Gentoo -rN revision as part of PV/P when parsing an
+# ebuild filename, unlike Portage. Keep the upstream version explicit so its
+# Manifest lint resolves the same distfile name; the update workflow rewrites
+# this value when copying the packaging to a new upstream Flutter release.
+UPSTREAM_PV="3.47.0"
 SRC_URI="
 	amd64? (
-		https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${PV}-stable.tar.xz -> ${P}.amd64.tar.xz
+		https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${UPSTREAM_PV}-stable.tar.xz -> ${PN}-${UPSTREAM_PV}.amd64.tar.xz
 	)
 "
 
