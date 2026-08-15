@@ -60,8 +60,16 @@ jobs:
               continue
             fi
 
-            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
-            if [ ! -f "${ebuild_file}" ]; then
+            # A downstream Gentoo revision still represents this same upstream
+            # Flutter version. Do not recreate an unrevisioned ebuild beside it.
+            existing_ebuild=$(find "${ebuild_dir}" -maxdepth 1 -type f \
+              \( -name "${ebuild_name}-${version}.ebuild" \
+                 -o -name "${ebuild_name}-${version}-r[0-9]*.ebuild" \) \
+              -print -quit)
+
+            if [ -z "${existing_ebuild}" ]; then
+              ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+
               # The ebuild deliberately contains no version-specific packaging
               # logic: ${PV} selects the upstream archive and the installed
               # wrapper substitutes the package version at build time. Copying
