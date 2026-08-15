@@ -39,21 +39,32 @@ src_prepare() {
 src_compile() {
 	# flutter_tools.snapshot is supplied precompiled in the release archive. Our
 	# Dart-side cache patch therefore needs a new snapshot or it would never be
-	# executed. Flutter deliberately strips .dart_tool from release bundles after
-	# warming the bundled pub cache, so recreate package_config.json from that
-	# cache only before compiling the patched snapshot.
+	# executed. Flutter strips .dart_tool from release bundles and ships the pub
+	# packages as .pub-preload-cache/*.tar.gz, so reconstruct a temporary pub
+	# cache entirely from those bundled archives before compiling the snapshot.
 	local dart="${S}/bin/cache/dart-sdk/bin/dart"
 	local tools="${S}/packages/flutter_tools"
 	local snapshot="${S}/bin/cache/flutter_tools.snapshot"
-	local pub_cache="${S}/.pub-cache"
+	local preload_cache="${S}/.pub-preload-cache"
+	local pub_cache="${T}/pub-cache"
+	local build_home="${T}/home"
+	local preload_archive
 
-	[[ -d "${pub_cache}" ]] ||
-		die "Flutter installation bundle has no pre-populated pub cache"
+	[[ -d "${preload_cache}" ]] ||
+		die "Flutter installation bundle has no pub preload cache"
+	preload_archive=$(find "${preload_cache}" -maxdepth 1 -type f -name '*.tar.gz' -print -quit) || die
+	[[ -n "${preload_archive}" ]] ||
+		die "Flutter installation bundle has no preloaded pub archives"
+	mkdir -p "${pub_cache}" "${build_home}" || die
+
+	HOME="${build_home}" PUB_CACHE="${pub_cache}" \
+		"${dart}" pub --suppress-analytics cache preload "${preload_cache}"/*.tar.gz ||
+		die "failed to preload bundled pub packages"
 
 	(
 		cd "${tools}" || exit 1
-		PUB_CACHE="${pub_cache}" \
-			"${dart}" pub get --offline --suppress-analytics
+		HOME="${build_home}" PUB_CACHE="${pub_cache}" \
+			"${dart}" pub --suppress-analytics get --offline
 	) || die "failed to prepare flutter_tools dependencies"
 
 	[[ -f "${tools}/.dart_tool/package_config.json" ]] ||
