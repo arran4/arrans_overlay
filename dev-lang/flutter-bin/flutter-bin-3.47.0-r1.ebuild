@@ -48,6 +48,7 @@ src_compile() {
 	local snapshot="${S}/bin/cache/flutter_tools.snapshot"
 	local preload_cache="${S}/.pub-preload-cache"
 	local pub_cache="${S}/.pub-cache"
+	local package_config="${tools}/.dart_tool/package_config.json"
 	local build_home="${T}/home"
 	local preload_archive
 
@@ -68,16 +69,28 @@ src_compile() {
 			"${dart}" pub --suppress-analytics get --offline
 	) || die "failed to prepare flutter_tools dependencies"
 
-	[[ -f "${tools}/.dart_tool/package_config.json" ]] ||
+	[[ -f "${package_config}" ]] ||
 		die "flutter_tools package_config.json was not generated"
 
 	"${dart}" --verbosity=error \
 		--snapshot="${snapshot}.new" \
 		--snapshot-kind=app-jit \
-		--packages="${tools}/.dart_tool/package_config.json" \
+		--packages="${package_config}" \
 		--no-enable-mirrors \
 		"${tools}/bin/flutter_tools.dart" || die "failed to rebuild flutter_tools.snapshot"
 	mv "${snapshot}.new" "${snapshot}" || die
+
+	# Pub records absolute paths for packages in an absolute PUB_CACHE. The SDK
+	# tree is moved from the Portage work directory to /opt/flutter at install
+	# time, so relocate the retained immutable tool package configuration only
+	# after the snapshot has been compiled against its build-time paths.
+	grep -Fq "${S}" "${package_config}" ||
+		die "flutter_tools package config contains no relocatable build-root paths"
+	sed -i "s#${S}#/opt/flutter#g" "${package_config}" ||
+		die "failed to relocate flutter_tools package config"
+	if grep -Fq "${S}" "${package_config}"; then
+		die "flutter_tools package config still references the Portage build root"
+	fi
 
 	# The compressed preload cache has now served its purpose. Keeping only the
 	# expanded package-managed seed avoids storing every dependency twice. The
