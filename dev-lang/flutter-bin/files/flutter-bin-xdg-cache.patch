@@ -58,7 +58,7 @@ diff --git a/packages/flutter_tools/lib/src/cache.dart b/packages/flutter_tools/
 diff --git a/packages/flutter_tools/lib/src/dart/pub.dart b/packages/flutter_tools/lib/src/dart/pub.dart
 --- a/packages/flutter_tools/lib/src/dart/pub.dart
 +++ b/packages/flutter_tools/lib/src/dart/pub.dart
-@@ -570,9 +570,12 @@
+@@ -570,9 +570,10 @@
    List<String> _computePubCommand() {
      // TODO(zanderso): refactor to use artifacts.
 +    final String cacheRoot =
@@ -75,7 +75,7 @@ diff --git a/packages/flutter_tools/lib/src/dart/pub.dart b/packages/flutter_too
 diff --git a/packages/flutter_tools/lib/src/flutter_cache.dart b/packages/flutter_tools/lib/src/flutter_cache.dart
 --- a/packages/flutter_tools/lib/src/flutter_cache.dart
 +++ b/packages/flutter_tools/lib/src/flutter_cache.dart
-@@ -122,12 +122,10 @@
+@@ -122,13 +122,10 @@
      OperatingSystemUtils operatingSystemUtils, {
      bool offline = false,
    }) async {
