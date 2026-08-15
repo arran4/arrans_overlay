@@ -55,6 +55,44 @@ diff --git a/packages/flutter_tools/lib/src/cache.dart b/packages/flutter_tools/
 -      ),
 -    );
 +    final File realmFile = getRoot().childFile('$artifactName.realm');
+diff --git a/packages/flutter_tools/lib/src/dart/pub.dart b/packages/flutter_tools/lib/src/dart/pub.dart
+--- a/packages/flutter_tools/lib/src/dart/pub.dart
++++ b/packages/flutter_tools/lib/src/dart/pub.dart
+@@ -570,9 +570,12 @@
+   List<String> _computePubCommand() {
+     // TODO(zanderso): refactor to use artifacts.
++    final String cacheRoot =
++        _platform.environment[kFlutterCacheEnvironmentVariableName] ??
++        _fileSystem.path.join(Cache.flutterRoot!, 'bin', 'cache');
+     final String sdkPath = _fileSystem.path.joinAll(<String>[
+-      Cache.flutterRoot!,
+-      'bin',
+-      'cache',
++      cacheRoot,
+       'dart-sdk',
+       'bin',
+       'dart',
+diff --git a/packages/flutter_tools/lib/src/flutter_cache.dart b/packages/flutter_tools/lib/src/flutter_cache.dart
+--- a/packages/flutter_tools/lib/src/flutter_cache.dart
++++ b/packages/flutter_tools/lib/src/flutter_cache.dart
+@@ -122,12 +122,10 @@
+     OperatingSystemUtils operatingSystemUtils, {
+     bool offline = false,
+   }) async {
+-    await _pub().get(
+-      context: PubContext.pubGet,
+-      project: _projectFactory.fromDirectory(
+-        fileSystem.directory(fileSystem.path.join(_flutterRoot(), 'packages', 'flutter_tools')),
+-      ),
+-      offline: offline,
+-      outputMode: PubOutputMode.failuresOnly,
++    throwToolExit(
++      'The packaged Flutter SDK is immutable and its flutter_tools dependencies '
++      'must be provided by dev-lang/flutter-bin. Reinstall the package if this '
++      'cache is incomplete.',
+     );
+   }
+ }
 diff --git a/packages/flutter_tools/lib/src/version.dart b/packages/flutter_tools/lib/src/version.dart
 --- a/packages/flutter_tools/lib/src/version.dart
 +++ b/packages/flutter_tools/lib/src/version.dart
