@@ -47,8 +47,8 @@ jobs:
               "auto-sync = no" \
               > /etc/portage/repos.conf/arrans-overlay.conf
 
-            if ! ACCEPT_KEYWORDS="~amd64" emerge --oneshot =dev-lang/flutter-bin-3.47.0; then
-              build_log=$(find /var/tmp/portage/dev-lang/flutter-bin-3.47.0 -path "*/temp/build.log" -print -quit 2>/dev/null || true)
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --oneshot =dev-lang/flutter-bin-3.47.0-r1; then
+              build_log=$(find /var/tmp/portage/dev-lang/flutter-bin-3.47.0-r1 -path "*/temp/build.log" -print -quit 2>/dev/null || true)
               if [ -n "${build_log}" ]; then
                 echo "===== flutter-bin Portage build.log ====="
                 cat "${build_log}"
@@ -84,7 +84,15 @@ jobs:
 
               test -x "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/dart-sdk/bin/dart"
               test -f "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/flutter_tools.snapshot"
+              test -w "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache"
               test ! -w /opt/flutter
+
+              # Explicit cache paths must work even when neither HOME nor
+              # XDG_CACHE_HOME is available to the launcher.
+              env -u HOME -u XDG_CACHE_HOME \
+                FLUTTER_CACHE_DIR="${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache" \
+                PUB_CACHE="${XDG_CACHE_HOME}/flutter/pub-cache" \
+                flutter --version
 
               flutter create --empty --platforms=web app
               cd app
