@@ -39,11 +39,25 @@ src_prepare() {
 src_compile() {
 	# flutter_tools.snapshot is supplied precompiled in the release archive. Our
 	# Dart-side cache patch therefore needs a new snapshot or it would never be
-	# executed. Everything required for this compilation is already in the
-	# installation bundle; no network access is needed here.
+	# executed. Flutter deliberately strips .dart_tool from release bundles after
+	# warming the bundled pub cache, so recreate package_config.json from that
+	# cache only before compiling the patched snapshot.
 	local dart="${S}/bin/cache/dart-sdk/bin/dart"
 	local tools="${S}/packages/flutter_tools"
 	local snapshot="${S}/bin/cache/flutter_tools.snapshot"
+	local pub_cache="${S}/.pub-cache"
+
+	[[ -d "${pub_cache}" ]] ||
+		die "Flutter installation bundle has no pre-populated pub cache"
+
+	(
+		cd "${tools}" || exit 1
+		PUB_CACHE="${pub_cache}" \
+			"${dart}" pub get --offline --suppress-analytics
+	) || die "failed to prepare flutter_tools dependencies"
+
+	[[ -f "${tools}/.dart_tool/package_config.json" ]] ||
+		die "flutter_tools package_config.json was not generated"
 
 	"${dart}" --verbosity=error \
 		--snapshot="${snapshot}.new" \
@@ -52,6 +66,10 @@ src_compile() {
 		--no-enable-mirrors \
 		"${tools}/bin/flutter_tools.dart" || die "failed to rebuild flutter_tools.snapshot"
 	mv "${snapshot}.new" "${snapshot}" || die
+
+	# Keep the installed tree consistent with the upstream release bundle; this
+	# metadata is needed only while rebuilding the snapshot.
+	rm -rf "${tools}/.dart_tool" || die
 }
 
 src_install() {
