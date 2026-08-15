@@ -40,13 +40,14 @@ src_compile() {
 	# flutter_tools.snapshot is supplied precompiled in the release archive. Our
 	# Dart-side cache patch therefore needs a new snapshot or it would never be
 	# executed. Flutter strips .dart_tool from release bundles and ships the pub
-	# packages as .pub-preload-cache/*.tar.gz, so reconstruct a temporary pub
-	# cache entirely from those bundled archives before compiling the snapshot.
+	# packages as .pub-preload-cache/*.tar.gz. Expand those archives into a
+	# package-managed pub cache and retain the generated flutter_tools package
+	# configuration so Flutter never needs to repair its own SDK at runtime.
 	local dart="${S}/bin/cache/dart-sdk/bin/dart"
 	local tools="${S}/packages/flutter_tools"
 	local snapshot="${S}/bin/cache/flutter_tools.snapshot"
 	local preload_cache="${S}/.pub-preload-cache"
-	local pub_cache="${T}/pub-cache"
+	local pub_cache="${S}/.pub-cache"
 	local build_home="${T}/home"
 	local preload_archive
 
@@ -78,9 +79,10 @@ src_compile() {
 		"${tools}/bin/flutter_tools.dart" || die "failed to rebuild flutter_tools.snapshot"
 	mv "${snapshot}.new" "${snapshot}" || die
 
-	# Keep the installed tree consistent with the upstream release bundle; this
-	# metadata is needed only while rebuilding the snapshot.
-	rm -rf "${tools}/.dart_tool" || die
+	# The compressed preload cache has now served its purpose. Keeping only the
+	# expanded package-managed seed avoids storing every dependency twice. The
+	# launcher copies this seed into each user's PUB_CACHE on first use.
+	rm -rf "${preload_cache}" || die
 }
 
 src_install() {
