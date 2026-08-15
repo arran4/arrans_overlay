@@ -1,0 +1,22 @@
+Title: Flutter now uses a per-user writable cache
+Author: Arran <gentoo@arran4.com>
+Posted: 2026-08-15
+Revision: 1
+News-Item-Format: 2.0
+Display-If-Installed: dev-lang/flutter-bin
+
+Starting with dev-lang/flutter-bin-3.47.0-r1, the package-managed Flutter SDK under /opt/flutter is treated as immutable. Flutter's writable runtime cache is seeded into each user's cache directory instead of modifying /opt/flutter at runtime.
+
+By default, the Flutter binary/artifact cache is stored under:
+
+${XDG_CACHE_HOME:-$HOME/.cache}/flutter/<version>/bin-cache
+
+and the pub cache is stored under:
+
+${XDG_CACHE_HOME:-$HOME/.cache}/flutter/pub-cache
+
+The initial run may therefore copy a substantial amount of data into the user's cache and temporarily increase disk usage. Multiple users will have separate writable caches.
+
+Users and service environments may override these locations explicitly with FLUTTER_CACHE_DIR and PUB_CACHE. When both are set, the launcher does not require HOME or XDG_CACHE_HOME.
+
+Old per-version Flutter cache directories may be removed manually when they are no longer needed. They will be recreated from the installed SDK if required.
