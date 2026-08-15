@@ -14,7 +14,7 @@ SLOT="0"
 KEYWORDS="~amd64 ~arm ~arm64"
 IUSE=" extended"
 
-REQUIRED_USE=""
+REQUIRED_USE="extended? ( || ( amd64 arm64  ) ) "
 
 RDEPEND="extended? ( sys-devel/gcc  ) "
 
