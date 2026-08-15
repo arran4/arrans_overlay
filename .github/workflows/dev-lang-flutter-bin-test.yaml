@@ -94,7 +94,11 @@ jobs:
                 PUB_CACHE="${XDG_CACHE_HOME}/flutter/pub-cache" \
                 flutter --version
 
-              flutter create --empty --platforms=web app
+              # The container is intentionally disconnected. Tell Flutter/Pub
+              # to resolve solely from the package-seeded user cache; otherwise
+              # a normal `flutter create` is allowed to query pub.dev even when
+              # a suitable version is already cached.
+              flutter create --offline --empty --platforms=web app
               cd app
               flutter build web
               test -f build/web/index.html
