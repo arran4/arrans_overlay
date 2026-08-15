@@ -70,12 +70,15 @@ jobs:
             if [ -z "${existing_ebuild}" ]; then
               ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
 
-              # The ebuild deliberately contains no version-specific packaging
-              # logic: ${PV} selects the upstream archive and the installed
-              # wrapper substitutes the package version at build time. Copying
-              # the last known-good ebuild ensures downstream patches and the
-              # immutable-/opt launcher are not lost when a release appears.
+              # Copy the last known-good packaging so downstream patches and
+              # the immutable-/opt launcher survive new upstream releases.
+              # UPSTREAM_PV is intentionally explicit because released g2
+              # versions currently include Gentoo -rN in PV/P when parsing
+              # revisioned ebuild filenames; rewrite it for the new release.
               cp "${template_file}" "${ebuild_file}"
+              sed -i -E \
+                "s/^UPSTREAM_PV=.*/UPSTREAM_PV=\"${version}\"/" \
+                "${ebuild_file}"
 
               g2 manifest upsert-from-url \
                 "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz" \
