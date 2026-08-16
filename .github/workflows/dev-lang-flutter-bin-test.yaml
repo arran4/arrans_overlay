@@ -1,0 +1,152 @@
+name: dev-lang/flutter-bin Integration
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'dev-lang/flutter-bin/**'
+      - '.github/workflows/dev-lang-flutter-bin-test.yaml'
+      - '.github/workflows/dev-lang-flutter-bin-update.yaml'
+
+concurrency:
+  group: flutter-bin-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install-and-build-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start Gentoo stage3
+        run: |
+          docker pull gentoo/stage3:latest
+          docker pull gentoo/portage:latest
+          docker create --name flutter-portage gentoo/portage:latest
+          docker run --detach \
+            --name flutter-gentoo \
+            --volumes-from flutter-portage \
+            --volume "${GITHUB_WORKSPACE}:/var/db/repos/arrans_overlay:ro" \
+            gentoo/stage3:latest \
+            sleep infinity
+
+      - name: Install flutter-bin
+        run: |
+          docker exec flutter-gentoo bash -euxo pipefail -c '
+            mkdir -p /etc/portage/repos.conf
+            printf "%s\n" \
+              "[arrans-overlay]" \
+              "location = /var/db/repos/arrans_overlay" \
+              "masters = gentoo" \
+              "auto-sync = no" \
+              > /etc/portage/repos.conf/arrans-overlay.conf
+
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --oneshot =dev-lang/flutter-bin-3.47.0-r1; then
+              build_log=$(find /var/tmp/portage/dev-lang/flutter-bin-3.47.0-r1 -path "*/temp/build.log" -print -quit 2>/dev/null || true)
+              if [ -n "${build_log}" ]; then
+                echo "===== flutter-bin Portage build.log ====="
+                cat "${build_log}"
+                echo "===== end flutter-bin Portage build.log ====="
+              fi
+              exit 1
+            fi
+
+            useradd --create-home --shell /bin/bash fluttertest
+            install -d -o fluttertest -g fluttertest /home/fluttertest/.cache
+
+            # Make the package-managed SDK deliberately unwritable. The test
+            # must only succeed through the per-user XDG cache.
+            chmod -R a-w /opt/flutter
+            find /opt/flutter -xdev -printf "%P %y %m\n" | sort > /tmp/flutter-tree.before
+            find /opt/flutter -xdev -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/flutter-files.before
+          '
+
+      - name: Disconnect network
+        run: docker network disconnect bridge flutter-gentoo
+
+      - name: Run Flutter and build sample app offline
+        run: |
+          docker exec \
+            --user fluttertest \
+            --env HOME=/home/fluttertest \
+            --env XDG_CACHE_HOME=/home/fluttertest/.cache \
+            --env CI=true \
+            --workdir /home/fluttertest \
+            flutter-gentoo \
+            bash -euxo pipefail -c '
+              # 1. Initial run seeds the cache
+              flutter --version
+
+              # 2. Verify cache structure and permissions
+              test -x "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/dart-sdk/bin/dart"
+              test -f "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/flutter_tools.snapshot"
+              test -w "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache"
+              test ! -w /opt/flutter
+
+              # 3. Verify seed stamps record the full package revision (PVR)
+              test "$(cat "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/.gentoo-flutter-seed-version")" = "3.47.0-r1"
+              test "$(cat "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version")" = "3.47.0-r1"
+
+              # 4. Invalidation & refresh test:
+              # Simulate an existing cache seeded by an older revision or unrevisioned PV (e.g., 3.47.0).
+              # Corrupt a seeded file and change the stamp to a stale revision / PV.
+              echo "corrupted-snapshot" > "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/flutter_tools.snapshot"
+              echo "3.47.0" > "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/.gentoo-flutter-seed-version"
+              echo "3.47.0" > "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version"
+
+              # Running flutter must detect the stale stamp and refresh the seed from /opt/flutter
+              flutter --version
+
+              # Verify the cache was refreshed with the correct revision stamp and restored files
+              test "$(cat "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/.gentoo-flutter-seed-version")" = "3.47.0-r1"
+              test "$(cat "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version")" = "3.47.0-r1"
+              cmp -s /opt/flutter/bin/cache/flutter_tools.snapshot "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/flutter_tools.snapshot"
+              test -w "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache"
+
+              # 5. Explicit cache paths must work even when neither HOME nor
+              # XDG_CACHE_HOME is available to the launcher.
+              env -u HOME -u XDG_CACHE_HOME \
+                FLUTTER_CACHE_DIR="${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache" \
+                PUB_CACHE="${XDG_CACHE_HOME}/flutter/pub-cache" \
+                flutter --version
+
+              # Also test a custom explicit path without HOME / XDG_CACHE_HOME
+              mkdir -p /home/fluttertest/custom-cache/bin-cache /home/fluttertest/custom-cache/pub-cache
+              env -u HOME -u XDG_CACHE_HOME \
+                FLUTTER_CACHE_DIR=/home/fluttertest/custom-cache/bin-cache \
+                PUB_CACHE=/home/fluttertest/custom-cache/pub-cache \
+                flutter --version
+              test "$(cat /home/fluttertest/custom-cache/bin-cache/.gentoo-flutter-seed-version)" = "3.47.0-r1"
+              test "$(cat /home/fluttertest/custom-cache/pub-cache/.gentoo-flutter-pub-seed-version)" = "3.47.0-r1"
+              test -w /home/fluttertest/custom-cache/bin-cache
+
+              # 6. Offline sample app create and build
+              # The container is intentionally disconnected. Tell Flutter/Pub
+              # to resolve solely from the package-seeded user cache; otherwise
+              # a normal `flutter create` is allowed to query pub.dev even when
+              # a suitable version is already cached.
+              flutter create --offline --empty --platforms=web app
+              cd app
+              flutter build web
+              test -f build/web/index.html
+            '
+
+      - name: Verify package-managed SDK was unchanged
+        run: |
+          docker exec flutter-gentoo bash -euxo pipefail -c '
+            find /opt/flutter -xdev -printf "%P %y %m\n" | sort > /tmp/flutter-tree.after
+            diff -u /tmp/flutter-tree.before /tmp/flutter-tree.after
+            sha256sum --check /tmp/flutter-files.before
+          '
+
+      - name: Clean up containers
+        if: always()
+        run: |
+          docker rm --force flutter-gentoo || true
+          docker rm --force flutter-portage || true

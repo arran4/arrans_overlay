@@ -1,0 +1,107 @@
+diff --git a/bin/internal/shared.sh b/bin/internal/shared.sh
+--- a/bin/internal/shared.sh
++++ b/bin/internal/shared.sh
+@@ -196,2 +196,3 @@ function shared::execute() {
+   export FLUTTER_ROOT="$(cd "${BIN_DIR}/.." ; pwd -P)"
++  export FLUTTER_CACHE_DIR="${FLUTTER_CACHE_DIR:-$FLUTTER_ROOT/bin/cache}"
+ 
+@@ -205,5 +206,5 @@ function shared::execute() {
+   FLUTTER_TOOLS_DIR="$FLUTTER_ROOT/packages/flutter_tools"
+-  SNAPSHOT_PATH="$FLUTTER_ROOT/bin/cache/flutter_tools.snapshot"
+-  STAMP_PATH="$FLUTTER_ROOT/bin/cache/flutter_tools.stamp"
++  SNAPSHOT_PATH="$FLUTTER_CACHE_DIR/flutter_tools.snapshot"
++  STAMP_PATH="$FLUTTER_CACHE_DIR/flutter_tools.stamp"
+   SCRIPT_PATH="$FLUTTER_TOOLS_DIR/bin/flutter_tools.dart"
+-  DART_SDK_PATH="$FLUTTER_ROOT/bin/cache/dart-sdk"
++  DART_SDK_PATH="$FLUTTER_CACHE_DIR/dart-sdk"
+diff --git a/packages/flutter_tools/lib/src/cache.dart b/packages/flutter_tools/lib/src/cache.dart
+--- a/packages/flutter_tools/lib/src/cache.dart
++++ b/packages/flutter_tools/lib/src/cache.dart
+@@ -36,4 +36,6 @@
+ const kFlutterRootEnvironmentVariableName =
+     'FLUTTER_ROOT'; // should point to //flutter/ (root of flutter/flutter repo)
++const kFlutterCacheEnvironmentVariableName =
++    'FLUTTER_CACHE_DIR'; // writable cache, defaults to //flutter/bin/cache/
+ const kFlutterEngineEnvironmentVariableName =
+     'FLUTTER_ENGINE'; // should point to //engine/src/ (root of flutter/engine repo)
+@@ -381,3 +383,1 @@
+-    final File lockFile = _fileSystem.file(
+-      _fileSystem.path.join(flutterRoot!, 'bin', 'cache', 'lockfile'),
+-    );
++    final File lockFile = getRoot().childFile('lockfile');
+@@ -581,5 +581,12 @@
+   Directory getRoot() {
+-    return _fileSystem.directory(
+-      _fileSystem.path.join(_rootOverride?.path ?? flutterRoot!, 'bin', 'cache'),
+-    );
++    if (_rootOverride != null) {
++      return _fileSystem.directory(
++        _fileSystem.path.join(_rootOverride.path, 'bin', 'cache'),
++      );
++    }
++    final String? cacheOverride = _platform.environment[kFlutterCacheEnvironmentVariableName];
++    if (cacheOverride != null && cacheOverride.isNotEmpty) {
++      return _fileSystem.directory(cacheOverride);
++    }
++    return _fileSystem.directory(_fileSystem.path.join(flutterRoot!, 'bin', 'cache'));
+   }
+@@ -646,8 +653,1 @@
+-    final File realmFile = _fileSystem.file(
+-      _fileSystem.path.join(
+-        _rootOverride?.path ?? flutterRoot!,
+-        'bin',
+-        'cache',
+-        '$artifactName.realm',
+-      ),
+-    );
++    final File realmFile = getRoot().childFile('$artifactName.realm');
+diff --git a/packages/flutter_tools/lib/src/dart/pub.dart b/packages/flutter_tools/lib/src/dart/pub.dart
+--- a/packages/flutter_tools/lib/src/dart/pub.dart
++++ b/packages/flutter_tools/lib/src/dart/pub.dart
+@@ -570,9 +570,10 @@
+   List<String> _computePubCommand() {
+     // TODO(zanderso): refactor to use artifacts.
++    final String cacheRoot =
++        _platform.environment[kFlutterCacheEnvironmentVariableName] ??
++        _fileSystem.path.join(Cache.flutterRoot!, 'bin', 'cache');
+     final String sdkPath = _fileSystem.path.joinAll(<String>[
+-      Cache.flutterRoot!,
+-      'bin',
+-      'cache',
++      cacheRoot,
+       'dart-sdk',
+       'bin',
+       'dart',
+diff --git a/packages/flutter_tools/lib/src/flutter_cache.dart b/packages/flutter_tools/lib/src/flutter_cache.dart
+--- a/packages/flutter_tools/lib/src/flutter_cache.dart
++++ b/packages/flutter_tools/lib/src/flutter_cache.dart
+@@ -122,13 +122,10 @@
+     OperatingSystemUtils operatingSystemUtils, {
+     bool offline = false,
+   }) async {
+-    await _pub().get(
+-      context: PubContext.pubGet,
+-      project: _projectFactory.fromDirectory(
+-        fileSystem.directory(fileSystem.path.join(_flutterRoot(), 'packages', 'flutter_tools')),
+-      ),
+-      offline: offline,
+-      outputMode: PubOutputMode.failuresOnly,
++    throwToolExit(
++      'The packaged Flutter SDK is immutable and its flutter_tools dependencies '
++      'must be provided by dev-lang/flutter-bin. Reinstall the package if this '
++      'cache is incomplete.',
+     );
+   }
+ }
+diff --git a/packages/flutter_tools/lib/src/version.dart b/packages/flutter_tools/lib/src/version.dart
+--- a/packages/flutter_tools/lib/src/version.dart
++++ b/packages/flutter_tools/lib/src/version.dart
+@@ -175,3 +175,8 @@
+   static File getVersionFile(FileSystem fs, String flutterRoot) {
++    final String? cacheOverride =
++        globals.platform.environment[kFlutterCacheEnvironmentVariableName];
++    if (cacheOverride != null && cacheOverride.isNotEmpty) {
++      return fs.file(fs.path.join(cacheOverride, 'flutter.version.json'));
++    }
+     return fs.file(fs.path.join(flutterRoot, 'bin', 'cache', 'flutter.version.json'));
+   }

@@ -10,8 +10,6 @@ concurrency:
 env:
   ebuild_category: "dev-lang"
   ebuild_name: "flutter-bin"
-  description: "Flutter makes it easy and fast to build beautiful apps for mobile and beyond "
-  homepage: "https://flutter.dev/"
 
 on:
   schedule:
@@ -39,73 +37,62 @@ jobs:
       - name: Install required tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget jq coreutils
-      - name: Process each release
+          sudo apt-get install -y jq coreutils
+
+      - name: Process latest stable release
         id: process_releases
         run: |
           ebuild_dir="./${ebuild_category}/${ebuild_name}"
-          mkdir -p $ebuild_dir
-          versions=$(curl -s https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json | jq -r '.releases[] | select ( .channel == "stable" ) | .version ')
-          
+          mkdir -p "${ebuild_dir}"
+
+          template_file=$(find "${ebuild_dir}" -maxdepth 1 -type f -name "${ebuild_name}-*.ebuild" -print | sort -V | tail -n 1)
+          if [ -z "${template_file}" ]; then
+            echo "No existing ${ebuild_name} ebuild is available to use as a packaging template" >&2
+            exit 1
+          fi
+
+          versions=$(curl -fsSL https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json |
+            jq -r '.releases[] | select(.channel == "stable") | .version')
+
           for version in ${versions}; do
-            if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
-              echo "$version doesn't match regexp";
-              continue; 
+            if ! echo "${version}" | grep -Eq '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+              echo "${version} doesn't match regexp"
+              continue
             fi
-            ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
-            if [ ! -f "$ebuild_file" ]; then
 
-              #wget "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz" -O "/tmp/${ebuild_name}-${version}.amd64.tar.xz"
-              #engineVersion=$(tar -xJf "/tmp/${ebuild_name}-${version}.amd64.tar.xz" flutter/bin/internal/engine.version -O)
-              #dartSdkUrl="https://storage.googleapis.com/flutter_infra_release/flutter/$engineVersion/dart-sdk-linux-x64.zip"
-              # wget "$dartSdkUrl" -O "/tmp/${ebuild_name}-dartsdk-${version}.amd64.tar.xz"
-          
-              g2 manifest upsert-from-url "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz" "${ebuild_name}-${version}.amd64.tar.xz" "${ebuild_dir}/Manifest"
-          
-              # Create ebuild script
-              {
-                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/dev-lang-flutter-bin-update.yaml "
-                echo "EAPI=8"
-                echo "DESCRIPTION=\"$description\""
-                echo "HOMEPAGE=\"$homepage\""
-                #echo 'IUSE="+dart"'
-                echo 'IUSE=""'
-                echo 'SRC_URI="  '
-                echo "  amd64? ( "
-                echo "    https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_\${PV}-stable.tar.xz -> \${P}.amd64.tar.xz"
-                #echo "    dart? ( $dartSdkUrl -> \${PN}-dartsdk-\${PV}.amd64.tar.xz )"
-                echo "  )"
-                echo '" '
-                echo "LICENSE=\"BSD\""
-                echo "SLOT=\"0\""
-                echo 'KEYWORDS="~amd64"'
-                echo 'RDEPEND="app-arch/tar app-arch/xz-utils"'
-                echo 'DEPEND=""'
-                echo "S=\"\${WORKDIR}/flutter\""
-                echo ""
-                echo "src_prepare() {"
-                echo "  # disable upgrade_flutter"
-                echo "  sed -i 's/^\\(\\s\\+\\)\\(upgrade_flutter \\)/\\1# \\2/' \"\${S}/bin/internal/shared.sh\""
-                echo "  eapply_user"
-                echo "}"
-                echo ""
-                echo "src_install() {"
-                echo '  mkdir "${ED}/opt" || die'
-                echo '  mv "${S}" "${ED}/opt/" || die'
-                echo "  dosym \"/opt/flutter/bin/flutter\" '/opt/bin/flutter'"
-                echo "}"
-                echo ""
-              } > $ebuild_file
+            # A downstream Gentoo revision still represents this same upstream
+            # Flutter version. Do not recreate an unrevisioned ebuild beside it.
+            existing_ebuild=$(find "${ebuild_dir}" -maxdepth 1 -type f \
+              \( -name "${ebuild_name}-${version}.ebuild" \
+                 -o -name "${ebuild_name}-${version}-r[0-9]*.ebuild" \) \
+              -print -quit)
 
+            if [ -z "${existing_ebuild}" ]; then
+              ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
+
+              # Copy the last known-good packaging so downstream patches and
+              # the immutable-/opt launcher survive new upstream releases.
+              # UPSTREAM_PV is intentionally explicit because released g2
+              # versions currently include Gentoo -rN in PV/P when parsing
+              # revisioned ebuild filenames; rewrite it for the new release.
+              cp "${template_file}" "${ebuild_file}"
+              sed -i -E \
+                "s/^UPSTREAM_PV=.*/UPSTREAM_PV=\"${version}\"/" \
+                "${ebuild_file}"
+
+              g2 manifest upsert-from-url \
+                "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz" \
+                "${ebuild_name}-${version}.amd64.tar.xz" \
+                "${ebuild_dir}/Manifest"
             fi
             break
           done
 
       - name: Commit and push changes
+        if: steps.process_releases.conclusion == 'success'
         run: |
           ebuild_dir="./${ebuild_category}/${ebuild_name}"
-          git add "./${ebuild_dir}"
-          git commit -m "Add ebuilds for new ${ebuild_name} releases" && 
+          git add "${ebuild_dir}"
+          git commit -m "Add ebuilds for new ${ebuild_name} releases" &&
           git pull --rebase &&
           git push || true
-        if: steps.process_releases.conclusion == 'success'
