@@ -106,7 +106,10 @@ src_compile() {
 
 src_install() {
 	local wrapper="${T}/flutter"
-	sed "s/@PV@/${PV}/g" "${FILESDIR}/${PN}-wrapper" > "${wrapper}" || die
+	sed \
+		-e "s/@PV@/${PV}/g" \
+		-e "s/@PVR@/${PVR}/g" \
+		"${FILESDIR}/${PN}-wrapper" > "${wrapper}" || die
 	dobin "${wrapper}"
 
 	mkdir "${ED}/opt" || die

@@ -80,20 +80,53 @@ jobs:
             --workdir /home/fluttertest \
             flutter-gentoo \
             bash -euxo pipefail -c '
+              # 1. Initial run seeds the cache
               flutter --version
 
+              # 2. Verify cache structure and permissions
               test -x "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/dart-sdk/bin/dart"
               test -f "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/flutter_tools.snapshot"
               test -w "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache"
               test ! -w /opt/flutter
 
-              # Explicit cache paths must work even when neither HOME nor
+              # 3. Verify seed stamps record the full package revision (PVR)
+              test "$(cat "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/.gentoo-flutter-seed-version")" = "3.47.0-r1"
+              test "$(cat "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version")" = "3.47.0-r1"
+
+              # 4. Invalidation & refresh test:
+              # Simulate an existing cache seeded by an older revision or unrevisioned PV (e.g., 3.47.0).
+              # Corrupt a seeded file and change the stamp to a stale revision / PV.
+              echo "corrupted-snapshot" > "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/flutter_tools.snapshot"
+              echo "3.47.0" > "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/.gentoo-flutter-seed-version"
+              echo "3.47.0" > "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version"
+
+              # Running flutter must detect the stale stamp and refresh the seed from /opt/flutter
+              flutter --version
+
+              # Verify the cache was refreshed with the correct revision stamp and restored files
+              test "$(cat "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/.gentoo-flutter-seed-version")" = "3.47.0-r1"
+              test "$(cat "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version")" = "3.47.0-r1"
+              cmp -s /opt/flutter/bin/cache/flutter_tools.snapshot "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/flutter_tools.snapshot"
+              test -w "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache"
+
+              # 5. Explicit cache paths must work even when neither HOME nor
               # XDG_CACHE_HOME is available to the launcher.
               env -u HOME -u XDG_CACHE_HOME \
                 FLUTTER_CACHE_DIR="${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache" \
                 PUB_CACHE="${XDG_CACHE_HOME}/flutter/pub-cache" \
                 flutter --version
 
+              # Also test a custom explicit path without HOME / XDG_CACHE_HOME
+              mkdir -p /home/fluttertest/custom-cache/bin-cache /home/fluttertest/custom-cache/pub-cache
+              env -u HOME -u XDG_CACHE_HOME \
+                FLUTTER_CACHE_DIR=/home/fluttertest/custom-cache/bin-cache \
+                PUB_CACHE=/home/fluttertest/custom-cache/pub-cache \
+                flutter --version
+              test "$(cat /home/fluttertest/custom-cache/bin-cache/.gentoo-flutter-seed-version)" = "3.47.0-r1"
+              test "$(cat /home/fluttertest/custom-cache/pub-cache/.gentoo-flutter-pub-seed-version)" = "3.47.0-r1"
+              test -w /home/fluttertest/custom-cache/bin-cache
+
+              # 6. Offline sample app create and build
               # The container is intentionally disconnected. Tell Flutter/Pub
               # to resolve solely from the package-seeded user cache; otherwise
               # a normal `flutter create` is allowed to query pub.dev even when
