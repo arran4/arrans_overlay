@@ -1,0 +1,77 @@
+name: dev-embedded/esp-idf Integration
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'dev-embedded/esp-idf/**'
+      - '.github/workflows/dev-embedded-esp-idf-test.yaml'
+  push:
+    paths:
+      - 'dev-embedded/esp-idf/**'
+      - '.github/workflows/dev-embedded-esp-idf-test.yaml'
+
+concurrency:
+  group: esp-idf-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start Gentoo stage3
+        run: |
+          docker pull gentoo/stage3:latest
+          docker pull gentoo/portage:latest
+          docker create --name esp-idf-portage gentoo/portage:latest
+          docker run --detach \
+            --name esp-idf-gentoo \
+            --volumes-from esp-idf-portage \
+            --volume "${GITHUB_WORKSPACE}:/var/db/repos/arrans_overlay:ro" \
+            gentoo/stage3:latest \
+            sleep infinity
+
+      - name: Install esp-idf
+        run: |
+          docker exec esp-idf-gentoo bash -euxo pipefail -c '
+            mkdir -p /etc/portage/repos.conf
+            printf "%s\n" \
+              "[arrans-overlay]" \
+              "location = /var/db/repos/arrans_overlay" \
+              "masters = gentoo" \
+              "auto-sync = no" \
+              > /etc/portage/repos.conf/arrans-overlay.conf
+
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot dev-embedded/esp-idf; then
+              build_log=$(find /var/tmp/portage/ -name "build.log" | head -n 1)
+              if [ -n "${build_log}" ]; then
+                echo "===== Portage build.log ====="
+                cat "${build_log}"
+                echo "===== end Portage build.log ====="
+              fi
+              sh -c "exit 1"
+            fi
+          '
+
+      - name: Basic test
+        run: |
+          docker exec esp-idf-gentoo bash -euxo pipefail -c '
+            source /usr/share/esp-idf/export.sh
+            idf.py --version
+          '
+
+      - name: Clean up containers
+        if: always()
+        run: |
+          docker rm --force esp-idf-gentoo || true
+          docker rm --force esp-idf-portage || true
