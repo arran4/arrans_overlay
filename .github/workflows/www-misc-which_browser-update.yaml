@@ -73,7 +73,7 @@ jobs:
             archive_name="$filename"
             ebuild_file="${ebuild_dir}/${{ env.ebuild_name }}-${version}.ebuild"
 
-            if [ ! -f "$ebuild_file" ]; then
+            if ! ls "${ebuild_dir}/${{ env.ebuild_name }}-${version}"*.ebuild 1> /dev/null 2>&1; then
               cat <<EOT > "$ebuild_file"
             # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}
             EAPI=8
