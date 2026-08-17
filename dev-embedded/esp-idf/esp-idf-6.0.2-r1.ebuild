@@ -33,7 +33,7 @@ RDEPEND="${DEPEND}
 	$(python_gen_cond_dep 'dev-python/pyelftools[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/idf-component-manager[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/esp-coredump[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-embedded/esptool[${PYTHON_USEDEP}]')
+	dev-embedded/esptool[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep 'dev-python/esp-idf-kconfig[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/esp-idf-monitor[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/esp-idf-nvs-partition-gen[${PYTHON_USEDEP}]')
@@ -52,6 +52,7 @@ RDEPEND="${DEPEND}
 	dev-embedded/esp32ulp-elf-bin
 	dev-embedded/openocd-esp32-bin
 	dev-embedded/esp-rom-elfs
+
 
 "
 BDEPEND="app-arch/unzip"
