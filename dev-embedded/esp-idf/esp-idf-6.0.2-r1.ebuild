@@ -24,34 +24,35 @@ RDEPEND="${DEPEND}
 	dev-util/gperf
 	dev-util/ccache
 	virtual/libusb:1
-	dev-python/setuptools[${PYTHON_USEDEP}]
-	dev-python/packaging[${PYTHON_USEDEP}]
-	dev-python/click[${PYTHON_USEDEP}]
-	dev-python/pyserial[${PYTHON_USEDEP}]
-	dev-python/cryptography[${PYTHON_USEDEP}]
-	dev-python/pyparsing[${PYTHON_USEDEP}]
-	dev-python/pyelftools[${PYTHON_USEDEP}]
-	dev-python/idf-component-manager[${PYTHON_USEDEP}]
-	dev-python/esp-coredump[${PYTHON_USEDEP}]
-	dev-embedded/esptool[${PYTHON_USEDEP}]
-	dev-python/esp-idf-kconfig[${PYTHON_USEDEP}]
-	dev-python/esp-idf-monitor[${PYTHON_USEDEP}]
-	dev-python/esp-idf-nvs-partition-gen[${PYTHON_USEDEP}]
-	dev-python/esp-idf-size[${PYTHON_USEDEP}]
-	dev-python/esp-idf-diag[${PYTHON_USEDEP}]
-	dev-python/esp-idf-panic-decoder[${PYTHON_USEDEP}]
-	dev-python/pyclang[${PYTHON_USEDEP}]
-	dev-python/construct[${PYTHON_USEDEP}]
-	dev-python/rich[${PYTHON_USEDEP}]
-	dev-python/psutil[${PYTHON_USEDEP}]
-	dev-python/tree-sitter[${PYTHON_USEDEP}]
-	dev-python/tree-sitter-c[${PYTHON_USEDEP}]
-	dev-python/freertos-gdb[${PYTHON_USEDEP}]
+	$(python_gen_cond_dep 'dev-python/setuptools[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/packaging[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/click[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/pyserial[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/cryptography[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/pyparsing[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/pyelftools[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/idf-component-manager[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/esp-coredump[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-embedded/esptool[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/esp-idf-kconfig[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/esp-idf-monitor[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/esp-idf-nvs-partition-gen[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/esp-idf-size[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/esp-idf-diag[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/esp-idf-panic-decoder[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/pyclang[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/construct[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/rich[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/psutil[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/tree-sitter[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/tree-sitter-c[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/freertos-gdb[${PYTHON_USEDEP}]')
 	dev-embedded/xtensa-esp-elf-bin
 	dev-embedded/xtensa-esp-elf-gdb-bin
 	dev-embedded/esp32ulp-elf-bin
 	dev-embedded/openocd-esp32-bin
 	dev-embedded/esp-rom-elfs
+
 "
 BDEPEND="app-arch/unzip"
 
