@@ -57,7 +57,7 @@ RDEPEND="${DEPEND}
 "
 BDEPEND="app-arch/unzip"
 
-S="${WORKDIR}/${P}"
+S="${WORKDIR}/esp-idf-v${PV}"
 
 src_prepare() {
 	default
