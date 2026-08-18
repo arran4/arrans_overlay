@@ -12,3 +12,4 @@ SRC_URI="https://files.pythonhosted.org/packages/source/f/freertos-gdb/freertos-
 LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~amd64"
+S="${WORKDIR}/${P}"

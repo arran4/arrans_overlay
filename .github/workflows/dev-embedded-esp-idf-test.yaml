@@ -10,10 +10,38 @@ on:
   pull_request:
     paths:
       - 'dev-embedded/esp-idf/**'
+      - 'dev-embedded/xtensa-esp-elf-bin/**'
+      - 'dev-embedded/xtensa-esp-elf-gdb-bin/**'
+      - 'dev-embedded/esp-rom-elfs/**'
+      - 'dev-embedded/esp32ulp-elf-bin/**'
+      - 'dev-embedded/openocd-esp32-bin/**'
+      - 'dev-python/freertos-gdb/**'
+      - 'dev-python/esp-coredump/**'
+      - 'dev-python/esp-idf-kconfig/**'
+      - 'dev-python/esp-idf-monitor/**'
+      - 'dev-python/esp-idf-nvs-partition-gen/**'
+      - 'dev-python/esp-idf-size/**'
+      - 'dev-python/esp-idf-diag/**'
+      - 'dev-python/esp-idf-panic-decoder/**'
+      - 'dev-python/idf-component-manager/**'
       - '.github/workflows/dev-embedded-esp-idf-test.yaml'
   push:
     paths:
       - 'dev-embedded/esp-idf/**'
+      - 'dev-embedded/xtensa-esp-elf-bin/**'
+      - 'dev-embedded/xtensa-esp-elf-gdb-bin/**'
+      - 'dev-embedded/esp-rom-elfs/**'
+      - 'dev-embedded/esp32ulp-elf-bin/**'
+      - 'dev-embedded/openocd-esp32-bin/**'
+      - 'dev-python/freertos-gdb/**'
+      - 'dev-python/esp-coredump/**'
+      - 'dev-python/esp-idf-kconfig/**'
+      - 'dev-python/esp-idf-monitor/**'
+      - 'dev-python/esp-idf-nvs-partition-gen/**'
+      - 'dev-python/esp-idf-size/**'
+      - 'dev-python/esp-idf-diag/**'
+      - 'dev-python/esp-idf-panic-decoder/**'
+      - 'dev-python/idf-component-manager/**'
       - '.github/workflows/dev-embedded-esp-idf-test.yaml'
 
 concurrency:
@@ -52,8 +80,13 @@ jobs:
               "auto-sync = no" \
               > /etc/portage/repos.conf/arrans-overlay.conf
 
+            # Ensure we can use Python 3.12 (standard now)
+            # ACCEPT_KEYWORDS="~amd64" python_targets_python3_12 python_single_target_python3_12
             if ! ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot dev-embedded/esp-idf; then
-              build_log=$(find /var/tmp/portage/ -name "build.log" | head -n 1)
+              build_log=$(grep -lR "die" /var/tmp/portage/*/temp/build.log 2>/dev/null | head -n 1)
+              if [ -z "${build_log}" ]; then
+                  build_log=$(ls -1t /var/tmp/portage/*/temp/build.log 2>/dev/null | head -n 1)
+              fi
               if [ -n "${build_log}" ]; then
                 echo "===== Portage build.log ====="
                 cat "${build_log}"
@@ -68,6 +101,19 @@ jobs:
           docker exec esp-idf-gentoo bash -euxo pipefail -c '
             source /usr/share/esp-idf/export.sh
             idf.py --version
+
+            # Setup project
+            mkdir -p /tmp/esp-test
+            cp -r /usr/share/esp-idf/examples/get-started/hello_world /tmp/esp-test/
+            cd /tmp/esp-test/hello_world
+
+            # Build for esp32
+            idf.py set-target esp32
+            idf.py build
+
+            # Build for esp32s3
+            idf.py set-target esp32s3
+            idf.py build
           '
 
       - name: Clean up containers
