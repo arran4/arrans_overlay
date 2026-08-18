@@ -82,7 +82,8 @@ jobs:
 
             # Ensure we can use Python 3.12 (standard now)
             # ACCEPT_KEYWORDS="~amd64" python_targets_python3_12 python_single_target_python3_12
-if ! ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot dev-embedded/esp-idf; then
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot dev-embedded/esp-idf; then
+
               build_log=$(grep -lR "die" /var/tmp/portage/*/temp/build.log 2>/dev/null | head -n 1 || true)
               if [ -z "${build_log}" ]; then
                   build_log=$(ls -1t /var/tmp/portage/*/temp/build.log 2>/dev/null | head -n 1 || true)
