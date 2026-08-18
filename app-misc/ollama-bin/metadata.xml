@@ -7,5 +7,6 @@
     </maintainer>
     <use>
         <flag name="rocm">Enable ROCm support</flag>
+        <flag name="systemd">Install systemd service file</flag>
     </use>
 </pkgmetadata>

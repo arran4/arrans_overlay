@@ -9,7 +9,7 @@ SRC_URI="
 	arm64? ( !extended? (  https://github.com/gohugoio/hugo/releases/download/v${PV}/hugo_${PV}_linux-arm64.tar.gz -> ${P}-hugo_${PV}_linux-arm64.tar.gz  )  )  
 	arm64? ( extended? (  https://github.com/gohugoio/hugo/releases/download/v${PV}/hugo_extended_${PV}_linux-arm64.tar.gz -> ${P}-hugo_extended_${PV}_linux-arm64.tar.gz  )  )  
 "
-LICENSE="Apache License 2.0"
+LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~amd64 ~arm ~arm64"
 IUSE="extended"
