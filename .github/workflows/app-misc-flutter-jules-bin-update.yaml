@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.39 Github Binary Release current.config 2026-08-13 09:21:15.269769781 +0000 UTC m=+0.006636584
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.40 Github Binary Release current.config 2026-08-15 08:34:21.310202772 +0000 UTC m=+0.007409756
 
 name: app-misc/flutter-jules-bin update
 
@@ -51,7 +51,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
-          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:arran4/flutter_jules" --use-add "amd64:Enable amd64" "$metadata_file"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:arran4/flutter_jules" "$metadata_file"
           declare -A releaseTypes=()
           tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
@@ -93,7 +93,6 @@ jobs:
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo -n 'IUSE="'
-                echo -n ' amd64'
                 echo '"'
                 echo ''
                 echo -n 'REQUIRED_USE="'
@@ -142,14 +141,6 @@ jobs:
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           g2 ebuild deduplicate "${ebuild_dir}"
-
-      - name: Generate Overlay
-        run: |
-          mkdir -p profiles metadata
-          [ ! -f profiles/repo_name ] && echo "overlay_name" > profiles/repo_name
-          [ ! -f profiles/eapi ] && echo "8" > profiles/eapi
-          [ ! -f metadata/layout.conf ] && wget -qO - https://raw.githubusercontent.com/gentoo/gentoo/master/metadata/layout.conf > metadata/layout.conf || true
-          if ! grep -q "^cache-formats" metadata/layout.conf; then echo "cache-formats = md5-dict" >> metadata/layout.conf; else echo "::warning title=Layout.conf check::cache-formats is already defined in layout.conf, skipping generation."; fi
 
       - name: Lint output
         if: steps.process_releases.outputs.generated_tag
