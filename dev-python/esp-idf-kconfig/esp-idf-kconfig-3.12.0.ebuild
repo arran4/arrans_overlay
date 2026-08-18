@@ -12,3 +12,11 @@ HOMEPAGE="https://pypi.org/project/esp-idf-kconfig/"
 LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~amd64"
+
+RDEPEND="
+	dev-python/kconfiglib[${PYTHON_USEDEP}]
+	dev-python/construct[${PYTHON_USEDEP}]
+	dev-python/esp-pylib[${PYTHON_USEDEP}]
+	dev-python/argcomplete[${PYTHON_USEDEP}]
+"
+DEPEND="${RDEPEND}"

@@ -12,3 +12,11 @@ HOMEPAGE="https://pypi.org/project/esp-idf-monitor/"
 LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~amd64"
+
+RDEPEND="
+	dev-python/pyserial[${PYTHON_USEDEP}]
+	dev-python/esp-coredump[${PYTHON_USEDEP}]
+	dev-python/esp-idf-panic-decoder[${PYTHON_USEDEP}]
+	dev-python/esp-pylib[${PYTHON_USEDEP}]
+"
+DEPEND="${RDEPEND}"

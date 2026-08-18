@@ -18,3 +18,10 @@ python_install() {
 	distutils-r1_python_install
 	rm -rv "${D}$(python_get_sitedir)/tests" || die
 }
+
+RDEPEND="
+	dev-python/construct[${PYTHON_USEDEP}]
+	dev-python/pygdbmi[${PYTHON_USEDEP}]
+	dev-embedded/esptool[${PYTHON_USEDEP}]
+"
+DEPEND="${RDEPEND}"
