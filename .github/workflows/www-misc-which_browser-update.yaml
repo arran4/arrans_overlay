@@ -73,7 +73,14 @@ jobs:
             archive_name="$filename"
             ebuild_file="${ebuild_dir}/${{ env.ebuild_name }}-${version}.ebuild"
 
-            if ! ls "${ebuild_dir}/${{ env.ebuild_name }}-${version}"*.ebuild 1> /dev/null 2>&1; then
+            ebuild_exists=0
+            for f in "${ebuild_dir}/${{ env.ebuild_name }}-${version}".ebuild "${ebuild_dir}/${{ env.ebuild_name }}-${version}"-r*.ebuild; do
+              if [ -f "$f" ]; then
+                ebuild_exists=1
+                break
+              fi
+            done
+            if [ "$ebuild_exists" -eq 0 ]; then
               cat <<EOT > "$ebuild_file"
             # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}
             EAPI=8
