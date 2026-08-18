@@ -73,13 +73,15 @@ jobs:
         run: |
           docker exec esp-idf-gentoo bash -euxo pipefail -c '
             mkdir -p /etc/portage/repos.conf
-            printf "%s
-" \
+            printf "%s\\n" \
               "[arrans-overlay]" \
               "location = /var/db/repos/arrans_overlay" \
               "masters = gentoo" \
               "auto-sync = no" \
               > /etc/portage/repos.conf/arrans-overlay.conf
+
+            # Ensure we can use Python 3.12 (standard now)
+            # ACCEPT_KEYWORDS="~amd64" python_targets_python3_12 python_single_target_python3_12
 
             # Pretend step to catch deps
             if ! ACCEPT_KEYWORDS="~amd64" emerge --pretend --verbose dev-embedded/esp-idf; then

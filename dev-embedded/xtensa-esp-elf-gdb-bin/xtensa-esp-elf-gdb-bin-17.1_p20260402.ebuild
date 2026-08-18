@@ -7,10 +7,11 @@ SRC_URI="https://github.com/espressif/binutils-gdb/releases/download/esp-gdb-v17
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
-S="${WORKDIR}/xtensa-esp-elf-gdb"
 RESTRICT="strip binchecks"
 
 QA_PREBUILT="opt/xtensa-esp-elf-gdb/*"
+
+S="${WORKDIR}/xtensa-esp-elf-gdb"
 
 src_install() {
 	dodir /opt/xtensa-esp-elf-gdb

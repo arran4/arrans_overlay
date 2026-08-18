@@ -5,7 +5,4 @@
 		<email>Gentoo@arran4.com</email>
 		<name>Arran Ubels</name>
 	</maintainer>
-	<upstream>
-		<remote-id type="pypi">esp-idf-diag</remote-id>
-	</upstream>
 </pkgmetadata>
