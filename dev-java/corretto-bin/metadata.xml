@@ -5,4 +5,8 @@
         <email>gentoo@arran4.com</email>
         <name>Arran Ubels</name>
     </maintainer>
+    <use>
+        <flag name="headless-awt">Don't install the X backend for AWT, needed by some GUIs (used to be X flag)</flag>
+        <flag name="source">Zip up and install Java sources</flag>
+    </use>
 </pkgmetadata>

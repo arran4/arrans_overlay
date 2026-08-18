@@ -12,7 +12,7 @@ SRC_URI="
 LICENSE="Apache License 2.0"
 SLOT="0"
 KEYWORDS="~amd64 ~arm ~arm64"
-IUSE=" extended amd64 arm arm64 extended"
+IUSE="extended"
 
 REQUIRED_USE="extended? ( || ( amd64 arm64  ) ) "
 

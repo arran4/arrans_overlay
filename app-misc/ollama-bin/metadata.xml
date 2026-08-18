@@ -5,4 +5,7 @@
         <email>gentoo@arran4.com</email>
         <name>Arran Ubels</name>
     </maintainer>
+    <use>
+        <flag name="rocm">Enable ROCm support</flag>
+    </use>
 </pkgmetadata>

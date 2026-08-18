@@ -5,6 +5,7 @@
 		<flag name="bash">Install bash completion</flag>
 		<flag name="fish">Install fish completion</flag>
 		<flag name="zsh">Install zsh completion</flag>
+		<flag name="man">Install man pages</flag>
 	</use>
 	<upstream>
 		<remote-id type="github">goreleaser/goreleaser</remote-id>

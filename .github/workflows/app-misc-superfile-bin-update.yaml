@@ -97,7 +97,7 @@ jobs:
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo -n 'IUSE="'
-                echo -n ' amd64 arm64'
+
                 echo '"'
                 echo ''
                 echo -n 'REQUIRED_USE="'

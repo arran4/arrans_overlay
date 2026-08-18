@@ -9,7 +9,7 @@ SRC_URI="
 LICENSE="MIT License"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
-IUSE=" amd64 arm64"
+IUSE=""
 
 REQUIRED_USE=""
 
