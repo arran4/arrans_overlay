@@ -12,3 +12,9 @@ HOMEPAGE="https://pypi.org/project/esp-coredump/"
 LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~amd64"
+
+
+python_install() {
+	distutils-r1_python_install
+	rm -rv "${D}$(python_get_sitedir)/tests" || die
+}
