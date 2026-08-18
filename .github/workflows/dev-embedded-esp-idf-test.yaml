@@ -73,17 +73,21 @@ jobs:
         run: |
           docker exec esp-idf-gentoo bash -euxo pipefail -c '
             mkdir -p /etc/portage/repos.conf
-            printf "%s\n" \
+            printf "%s
+" \
               "[arrans-overlay]" \
               "location = /var/db/repos/arrans_overlay" \
               "masters = gentoo" \
               "auto-sync = no" \
               > /etc/portage/repos.conf/arrans-overlay.conf
 
-            # Ensure we can use Python 3.12 (standard now)
-            # ACCEPT_KEYWORDS="~amd64" python_targets_python3_12 python_single_target_python3_12
-            if ! ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot dev-embedded/esp-idf; then
+            # Pretend step to catch deps
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --pretend --verbose dev-embedded/esp-idf; then
+               echo "Pretend step failed. Check dependency graph."
+               sh -c "exit 1"
+            fi
 
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot dev-embedded/esp-idf; then
               build_log=$(grep -lR "die" /var/tmp/portage/*/temp/build.log 2>/dev/null | head -n 1 || true)
               if [ -z "${build_log}" ]; then
                   build_log=$(ls -1t /var/tmp/portage/*/temp/build.log 2>/dev/null | head -n 1 || true)

@@ -6,9 +6,8 @@ SRC_URI="https://github.com/espressif/esp-rom-elfs/releases/download/${PV}/esp-r
 
 LICENSE="Apache-2.0"
 SLOT="0"
-KEYWORDS="~amd64"
-
 S="${WORKDIR}"
+KEYWORDS="~amd64"
 
 src_install() {
 	dodir /usr/share/esp-rom-elfs
