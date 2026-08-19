@@ -42,6 +42,7 @@ jobs:
           set -euo pipefail
 
           ebuild_dir="${EBUILD_CATEGORY}/${EBUILD_NAME}"
+          manifest="${ebuild_dir}/Manifest"
           latest_tag=$(
             gh api --paginate "repos/${UPSTREAM_OWNER}/${UPSTREAM_REPO}/tags?per_page=100" --jq '.[].name' |
               grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
@@ -54,40 +55,36 @@ jobs:
           }
 
           version=${latest_tag#v}
-          commit=$(gh api "repos/${UPSTREAM_OWNER}/${UPSTREAM_REPO}/commits/${latest_tag}" --jq '.sha')
-          [[ "${commit}" =~ ^[0-9a-f]{40}$ ]] || {
-            echo "Could not resolve ${latest_tag} to a commit" >&2
-            exit 1
-          }
-
-          if find "${ebuild_dir}" -maxdepth 1 -type f \
+          existing_ebuild=$(find "${ebuild_dir}" -maxdepth 1 -type f \
             \( -name "${EBUILD_NAME}-${version}.ebuild" -o -name "${EBUILD_NAME}-${version}-r[0-9]*.ebuild" \) \
-            -print -quit | grep -q .; then
-            echo "${EBUILD_NAME}-${version} already exists"
-            echo "changed=false" >> "${GITHUB_OUTPUT}"
-            exit 0
+            -print -quit)
+
+          if [[ -z "${existing_ebuild}" ]]; then
+            template=$(find "${ebuild_dir}" -maxdepth 1 -type f -name "${EBUILD_NAME}-*.ebuild" -print | sort -V | tail -n 1)
+            [[ -n "${template}" ]] || {
+              echo "No existing source ebuild is available as a template" >&2
+              exit 1
+            }
+
+            new_ebuild="${ebuild_dir}/${EBUILD_NAME}-${version}.ebuild"
+            cp "${template}" "${new_ebuild}"
+            echo "Created ${new_ebuild} from ${template}"
+          else
+            echo "${EBUILD_NAME}-${version} already exists as ${existing_ebuild}"
           fi
 
-          template=$(find "${ebuild_dir}" -maxdepth 1 -type f -name "${EBUILD_NAME}-*.ebuild" -print | sort -V | tail -n 1)
-          [[ -n "${template}" ]] || {
-            echo "No existing source ebuild is available as a template" >&2
-            exit 1
-          }
-
-          new_ebuild="${ebuild_dir}/${EBUILD_NAME}-${version}.ebuild"
-          cp "${template}" "${new_ebuild}"
-          sed -i -E "s/^EGIT_COMMIT=.*/EGIT_COMMIT=\"${commit}\"/" "${new_ebuild}"
-
-          grep -Fq "EGIT_COMMIT=\"${commit}\"" "${new_ebuild}" || {
-            echo "Failed to pin ${new_ebuild} to ${commit}" >&2
-            exit 1
-          }
-
+          source_url="https://github.com/${UPSTREAM_OWNER}/${UPSTREAM_REPO}/archive/refs/tags/${latest_tag}.tar.gz"
+          distfile="${EBUILD_NAME}-${version}.tar.gz"
+          g2 manifest upsert-from-url "${source_url}" "${distfile}" "${manifest}"
           g2 ebuild deduplicate "${ebuild_dir}"
 
           echo "latest_tag=${latest_tag}" >> "${GITHUB_OUTPUT}"
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
-          echo "changed=true" >> "${GITHUB_OUTPUT}"
+          if [[ -n "$(git status --porcelain -- "${ebuild_dir}")" ]]; then
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+          fi
 
       - name: Lint generated package
         if: steps.update.outputs.changed == 'true'
@@ -102,6 +99,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "${EBUILD_CATEGORY}/${EBUILD_NAME}"
-          git commit -m "app-misc/flutter-jules: add ${{ steps.update.outputs.version }}"
+          git commit -m "app-misc/flutter-jules: update to ${{ steps.update.outputs.version }}"
           git pull --rebase
           git push
