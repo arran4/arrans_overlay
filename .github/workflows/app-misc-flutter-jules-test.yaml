@@ -58,11 +58,29 @@ jobs:
               > /etc/portage/package.use/flutter-jules-ci
 
             # The stage3 image can lag the separately mounted current Portage
-            # snapshot. Bring @world forward, then remove packages that are no
-            # longer part of the current stage3 dependency graph; this avoids
-            # stale Perl-subslot packages blocking the build toolchain.
+            # snapshot. Bring its declared system set forward first.
             emerge --getbinpkg --update --deep --newuse --with-bdeps=y @world
-            emerge --depclean
+
+            # Docker stage3 intentionally has no world file, so depclean cannot
+            # identify old Perl modules as removable. When the current Portage
+            # tree has moved to a new Perl subslot, explicitly remove the stale
+            # Perl stack from this disposable test root and let the package
+            # resolver install a coherent current stack below.
+            if [ -d /var/db/pkg/dev-lang/perl-5.42.2 ]; then
+              perl_atoms=()
+              for pkgdir in \
+                /var/db/pkg/dev-perl/* \
+                /var/db/pkg/perl-core/* \
+                /var/db/pkg/virtual/perl-* \
+                /var/db/pkg/dev-lang/perl-*; do
+                [ -d "${pkgdir}" ] || continue
+                category=$(basename "$(dirname "${pkgdir}")")
+                pf_installed=$(basename "${pkgdir}")
+                perl_atoms+=("=${category}/${pf_installed}")
+              done
+              printf "Removing stale stage3 Perl packages:\n%s\n" "${perl_atoms[*]}"
+              emerge --unmerge "${perl_atoms[@]}"
+            fi
 
             ebuild_file=$(find /var/db/repos/arrans_overlay/app-misc/flutter-jules -maxdepth 1 -type f -name "flutter-jules-*.ebuild" -print | sort -V | tail -n 1)
             [ -n "${ebuild_file}" ]
