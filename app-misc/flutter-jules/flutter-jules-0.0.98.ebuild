@@ -60,18 +60,24 @@ src_compile() {
 
 src_install() {
 	local bundle="${S}/build/linux/x64/release/bundle"
+	local desktop_file="${bundle}/share/applications/com.arran4.flutter_jules.desktop"
+	local icon_file="${bundle}/share/icons/hicolor/256x256/apps/com.arran4.flutter_jules.png"
 
 	[[ -x "${bundle}/flutter_jules" ]] || die "Flutter Jules release binary was not produced"
 	[[ -f "${bundle}/lib/libapp.so" ]] || die "Flutter Jules release bundle is incomplete"
 	[[ -f "${bundle}/data/icudtl.dat" ]] || die "Flutter Jules ICU data is missing"
+	[[ -f "${desktop_file}" ]] || die "Flutter Jules desktop file is missing"
+	[[ -f "${icon_file}" ]] || die "Flutter Jules application icon is missing"
 
 	dodir /opt/flutter-jules
-	cp -a "${bundle}/." "${ED}/opt/flutter-jules/" ||
-		die "failed to install Flutter Jules release bundle"
+	cp -a "${bundle}/flutter_jules" "${bundle}/lib" "${bundle}/data" \
+		"${ED}/opt/flutter-jules/" || die "failed to install Flutter Jules release bundle"
 
+	# Keep the upstream executable name for its desktop file and retain the
+	# historical overlay launcher name used by flutter-jules-bin.
+	dosym -r /opt/flutter-jules/flutter_jules /usr/bin/flutter_jules
 	dosym -r /opt/flutter-jules/flutter_jules /usr/bin/jules_client
 
-	insinto /usr/share/pixmaps
-	newins assets/icon/app_icon.png flutter-jules.png
-	make_desktop_entry jules_client "Jules Client" flutter-jules "Development;Utility;"
+	domenu "${desktop_file}"
+	newicon -s 256 "${icon_file}" com.arran4.flutter_jules.png
 }
