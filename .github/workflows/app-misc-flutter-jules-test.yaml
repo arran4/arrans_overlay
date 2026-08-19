@@ -1,0 +1,72 @@
+name: app-misc/flutter-jules source integration
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'app-misc/flutter-jules/**'
+      - 'scripts/test_flutter_jules_source.sh'
+      - '.github/workflows/app-misc-flutter-jules-test.yaml'
+      - '.github/workflows/app-misc-flutter-jules-update.yaml'
+
+concurrency:
+  group: flutter-jules-source-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start Gentoo stage3
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull gentoo/stage3:latest
+          docker pull gentoo/portage:latest
+          docker create --name flutter-jules-portage gentoo/portage:latest
+          docker run --detach \
+            --name flutter-jules-gentoo \
+            --volumes-from flutter-jules-portage \
+            --volume "${GITHUB_WORKSPACE}:/var/db/repos/arrans_overlay:ro" \
+            gentoo/stage3:latest \
+            sleep infinity
+
+      - name: Build and install flutter-jules from source
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec flutter-jules-gentoo bash -euxo pipefail -c '
+            mkdir -p /etc/portage/repos.conf
+            printf "%s\n" \
+              "[arrans-overlay]" \
+              "location = /var/db/repos/arrans_overlay" \
+              "masters = gentoo" \
+              "auto-sync = no" \
+              > /etc/portage/repos.conf/arrans-overlay.conf
+
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --oneshot =app-misc/flutter-jules-0.0.98; then
+              build_log=$(find /var/tmp/portage/app-misc/flutter-jules-0.0.98 -path "*/temp/build.log" -print -quit 2>/dev/null || true)
+              if [ -n "${build_log}" ]; then
+                echo "===== flutter-jules Portage build.log ====="
+                cat "${build_log}"
+                echo "===== end flutter-jules Portage build.log ====="
+              fi
+              exit 1
+            fi
+
+            bash /var/db/repos/arrans_overlay/scripts/test_flutter_jules_source.sh
+          '
+
+      - name: Clean up containers
+        if: always()
+        shell: bash
+        run: |
+          docker rm --force flutter-jules-gentoo || true
+          docker rm --force flutter-jules-portage || true
