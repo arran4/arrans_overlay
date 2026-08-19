@@ -1,0 +1,44 @@
+Title: Migration of AI packages from dev-ml to app-misc
+Author: Arran <gentoo@arran4.com>
+Posted: 2024-09-21
+Revision: 1
+News-Item-Format: 2.0
+Display-If-Installed: dev-ml/llamafile-bin
+Display-If-Installed: app-misc/llamafile-bin
+Display-If-Installed: dev-ml/llm-compiler-13b-ftd-llamafile-bin
+Display-If-Installed: app-misc/llm-compiler-13b-ftd-llamafile-bin
+Display-If-Installed: dev-ml/moondream2llamafile-bin
+Display-If-Installed: app-misc/moondream2llamafile-bin
+Display-If-Installed: dev-ml/ollama-bin
+Display-If-Installed: app-misc/ollama-bin
+Display-If-Installed: dev-ml/whisperfile-bin
+Display-If-Installed: app-misc/whisperfile-bin
+
+On 2024-09-21, several AI and LLM application packages were moved from the
+`dev-ml` category to `app-misc`.  This followed issue #8, which pointed out
+that Gentoo's `dev-ml` category is intended for OCaml packages.
+
+The affected package moves are:
+
+  dev-ml/llamafile-bin -> app-misc/llamafile-bin
+  dev-ml/llm-compiler-13b-ftd-llamafile-bin -> app-misc/llm-compiler-13b-ftd-llamafile-bin
+  dev-ml/moondream2llamafile-bin -> app-misc/moondream2llamafile-bin
+  dev-ml/ollama-bin -> app-misc/ollama-bin
+  dev-ml/whisperfile-bin -> app-misc/whisperfile-bin
+
+The original migration did not include the corresponding `profiles/updates`
+move entries.  As a result, systems which installed one of these packages
+before the migration may still record the old `dev-ml` package atom in the
+installed package database.  This can cause file collisions when Portage
+tries to install the replacement from `app-misc`.
+
+The overlay now contains the missing package move metadata.  After syncing,
+Portage normally applies repository updates automatically.  If an old
+`dev-ml` atom remains installed, the installed package database can be
+updated explicitly with:
+
+  emaint --fix moveinst
+
+No manual deselection, unmerge, or reinstall of the old category is required
+solely for this category migration.  After the move metadata has been
+applied, update the package normally from its `app-misc` location.
