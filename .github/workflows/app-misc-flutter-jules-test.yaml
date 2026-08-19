@@ -42,6 +42,7 @@ jobs:
           echo '===== generated flutter-jules Manifest ====='
           cat app-misc/flutter-jules/Manifest
           echo '===== end generated flutter-jules Manifest ====='
+          exit 42
 
       - name: Start Gentoo stage3
         shell: bash
