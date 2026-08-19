@@ -1,0 +1,107 @@
+name: app-misc/flutter-jules source update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '17 0 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-misc-flutter-jules-update.yaml'
+
+concurrency:
+  group: app-misc-flutter-jules-update-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  EBUILD_CATEGORY: app-misc
+  EBUILD_NAME: flutter-jules
+  UPSTREAM_OWNER: arran4
+  UPSTREAM_REPO: flutter_jules
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Find latest stable SemVer tag
+        id: update
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ebuild_dir="${EBUILD_CATEGORY}/${EBUILD_NAME}"
+          latest_tag=$(
+            gh api --paginate "repos/${UPSTREAM_OWNER}/${UPSTREAM_REPO}/tags?per_page=100" --jq '.[].name' |
+              grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
+              sort -V |
+              tail -n 1
+          )
+          [[ -n "${latest_tag}" ]] || {
+            echo "No stable SemVer tags found upstream" >&2
+            exit 1
+          }
+
+          version=${latest_tag#v}
+          commit=$(gh api "repos/${UPSTREAM_OWNER}/${UPSTREAM_REPO}/commits/${latest_tag}" --jq '.sha')
+          [[ "${commit}" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "Could not resolve ${latest_tag} to a commit" >&2
+            exit 1
+          }
+
+          if find "${ebuild_dir}" -maxdepth 1 -type f \
+            \( -name "${EBUILD_NAME}-${version}.ebuild" -o -name "${EBUILD_NAME}-${version}-r[0-9]*.ebuild" \) \
+            -print -quit | grep -q .; then
+            echo "${EBUILD_NAME}-${version} already exists"
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          template=$(find "${ebuild_dir}" -maxdepth 1 -type f -name "${EBUILD_NAME}-*.ebuild" -print | sort -V | tail -n 1)
+          [[ -n "${template}" ]] || {
+            echo "No existing source ebuild is available as a template" >&2
+            exit 1
+          }
+
+          new_ebuild="${ebuild_dir}/${EBUILD_NAME}-${version}.ebuild"
+          cp "${template}" "${new_ebuild}"
+          sed -i -E "s/^EGIT_COMMIT=.*/EGIT_COMMIT=\"${commit}\"/" "${new_ebuild}"
+
+          grep -Fq "EGIT_COMMIT=\"${commit}\"" "${new_ebuild}" || {
+            echo "Failed to pin ${new_ebuild} to ${commit}" >&2
+            exit 1
+          }
+
+          g2 ebuild deduplicate "${ebuild_dir}"
+
+          echo "latest_tag=${latest_tag}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "changed=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Lint generated package
+        if: steps.update.outputs.changed == 'true'
+        shell: bash
+        run: g2 lint . "${EBUILD_CATEGORY}/${EBUILD_NAME}"
+
+      - name: Commit update
+        if: steps.update.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "${EBUILD_CATEGORY}/${EBUILD_NAME}"
+          git commit -m "app-misc/flutter-jules: add ${{ steps.update.outputs.version }}"
+          git pull --rebase
+          git push
