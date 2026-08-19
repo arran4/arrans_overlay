@@ -6,13 +6,16 @@ inherit desktop
 DESCRIPTION="Flutter desktop client for the Google Jules API"
 HOMEPAGE="https://github.com/arran4/flutter_jules"
 SRC_URI="https://github.com/arran4/flutter_jules/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+S="${WORKDIR}/flutter_jules-${PV}"
 
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
 
 # Dart packages are integrity-checked by the upstream pubspec.lock, but Pub
-# still needs network access to populate its build-only cache.
+# still needs network access to populate its build-only cache. Portage supports
+# RESTRICT=network-sandbox for overlays even though pkgcheck treats this Portage
+# extension as non-PMS metadata.
 RESTRICT="network-sandbox"
 
 COMMON_DEPEND="
@@ -21,7 +24,7 @@ COMMON_DEPEND="
 	dev-libs/jsoncpp
 	dev-libs/libayatana-appindicator
 	media-libs/libglvnd
-	sys-libs/zlib
+	virtual/zlib
 	x11-libs/gtk+:3
 	x11-libs/libX11
 "
@@ -37,8 +40,6 @@ BDEPEND="
 	llvm-core/clang
 	virtual/pkgconfig
 "
-
-S="${WORKDIR}/flutter_jules-${PV}"
 
 src_compile() {
 	local build_home="${T}/home"
@@ -68,7 +69,7 @@ src_install() {
 	cp -a "${bundle}/." "${ED}/opt/flutter-jules/" ||
 		die "failed to install Flutter Jules release bundle"
 
-	dosym /opt/flutter-jules/flutter_jules /usr/bin/jules_client
+	dosym -r /opt/flutter-jules/flutter_jules /usr/bin/jules_client
 
 	insinto /usr/share/pixmaps
 	newins assets/icon/app_icon.png flutter-jules.png
