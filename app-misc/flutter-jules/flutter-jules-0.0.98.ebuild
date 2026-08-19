@@ -1,13 +1,11 @@
 # Maintained by: .github/workflows/app-misc-flutter-jules-update.yaml
 EAPI=8
 
-inherit desktop git-r3
+inherit desktop
 
 DESCRIPTION="Flutter desktop client for the Google Jules API"
 HOMEPAGE="https://github.com/arran4/flutter_jules"
-EGIT_REPO_URI="https://github.com/arran4/flutter_jules.git"
-EGIT_COMMIT="0b8367fb9ffc31f42b260a5645779fd9fb92f0da"
-EGIT_CHECKOUT_DIR="${WORKDIR}/${P}"
+SRC_URI="https://github.com/arran4/flutter_jules/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="MIT"
 SLOT="0"
@@ -15,7 +13,7 @@ KEYWORDS="~amd64"
 
 # Dart packages are integrity-checked by the upstream pubspec.lock, but Pub
 # still needs network access to populate its build-only cache.
-RESTRICT+=" network-sandbox"
+RESTRICT="network-sandbox"
 
 COMMON_DEPEND="
 	app-arch/xz-utils
@@ -40,7 +38,7 @@ BDEPEND="
 	virtual/pkgconfig
 "
 
-S="${EGIT_CHECKOUT_DIR}"
+S="${WORKDIR}/flutter_jules-${PV}"
 
 src_compile() {
 	local build_home="${T}/home"
