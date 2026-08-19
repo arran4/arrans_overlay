@@ -51,13 +51,21 @@ jobs:
               "auto-sync = no" \
               > /etc/portage/repos.conf/arrans-overlay.conf
 
+            # The stage3 image can lag the separately mounted current Portage
+            # snapshot by a toolchain subslot (notably Perl). Bring the minimal
+            # root forward before testing the overlay package. Prefer Gentoo
+            # binary packages where the stage3 configuration provides them.
+            emerge --getbinpkg --update --deep --newuse --with-bdeps=y \
+              --autounmask-write=y --autounmask-continue=y @world
+
             ebuild_file=$(find /var/db/repos/arrans_overlay/app-misc/flutter-jules -maxdepth 1 -type f -name "flutter-jules-*.ebuild" -print | sort -V | tail -n 1)
             [ -n "${ebuild_file}" ]
             pf=$(basename "${ebuild_file}" .ebuild)
             atom="=app-misc/${pf}"
 
             echo "Testing ${atom} from ${ebuild_file}"
-            if ! ACCEPT_KEYWORDS="~amd64" emerge --oneshot "${atom}"; then
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --getbinpkg --oneshot \
+              --autounmask-write=y --autounmask-continue=y "${atom}"; then
               build_log=$(find "/var/tmp/portage/app-misc/${pf}" -path "*/temp/build.log" -print -quit 2>/dev/null || true)
               if [ -n "${build_log}" ]; then
                 echo "===== flutter-jules Portage build.log ====="
