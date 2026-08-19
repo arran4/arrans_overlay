@@ -15,7 +15,7 @@ KEYWORDS="~amd64"
 
 # Dart packages are integrity-checked by the upstream pubspec.lock, but Pub
 # still needs network access to populate its build-only cache.
-RESTRICT="network-sandbox"
+RESTRICT+=" network-sandbox"
 
 COMMON_DEPEND="
 	app-arch/xz-utils
@@ -66,9 +66,9 @@ src_install() {
 	[[ -f "${bundle}/lib/libapp.so" ]] || die "Flutter Jules release bundle is incomplete"
 	[[ -f "${bundle}/data/icudtl.dat" ]] || die "Flutter Jules ICU data is missing"
 
-	insinto /opt/flutter-jules
-	doins -r "${bundle}/."
-	fperms 0755 /opt/flutter-jules/flutter_jules
+	dodir /opt/flutter-jules
+	cp -a "${bundle}/." "${ED}/opt/flutter-jules/" ||
+		die "failed to install Flutter Jules release bundle"
 
 	dosym /opt/flutter-jules/flutter_jules /usr/bin/jules_client
 
