@@ -1,7 +1,7 @@
 export IDF_PATH="/usr/share/esp-idf"
 export ESP_ROM_ELF_DIR="/usr/share/esp-rom-elfs"
 export OPENOCD_SCRIPTS="/opt/openocd-esp32/share/openocd/scripts"
-export IDF_PYTHON_ENV_PATH="/usr"
 export IDF_TOOLS_PATH="/usr/share/esp-idf"
 export IDF_PYTHON_CHECK_CONSTRAINTS="0"
+export IDF_PYTHON_ENV_PATH="/usr"
 export PATH="/usr/share/esp-idf/tools:/opt/openocd-esp32/bin:$PATH"

@@ -5,7 +5,8 @@ inherit python-single-r1
 
 DESCRIPTION="Espressif IoT Development Framework"
 HOMEPAGE="https://github.com/espressif/esp-idf"
-SRC_URI="https://dl.espressif.com/github_assets/espressif/esp-idf/releases/download/v${PV}/esp-idf-v${PV}.zip"
+SRC_URI="https://dl.espressif.com/github_assets/espressif/esp-idf/releases/download/v${PV}/esp-idf-v${PV}.zip
+	https://dl.espressif.com/github_assets/espressif/esp-idf/releases/download/v${PV}/espidf.constraints.v${PV}.txt"
 
 LICENSE="Apache-2.0"
 SLOT="0"
@@ -33,6 +34,7 @@ RDEPEND="${DEPEND}
 	$(python_gen_cond_dep 'dev-python/pyelftools[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/idf-component-manager[${PYTHON_USEDEP}]')
 	dev-python/esp-coredump[${PYTHON_SINGLE_USEDEP}]
+	dev-python/esp-pylib[${PYTHON_USEDEP}]
 	dev-embedded/esptool[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep 'dev-python/esp-idf-kconfig[${PYTHON_USEDEP}]')
 	dev-python/esp-idf-monitor[${PYTHON_SINGLE_USEDEP}]
@@ -74,6 +76,7 @@ src_compile() {
 src_install() {
 	insinto /usr/share/esp-idf
 	doins -r .
+	doins "${DISTDIR}/espidf.constraints.v${PV}.txt"
 
 	fperms +x /usr/share/esp-idf/tools/idf.py
 
