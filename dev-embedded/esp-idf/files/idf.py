@@ -6,7 +6,6 @@ export PATH="/opt/openocd-esp32/bin:$PATH"
 # Disable default tools check/venv
 export IDF_PYTHON_ENV_PATH="/usr"
 export IDF_TOOLS_PATH="/usr/share/esp-idf"
-export IDF_VIRTUAL_ENV_DISABLED="1"
 export IDF_PYTHON_CHECK_CONSTRAINTS="no"
 export ESP_IDF_VERSION="${ESP_IDF_VERSION:-$(cat /usr/share/esp-idf/version.txt 2>/dev/null || echo 6.0.2)}"
 export IDF_VERSION="${IDF_VERSION:-${ESP_IDF_VERSION}}"

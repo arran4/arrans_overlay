@@ -15,4 +15,3 @@ KEYWORDS="~amd64"
 S="${WORKDIR}/${P}"
 
 RDEPEND=""
-

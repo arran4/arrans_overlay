@@ -48,6 +48,7 @@ RDEPEND="${DEPEND}
 	$(python_gen_cond_dep 'dev-python/tree-sitter[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/tree-sitter-c[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/freertos-gdb[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep '<dev-python/reedsolo-1.8[${PYTHON_USEDEP}]')
 	dev-embedded/xtensa-esp-elf-bin
 	dev-embedded/xtensa-esp-elf-gdb-bin
 	dev-embedded/esp32ulp-elf-bin
@@ -64,8 +65,6 @@ src_prepare() {
 	echo "${PV}" > version.txt
 	# Remove git directories
 	find . -type d -name ".git" -exec rm -rf {} + || die
-	# Make check_python_dependencies.py a no-op as Portage manages Python dependencies
-	printf '#!/usr/bin/env python3\nimport sys\nsys.exit(0)\n' > tools/check_python_dependencies.py || die
 }
 
 src_compile() {
@@ -79,8 +78,22 @@ src_install() {
 
 	fperms +x /usr/share/esp-idf/tools/idf.py
 
-	# Provide an idf.py wrapper
-	newbin "${FILESDIR}/idf.py" idf.py
+	# Generate the idf.py wrapper with the selected Python implementation
+	cat > "${T}/idf.py" <<-EOF || die
+	#!/bin/bash
+	export IDF_PATH="/usr/share/esp-idf"
+	export ESP_ROM_ELF_DIR="/usr/share/esp-rom-elfs"
+	export OPENOCD_SCRIPTS="/opt/openocd-esp32/share/openocd/scripts"
+	export PATH="/opt/openocd-esp32/bin:\$PATH"
+	export IDF_PYTHON_ENV_PATH="/usr"
+	export IDF_TOOLS_PATH="/usr/share/esp-idf"
+	export IDF_PYTHON_CHECK_CONSTRAINTS="no"
+	export ESP_IDF_VERSION="\${ESP_IDF_VERSION:-\$(cat /usr/share/esp-idf/version.txt 2>/dev/null || echo ${PV})}"
+	export IDF_VERSION="\${IDF_VERSION:-\${ESP_IDF_VERSION}}"
+	export PYTHON="\${PYTHON:-${PYTHON}}"
+	exec "\${PYTHON}" "/usr/share/esp-idf/tools/idf.py" "\$@"
+	EOF
+	dobin "${T}/idf.py"
 
 	# Provide a sourcable export.sh
 	insinto /usr/share/esp-idf
