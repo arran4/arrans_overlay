@@ -89,20 +89,29 @@ jobs:
           mkdir -p /etc/portage/package.accept_keywords
           echo "*/*::arrans-overlay ~amd64" > /etc/portage/package.accept_keywords/arrans-overlay
 
+          # Install pkgcheck
+          emerge -v dev-util/pkgcheck
+
           PACKAGES="$1"
 
           FAILED_PACKAGES=""
           for PKG in $PACKAGES; do
+            echo "Running pkgcheck on $PKG"
+            if ! pkgcheck scan /var/db/repos/arrans_overlay/${PKG#=}; then
+              echo "pkgcheck failed for $PKG"
+              FAILED_PACKAGES="$FAILED_PACKAGES $PKG (pkgcheck)"
+            fi
+
             echo "Building and testing $PKG"
             # Actually build and install the package to verify it works
             if ! emerge -v $PKG; then
               echo "Failed to emerge $PKG"
-              FAILED_PACKAGES="$FAILED_PACKAGES $PKG"
+              FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
             fi
           done
 
           if [ -n "$FAILED_PACKAGES" ]; then
-            echo "The following packages failed to build or install: $FAILED_PACKAGES"
+            echo "The following packages failed to build, install, or pass pkgcheck: $FAILED_PACKAGES"
             exit 1
           fi
           INNEREOF
@@ -112,8 +121,10 @@ jobs:
           docker cp test_packages.sh gentoo:/tmp/test_packages.sh
           docker exec gentoo /tmp/test_packages.sh "$PACKAGES"
 
-      - name: Clean up containers
+      - name: Stop and clean up containers
         if: always()
         run: |
+          docker stop gentoo || true
+          docker stop portage || true
           docker rm --force gentoo || true
           docker rm --force portage || true
