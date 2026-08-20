@@ -1,7 +1,7 @@
 # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-kjules-update.yaml
 EAPI=8
 
-inherit ecm
+inherit xdg ecm
 
 DESCRIPTION="kjules KDE application"
 HOMEPAGE="https://github.com/arran4/kjules"
