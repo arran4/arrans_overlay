@@ -16,4 +16,4 @@ KEYWORDS="~amd64"
 RDEPEND="
 	dev-python/esp-pylib[${PYTHON_USEDEP}]
 "
-DEPEND="${RDEPEND}"
+

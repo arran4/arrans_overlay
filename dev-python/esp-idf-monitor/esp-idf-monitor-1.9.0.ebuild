@@ -15,10 +15,11 @@ SLOT="0"
 KEYWORDS="~amd64"
 
 RDEPEND="
-	$(python_gen_cond_dep 'dev-python/pyserial[${PYTHON_USEDEP}]')
 	dev-python/esp-coredump[${PYTHON_SINGLE_USEDEP}]
-	dev-python/esp-idf-panic-decoder[${PYTHON_SINGLE_USEDEP}]
-	dev-embedded/esptool[${PYTHON_SINGLE_USEDEP}]
-	$(python_gen_cond_dep 'dev-python/esp-pylib[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep '
+		dev-python/pyserial[${PYTHON_USEDEP}]
+		dev-python/esp-idf-panic-decoder[${PYTHON_USEDEP}]
+		dev-python/pyelftools[${PYTHON_USEDEP}]
+	')
 "
-DEPEND="${RDEPEND}"
+

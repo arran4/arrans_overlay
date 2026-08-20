@@ -25,4 +25,4 @@ RDEPEND="
 	$(python_gen_cond_dep 'dev-python/pygdbmi[${PYTHON_USEDEP}]')
 	dev-embedded/esptool[${PYTHON_SINGLE_USEDEP}]
 "
-DEPEND="${RDEPEND}"
+

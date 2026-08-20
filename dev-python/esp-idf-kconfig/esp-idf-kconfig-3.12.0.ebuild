@@ -19,4 +19,4 @@ RDEPEND="
 	dev-python/esp-pylib[${PYTHON_USEDEP}]
 	dev-python/argcomplete[${PYTHON_USEDEP}]
 "
-DEPEND="${RDEPEND}"
+

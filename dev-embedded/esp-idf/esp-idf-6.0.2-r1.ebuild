@@ -39,21 +39,20 @@ RDEPEND="${DEPEND}
 	$(python_gen_cond_dep 'dev-python/esp-idf-nvs-partition-gen[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/esp-idf-size[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/esp-idf-diag[${PYTHON_USEDEP}]')
-	dev-python/esp-idf-panic-decoder[${PYTHON_SINGLE_USEDEP}]
+	$(python_gen_cond_dep 'dev-python/esp-idf-panic-decoder[${PYTHON_USEDEP}]')
+	$(python_gen_cond_dep 'dev-python/esp-pylib[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/pyclang[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/construct[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/rich[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/psutil[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/tree-sitter[${PYTHON_USEDEP}]')
 	$(python_gen_cond_dep 'dev-python/tree-sitter-c[${PYTHON_USEDEP}]')
-	dev-python/freertos-gdb[${PYTHON_SINGLE_USEDEP}]
+	$(python_gen_cond_dep 'dev-python/freertos-gdb[${PYTHON_USEDEP}]')
 	dev-embedded/xtensa-esp-elf-bin
 	dev-embedded/xtensa-esp-elf-gdb-bin
 	dev-embedded/esp32ulp-elf-bin
 	dev-embedded/openocd-esp32-bin
 	dev-embedded/esp-rom-elfs
-
-
 "
 BDEPEND="app-arch/unzip"
 
@@ -65,6 +64,8 @@ src_prepare() {
 	echo "${PV}" > version.txt
 	# Remove git directories
 	find . -type d -name ".git" -exec rm -rf {} + || die
+	# Make check_python_dependencies.py a no-op as Portage manages Python dependencies
+	printf '#!/usr/bin/env python3\nimport sys\nsys.exit(0)\n' > tools/check_python_dependencies.py || die
 }
 
 src_compile() {

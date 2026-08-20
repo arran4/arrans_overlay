@@ -16,4 +16,4 @@ KEYWORDS="~amd64"
 RDEPEND="
 	dev-python/cryptography[${PYTHON_USEDEP}]
 "
-DEPEND="${RDEPEND}"
+

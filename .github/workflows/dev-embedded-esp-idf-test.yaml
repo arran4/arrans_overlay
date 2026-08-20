@@ -24,6 +24,7 @@ on:
       - 'dev-python/esp-idf-diag/**'
       - 'dev-python/esp-idf-panic-decoder/**'
       - 'dev-python/idf-component-manager/**'
+      - 'dev-python/esp-pylib/**'
       - '.github/workflows/dev-embedded-esp-idf-test.yaml'
   push:
     paths:
@@ -42,6 +43,7 @@ on:
       - 'dev-python/esp-idf-diag/**'
       - 'dev-python/esp-idf-panic-decoder/**'
       - 'dev-python/idf-component-manager/**'
+      - 'dev-python/esp-pylib/**'
       - '.github/workflows/dev-embedded-esp-idf-test.yaml'
 
 concurrency:
