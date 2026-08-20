@@ -68,7 +68,7 @@ jobs:
                 echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-kjules-update.yaml"
                 echo "EAPI=8"
                 echo ""
-                echo "inherit ecm"
+                echo "inherit xdg ecm"
                 echo ""
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
