@@ -74,7 +74,3 @@ To keep the overlay clean, we follow a **"One Version Per Grade"** policy.
 
 ## 8. Package Migration
 * When removing an ebuild because it is moving to another category, create a news article instructing users to migrate to the new category path. Use the `metadata/news/` directory and format it according to GLEP 42 (News-Item-Format: 2.0).
-* When renaming, moving to another category, or changing slots, you must also add an entry to the `profiles/updates/` directory to adjust package manager metadata.
-    * The files in the `updates/` directory are organized by quarters of years and are named `<quarter>Q-<year>`, e.g. `1Q-2010` (quarter count is one-based).
-    * `move oldcat/oldpkg newcat/newpkg`: Indicates the packages has been renamed, moved to another category, or both.
-    * `slotmove spec oldslot newslot`: Indicates that the package matching dependency specification `spec` has changed slots.

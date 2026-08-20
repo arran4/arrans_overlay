@@ -17,6 +17,9 @@ src_install() {
 	dodir /opt/xtensa-esp-elf-gdb
 	cp -a . "${ED}/opt/xtensa-esp-elf-gdb/" || die
 
+	# Remove gprof as it collides with xtensa-esp-elf-bin
+	rm "${ED}/opt/xtensa-esp-elf-gdb/bin/xtensa-esp-elf-gprof" || die
+
 	dodir /usr/bin
 	for bin in "${ED}"/opt/xtensa-esp-elf-gdb/bin/*; do
 		dosym "../../opt/xtensa-esp-elf-gdb/bin/${bin##*/}" "/usr/bin/${bin##*/}"

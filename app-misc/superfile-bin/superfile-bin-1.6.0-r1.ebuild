@@ -3,13 +3,13 @@ EAPI=8
 DESCRIPTION="Pretty fancy and modern terminal file manager"
 HOMEPAGE="https://superfile.netlify.app"
 SRC_URI="
-	amd64? (  https://github.com/yorukot/superfile/releases/download/v1.6.0/superfile-linux-v1.6.0-amd64.tar.gz -> superfile-bin-1.6.0-superfile-linux-v1.6.0-amd64.tar.gz  )
-	arm64? (  https://github.com/yorukot/superfile/releases/download/v1.6.0/superfile-linux-v1.6.0-arm64.tar.gz -> superfile-bin-1.6.0-superfile-linux-v1.6.0-arm64.tar.gz  )
+	amd64? (  https://github.com/yorukot/superfile/releases/download/v${PV}/superfile-linux-v1.6.0-amd64.tar.gz -> ${P}-superfile-linux-v1.6.0-amd64.tar.gz  )
+	arm64? (  https://github.com/yorukot/superfile/releases/download/v${PV}/superfile-linux-v1.6.0-arm64.tar.gz -> ${P}-superfile-linux-v1.6.0-arm64.tar.gz  )
 "
-LICENSE="MIT"
+LICENSE="MIT License"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
-IUSE=""
+IUSE=" amd64 arm64"
 
 REQUIRED_USE=""
 
@@ -19,10 +19,10 @@ S="${WORKDIR}"
 
 src_unpack() {
   if use amd64; then
-    unpack "${DISTDIR}/superfile-bin-1.6.0-superfile-linux-v1.6.0-amd64.tar.gz" || die "Can't unpack archive file"
+    unpack "${DISTDIR}/${P}-superfile-linux-v1.6.0-amd64.tar.gz" || die "Can't unpack archive file"
   fi
   if use arm64; then
-    unpack "${DISTDIR}/superfile-bin-1.6.0-superfile-linux-v1.6.0-arm64.tar.gz" || die "Can't unpack archive file"
+    unpack "${DISTDIR}/${P}-superfile-linux-v1.6.0-arm64.tar.gz" || die "Can't unpack archive file"
   fi
 }
 

@@ -102,12 +102,12 @@ jobs:
                 echo "	arm64? ( !extended? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-hugo_\${PV}_linux-arm64.tar.gz  )  )  "
                 echo "	arm64? ( extended? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-hugo_extended_\${PV}_linux-arm64.tar.gz  )  )  "
                 echo '"'
-                echo 'LICENSE="Apache-2.0"'
+                echo 'LICENSE="Apache License 2.0"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo -n 'IUSE="'
                 echo -n ' extended'
-
+                echo -n ' amd64 arm arm64 extended'
                 echo '"'
                 echo ''
                 echo -n 'REQUIRED_USE="'

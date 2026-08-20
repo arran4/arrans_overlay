@@ -17,4 +17,4 @@ KEYWORDS="~amd64"
 RDEPEND="
 	dev-python/rich[${PYTHON_USEDEP}]
 "
-
+DEPEND="${RDEPEND}"

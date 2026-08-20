@@ -7,6 +7,9 @@
 	</maintainer>
 	<use>
 		<flag name="extended">Install extended binary</flag>
+		<flag name="amd64">Enable amd64</flag>
+		<flag name="arm">Enable arm</flag>
+		<flag name="arm64">Enable arm64</flag>
 	</use>
 	<upstream>
 		<remote-id type="github">gohugoio/hugo</remote-id>

@@ -36,17 +36,6 @@ sync-type = git
 sync-uri = https://github.com/gentoo-mirror/arrans-overlay.git
 ```
 
-Alternatively, you can create the file using `tee`:
-
-```console
-$ sudo tee /etc/portage/repos.conf/arrans-overlay.conf << EOF
-[arrans-overlay]
-location = /var/db/repos/arrans-overlay
-sync-type = git
-sync-uri = https://github.com/gentoo-mirror/arrans-overlay.git
-EOF
-```
-
 Afterwards, simply run `emerge --sync`, and Portage should seamlessly make all our ebuilds available.
 
 ## Links

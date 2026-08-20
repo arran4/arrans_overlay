@@ -1,5 +1,0 @@
-move dev-ml/llamafile-bin app-misc/llamafile-bin
-move dev-ml/llm-compiler-13b-ftd-llamafile-bin app-misc/llm-compiler-13b-ftd-llamafile-bin
-move dev-ml/moondream2llamafile-bin app-misc/moondream2llamafile-bin
-move dev-ml/ollama-bin app-misc/ollama-bin
-move dev-ml/whisperfile-bin app-misc/whisperfile-bin

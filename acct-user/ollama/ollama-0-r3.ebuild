@@ -5,7 +5,7 @@ EAPI=8
 inherit acct-user
 
 DESCRIPTION="System user for ollama"
-HOMEPAGE="https://github.com/ollama/ollama"
+HOMEPAGE=""
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"

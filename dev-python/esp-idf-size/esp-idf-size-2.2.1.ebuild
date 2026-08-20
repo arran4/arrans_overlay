@@ -17,4 +17,4 @@ RDEPEND="
 	dev-python/pyyaml[${PYTHON_USEDEP}]
 	dev-python/esp-pylib[${PYTHON_USEDEP}]
 "
-
+DEPEND="${RDEPEND}"

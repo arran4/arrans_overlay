@@ -29,4 +29,4 @@ RDEPEND="
 	dev-python/pathvalidate[${PYTHON_USEDEP}]
 	dev-python/truststore[${PYTHON_USEDEP}]
 "
-
+DEPEND="${RDEPEND}"
