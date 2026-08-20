@@ -79,6 +79,11 @@ jobs:
 
           mkdir -p /etc/portage/repos.conf
           printf "%s\n" \
+            "[gentoo]" \
+            "location = /var/db/repos/gentoo" \
+            "auto-sync = no" \
+            > /etc/portage/repos.conf/gentoo.conf
+          printf "%s\n" \
             "[arrans-overlay]" \
             "location = /var/db/repos/arrans_overlay" \
             "masters = gentoo" \
