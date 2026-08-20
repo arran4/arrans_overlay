@@ -78,6 +78,9 @@ jobs:
           set -euxo pipefail
 
           mkdir -p /etc/portage/repos.conf
+          if [ -f /usr/share/portage/config/repos.conf ]; then
+            cp /usr/share/portage/config/repos.conf /etc/portage/repos.conf/gentoo.conf
+          fi
           printf "%s\n" \
             "[arrans-overlay]" \
             "location = /var/db/repos/arrans_overlay" \
@@ -85,7 +88,8 @@ jobs:
             "auto-sync = no" \
             > /etc/portage/repos.conf/arrans-overlay.conf
 
-          # Unmask all packages in the overlay for testing
+          # Unmask testing packages
+          echo 'ACCEPT_KEYWORDS="~amd64"' >> /etc/portage/make.conf
           mkdir -p /etc/portage/package.accept_keywords
           echo "*/*::arrans-overlay ~amd64" > /etc/portage/package.accept_keywords/arrans-overlay
 
@@ -96,8 +100,14 @@ jobs:
 
           FAILED_PACKAGES=""
           for PKG in $PACKAGES; do
-            echo "Running pkgcheck on $PKG"
-            if ! pkgcheck scan /var/db/repos/arrans_overlay/${PKG#=}; then
+            PKG_PATH="${PKG#=}"
+            PKG_NAME_VER="${PKG_PATH#*/}"
+            PKG_NAME=$(echo "$PKG_NAME_VER" | sed -E "s/-[0-9]+(\.[0-9]+)*.*//")
+            PKG_CAT="${PKG_PATH%%/*}"
+            PKG_DIR="$PKG_CAT/$PKG_NAME"
+
+            echo "Running pkgcheck on $PKG_DIR"
+            if ! pkgcheck scan "/var/db/repos/arrans_overlay/$PKG_DIR"; then
               echo "pkgcheck failed for $PKG"
               FAILED_PACKAGES="$FAILED_PACKAGES $PKG (pkgcheck)"
             fi
