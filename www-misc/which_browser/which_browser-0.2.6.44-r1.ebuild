@@ -6,13 +6,10 @@ EAPI=8
 DESCRIPTION="Which Browser? A browser selecting tool with rules to automate"
 HOMEPAGE="https://which-browser-site.pages.dev"
 
-MY_BASE_PV=${PV%.*}
-MY_BUILD_SUFFIX=${PV##*.}
-MY_DEB_ARCHIVE="which_browser-${MY_BASE_PV}+${MY_BUILD_SUFFIX}-linux.deb"
 
 # Updated SRC_URI for new host structure: downloads/vBase/file
 # Hardcoded to prevent g2 static parsing errors with complex bash variables
-SRC_URI="https://which-browser-site.pages.dev/downloads/v${MY_BASE_PV}/${MY_DEB_ARCHIVE}"
+SRC_URI="https://which-browser-site.pages.dev/downloads/v0.2.6/which_browser-0.2.6+44-linux.deb"
 S="${WORKDIR}"
 LICENSE="All-rights-reserved"
 SLOT="0"
@@ -32,7 +29,7 @@ src_prepare() {
 }
 
 src_unpack() {
-	unpack_deb "${MY_DEB_ARCHIVE}"
+	unpack_deb "which_browser-0.2.6+44-linux.deb"
 }
 
 src_install() {
