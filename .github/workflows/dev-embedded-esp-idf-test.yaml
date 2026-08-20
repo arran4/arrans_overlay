@@ -108,6 +108,7 @@ jobs:
       - name: Smoke test
         run: |
           docker exec esp-idf-gentoo bash -euxo pipefail -c '
+            /usr/share/esp-idf/install.sh
             source /usr/share/esp-idf/export.sh
             python3 -c "import esp_pylib"
             python3 -c "import idf_component_manager.idf_extensions"
