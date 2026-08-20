@@ -5,12 +5,12 @@ inherit python-single-r1
 
 DESCRIPTION="Espressif IoT Development Framework"
 HOMEPAGE="https://github.com/espressif/esp-idf"
-SRC_URI="https://dl.espressif.com/github_assets/espressif/esp-idf/releases/download/v6.0.2/esp-idf-v6.0.2.zip"
+SRC_URI="https://dl.espressif.com/github_assets/espressif/esp-idf/releases/download/v${PV}/esp-idf-v${PV}.zip"
 
 LICENSE="Apache-2.0"
 SLOT="0"
+S="${WORKDIR}/esp-idf-v${PV}"
 KEYWORDS="~amd64"
-IUSE=""
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 # We depend on python, git, cmake, ninja, ccache, flex, bison, gperf, libusb
@@ -57,7 +57,6 @@ RDEPEND="${DEPEND}
 "
 BDEPEND="app-arch/unzip"
 
-S="${WORKDIR}/esp-idf-v${PV}"
 
 src_prepare() {
 	default
