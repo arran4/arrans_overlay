@@ -99,7 +99,7 @@ jobs:
 
             # 11c: freertos-gdb independent install and import check
             ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot =dev-python/freertos-gdb-1.0.4-r2
-            python3 -c "import sys, unittest.mock; sys.modules['gdb'] = unittest.mock.MagicMock(); import freertos_gdb; print(\"freertos_gdb import OK\")"
+            python3 -c "import sys, unittest.mock; sys.modules[\"gdb\"] = unittest.mock.MagicMock(); import freertos_gdb; print(\"freertos_gdb import OK\")"
 
             # 11d: Xtensa GCC and GDB coexist without gprof file collision
             ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot dev-embedded/xtensa-esp-elf-bin dev-embedded/xtensa-esp-elf-gdb-bin
@@ -140,7 +140,7 @@ jobs:
             idf.py --version
 
             # Test all touched Python package imports
-            python3 -c "import esp_pylib; import idf_component_manager.idf_extensions; import esp_coredump; import esp_idf_monitor; import esp_idf_panic_decoder; import esp_idf_diag; import esp_idf_kconfig; import esp_idf_nvs_partition_gen; import esp_idf_size; import esptool; import sys, unittest.mock; sys.modules['gdb'] = unittest.mock.MagicMock(); import freertos_gdb; print(\"All ESP-IDF Python module imports succeeded!\")"
+            python3 -c "import esp_pylib; import idf_component_manager.idf_extensions; import esp_coredump; import esp_idf_monitor; import esp_idf_panic_decoder; import esp_idf_diag; import esp_idf_kconfig; import esp_idf_nvs_partition_gen; import esp_idf_size; import esptool; import sys, unittest.mock; sys.modules[\"gdb\"] = unittest.mock.MagicMock(); import freertos_gdb; print(\"All ESP-IDF Python module imports succeeded!\")"
           '
 
       - name: Basic test
