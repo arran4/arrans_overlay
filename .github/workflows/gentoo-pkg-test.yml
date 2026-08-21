@@ -107,7 +107,7 @@ jobs:
           FAILED_PACKAGES=""
           for PKG in $PACKAGES; do
             echo "Running pkgcheck on $PKG"
-            if ! pkgcheck scan --net --exit error /var/db/repos/arrans-overlay/${PKG#=}; then
+            if ! pkgcheck scan --net --exit error -R p "$PKG"; then
               echo "pkgcheck failed for $PKG"
               FAILED_PACKAGES="$FAILED_PACKAGES $PKG (pkgcheck)"
             fi
