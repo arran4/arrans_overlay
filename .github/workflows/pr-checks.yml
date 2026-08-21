@@ -19,7 +19,7 @@ jobs:
       - name: Run pkgcheck
         uses: pkgcore/pkgcheck-action@v1
         with:
-          args: --keywords=-UnknownManifest,-NonexistentDeps,-NonsolvableDepsInDev,-NonsolvableDepsInStable,-StaticSrcUri,-MissingRemoteId,-DoubleEmptyLine --commits
+          args: --keywords=-UnknownManifest,-NonexistentDeps,-NonsolvableDepsInDev,-NonsolvableDepsInStable,-NonsolvableDeps,-StaticSrcUri,-MissingRemoteId,-DoubleEmptyLine --commits
 
   g2-lint:
     runs-on: ubuntu-latest

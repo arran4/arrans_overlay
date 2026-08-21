@@ -50,7 +50,7 @@ RDEPEND="
 	gui-wm/hyprland
 	media-fonts/material-symbols-variable
 	media-fonts/rubik
-	media-fonts/nerdfonts[cascadiacode]
+	media-fonts/cascadia-code
 	media-fonts/noto
 	media-fonts/noto-cjk
 	media-fonts/noto-emoji
