@@ -114,7 +114,7 @@ jobs:
 
             echo "Building and testing $PKG"
             # Actually build and install the package to verify it works
-            emerge --autounmask-write $PKG || true
+            emerge --autounmask-write --autounmask-continue --autounmask-backtrack=y $PKG || true
             etc-update --automode -5
             if ! emerge -v $PKG; then
               echo "Failed to emerge $PKG"
