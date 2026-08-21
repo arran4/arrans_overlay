@@ -75,27 +75,45 @@ jobs:
             gentoo/stage3:latest \
             sleep infinity
 
-      - name: Install esp-idf
+      - name: Setup overlay repository
         run: |
           docker exec esp-idf-gentoo bash -euxo pipefail -c '
             mkdir -p /etc/portage/repos.conf
-            printf "%s\\n" \
+            printf "%s\n" \
               "[arrans-overlay]" \
               "location = /var/db/repos/arrans_overlay" \
               "masters = gentoo" \
               "auto-sync = no" \
               > /etc/portage/repos.conf/arrans-overlay.conf
+          '
 
-            # Ensure we can use Python 3.12 (standard now)
-            # ACCEPT_KEYWORDS="~amd64" python_targets_python3_12 python_single_target_python3_12
+      - name: PR #827 / issue #823 regression checks
+        run: |
+          docker exec esp-idf-gentoo bash -euxo pipefail -c '
+            # 11a: Original python-single-r1 invalid atom resolution check
+            ACCEPT_KEYWORDS="~amd64" emerge --pretend --verbose =dev-embedded/esp-idf-6.0.2-r3
 
-            # Pretend step to catch deps
-            if ! ACCEPT_KEYWORDS="~amd64" emerge --pretend --verbose dev-embedded/esp-idf; then
-               echo "Pretend step failed. Check dependency graph."
-               sh -c "exit 1"
-            fi
+            # 11b: esp-coredump independent install and import check
+            ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot =dev-python/esp-coredump-1.16.0-r2
+            python3 -c "import esp_coredump; print(\"esp_coredump import OK\")"
 
-            if ! ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot dev-embedded/esp-idf; then
+            # 11c: freertos-gdb independent install and import check
+            ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot =dev-python/freertos-gdb-1.0.4-r2
+            python3 -c "import sys, unittest.mock; sys.modules['gdb'] = unittest.mock.MagicMock(); import freertos_gdb; print(\"freertos_gdb import OK\")"
+
+            # 11d: Xtensa GCC and GDB coexist without gprof file collision
+            ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot dev-embedded/xtensa-esp-elf-bin dev-embedded/xtensa-esp-elf-gdb-bin
+            test -x /usr/bin/xtensa-esp-elf-gprof
+            owners=$(portageq owners / /usr/bin/xtensa-esp-elf-gprof)
+            echo "Owners of /usr/bin/xtensa-esp-elf-gprof: ${owners}"
+            [[ "${owners}" == *"dev-embedded/xtensa-esp-elf-gdb-bin"* ]]
+            [[ "${owners}" != *"dev-embedded/xtensa-esp-elf-bin"* ]]
+          '
+
+      - name: Install esp-idf
+        run: |
+          docker exec esp-idf-gentoo bash -euxo pipefail -c '
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot =dev-embedded/esp-idf-6.0.2-r3; then
               build_log=$(grep -lR "die" /var/tmp/portage/*/temp/build.log 2>/dev/null | head -n 1 || true)
               if [ -z "${build_log}" ]; then
                   build_log=$(ls -1t /var/tmp/portage/*/temp/build.log 2>/dev/null | head -n 1 || true)
@@ -107,7 +125,7 @@ jobs:
               else
                 echo "===== Portage build log not found ====="
               fi
-              sh -c "exit 1"
+              exit 1
             fi
           '
 
@@ -122,7 +140,7 @@ jobs:
             idf.py --version
 
             # Test all touched Python package imports
-            python3 -c "import esp_pylib; import idf_component_manager.idf_extensions; import esp_coredump; import esp_idf_monitor; import esp_idf_panic_decoder; import esp_idf_diag; import esp_idf_kconfig; import esp_idf_nvs_partition_gen; import esp_idf_size; import esptool; print(\"All ESP-IDF Python module imports succeeded!\")"
+            python3 -c "import esp_pylib; import idf_component_manager.idf_extensions; import esp_coredump; import esp_idf_monitor; import esp_idf_panic_decoder; import esp_idf_diag; import esp_idf_kconfig; import esp_idf_nvs_partition_gen; import esp_idf_size; import esptool; import sys, unittest.mock; sys.modules['gdb'] = unittest.mock.MagicMock(); import freertos_gdb; print(\"All ESP-IDF Python module imports succeeded!\")"
           '
 
       - name: Basic test

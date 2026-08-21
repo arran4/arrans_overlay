@@ -1,6 +1,6 @@
 EAPI=8
 
-PYTHON_COMPAT=( python3_{12..14} )
+PYTHON_COMPAT=( python3_{10..15} )
 inherit python-single-r1
 
 DESCRIPTION="Espressif IoT Development Framework"
@@ -24,31 +24,29 @@ RDEPEND="${DEPEND}
 	dev-util/gperf
 	dev-util/ccache
 	virtual/libusb:1
-	$(python_gen_cond_dep 'dev-python/setuptools[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/packaging[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/click[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/pyserial[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/cryptography[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/pyparsing[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/pyelftools[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/idf-component-manager[${PYTHON_USEDEP}]')
-	dev-python/esp-coredump[${PYTHON_SINGLE_USEDEP}]
-	dev-embedded/esptool[${PYTHON_SINGLE_USEDEP}]
-	$(python_gen_cond_dep 'dev-python/esp-idf-kconfig[${PYTHON_USEDEP}]')
-	dev-python/esp-idf-monitor[${PYTHON_SINGLE_USEDEP}]
-	$(python_gen_cond_dep 'dev-python/esp-idf-nvs-partition-gen[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/esp-idf-size[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/esp-idf-diag[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/esp-idf-panic-decoder[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/esp-pylib[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/pyclang[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/construct[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/rich[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/psutil[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/tree-sitter[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/tree-sitter-c[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep 'dev-python/freertos-gdb[${PYTHON_USEDEP}]')
-	$(python_gen_cond_dep '<dev-python/reedsolo-1.8[${PYTHON_USEDEP}]')
+	dev-python/setuptools[${PYTHON_USEDEP}]
+	dev-python/packaging[${PYTHON_USEDEP}]
+	dev-python/click[${PYTHON_USEDEP}]
+	dev-python/pyserial[${PYTHON_USEDEP}]
+	dev-python/cryptography[${PYTHON_USEDEP}]
+	dev-python/pyparsing[${PYTHON_USEDEP}]
+	dev-python/pyelftools[${PYTHON_USEDEP}]
+	dev-python/idf-component-manager[${PYTHON_USEDEP}]
+	dev-python/esp-coredump[${PYTHON_USEDEP}]
+	dev-embedded/esptool[${PYTHON_USEDEP}]
+	dev-python/esp-idf-kconfig[${PYTHON_USEDEP}]
+	dev-python/esp-idf-monitor[${PYTHON_USEDEP}]
+	dev-python/esp-idf-nvs-partition-gen[${PYTHON_USEDEP}]
+	dev-python/esp-idf-size[${PYTHON_USEDEP}]
+	dev-python/esp-idf-diag[${PYTHON_USEDEP}]
+	dev-python/esp-idf-panic-decoder[${PYTHON_USEDEP}]
+	dev-python/pyclang[${PYTHON_USEDEP}]
+	dev-python/construct[${PYTHON_USEDEP}]
+	dev-python/rich[${PYTHON_USEDEP}]
+	dev-python/psutil[${PYTHON_USEDEP}]
+	dev-python/tree-sitter[${PYTHON_USEDEP}]
+	dev-python/tree-sitter-c[${PYTHON_USEDEP}]
+	dev-python/freertos-gdb[${PYTHON_USEDEP}]
 	dev-embedded/xtensa-esp-elf-bin
 	dev-embedded/xtensa-esp-elf-gdb-bin
 	dev-embedded/esp32ulp-elf-bin
@@ -57,7 +55,7 @@ RDEPEND="${DEPEND}
 "
 BDEPEND="app-arch/unzip"
 
-S="${WORKDIR}/esp-idf-v${PV}"
+S="${WORKDIR}/${P}"
 
 src_prepare() {
 	default
@@ -78,22 +76,8 @@ src_install() {
 
 	fperms +x /usr/share/esp-idf/tools/idf.py
 
-	# Generate the idf.py wrapper with the selected Python implementation
-	cat > "${T}/idf.py" <<-EOF || die
-	#!/bin/bash
-	export IDF_PATH="/usr/share/esp-idf"
-	export ESP_ROM_ELF_DIR="/usr/share/esp-rom-elfs"
-	export OPENOCD_SCRIPTS="/opt/openocd-esp32/share/openocd/scripts"
-	export PATH="/opt/openocd-esp32/bin:\$PATH"
-	export IDF_PYTHON_ENV_PATH="/usr"
-	export IDF_TOOLS_PATH="/usr/share/esp-idf"
-	export IDF_PYTHON_CHECK_CONSTRAINTS="no"
-	export ESP_IDF_VERSION="\${ESP_IDF_VERSION:-\$(cat /usr/share/esp-idf/version.txt 2>/dev/null || echo ${PV})}"
-	export IDF_VERSION="\${IDF_VERSION:-\${ESP_IDF_VERSION}}"
-	export PYTHON="\${PYTHON:-${PYTHON}}"
-	exec "\${PYTHON}" "/usr/share/esp-idf/tools/idf.py" "\$@"
-	EOF
-	dobin "${T}/idf.py"
+	# Provide an idf.py wrapper
+	newbin "${FILESDIR}/idf.py" idf.py
 
 	# Provide a sourcable export.sh
 	insinto /usr/share/esp-idf

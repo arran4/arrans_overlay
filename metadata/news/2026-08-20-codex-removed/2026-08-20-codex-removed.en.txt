@@ -3,7 +3,8 @@ Author: Arran Ubels <gentoo@arran4.com>
 Posted: 2026-08-20
 Revision: 1
 News-Item-Format: 2.0
-Display-If-Installed: dev-util/codex dev-util/codex-bin
+Display-If-Installed: dev-util/codex
+Display-If-Installed: dev-util/codex-bin
 
 The packages dev-util/codex and dev-util/codex-bin have been added to the official guru repository.
 They have been removed from this overlay to avoid collisions.
