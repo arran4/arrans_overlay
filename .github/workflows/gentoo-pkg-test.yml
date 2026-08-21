@@ -101,15 +101,15 @@ jobs:
 
           # Install pkgcheck
 
-printf "%s\n" \
-  "[guru]" \
-  "location = /var/db/repos/guru" \
-  "sync-type = git" \
-  "sync-uri = https://github.com/gentoo-mirror/guru.git" \
-  "auto-sync = yes" \
-  > /etc/portage/repos.conf/guru.conf
+          printf "%s\n" \
+            "[guru]" \
+            "location = /var/db/repos/guru" \
+            "sync-type = git" \
+            "sync-uri = https://github.com/gentoo-mirror/guru.git" \
+            "auto-sync = yes" \
+            > /etc/portage/repos.conf/guru.conf
 
-emerge --sync guru
+          emerge --sync guru
 
           emerge -v dev-util/pkgcheck
 
