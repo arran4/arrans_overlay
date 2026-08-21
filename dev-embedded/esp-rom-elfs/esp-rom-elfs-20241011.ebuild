@@ -8,7 +8,7 @@ LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~amd64"
 
-S="${WORKDIR}"
+S="${WORKDIR}/${P}"
 
 src_install() {
 	dodir /usr/share/esp-rom-elfs

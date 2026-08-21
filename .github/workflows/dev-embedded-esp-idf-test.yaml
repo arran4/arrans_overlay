@@ -102,12 +102,13 @@ jobs:
             python3 -c "import sys, unittest.mock; sys.modules[\"gdb\"] = unittest.mock.MagicMock(); import freertos_gdb; print(\"freertos_gdb import OK\")"
 
             # 11d: Xtensa GCC and GDB coexist without gprof file collision
-            ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot dev-embedded/xtensa-esp-elf-bin dev-embedded/xtensa-esp-elf-gdb-bin
+            ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot =dev-embedded/xtensa-esp-elf-bin-16.1.0_p20260609-r1 dev-embedded/xtensa-esp-elf-gdb-bin
             test -x /usr/bin/xtensa-esp-elf-gprof
             owners=$(portageq owners / /usr/bin/xtensa-esp-elf-gprof)
             echo "Owners of /usr/bin/xtensa-esp-elf-gprof: ${owners}"
             [[ "${owners}" == *"dev-embedded/xtensa-esp-elf-gdb-bin"* ]]
             [[ "${owners}" != *"dev-embedded/xtensa-esp-elf-bin"* ]]
+            [[ $(echo "${owners}" | grep -c "dev-embedded/") -eq 1 ]]
           '
 
       - name: Install esp-idf
