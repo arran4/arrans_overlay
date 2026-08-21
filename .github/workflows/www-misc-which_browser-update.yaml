@@ -141,7 +141,7 @@ jobs:
                     # Ensure the desktop file has the correct permissions
                     if [[ -f "\${D}/usr/share/applications/which_browser.desktop" ]]; then
                             fperms 0644 /usr/share/applications/which_browser.desktop
-                            sed -i -e '/^Version=/d' "${D}/usr/share/applications/which_browser.desktop" || die
+                            sed -i -e '/^Version=/d' "\${D}/usr/share/applications/which_browser.desktop" || die
                     fi
 
                     # Ensure the icon file has the correct permissions
