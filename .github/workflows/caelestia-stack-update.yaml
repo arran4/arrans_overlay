@@ -25,8 +25,8 @@ jobs:
           echo "cli=$LATEST_CLI" >> $GITHUB_OUTPUT
 
           # Find current versions from our ebuilds
-          CURRENT_SHELL=$(ls gui-apps/caelestia-shell/*.ebuild | grep -oP '\d+\.\d+\.\d+(?=-r\d+)?' | sort -V | tail -n 1)
-          CURRENT_CLI=$(ls gui-apps/caelestia-cli/*.ebuild | grep -oP '\d+\.\d+\.\d+(?=-r\d+)?' | sort -V | tail -n 1)
+          CURRENT_SHELL=$(find gui-apps/caelestia-shell -name "*.ebuild" | grep -oP '\d+\.\d+\.\d+(?=-r\d+)?' | sort -V | tail -n 1)
+          CURRENT_CLI=$(find gui-apps/caelestia-cli -name "*.ebuild" | grep -oP '\d+\.\d+\.\d+(?=-r\d+)?' | sort -V | tail -n 1)
 
           echo "current_shell=$CURRENT_SHELL" >> $GITHUB_OUTPUT
           echo "current_cli=$CURRENT_CLI" >> $GITHUB_OUTPUT
@@ -62,11 +62,11 @@ jobs:
           # Here we just generate the new ebuild.
 
           cd gui-apps/caelestia-shell
-          CURRENT_SHELL_EBUILD=$(ls caelestia-shell-*.ebuild | sort -V | tail -n 1)
+          CURRENT_SHELL_EBUILD=$(find . -name "caelestia-shell-*.ebuild" | sort -V | tail -n 1)
           cp $CURRENT_SHELL_EBUILD "caelestia-shell-${SHELL_VER}.ebuild"
 
           cd ../caelestia-cli
-          CURRENT_CLI_EBUILD=$(ls caelestia-cli-*.ebuild | sort -V | tail -n 1)
+          CURRENT_CLI_EBUILD=$(find . -name "caelestia-cli-*.ebuild" | sort -V | tail -n 1)
           cp $CURRENT_CLI_EBUILD "caelestia-cli-${CLI_VER}.ebuild"
           cd ../../
 

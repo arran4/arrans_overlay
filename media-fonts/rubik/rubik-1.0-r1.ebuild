@@ -3,9 +3,10 @@
 
 EAPI=8
 
-COMMIT="e337a5f69a9bea30e58d05bd40184d79cc099628"
 
 inherit font
+
+COMMIT="e337a5f69a9bea30e58d05bd40184d79cc099628"
 
 DESCRIPTION="A sans serif font family with slightly rounded corners: variable font version"
 HOMEPAGE="https://github.com/googlefonts/rubik"
