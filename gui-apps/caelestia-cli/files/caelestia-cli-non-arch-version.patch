@@ -1,0 +1,41 @@
+Subject: [PATCH] Report package versions through Portage on Gentoo
+
+diff --git a/src/caelestia/utils/version.py b/src/caelestia/utils/version.py
+index becb066..225daa3 100644
+--- a/src/caelestia/utils/version.py
++++ b/src/caelestia/utils/version.py
+@@ -10,6 +10,11 @@ from caelestia.utils.dots.state import DotsState
+ from caelestia.utils.paths import config_dir
+
+ PKGS = ("caelestia-shell", "caelestia-cli", "quickshell")
++GENTOO_PKGS = (
++    "gui-apps/caelestia-shell",
++    "gui-apps/caelestia-cli",
++    "gui-apps/caelestia-meta",
++)
+ INDENT = "    "
+
+
+@@ -59,6 +64,22 @@ def fetch_git_metadata(repo_dir: Path, branch: str = "upstream/main") -> tuple[s
+
+
+ def print_packages() -> tuple[str, str] | None:
++    if shutil.which("portageq"):
++        _header("Packages:")
++        installed = []
++        for pkg in GENTOO_PKGS:
++            version = subprocess.run(
++                ["portageq", "best_version", "/", pkg],
++                stdout=subprocess.PIPE,
++                stderr=subprocess.DEVNULL,
++                text=True,
++            ).stdout.strip()
++            installed.append(
++                (pkg, version.removeprefix(f"{pkg}-") if version else "not installed")
++            )
++        _rows(installed, align=True)
++        return None
++
+     if not shutil.which("pacman"):
+         _header("Packages:", "not on Arch")
+         return None

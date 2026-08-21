@@ -1,0 +1,17 @@
+RESTRICT=mirror binchecks strip
+LICENSE=Apache-2.0
+INHERITED=font
+KEYWORDS=~amd64 ~arm64
+DESCRIPTION=Google Material Symbols variable fonts (Outlined, Rounded, Sharp)
+SLOT=0
+SRC_URI=
+	https://raw.githubusercontent.com/google/material-design-icons/481507587f1bdfe712939398c4dc0ecc2079ea7c/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf
+		-> MaterialSymbolsOutlined-0_p20260724.ttf
+	https://raw.githubusercontent.com/google/material-design-icons/481507587f1bdfe712939398c4dc0ecc2079ea7c/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf
+		-> MaterialSymbolsRounded-0_p20260724.ttf
+	https://raw.githubusercontent.com/google/material-design-icons/481507587f1bdfe712939398c4dc0ecc2079ea7c/variablefont/MaterialSymbolsSharp%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf
+		-> MaterialSymbolsSharp-0_p20260724.ttf
+
+EAPI=8
+HOMEPAGE=https://fonts.google.com/icons https://github.com/google/material-design-icons
+_md5_=6bccd71fe208bb836ab38376fa6e6ace

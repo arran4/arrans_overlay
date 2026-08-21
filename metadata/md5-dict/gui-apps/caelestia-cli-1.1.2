@@ -1,0 +1,23 @@
+SLOT=0
+INHERITED=distutils-r1 shell-completion
+DESCRIPTION=CLI for the Caelestia shell (scheme, screenshot, record, wallpaper, ...)
+BDEPEND=$(python_gen_cond_dep 'dev-python/hatch-vcs[${PYTHON_USEDEP}]')
+LICENSE=GPL-3
+KEYWORDS=~amd64
+HOMEPAGE=https://github.com/caelestia-dots/cli
+SRC_URI=https://github.com/caelestia-dots/cli/archive/refs/tags/v1.1.2.tar.gz -> caelestia-cli-1.1.2.tar.gz
+EAPI=8
+RDEPEND=
+	dev-python/pillow[]
+	dev-python/materialyoucolor[]
+	app-misc/cliphist
+	dev-vcs/git
+	gui-apps/fuzzel
+	gui-apps/grim
+	gui-apps/slurp
+	gui-apps/swappy
+	gui-apps/wl-clipboard
+	media-video/gpu-screen-recorder
+	x11-libs/libnotify
+
+_md5_=2a1bdf056bed3d37373ec77ea300e5c8

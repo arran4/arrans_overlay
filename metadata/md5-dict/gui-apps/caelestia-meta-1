@@ -1,0 +1,11 @@
+KEYWORDS=~amd64
+RDEPEND=
+	gui-apps/caelestia-shell
+	gui-apps/caelestia-cli
+
+EAPI=8
+DESCRIPTION=Meta package for the Caelestia desktop shell
+HOMEPAGE=https://github.com/caelestia-dots/shell
+LICENSE=metapackage
+SLOT=0
+_md5_=36fc2cb5961dd25e5adea736f07d04f5

@@ -1,0 +1,324 @@
+From 1b85b731f16351fb50facc0fcedc3a37f9d52da5 Mon Sep 17 00:00:00 2001
+From: Chua Zheng Leong <melynx@gmail.com>
+Date: Thu, 16 Jul 2026 13:36:41 +0800
+Subject: [PATCH] feat(lock): support configurable facial auth providers
+
+---
+ README.md                                  | 20 ++++++--
+ assets/pam.d/gaze                          |  3 ++
+ modules/lock/Pam.qml                       | 54 +++++++++++++---------
+ modules/lock/center/InputField.qml         |  2 +-
+ modules/lock/center/PasswordInput.qml      |  8 ++--
+ modules/lock/center/StateMessage.qml       | 22 ++++-----
+ plugin/src/Caelestia/Config/lockconfig.hpp |  8 ++--
+ 7 files changed, 73 insertions(+), 44 deletions(-)
+ create mode 100644 assets/pam.d/gaze
+
+diff --git a/README.md b/README.md
+index 61d58f3e..3610f661 100644
+--- a/README.md
++++ b/README.md
+@@ -240,7 +240,8 @@ For example, to disable the bar on DP-1:
+ >   `favouriteApps`, `hiddenApps`, `actions`)
+ > - `launcher.useFuzzy` (`apps`, `actions`, `schemes`, `variants`, `wallpapers`)
+ > - `notifs` (`expire`, `fullscreen`, `defaultExpireTimeout`, `fullscreenExpireTimeout`, `actionOnClick`)
+-> - `lock` (`enableFprint`, `maxFprintTries`)
++> - `lock` (`enableFprint`, `maxFprintTries`, `facialProvider`, `maxFacialTries`,
++>   `triggerFacialOnWake`)
+ > - `nexus` (`networkRescanInterval`)
+ > - `utilities.toasts` (all except `fullscreen`)
+ > - `utilities.vpn` (`enabled`, `provider`)
+@@ -251,6 +252,17 @@ For example, to disable the bar on DP-1:
+ >
+ > </details>
+
++### Facial authentication
++
++The lock screen supports one facial authentication provider at a time. Set
++`lock.facialProvider` to `"howdy"` (the default), `"gaze"`, or `"none"` to disable facial
++authentication. `lock.maxFacialTries` and `lock.triggerFacialOnWake` apply to whichever
++provider is selected.
++
++Howdy requires the `howdy` executable and `pam_howdy.so`. Gaze requires the `gaze`
++executable, `pam_gaze.so`, and an active system `gazed` service. Password authentication
++remains available independently of the selected facial provider.
++
+ ### Example configuration
+
+ > [!NOTE]
+@@ -697,9 +709,9 @@ For example, to disable the bar on DP-1:
+         "recolourLogo": true,
+         "enableFprint": true,
+         "maxFprintTries": 3,
+-        "enableHowdy": true,
+-        "maxHowdyTries": 3,
+-        "triggerHowdyOnWake": true,
++        "facialProvider": "howdy",
++        "maxFacialTries": 3,
++        "triggerFacialOnWake": true,
+         "hideNotifs": false
+     },
+     "nexus": {
+diff --git a/assets/pam.d/gaze b/assets/pam.d/gaze
+new file mode 100644
+index 00000000..f047001b
+--- /dev/null
++++ b/assets/pam.d/gaze
+@@ -0,0 +1,3 @@
++#%PAM-1.0
++
++auth    required    pam_gaze.so
+diff --git a/modules/lock/Pam.qml b/modules/lock/Pam.qml
+index f6c97470..a3224725 100644
+--- a/modules/lock/Pam.qml
++++ b/modules/lock/Pam.qml
+@@ -22,7 +22,18 @@ Scope {
+
+     readonly property alias passwd: passwd
+     readonly property alias fprint: fprint
+-    readonly property alias howdy: howdy
++    readonly property alias facial: facial
++
++    readonly property string facialProvider: GlobalConfig.lock.facialProvider
++    readonly property bool facialProviderSupported: facialProvider === "howdy" || facialProvider === "gaze"
++    readonly property string facialPamConfig: facialProviderSupported ? facialProvider : "howdy"
++    readonly property list<string> facialAvailCommand: {
++        if (facialProvider === "howdy")
++            return ["sh", "-c", "command -v howdy"];
++        if (facialProvider === "gaze")
++            return ["sh", "-c", "command -v gaze >/dev/null && systemctl is-active --quiet gazed"];
++        return ["false"];
++    }
+
+     property string lockMessage
+     property int state
+@@ -34,16 +45,16 @@ Scope {
+         if (passwd.active)
+             return;
+
+-        // Trigger howdy on enter while empty buffer
+-        if (howdy.canAttempt && !howdy.active && (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) && buffer.length === 0)
+-            return howdy.start(); // Gate on active so double enter still allows empty password
++        // Trigger facial authentication on enter while the password buffer is empty.
++        if (facial.canAttempt && !facial.active && (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) && buffer.length === 0)
++            return facial.start(); // Gate on active so double enter still allows empty password
+
+         if (state === Pam.MaxTries)
+             return;
+
+-        // Abort howdy on pwd input
+-        if (howdy.active)
+-            howdy.abort();
++        // Abort facial authentication on password input.
++        if (facial.active)
++            facial.abort();
+
+         if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
+             passwd.start();
+@@ -68,7 +79,7 @@ Scope {
+     }
+
+     function clearTransientState(): void {
+-        for (const obj of [root, fprint, howdy])
++        for (const obj of [root, fprint, facial])
+             if (obj.state !== Pam.MaxTries)
+                 obj.state = Pam.None;
+     }
+@@ -134,18 +145,18 @@ Scope {
+     }
+
+     ManualPamContext {
+-        id: howdy
++        id: facial
+
+-        config: "howdy"
+-        availCommand: ["sh", "-c", "command -v howdy"]
+-        enabled: GlobalConfig.lock.enableHowdy
+-        maxTries: GlobalConfig.lock.maxHowdyTries
++        config: root.facialPamConfig
++        availCommand: root.facialAvailCommand
++        enabled: root.facialProviderSupported
++        maxTries: GlobalConfig.lock.maxFacialTries
+     }
+
+     Connections {
+         function onResumed(): void {
+-            if (howdy.canAttempt && !howdy.active && GlobalConfig.lock.triggerHowdyOnWake)
+-                howdy.start();
++            if (facial.canAttempt && !facial.active && GlobalConfig.lock.triggerFacialOnWake)
++                facial.start();
+         }
+
+         target: SessionManager
+@@ -155,9 +166,9 @@ Scope {
+         function onSecureChanged(): void {
+             if (root.lock.secure) {
+                 fprint.checkAvailable();
+-                howdy.checkAvailable();
++                facial.checkAvailable();
+                 fprint.reset();
+-                howdy.reset();
++                facial.reset();
+                 root.buffer = "";
+                 root.state = Pam.None;
+                 root.lockMessage = "";
+@@ -166,7 +177,7 @@ Scope {
+
+         function onUnlock(): void {
+             fprint.abort();
+-            howdy.abort();
++            facial.abort();
+             passwd.abort();
+         }
+
+@@ -178,9 +189,10 @@ Scope {
+             root.restartFprint();
+         }
+
+-        function onEnableHowdyChanged(): void {
+-            if (!GlobalConfig.lock.enableHowdy && howdy.active)
+-                howdy.abort();
++        function onFacialProviderChanged(): void {
++            facial.abort();
++            facial.reset();
++            facial.checkAvailable();
+         }
+
+         target: GlobalConfig.lock
+diff --git a/modules/lock/center/InputField.qml b/modules/lock/center/InputField.qml
+index e25166b6..7d32f7cd 100644
+--- a/modules/lock/center/InputField.qml
++++ b/modules/lock/center/InputField.qml
+@@ -48,7 +48,7 @@ Item {
+         text: {
+             if (root.pam.passwd.active)
+                 return qsTr("Loading...");
+-            if (root.pam.howdy.active)
++            if (root.pam.facial.active)
+                 return qsTr("Scanning face...");
+             if (root.pam.state === Pam.MaxTries)
+                 return qsTr("Max tries reached");
+diff --git a/modules/lock/center/PasswordInput.qml b/modules/lock/center/PasswordInput.qml
+index 7608a8b8..6b9cd627 100644
+--- a/modules/lock/center/PasswordInput.qml
++++ b/modules/lock/center/PasswordInput.qml
+@@ -66,7 +66,7 @@ StyledRect {
+             AnimLoader {
+                 anchors.centerIn: parent
+                 anchors.verticalCenterOffset: sourceComponent === iconComp ? 1 : 0
+-                sourceComp: root.lock.pam.passwd.active || root.lock.pam.howdy.active ? loadingComp : iconComp
++                sourceComp: root.lock.pam.passwd.active || root.lock.pam.facial.active ? loadingComp : iconComp
+             }
+
+             Component {
+@@ -76,17 +76,17 @@ StyledRect {
+                     animate: true
+                     text: {
+                         if (root.lock.pam.fprint.tries >= GlobalConfig.lock.maxFprintTries) {
+-                            if (root.lock.pam.howdy.canAttempt)
++                            if (root.lock.pam.facial.canAttempt)
+                                 return "face";
+                             return "fingerprint_off";
+                         }
+                         if (root.lock.pam.fprint.active)
+                             return "fingerprint";
+-                        if (root.lock.pam.howdy.canAttempt)
++                        if (root.lock.pam.facial.canAttempt)
+                             return "face";
+                         return "lock";
+                     }
+-                    color: !root.lock.pam.howdy.canAttempt && root.lock.pam.fprint.tries >= GlobalConfig.lock.maxFprintTries ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
++                    color: !root.lock.pam.facial.canAttempt && root.lock.pam.fprint.tries >= GlobalConfig.lock.maxFprintTries ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+                     fontStyle: Tokens.font.icon.builders.medium.scale(root.centerScale).build()
+                     fill: text === "face"
+                 }
+diff --git a/modules/lock/center/StateMessage.qml b/modules/lock/center/StateMessage.qml
+index b89c9a46..71c34bf5 100644
+--- a/modules/lock/center/StateMessage.qml
++++ b/modules/lock/center/StateMessage.qml
+@@ -15,22 +15,22 @@ Item {
+         // Errors
+         if (pam.fprint.state === Pam.Error)
+             return qsTr("FP ERROR: %1").arg(pam.fprint.message);
+-        if (pam.howdy.state === Pam.Error)
+-            return qsTr("FACE ERROR: %1").arg(pam.howdy.message);
++        if (pam.facial.state === Pam.Error)
++            return qsTr("FACE ERROR: %1").arg(pam.facial.message);
+         if (pam.state === Pam.Error)
+             return qsTr("PW ERROR: %1").arg(pam.passwd.message);
+
+-        // Fprint/howdy fail
++        // Fingerprint/facial fail
+         if (pam.state !== Pam.MaxTries) {
+             if (pam.fprint.state === Pam.Failed)
+                 return qsTr("Fingerprint not recognized (%1/%2). Please try again or use password.").arg(pam.fprint.tries).arg(GlobalConfig.lock.maxFprintTries);
+-            if (pam.howdy.state === Pam.Failed)
+-                return qsTr("Face not recognized (%1/%2). Please try again or use password.").arg(pam.howdy.tries).arg(GlobalConfig.lock.maxHowdyTries);
++            if (pam.facial.state === Pam.Failed)
++                return qsTr("Face not recognized (%1/%2). Please try again or use password.").arg(pam.facial.tries).arg(GlobalConfig.lock.maxFacialTries);
+         } else {
+             if (pam.fprint.state === Pam.Failed)
+                 return qsTr("Fingerprint not recognized (%1/%2). Please try again.").arg(pam.fprint.tries).arg(GlobalConfig.lock.maxFprintTries);
+-            if (pam.howdy.state === Pam.Failed)
+-                return qsTr("Face not recognized (%1/%2). Please try again.").arg(pam.howdy.tries).arg(GlobalConfig.lock.maxHowdyTries);
++            if (pam.facial.state === Pam.Failed)
++                return qsTr("Face not recognized (%1/%2). Please try again.").arg(pam.facial.tries).arg(GlobalConfig.lock.maxFacialTries);
+         }
+
+         if (pam.lockMessage) // Password max tries message
+@@ -40,7 +40,7 @@ Item {
+         if (pam.state === Pam.Failed) {
+             if (pam.fprint.available && pam.fprint.state !== Pam.MaxTries)
+                 return qsTr("Incorrect password. Please try again or use fingerprint.");
+-            if (pam.howdy.available && pam.howdy.state !== Pam.MaxTries)
++            if (pam.facial.available && pam.facial.state !== Pam.MaxTries)
+                 return qsTr("Incorrect password. Please try again or use face.");
+             return qsTr("Incorrect password. Please try again.");
+         }
+@@ -49,15 +49,15 @@ Item {
+         if (pam.state === Pam.MaxTries) {
+             if (pam.fprint.available && pam.fprint.state !== Pam.MaxTries)
+                 return qsTr("Maximum password attempts reached. Please use fingerprint.");
+-            if (pam.howdy.available && pam.howdy.state !== Pam.MaxTries)
++            if (pam.facial.available && pam.facial.state !== Pam.MaxTries)
+                 return qsTr("Maximum password attempts reached. Please use face.");
+-            if (pam.fprint.available || pam.howdy.available)
++            if (pam.fprint.available || pam.facial.available)
+                 return qsTr("Maximum attempts for all authentication methods reached.");
+             return qsTr("Maximum password attempts reached.");
+         }
+         if (pam.fprint.state === Pam.MaxTries)
+             return qsTr("Maximum fingerprint attempts reached. Please use password.");
+-        if (pam.howdy.state === Pam.MaxTries)
++        if (pam.facial.state === Pam.MaxTries)
+             return qsTr("Maximum face attempts reached. Please use password.");
+
+         return "";
+diff --git a/plugin/src/Caelestia/Config/lockconfig.hpp b/plugin/src/Caelestia/Config/lockconfig.hpp
+index 85653975..8ab8ec5d 100644
+--- a/plugin/src/Caelestia/Config/lockconfig.hpp
++++ b/plugin/src/Caelestia/Config/lockconfig.hpp
+@@ -2,6 +2,8 @@
+
+ #include "configobject.hpp"
+
++#include <qstring.h>
++
+ namespace caelestia::config {
+
+ class LockConfig : public ConfigObject {
+@@ -13,9 +15,9 @@ class LockConfig : public ConfigObject {
+     CONFIG_PROPERTY(bool, recolourLogo, true)
+     CONFIG_GLOBAL_PROPERTY(bool, enableFprint, true)
+     CONFIG_GLOBAL_PROPERTY(int, maxFprintTries, 3)
+-    CONFIG_GLOBAL_PROPERTY(bool, enableHowdy, true)
+-    CONFIG_GLOBAL_PROPERTY(int, maxHowdyTries, 3)
+-    CONFIG_GLOBAL_PROPERTY(bool, triggerHowdyOnWake, true)
++    CONFIG_GLOBAL_PROPERTY(QString, facialProvider, QStringLiteral("howdy"))
++    CONFIG_GLOBAL_PROPERTY(int, maxFacialTries, 3)
++    CONFIG_GLOBAL_PROPERTY(bool, triggerFacialOnWake, true)
+     CONFIG_PROPERTY(bool, hideNotifs, false)
+
+ public:
+--
+2.55.0
