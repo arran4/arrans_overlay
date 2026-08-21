@@ -32,7 +32,7 @@ jobs:
           docker run --detach \
             --name gentoo \
             --volumes-from portage \
-            --volume "${GITHUB_WORKSPACE}:/var/db/repos/arrans_overlay:ro" \
+            --volume "${GITHUB_WORKSPACE}:/var/db/repos/arrans-overlay:ro" \
             gentoo/stage3:latest \
             sleep infinity
 
@@ -86,7 +86,7 @@ jobs:
 
           printf "%s\n" \
             "[arrans-overlay]" \
-            "location = /var/db/repos/arrans_overlay" \
+            "location = /var/db/repos/arrans-overlay" \
             "masters = gentoo" \
             "auto-sync = no" \
             > /etc/portage/repos.conf/arrans-overlay.conf
@@ -107,13 +107,15 @@ jobs:
           FAILED_PACKAGES=""
           for PKG in $PACKAGES; do
             echo "Running pkgcheck on $PKG"
-            if ! pkgcheck scan /var/db/repos/arrans_overlay/${PKG#=}; then
+            if ! pkgcheck scan /var/db/repos/arrans-overlay/${PKG#=}; then
               echo "pkgcheck failed for $PKG"
               FAILED_PACKAGES="$FAILED_PACKAGES $PKG (pkgcheck)"
             fi
 
             echo "Building and testing $PKG"
             # Actually build and install the package to verify it works
+            emerge --autounmask-write $PKG || true
+            etc-update --automode -5
             if ! emerge -v $PKG; then
               echo "Failed to emerge $PKG"
               FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
