@@ -6,10 +6,12 @@ EAPI=8
 PYTHON_COMPAT=( python3_{12..14} )
 inherit python-single-r1
 
+MY_PV="${PV%-r*}"
+
 DESCRIPTION="Espressif IoT Development Framework"
 HOMEPAGE="https://github.com/espressif/esp-idf"
-SRC_URI="https://dl.espressif.com/github_assets/espressif/esp-idf/releases/download/v6.0.2/esp-idf-v6.0.2.zip"
-S="${WORKDIR}/esp-idf-v6.0.2"
+SRC_URI="https://dl.espressif.com/github_assets/espressif/esp-idf/releases/download/v${MY_PV}/esp-idf-v${MY_PV}.zip"
+S="${WORKDIR}/${PN}-v${MY_PV}"
 
 LICENSE="Apache-2.0"
 SLOT="0"
@@ -79,14 +81,14 @@ src_prepare() {
 import json
 path = 'tools/tools.json'
 with open(path) as f:
-    d = json.load(f)
+	d = json.load(f)
 for tool in d['tools']:
-    if tool['name'] == 'xtensa-esp-elf':
-        ver_names = [v['name'] for v in tool['versions']]
-        if 'esp-16.1.0_20260609' not in ver_names:
-            tool['versions'].insert(0, {'name': 'esp-16.1.0_20260609'})
+	if tool['name'] == 'xtensa-esp-elf':
+		ver_names = [v['name'] for v in tool['versions']]
+		if 'esp-16.1.0_20260609' not in ver_names:
+			tool['versions'].insert(0, {'name': 'esp-16.1.0_20260609'})
 with open(path, 'w') as f:
-    json.dump(d, f, indent=2)
+	json.dump(d, f, indent=2)
 " || die
 
 	# Picolibc compatibility with updated toolchains

@@ -10,7 +10,7 @@ inherit distutils-r1 pypi
 
 DESCRIPTION="Rapid application development framework for Python"
 HOMEPAGE="https://github.com/Textualize/textual https://pypi.org/project/textual/"
-SRC_URI="https://files.pythonhosted.org/packages/1f/b6/59b1de04bb4dca0f21ed7ba0b19309ed7f3f5de4396edf20cc2855e53085/textual-1.0.0.tar.gz"
+SRC_URI="https://files.pythonhosted.org/packages/1f/b6/59b1de04bb4dca0f21ed7ba0b19309ed7f3f5de4396edf20cc2855e53085/${P}.tar.gz"
 
 LICENSE="MIT"
 SLOT="0"

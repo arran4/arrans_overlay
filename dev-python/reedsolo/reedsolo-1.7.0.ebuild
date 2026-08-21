@@ -14,7 +14,7 @@ HOMEPAGE="
 	https://github.com/tomerfiliba/reedsolomon/
 	https://pypi.org/project/reedsolo/
 "
-SRC_URI="https://files.pythonhosted.org/packages/source/r/reedsolo/reedsolo-1.7.0.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://files.pythonhosted.org/packages/f7/61/a67338cbecf370d464e71b10e9a31355f909d6937c3a8d6b17dd5d5beb5e/${P}.tar.gz"
 
 LICENSE="|| ( Unlicense MIT-0 )"
 SLOT="0"
