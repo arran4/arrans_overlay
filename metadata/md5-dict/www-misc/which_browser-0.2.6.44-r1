@@ -1,0 +1,12 @@
+RDEPEND=|| ( dev-libs/libayatana-appindicator )
+KEYWORDS=~amd64
+INHERITED=unpacker
+LICENSE=All-rights-reserved
+RESTRICT=mirror
+DESCRIPTION=Which Browser? A browser selecting tool with rules to automate.
+SLOT=0
+BDEPEND=dev-util/patchelf
+SRC_URI=https://which-browser-site.pages.dev/downloads/v0.2.6/which_browser-0.2.6+44-linux.deb
+EAPI=8
+HOMEPAGE=https://which-browser-site.pages.dev
+_md5_=fc8e8187afcad015f858b751cd39622a
