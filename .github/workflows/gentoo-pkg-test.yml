@@ -79,6 +79,12 @@ jobs:
 
           mkdir -p /etc/portage/repos.conf
           printf "%s\n" \
+            "[gentoo]" \
+            "location = /var/db/repos/gentoo" \
+            "auto-sync = no" \
+            > /etc/portage/repos.conf/gentoo.conf
+
+          printf "%s\n" \
             "[arrans-overlay]" \
             "location = /var/db/repos/arrans_overlay" \
             "masters = gentoo" \
@@ -86,6 +92,10 @@ jobs:
             > /etc/portage/repos.conf/arrans-overlay.conf
 
           # Unmask all packages in the overlay for testing
+          # Unmask licenses
+          mkdir -p /etc/portage/package.license
+          echo "*/*::arrans-overlay *" > /etc/portage/package.license/arrans-overlay
+
           mkdir -p /etc/portage/package.accept_keywords
           echo "*/*::arrans-overlay ~amd64" > /etc/portage/package.accept_keywords/arrans-overlay
 
