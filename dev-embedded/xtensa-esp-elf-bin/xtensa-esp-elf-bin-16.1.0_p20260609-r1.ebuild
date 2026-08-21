@@ -11,6 +11,7 @@ SRC_URI="
 	amd64? ( https://github.com/espressif/crosstool-NG/releases/download/esp-${MY_PV}/xtensa-esp-elf-${MY_PV}-x86_64-linux-gnu.tar.xz )
 	arm64? ( https://github.com/espressif/crosstool-NG/releases/download/esp-${MY_PV}/xtensa-esp-elf-${MY_PV}-aarch64-linux-gnu.tar.xz )
 "
+S="${WORKDIR}/xtensa-esp-elf"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -18,8 +19,6 @@ KEYWORDS="~amd64 ~arm64"
 RESTRICT="strip binchecks"
 
 QA_PREBUILT="opt/xtensa-esp-elf/*"
-
-S="${WORKDIR}/xtensa-esp-elf"
 
 src_install() {
 	dodir /opt/xtensa-esp-elf

@@ -9,11 +9,11 @@ inherit python-single-r1
 DESCRIPTION="Espressif IoT Development Framework"
 HOMEPAGE="https://github.com/espressif/esp-idf"
 SRC_URI="https://dl.espressif.com/github_assets/espressif/esp-idf/releases/download/v6.0.2/esp-idf-v6.0.2.zip"
+S="${WORKDIR}/esp-idf-v6.0.2"
 
 LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE=""
 REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 RESTRICT="strip"
 
@@ -66,8 +66,6 @@ RDEPEND="${DEPEND}
 	dev-embedded/esp-rom-elfs
 "
 BDEPEND="app-arch/unzip"
-
-S="${WORKDIR}/esp-idf-v6.0.2"
 
 src_prepare() {
 	default
