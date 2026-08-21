@@ -3,7 +3,6 @@
 
 EAPI=8
 
-
 inherit font
 
 COMMIT="e337a5f69a9bea30e58d05bd40184d79cc099628"

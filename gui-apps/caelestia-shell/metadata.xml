@@ -8,7 +8,4 @@
 	<upstream>
 		<remote-id type="github">caelestia-dots/shell</remote-id>
 	</upstream>
-	<use>
-		<flag name="i18n">Enable internationalization support</flag>
-	</use>
 </pkgmetadata>
