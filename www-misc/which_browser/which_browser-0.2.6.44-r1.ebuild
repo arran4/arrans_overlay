@@ -29,7 +29,9 @@ RESTRICT="mirror"
 # Verify the SHA256 checksum
 S="${WORKDIR}"
 
-inherit unpacker
+inherit unpacker xdg
+
+QA_PREBUILT="usr/share/which_browser/*"
 
 src_prepare() {
 	default
@@ -55,6 +57,7 @@ src_install() {
 	# Ensure the desktop file has the correct permissions
 	if [[ -f "${D}/usr/share/applications/which_browser.desktop" ]]; then
 		fperms 0644 /usr/share/applications/which_browser.desktop
+		sed -i -e '/^Version=/d' "${D}/usr/share/applications/which_browser.desktop" || die
 	fi
 
 	# Ensure the icon file has the correct permissions
@@ -64,7 +67,12 @@ src_install() {
 }
 
 pkg_postinst() {
+	xdg_pkg_postinst
 	einfo "Which Browser? has been installed."
 
 	einfo "Please set Which Browser? as the default HTTP and HTTPS handler."
+}
+
+pkg_postrm() {
+	xdg_pkg_postrm
 }
