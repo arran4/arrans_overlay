@@ -1,0 +1,47 @@
+diff -ruN a/src/caelestia/parser.py b/src/caelestia/parser.py
+--- a/src/caelestia/parser.py	2026-07-06 17:23:30.641409039 +0800
++++ b/src/caelestia/parser.py	2026-07-06 17:23:30.663972846 +0800
+@@ -160,6 +160,9 @@
+         "--disable-components", metavar="LIST", help="comma-separated list of components to disable"
+     )
+     install_parser.add_argument("--noconfirm", action="store_true", help="use defaults for all prompts")
++    install_parser.add_argument(
++        "--no-packages", action="store_true", help="skip package installation; deploy configs only"
++    )
+     _set_install_epilog(install_parser)
+
+     # Create parser for update opts
+diff -ruN a/src/caelestia/subcommands/install.py b/src/caelestia/subcommands/install.py
+--- a/src/caelestia/subcommands/install.py	2026-07-06 17:23:30.642281275 +0800
++++ b/src/caelestia/subcommands/install.py	2026-07-06 17:23:30.664002006 +0800
+@@ -59,11 +59,15 @@
+         legacy_dir = detect_legacy_repo()  # Detect legacy repo first cause deploy overwrites legacy syms
+
+         source, tip, manifest = self.fetch_manifest()
+-        try:
+-            installer, packages, local_packages = self.install_packages(source, manifest)
+-        except PackageError as e:
+-            fatal(e)
+-        run_hooks(manifest, "post_package")
++        if self.args.no_packages:
++            info("Skipping package installation (--no-packages); deploying configs only")
++            installer, packages, local_packages = None, [], {}
++        else:
++            try:
++                installer, packages, local_packages = self.install_packages(source, manifest)
++            except PackageError as e:
++                fatal(e)
++            run_hooks(manifest, "post_package")
+         self.dereference_legacy(legacy_dir)  # Copy legacy content into place before deploy overwrites the symlinks
+         deployed = self.deploy_configs(source, manifest)
+         run_hooks(manifest, "post_install")
+@@ -77,7 +81,8 @@
+             deployed_files=deployed,
+         ).save()
+
+-        self.migrate_legacy(installer, legacy_dir)
++        if installer is not None:
++            self.migrate_legacy(installer, legacy_dir)
+         self.print_done()
+
+     def print_greeting(self) -> None:

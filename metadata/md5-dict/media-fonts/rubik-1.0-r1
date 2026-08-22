@@ -1,0 +1,9 @@
+SRC_URI=https://github.com/googlefonts/rubik/archive/e337a5f69a9bea30e58d05bd40184d79cc099628.tar.gz -> rubik-1.0-r1.tar.gz
+KEYWORDS=~amd64 ~arm64 ~x86
+EAPI=8
+SLOT=0
+HOMEPAGE=https://github.com/googlefonts/rubik
+INHERITED=font
+LICENSE=OFL-1.1
+DESCRIPTION=A sans serif font family with slightly rounded corners: variable font version
+_md5_=927b943645dc9486045f730d2833ea54

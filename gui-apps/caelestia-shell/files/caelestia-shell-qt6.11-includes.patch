@@ -1,0 +1,102 @@
+diff -ruN a/plugin/src/Caelestia/Config/fontbuilder.hpp b/plugin/src/Caelestia/Config/fontbuilder.hpp
+--- a/plugin/src/Caelestia/Config/fontbuilder.hpp	2026-07-06 16:51:44.650375328 +0800
++++ b/plugin/src/Caelestia/Config/fontbuilder.hpp	2026-07-06 16:51:44.651109682 +0800
+@@ -1,6 +1,7 @@
+ #pragma once
+
+ #include <qfont.h>
++#include <qvariant.h>
+ #include <qqmlintegration.h>
+
+ namespace caelestia::config {
+diff -ruN a/plugin/src/Caelestia/Config/font.hpp b/plugin/src/Caelestia/Config/font.hpp
+--- a/plugin/src/Caelestia/Config/font.hpp	2026-07-06 16:51:44.642674562 +0800
++++ b/plugin/src/Caelestia/Config/font.hpp	2026-07-06 16:51:44.644443013 +0800
+@@ -3,6 +3,7 @@
+ #include "fontbuilder.hpp"
+
+ #include <qqmlintegration.h>
++#include <qobject.h>
+
+ namespace caelestia::config {
+
+diff -ruN a/plugin/src/Caelestia/Images/iutils.hpp b/plugin/src/Caelestia/Images/iutils.hpp
+--- a/plugin/src/Caelestia/Images/iutils.hpp	2026-07-06 16:51:44.659727985 +0800
++++ b/plugin/src/Caelestia/Images/iutils.hpp	2026-07-06 16:51:44.664443020 +0800
+@@ -2,6 +2,7 @@
+
+ #include <qobject.h>
+ #include <qqmlintegration.h>
++#include <qqmlengine.h>
+ #include <qurl.h>
+
+ namespace caelestia::images {
+diff -ruN a/plugin/src/Caelestia/Services/lyriccandidate.hpp b/plugin/src/Caelestia/Services/lyriccandidate.hpp
+--- a/plugin/src/Caelestia/Services/lyriccandidate.hpp	2026-07-06 16:51:44.674776620 +0800
++++ b/plugin/src/Caelestia/Services/lyriccandidate.hpp	2026-07-06 16:51:44.684443026 +0800
+@@ -1,6 +1,8 @@
+ #pragma once
+
+ #include <qqmlintegration.h>
++#include <qobject.h>
++#include <qstring.h>
+
+ namespace caelestia::services {
+
+diff -ruN a/plugin/src/Caelestia/Services/lyrics.hpp b/plugin/src/Caelestia/Services/lyrics.hpp
+--- a/plugin/src/Caelestia/Services/lyrics.hpp	2026-07-06 16:51:44.744120739 +0800
++++ b/plugin/src/Caelestia/Services/lyrics.hpp	2026-07-06 16:51:44.754443049 +0800
+@@ -6,6 +6,8 @@
+ #include <qjsonobject.h>
+ #include <qnetworkaccessmanager.h>
+ #include <qnetworkreply.h>
++#include <qtimer.h>
++#include <qpointer.h>
+
+ namespace caelestia::services {
+
+diff -ruN a/plugin/src/Caelestia/Services/sessionmanager.cpp b/plugin/src/Caelestia/Services/sessionmanager.cpp
+--- a/plugin/src/Caelestia/Services/sessionmanager.cpp	2026-07-06 16:51:44.761151338 +0800
++++ b/plugin/src/Caelestia/Services/sessionmanager.cpp	2026-07-06 16:51:44.764443052 +0800
+@@ -7,6 +7,7 @@
+ #include <QtDBus/qdbuspendingreply.h>
+ #include <QtDBus/qdbusreply.h>
+ #include <qloggingcategory.h>
++#include <qqmlengine.h>
+
+ #include "../toaster.hpp"
+
+diff -ruN a/plugin/src/Caelestia/Services/storage.hpp b/plugin/src/Caelestia/Services/storage.hpp
+--- a/plugin/src/Caelestia/Services/storage.hpp	2026-07-06 16:51:44.726400433 +0800
++++ b/plugin/src/Caelestia/Services/storage.hpp	2026-07-06 16:51:44.734443042 +0800
+@@ -7,6 +7,8 @@
+ #include <qqmlintegration.h>
+ #include <qqmllist.h>
+ #include <qvariant.h>
++#include <qpointer.h>
++#include <qstringlist.h>
+
+ namespace caelestia::services {
+
+diff -ruN a/plugin/src/Caelestia/Services/tickingservice.hpp b/plugin/src/Caelestia/Services/tickingservice.hpp
+--- a/plugin/src/Caelestia/Services/tickingservice.hpp	2026-07-06 16:51:44.705688419 +0800
++++ b/plugin/src/Caelestia/Services/tickingservice.hpp	2026-07-06 16:51:44.714443036 +0800
+@@ -1,6 +1,7 @@
+ #pragma once
+
+ #include "service.hpp"
++#include <qtimer.h>
+
+ namespace caelestia::services {
+
+diff -ruN a/plugin/src/Caelestia/Services/usagefmt.hpp b/plugin/src/Caelestia/Services/usagefmt.hpp
+--- a/plugin/src/Caelestia/Services/usagefmt.hpp	2026-07-06 16:51:44.693383576 +0800
++++ b/plugin/src/Caelestia/Services/usagefmt.hpp	2026-07-06 16:51:44.697776364 +0800
+@@ -1,6 +1,8 @@
+ #pragma once
+
+ #include <qqmlintegration.h>
++#include <qobject.h>
++#include <qstring.h>
+
+ namespace caelestia::services::usagefmt {

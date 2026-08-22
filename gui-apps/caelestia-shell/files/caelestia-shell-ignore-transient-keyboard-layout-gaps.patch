@@ -1,0 +1,53 @@
+From b952f02bc0880361aa923602a8aa926275338a88 Mon Sep 17 00:00:00 2001
+From: Chua Zheng Leong <melynx@gmail.com>
+Date: Mon, 13 Jul 2026 15:07:15 +0800
+Subject: [PATCH] fix: ignore transient keyboard layout gaps
+
+---
+ services/Hypr.qml | 23 ++++++++++++++++++++---
+ 1 file changed, 20 insertions(+), 3 deletions(-)
+
+diff --git a/services/Hypr.qml b/services/Hypr.qml
+index d890f098..232db1c8 100644
+--- a/services/Hypr.qml
++++ b/services/Hypr.qml
+@@ -38,6 +38,7 @@ Singleton {
+     readonly property alias devices: extras.devices
+
+     property bool hadKeyboard
++    property string lastKbLayout: ""
+     property string lastSpecialWorkspace: ""
+
+     signal configReloaded
+@@ -118,10 +119,26 @@ Singleton {
+     }
+
+     onKbLayoutFullChanged: {
+-        if (hadKeyboard && GlobalConfig.utilities.toasts.kbLayoutChanged)
+-            Toaster.toast(qsTr("Keyboard layout changed"), qsTr("Layout changed to: %1").arg(kbLayoutFull), "keyboard");
++        const layout = keyboard?.activeKeymap ?? "";
+
+-        hadKeyboard = !!keyboard;
++        if (!keyboard || !layout || layout === "Unknown") {
++            hadKeyboard = false;
++            return;
++        }
++
++        if (!hadKeyboard) {
++            hadKeyboard = true;
++
++            if (!lastKbLayout) {
++                lastKbLayout = layout;
++                return;
++            }
++        }
++
++        if (layout !== lastKbLayout && GlobalConfig.utilities.toasts.kbLayoutChanged)
++            Toaster.toast(qsTr("Keyboard layout changed"), qsTr("Layout changed to: %1").arg(layout), "keyboard");
++
++        lastKbLayout = layout;
+     }
+
+     Connections {
+--
+2.55.0
