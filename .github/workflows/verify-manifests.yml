@@ -1,5 +1,9 @@
 name: Verify Manifests
 
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   push:
     paths:
@@ -65,6 +69,7 @@ jobs:
           echo "$EOF" >> "$GITHUB_OUTPUT"
 
       - name: Create Pull Request
+        id: create-pull-request
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -90,3 +95,16 @@ jobs:
           branch: fix/manifest-updates
           delete-branch: true
           base: ${{ github.head_ref || github.ref_name }}
+          assignees: arran4
+
+      - name: Close superseded pull request
+        if: >-
+          github.event_name == 'pull_request' &&
+          steps.create-pull-request.outputs.pull-request-number != '' &&
+          steps.create-pull-request.outputs.pull-request-number != github.event.pull_request.number
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OLD_PR: ${{ github.event.pull_request.number }}
+          REPLACEMENT_PR: ${{ steps.create-pull-request.outputs.pull-request-number }}
+        run: |
+          gh pr close "$OLD_PR" --comment "Superseded by #${REPLACEMENT_PR}."
