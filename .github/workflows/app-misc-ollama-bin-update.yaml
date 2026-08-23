@@ -112,7 +112,7 @@ jobs:
                 echo 'S="${WORKDIR}"'
                 echo 'RESTRICT="strip"'
                 echo ''
-                echo "inherit xdg-utils"
+                echo "inherit systemd xdg-utils"
                 echo ''
                 echo 'MY_PV="${PV/_/-}"'
                 echo 'SRC_URI="  '
@@ -150,19 +150,7 @@ jobs:
                 echo '  doins -r "${WORKDIR}/lib/ollama/"'
                 echo '  fperms -R +x /opt/Ollama/lib/ollama'
                 echo '  dosym /opt/Ollama/bin/ollama /opt/bin/ollama'
-                echo "}"
-                echo ""
-                echo "src_prepare() {"
-                echo "  eapply_user"
-                echo "}"
-                echo ""
-                echo "pkg_postinst() {"
-                echo "  einfo \"Quick guide:\""
-                echo "  einfo \"ollama serve\""
-                echo "  einfo \"ollama run llama3:70b\""
-                echo "  einfo \"See available models at https://ollama.com/library\""
-                echo "  if use systemd; then"
-                echo "    einfo \"Creating systemd service file...\""
+                echo '  if use systemd; then'
                 echo '    {'
                 echo '      echo "[Unit]"'
                 echo '      echo "Description=Ollama Service"'
@@ -177,13 +165,28 @@ jobs:
                 echo '      echo ""'
                 echo '      echo "[Install]"'
                 echo '      echo "WantedBy=default.target"'
-                echo '    } > /usr/lib/systemd/system/ollama.service'
-                echo "    einfo \"Service file created at /etc/systemd/system/ollama.service\""
-                echo "    einfo \"Making service user-startable...\""
-                echo '    mkdir -p /etc/systemd/user'
-                echo '    ln -s /usr/lib/systemd/system/ollama.service /etc/systemd/user/ollama.service'
-                echo '    ln -s /usr/lib/systemd/system/ollama.service /etc/systemd/system/ollama.service'
+                echo '    } > "${T}/ollama.service"'
+                echo '    systemd_dounit "${T}/ollama.service"'
+                echo '  fi'
+                echo "}"
+                echo ""
+                echo "src_prepare() {"
+                echo "  eapply_user"
+                echo "}"
+                echo ""
+                echo "pkg_postinst() {"
+                echo "  einfo \"Quick guide:\""
+                echo "  if use systemd; then"
+                echo "    einfo \"  To start the system-wide service:\""
+                echo "    einfo \"    systemctl start ollama\""
+                echo "    einfo \"  Or to run it manually as your user:\""
                 echo "  fi"
+                echo "  einfo \"  ollama serve\""
+                echo "  einfo \"\""
+                echo "  einfo \"To run a model:\""
+                echo "  einfo \"  ollama run llama3:70b\""
+                echo "  einfo \"\""
+                echo "  einfo \"See available models at https://ollama.com/library\""
                 echo "}"
                 echo ""
               } > "$tmp_ebuild"
