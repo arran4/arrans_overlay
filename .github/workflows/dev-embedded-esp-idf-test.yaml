@@ -1,0 +1,171 @@
+name: dev-embedded/esp-idf Integration
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'dev-embedded/esp-idf/**'
+      - 'dev-embedded/xtensa-esp-elf-bin/**'
+      - 'dev-embedded/xtensa-esp-elf-gdb-bin/**'
+      - 'dev-embedded/esp-rom-elfs/**'
+      - 'dev-embedded/esp32ulp-elf-bin/**'
+      - 'dev-embedded/openocd-esp32-bin/**'
+      - 'dev-python/freertos-gdb/**'
+      - 'dev-python/esp-coredump/**'
+      - 'dev-python/esp-idf-kconfig/**'
+      - 'dev-python/esp-idf-monitor/**'
+      - 'dev-python/esp-idf-nvs-partition-gen/**'
+      - 'dev-python/esp-idf-size/**'
+      - 'dev-python/esp-idf-diag/**'
+      - 'dev-python/esp-idf-panic-decoder/**'
+      - 'dev-python/idf-component-manager/**'
+      - 'dev-python/esp-pylib/**'
+      - 'dev-python/textual/**'
+      - 'dev-python/reedsolo/**'
+      - '.github/workflows/dev-embedded-esp-idf-test.yaml'
+  push:
+    paths:
+      - 'dev-embedded/esp-idf/**'
+      - 'dev-embedded/xtensa-esp-elf-bin/**'
+      - 'dev-embedded/xtensa-esp-elf-gdb-bin/**'
+      - 'dev-embedded/esp-rom-elfs/**'
+      - 'dev-embedded/esp32ulp-elf-bin/**'
+      - 'dev-embedded/openocd-esp32-bin/**'
+      - 'dev-python/freertos-gdb/**'
+      - 'dev-python/esp-coredump/**'
+      - 'dev-python/esp-idf-kconfig/**'
+      - 'dev-python/esp-idf-monitor/**'
+      - 'dev-python/esp-idf-nvs-partition-gen/**'
+      - 'dev-python/esp-idf-size/**'
+      - 'dev-python/esp-idf-diag/**'
+      - 'dev-python/esp-idf-panic-decoder/**'
+      - 'dev-python/idf-component-manager/**'
+      - 'dev-python/esp-pylib/**'
+      - 'dev-python/textual/**'
+      - 'dev-python/reedsolo/**'
+      - '.github/workflows/dev-embedded-esp-idf-test.yaml'
+
+concurrency:
+  group: esp-idf-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start Gentoo stage3
+        run: |
+          docker pull gentoo/stage3:latest
+          docker pull gentoo/portage:latest
+          docker create --name esp-idf-portage gentoo/portage:latest
+          docker run --detach \
+            --name esp-idf-gentoo \
+            --volumes-from esp-idf-portage \
+            --volume "${GITHUB_WORKSPACE}:/var/db/repos/arrans_overlay:ro" \
+            gentoo/stage3:latest \
+            sleep infinity
+
+      - name: Setup overlay repository
+        run: |
+          docker exec esp-idf-gentoo bash -euxo pipefail -c '
+            mkdir -p /etc/portage/repos.conf
+            printf "%s\n" \
+              "[arrans-overlay]" \
+              "location = /var/db/repos/arrans_overlay" \
+              "masters = gentoo" \
+              "auto-sync = no" \
+              > /etc/portage/repos.conf/arrans-overlay.conf
+          '
+
+      - name: PR #827 / issue #823 regression checks
+        run: |
+          docker exec esp-idf-gentoo bash -euxo pipefail -c '
+            # 11a: Original python-single-r1 invalid atom resolution check
+            ACCEPT_KEYWORDS="~amd64" emerge --pretend --verbose =dev-embedded/esp-idf-6.0.2-r3
+
+            # 11b: esp-coredump independent install and import check
+            ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot =dev-python/esp-coredump-1.16.0-r2
+            python3 -c "import esp_coredump; print(\"esp_coredump import OK\")"
+
+            # 11c: freertos-gdb independent install and import check
+            ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot =dev-python/freertos-gdb-1.0.4-r2
+            python3 -c "import sys, unittest.mock; sys.modules[\"gdb\"] = unittest.mock.MagicMock(); import freertos_gdb; print(\"freertos_gdb import OK\")"
+
+            # 11d: Xtensa GCC and GDB coexist without gprof file collision
+            ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot =dev-embedded/xtensa-esp-elf-bin-16.1.0_p20260609-r1 dev-embedded/xtensa-esp-elf-gdb-bin
+            test -x /usr/bin/xtensa-esp-elf-gprof
+            owners=$(portageq owners / /usr/bin/xtensa-esp-elf-gprof)
+            echo "Owners of /usr/bin/xtensa-esp-elf-gprof: ${owners}"
+            [[ "${owners}" == *"dev-embedded/xtensa-esp-elf-gdb-bin"* ]]
+            [[ "${owners}" != *"dev-embedded/xtensa-esp-elf-bin"* ]]
+            [[ $(echo "${owners}" | grep -c "dev-embedded/") -eq 1 ]]
+          '
+
+      - name: Install esp-idf
+        run: |
+          docker exec esp-idf-gentoo bash -euxo pipefail -c '
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --verbose --oneshot =dev-embedded/esp-idf-6.0.2-r3; then
+              build_log=$(grep -lR "die" /var/tmp/portage/*/temp/build.log 2>/dev/null | head -n 1 || true)
+              if [ -z "${build_log}" ]; then
+                  build_log=$(ls -1t /var/tmp/portage/*/temp/build.log 2>/dev/null | head -n 1 || true)
+              fi
+              if [ -n "${build_log}" ] && [ -f "${build_log}" ]; then
+                echo "===== Portage build.log ====="
+                cat "${build_log}" || true
+                echo "===== end Portage build.log ====="
+              else
+                echo "===== Portage build log not found ====="
+              fi
+              exit 1
+            fi
+          '
+
+      - name: Smoke test
+        run: |
+          docker exec esp-idf-gentoo bash -euxo pipefail -c '
+            # Test direct wrapper from clean shell without export.sh
+            /usr/bin/idf.py --version
+
+            # Test environment with export.sh
+            source /usr/share/esp-idf/export.sh
+            idf.py --version
+
+            # Test all touched Python package imports
+            python3 -c "import esp_pylib; import idf_component_manager.idf_extensions; import esp_coredump; import esp_idf_monitor; import esp_idf_panic_decoder; import esp_idf_diag; import esp_idf_kconfig; import esp_idf_nvs_partition_gen; import esp_idf_size; import esptool; import sys, unittest.mock; sys.modules[\"gdb\"] = unittest.mock.MagicMock(); import freertos_gdb; print(\"All ESP-IDF Python module imports succeeded!\")"
+          '
+
+      - name: Basic test
+        run: |
+          docker exec esp-idf-gentoo bash -euxo pipefail -c '
+            source /usr/share/esp-idf/export.sh
+            idf.py --version
+
+            # Setup project
+            mkdir -p /tmp/esp-test
+            cp -r /usr/share/esp-idf/examples/get-started/hello_world /tmp/esp-test/
+            cd /tmp/esp-test/hello_world
+
+            # Build for esp32
+            idf.py set-target esp32
+            idf.py build
+
+            # Build for esp32s3
+            idf.py set-target esp32s3
+            idf.py build
+          '
+
+      - name: Clean up containers
+        if: always()
+        run: |
+          docker rm --force esp-idf-gentoo || true
+          docker rm --force esp-idf-portage || true
