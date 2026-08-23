@@ -11,10 +11,10 @@ import shutil
 # Example: ollama-bin-0.10.1.ebuild -> PN=ollama-bin, PV=0.10.1
 # Example: g2-bin-0.0.2.ebuild -> PN=g2-bin, PV=0.0.2
 # This regex is a simplification but covers most cases in this overlay
-EBUILD_FILENAME_PATTERN = re.compile(r'^(?P<pn>.+)-(?P<pv>\d+(\.\d+)*([a-z]|_p\d+|_rc\d+|_beta\d+|_alpha\d+)?(-r\d+)?)\.ebuild$')
+EBUILD_FILENAME_PATTERN = re.compile(r'^(?P<pn>.+)-(?P<pv>\d+(\.\d+)*([a-z]|_p\d+|_rc\d+|_beta\d+|_alpha\d+)?)(?:-r(?P<pr>\d+))?\.ebuild$')
 
-def parse_ebuild_variables(filename):
-    # Basic parsing for PV, P, PN from filename
+def parse_ebuild_variables(filename, content=""):
+    # Basic parsing for PV, P, PN from filename and assignments from ebuild
     basename = os.path.basename(filename)
 
     match = EBUILD_FILENAME_PATTERN.match(basename)
@@ -24,13 +24,24 @@ def parse_ebuild_variables(filename):
 
     pn = match.group('pn')
     pv = match.group('pv')
-    p = f"{pn}-{pv}"
+    pr = match.group('pr')
+    p = f"{pn}-{pv}" + (f"-r{pr}" if pr else "")
 
-    return {
+    variables = {
         'P': p,
         'PN': pn,
         'PV': pv,
+        'PR': f"r{pr}" if pr else "r0",
+        'PVR': f"{pv}-r{pr}" if pr else pv,
     }
+
+    # Extract simple VAR="value" or VAR='value' definitions from ebuild
+    for var_match in re.finditer(r'^[ \t]*([A-Za-z0-9_]+)\s*=\s*["\']([^"\'\n]*)["\']', content, re.MULTILINE):
+        key, val = var_match.group(1), var_match.group(2)
+        if key not in variables:
+            variables[key] = val
+
+    return variables
 
 def resolve_variables(text, variables):
     # Replace ${VAR} and $VAR
@@ -119,13 +130,13 @@ def process_directory(directory):
         ebuild_path = os.path.join(directory, ebuild)
         print(f"  Parsing {ebuild}...")
 
-        variables = parse_ebuild_variables(ebuild)
+        with open(ebuild_path, 'r') as f:
+            content = f.read()
+
+        variables = parse_ebuild_variables(ebuild, content)
         if not variables:
             print(f"  Skipping {ebuild}: Could not parse version/name.")
             continue
-
-        with open(ebuild_path, 'r') as f:
-            content = f.read()
 
         uris = extract_uris(content, variables)
         tasks.extend(uris)

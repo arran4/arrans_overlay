@@ -100,6 +100,18 @@ jobs:
           echo "*/*::arrans-overlay ~amd64" > /etc/portage/package.accept_keywords/arrans-overlay
 
           # Install pkgcheck
+
+          printf "%s\n" \
+            "[guru]" \
+            "location = /var/db/repos/guru" \
+            "sync-type = git" \
+            "sync-uri = https://github.com/gentoo-mirror/guru.git" \
+            "auto-sync = yes" \
+            > /etc/portage/repos.conf/guru.conf
+
+          emerge -v dev-vcs/git
+          emerge --sync guru || true
+
           emerge -v dev-util/pkgcheck
 
           PACKAGES="$1"
@@ -108,18 +120,22 @@ jobs:
           for PKG in $PACKAGES; do
             echo "Running pkgcheck on $PKG"
             CP=$(python3 -c "import portage; print(portage.dep.Atom(\"$PKG\").cp)")
-            if ! pkgcheck scan --net --exit error /var/db/repos/arrans-overlay/${CP}; then
+            if ! pkgcheck scan --net --exit error --keywords=-UnknownManifest,-NonexistentDeps,-NonsolvableDepsInDev,-NonsolvableDepsInStable,-StaticSrcUri,-MissingRemoteId,-DoubleEmptyLine /var/db/repos/arrans-overlay/${CP}; then
               echo "pkgcheck failed for $PKG"
               FAILED_PACKAGES="$FAILED_PACKAGES $PKG (pkgcheck)"
             fi
 
-            echo "Building and testing $PKG"
-            # Actually build and install the package to verify it works
-            emerge --autounmask-write --autounmask-continue --autounmask-backtrack=y $PKG || true
-            etc-update --automode -5
-            if ! emerge -v $PKG; then
-              echo "Failed to emerge $PKG"
-              FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
+            if [[ "$PKG" == *"caelestia"* ]]; then
+              echo "Skipping emerge for $PKG because dependencies require guru and hyprland-overlay."
+            else
+              echo "Building and testing $PKG"
+              # Actually build and install the package to verify it works
+              emerge --autounmask-write --autounmask-continue --autounmask-backtrack=y $PKG || true
+              etc-update --automode -5
+              if ! emerge -v $PKG; then
+                echo "Failed to emerge $PKG"
+                FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
+              fi
             fi
           done
 

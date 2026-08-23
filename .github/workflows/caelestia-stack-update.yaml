@@ -1,0 +1,95 @@
+name: Caelestia Stack Update
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Run daily
+  workflow_dispatch:
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Get Latest Upstream Releases
+        id: versions
+        run: |
+          LATEST_SHELL=$(curl -s https://api.github.com/repos/caelestia-dots/shell/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+          LATEST_CLI=$(curl -s https://api.github.com/repos/caelestia-dots/cli/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+
+          echo "shell=$LATEST_SHELL" >> $GITHUB_OUTPUT
+          echo "cli=$LATEST_CLI" >> $GITHUB_OUTPUT
+
+          # Find current versions from our ebuilds
+          CURRENT_SHELL=$(find gui-apps/caelestia-shell -maxdepth 1 -name "caelestia-shell-*.ebuild" | sed -E 's/.*caelestia-shell-([0-9.]+)(-r[0-9]+)?\.ebuild/\1/' | sort -V | tail -n 1)
+          CURRENT_CLI=$(find gui-apps/caelestia-cli -maxdepth 1 -name "caelestia-cli-*.ebuild" | sed -E 's/.*caelestia-cli-([0-9.]+)(-r[0-9]+)?\.ebuild/\1/' | sort -V | tail -n 1)
+
+          echo "current_shell=$CURRENT_SHELL" >> $GITHUB_OUTPUT
+          echo "current_cli=$CURRENT_CLI" >> $GITHUB_OUTPUT
+
+      - name: Check if Update Needed
+        id: update_needed
+        run: |
+          SHELL_VER="${{ steps.versions.outputs.shell }}"
+          CURRENT_SHELL="${{ steps.versions.outputs.current_shell }}"
+          CLI_VER="${{ steps.versions.outputs.cli }}"
+          CURRENT_CLI="${{ steps.versions.outputs.current_cli }}"
+
+          if [ -n "$SHELL_VER" ] && [ "$SHELL_VER" != "null" ] && [ "$SHELL_VER" != "$CURRENT_SHELL" ]; then
+            echo "needed=true" >> $GITHUB_OUTPUT
+          elif [ -n "$CLI_VER" ] && [ "$CLI_VER" != "null" ] && [ "$CLI_VER" != "$CURRENT_CLI" ]; then
+            echo "needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install g2
+        if: steps.update_needed.outputs.needed == 'true'
+        uses: arran4/g2-action@v1.2
+
+      - name: Update Ebuilds
+        if: steps.update_needed.outputs.needed == 'true'
+        run: |
+          SHELL_VER="${{ steps.versions.outputs.shell }}"
+          CURRENT_SHELL="${{ steps.versions.outputs.current_shell }}"
+          CLI_VER="${{ steps.versions.outputs.cli }}"
+          CURRENT_CLI="${{ steps.versions.outputs.current_cli }}"
+
+          if [ -n "$SHELL_VER" ] && [ "$SHELL_VER" != "null" ] && [ "$SHELL_VER" != "$CURRENT_SHELL" ]; then
+            CURRENT_SHELL_EBUILD=$(find gui-apps/caelestia-shell -maxdepth 1 -name "caelestia-shell-*.ebuild" | sort -V | tail -n 1)
+            cp "$CURRENT_SHELL_EBUILD" "gui-apps/caelestia-shell/caelestia-shell-${SHELL_VER}.ebuild"
+            g2 manifest upsert-from-url "https://github.com/caelestia-dots/shell/archive/refs/tags/v${SHELL_VER}.tar.gz" "caelestia-shell-${SHELL_VER}.tar.gz" gui-apps/caelestia-shell/Manifest
+            M3_REV=$(grep 'M3SHAPES_REV=' "gui-apps/caelestia-shell/caelestia-shell-${SHELL_VER}.ebuild" | cut -d'"' -f2)
+            g2 manifest upsert-from-url "https://github.com/soramanew/m3shapes/archive/${M3_REV}.tar.gz" "caelestia-m3shapes-${M3_REV}.tar.gz" gui-apps/caelestia-shell/Manifest
+          fi
+
+          if [ -n "$CLI_VER" ] && [ "$CLI_VER" != "null" ] && [ "$CLI_VER" != "$CURRENT_CLI" ]; then
+            CURRENT_CLI_EBUILD=$(find gui-apps/caelestia-cli -maxdepth 1 -name "caelestia-cli-*.ebuild" | sort -V | tail -n 1)
+            cp "$CURRENT_CLI_EBUILD" "gui-apps/caelestia-cli/caelestia-cli-${CLI_VER}.ebuild"
+            g2 manifest upsert-from-url "https://github.com/caelestia-dots/cli/archive/refs/tags/v${CLI_VER}.tar.gz" "caelestia-cli-${CLI_VER}.tar.gz" gui-apps/caelestia-cli/Manifest
+          fi
+
+      - name: Create Pull Request
+        if: steps.update_needed.outputs.needed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update Caelestia stack (Shell ${{ steps.versions.outputs.shell }}, CLI ${{ steps.versions.outputs.cli }})"
+          branch: "update-caelestia-stack"
+          title: "Update Caelestia stack"
+          body: |
+            Updates Caelestia stack:
+            - **Caelestia Shell:** ${{ steps.versions.outputs.current_shell }} -> ${{ steps.versions.outputs.shell }}
+            - **Caelestia CLI:** ${{ steps.versions.outputs.current_cli }} -> ${{ steps.versions.outputs.cli }}
+
+            This is an automated PR. Please review dependencies, patches, and QuickShell compatibility before merging.
+
+            Steps to verify:
+            1. Check if new QuickShell minimum version is required.
+            2. Verify patches still apply.
+            3. Verify build manually.
+          labels: "automated pr"

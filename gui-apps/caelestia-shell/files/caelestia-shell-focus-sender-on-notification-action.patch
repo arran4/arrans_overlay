@@ -1,0 +1,46 @@
+--- a/services/NotifData.qml	2026-08-19 18:24:10.833866562 +0800
++++ b/services/NotifData.qml	2026-08-19 18:24:22.487840106 +0800
+@@ -39,6 +39,17 @@
+     property bool hasActionIcons
+     property list<var> actions
+
++    // Invoking a notification action is the one moment focus transfer is known
++    // to be user intent. Windows carrying a focus_on_activate=false rule cannot
++    // raise themselves (on Wayland an app's "notice me" and "the user clicked,
++    // open me" are the same xdg-activation request, so the compositor cannot
++    // tell them apart) -- raise the sender here instead, via a dispatcher.
++    function focusSender(): void {
++        const entry = notification?.desktopEntry ?? "";
++        if (entry)
++            Hypr.dispatch(Hypr.usingLua ? `hl.dsp.focus({ window = "class:^(${entry})$" })` : `focuswindow class:^(${entry})$`);
++    }
++
+     readonly property bool hasFullscreen: {
+         const monitor = Hypr.focusedMonitor;
+         const specialName = monitor?.lastIpcObject.specialWorkspace?.name;
+@@ -157,7 +168,11 @@
+                         // qmllint enable unresolved-type
+                         identifier: a.identifier,
+                         text: a.text,
+-                        invoke: () => a.invoke()
++                        invoke: () => {
++                            a.invoke();
++                            if (a.identifier === "default")
++                                notif.focusSender();
++                        }
+                     }));
+         }
+
+@@ -237,7 +252,11 @@
+                     // qmllint enable unresolved-type
+                     identifier: a.identifier,
+                     text: a.text,
+-                    invoke: () => a.invoke()
++                    invoke: () => {
++                        a.invoke();
++                        if (a.identifier === "default")
++                            notif.focusSender();
++                    }
+                 }));
+     }
+ }

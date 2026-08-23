@@ -1,0 +1,75 @@
+From a9f7abf8e6e26cbb633b6f188a6caf79c2523a53 Mon Sep 17 00:00:00 2001
+From: Chua Zheng Leong <melynx@gmail.com>
+Date: Mon, 10 Aug 2026 18:44:42 +0800
+Subject: [PATCH] fix: rebuild the idle inhibitor window when outputs change
+
+The Keep Awake toggle attaches a zwp_idle_inhibitor_v1 to a PanelWindow that
+is constructed exactly once, inline, inside a Singleton. Nothing recreates it.
+
+When the set of outputs changes (monitor hotplug), Quickshell destroys that
+window along with every other screen-bound window. The bar, drawers and
+background return because they live inside screen-bound Variants; this one
+does not, so it stays gone for the life of the process.
+
+props.enabled is an independent bool and is unaffected, so the toggle keeps
+reporting true and the utilities card keeps rendering "Preventing sleep mode /
+Active since HH:MM" while no inhibitor object exists at all. The idle timeouts
+then fire normally and the session locks, with no indication anything failed.
+
+Hold the window in a Loader and rebuild it on Quickshell.screensChanged so the
+inhibitor is reattached once outputs come back.
+
+Requires the QtQuick import for Loader and Connections.
+---
+ services/IdleInhibitor.qml | 23 ++++++++++++++++++++---
+ 1 file changed, 20 insertions(+), 3 deletions(-)
+
+diff --git a/services/IdleInhibitor.qml b/services/IdleInhibitor.qml
+index 9f556b3a..6ad93dc3 100644
+--- a/services/IdleInhibitor.qml
++++ b/services/IdleInhibitor.qml
+@@ -1,5 +1,6 @@
+ pragma Singleton
+
++import QtQuick
+ import Quickshell
+ import Quickshell.Io
+ import Quickshell.Wayland
+@@ -24,9 +25,11 @@ Singleton {
+         reloadableId: "idleInhibitor"
+     }
+
+-    IdleInhibitor {
+-        enabled: props.enabled
+-        window: PanelWindow {
++    Loader {
++        id: winLoader
++
++        active: true
++        sourceComponent: PanelWindow {
+             implicitWidth: 0
+             implicitHeight: 0
+             color: "transparent"
+@@ -34,6 +37,20 @@ Singleton {
+         }
+     }
+
++    Connections {
++        function onScreensChanged(): void {
++            winLoader.active = false;
++            winLoader.active = true;
++        }
++
++        target: Quickshell
++    }
++
++    IdleInhibitor {
++        enabled: props.enabled
++        window: winLoader.item
++    }
++
+     IpcHandler {
+         function isEnabled(): bool {
+             return props.enabled;
+--
+2.55.0
