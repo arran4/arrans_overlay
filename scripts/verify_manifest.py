@@ -11,7 +11,7 @@ import shutil
 # Example: ollama-bin-0.10.1.ebuild -> PN=ollama-bin, PV=0.10.1
 # Example: g2-bin-0.0.2.ebuild -> PN=g2-bin, PV=0.0.2
 # This regex is a simplification but covers most cases in this overlay
-EBUILD_FILENAME_PATTERN = re.compile(r'^(?P<pn>.+)-(?P<pv>\d+(\.\d+)*([a-z]|_p\d+|_rc\d+|_beta\d+|_alpha\d+)?)(?:-r(?P<pr>\d+))?\.ebuild$')
+EBUILD_FILENAME_PATTERN = re.compile(r'^(?P<pn>.+)-(?P<pv>\d+(\.\d+)*([a-z]|_p\d+|_rc\d*|_beta\d*|_alpha\d*|_pre\d*)?)(?:-r(?P<pr>\d+))?\.ebuild$')
 
 def parse_ebuild_variables(filename, content=""):
     # Basic parsing for PV, P, PN from filename and assignments from ebuild
@@ -25,14 +25,19 @@ def parse_ebuild_variables(filename, content=""):
     pn = match.group('pn')
     pv = match.group('pv')
     pr = match.group('pr')
-    p = f"{pn}-{pv}" + (f"-r{pr}" if pr else "")
+
+    p = f"{pn}-{pv}"
+    pr_val = f"r{pr}" if pr else "r0"
+    pvr = f"{pv}-r{pr}" if pr else pv
+    pf = f"{pn}-{pvr}"
 
     variables = {
-        'P': p,
         'PN': pn,
         'PV': pv,
-        'PR': f"r{pr}" if pr else "r0",
-        'PVR': f"{pv}-r{pr}" if pr else pv,
+        'P': p,
+        'PR': pr_val,
+        'PVR': pvr,
+        'PF': pf,
     }
 
     # Extract simple VAR="value" or VAR='value' definitions from ebuild
@@ -41,11 +46,17 @@ def parse_ebuild_variables(filename, content=""):
         if key not in variables:
             variables[key] = val
 
+    # Resolve variables within variables (e.g. MDI_BASE using MDI_COMMIT)
+    for _ in range(3):
+        for k, v in list(variables.items()):
+            variables[k] = resolve_variables(v, variables)
+
     return variables
 
 def resolve_variables(text, variables):
-    # Replace ${VAR} and $VAR
-    for key, value in variables.items():
+    # Replace ${VAR} and $VAR, sorted by key length descending to prevent prefix collisions
+    for key in sorted(variables.keys(), key=len, reverse=True):
+        value = variables[key]
         text = text.replace(f"${{{key}}}", value)
         text = text.replace(f"${key}", value)
     return text
@@ -65,6 +76,7 @@ def extract_uris(content, variables):
         return []
 
     src_uri_body = match.group(1)
+    src_uri_body = resolve_variables(src_uri_body, variables)
 
     # Simple tokenizer
     tokens = src_uri_body.split()
@@ -85,10 +97,6 @@ def extract_uris(content, variables):
                 i += 3 # skip url, ->, filename
             else:
                 i += 1 # skip url
-
-            # Resolve variables in both URL and filename
-            url = resolve_variables(url, variables)
-            filename = resolve_variables(filename, variables)
 
             uris.append((url, filename))
         else:
