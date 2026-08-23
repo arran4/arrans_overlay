@@ -48,13 +48,20 @@ jobs:
         id: process_releases
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
-          mkdir -p $ebuild_dir
+          mkdir -p "$ebuild_dir"
 
-          # Clean up old ebuilds and Manifest to keep only the latest stable version
-          rm -f "${ebuild_dir}"/*.ebuild "${ebuild_dir}/Manifest"
+          # Fetch only the latest non-prerelease tag. Do not mutate the package
+          # directory until the replacement ebuild and Manifest are complete.
+          tags=$(curl --fail --silent --show-error \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" \
+            https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases \
+            | jq -r '[.[] | select(.prerelease==false)] | .[0].tag_name')
 
-          # Fetch only the latest non-prerelease tag
-          tags=$(curl -s --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '[.[] | select(.prerelease==false)] | .[0].tag_name')
+          if [ -z "$tags" ] || [ "$tags" = "null" ]; then
+            echo "No stable release tag found"
+            exit 1
+          fi
 
           for tag in $tags; do
             version="${tag#v}"
@@ -71,7 +78,7 @@ jobs:
 
             if ! echo "$version" | egrep '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
               echo "tag / $version doesn't match regexp";
-              continue; 
+              continue;
             fi
 
             ext="tgz"
@@ -83,6 +90,11 @@ jobs:
 
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
+              tmp_ebuild="${ebuild_file}.tmp"
+              tmp_manifest="${ebuild_dir}/Manifest.tmp"
+              rm -f "$tmp_ebuild" "$tmp_manifest"
+              trap 'rm -f "$tmp_ebuild" "$tmp_manifest"' EXIT
+
               {
                 echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-ollama-bin-update.yaml"
                 echo 'EAPI=8'
@@ -174,15 +186,26 @@ jobs:
                 echo "  fi"
                 echo "}"
                 echo ""
-              } > $ebuild_file
+              } > "$tmp_ebuild"
 
-              # Generate the manifest for the new ebuild
-              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64.${ext} ${{ env.epn }}-${version}.amd64.${ext} "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-arm64.${ext} ${{ env.epn }}-${version}.arm64.${ext} "${ebuild_dir}/Manifest"
-              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64-rocm.${ext} ${{ env.epn }}-${version}.rocm.${ext} "${ebuild_dir}/Manifest"
+              # Validate and fully build the replacement Manifest before removing
+              # the currently published version.
+              bash -n "$tmp_ebuild"
+              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64.${ext} ${{ env.epn }}-${version}.amd64.${ext} "$tmp_manifest"
+              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-arm64.${ext} ${{ env.epn }}-${version}.arm64.${ext} "$tmp_manifest"
+              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64-rocm.${ext} ${{ env.epn }}-${version}.rocm.${ext} "$tmp_manifest"
+              test -s "$tmp_ebuild"
+              test -s "$tmp_manifest"
+
+              # Only after all replacement artifacts are ready do we publish the
+              # new version and perform one-version-per-grade retention cleanup.
+              mv "$tmp_ebuild" "$ebuild_file"
+              mv "$tmp_manifest" "${ebuild_dir}/Manifest"
+              find "$ebuild_dir" -maxdepth 1 -type f -name '${{ env.epn }}-*.ebuild' ! -name "$(basename "$ebuild_file")" -delete
+              trap - EXIT
+
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
               echo "generated_tag=${tag}" >> $GITHUB_ENV
-              
             fi
           done
 
