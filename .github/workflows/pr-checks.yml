@@ -16,10 +16,54 @@ jobs:
           fetch-depth: 0 # needed for commits check
       - name: Configure git remote
         run: git remote set-head origin -a
+
+      - name: Clone external repositories
+        run: |
+          mkdir -p repos
+          git clone --depth=1 https://github.com/gentoo-mirror/gentoo.git repos/gentoo
+          git clone --depth=1 https://github.com/gentoo-mirror/guru.git repos/guru
+          git clone --depth=1 https://codeberg.org/hyproverlay/hyproverlay.git repos/hyproverlay
+
       - name: Run pkgcheck
-        uses: pkgcore/pkgcheck-action@v1
-        with:
-          args: --keywords=-UnknownManifest --commits
+        run: |
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/var/db/repos/arrans-overlay" \
+            -v "${GITHUB_WORKSPACE}/repos/gentoo:/var/db/repos/gentoo" \
+            -v "${GITHUB_WORKSPACE}/repos/guru:/var/db/repos/guru" \
+            -v "${GITHUB_WORKSPACE}/repos/hyproverlay:/var/db/repos/hyproverlay" \
+            ghcr.io/pkgcore/pkgcheck:latest \
+            bash -euxo pipefail -c '
+              mkdir -p /etc/portage/repos.conf
+
+              printf "%s\n" \
+                "[gentoo]" \
+                "location = /var/db/repos/gentoo" \
+                "auto-sync = no" \
+                > /etc/portage/repos.conf/gentoo.conf
+
+              printf "%s\n" \
+                "[guru]" \
+                "location = /var/db/repos/guru" \
+                "auto-sync = no" \
+                > /etc/portage/repos.conf/guru.conf
+
+              printf "%s\n" \
+                "[hyproverlay]" \
+                "location = /var/db/repos/hyproverlay" \
+                "auto-sync = no" \
+                > /etc/portage/repos.conf/hyproverlay.conf
+
+              printf "%s\n" \
+                "[arrans-overlay]" \
+                "location = /var/db/repos/arrans-overlay" \
+                "masters = gentoo" \
+                "auto-sync = no" \
+                > /etc/portage/repos.conf/arrans-overlay.conf
+
+              cd /var/db/repos/arrans-overlay
+              git config --global --add safe.directory /var/db/repos/arrans-overlay
+              pkgcheck scan --keywords=-UnknownManifest --commits
+            '
 
   unit-tests:
     runs-on: ubuntu-latest

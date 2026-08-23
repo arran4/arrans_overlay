@@ -1,5 +1,6 @@
 /scratch/
 /output
+/repos/
 site_out
 /*.tar.gz
 /*.zip

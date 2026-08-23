@@ -19,7 +19,7 @@ KEYWORDS="~amd64"
 
 RDEPEND="
 	dev-python/pillow[${PYTHON_USEDEP}]
-	dev-python/materialyoucolor[${PYTHON_USEDEP}]
+	>=dev-python/materialyoucolor-3.0.0[${PYTHON_USEDEP}]
 	app-misc/cliphist
 	dev-vcs/git
 	gui-apps/fuzzel

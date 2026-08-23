@@ -153,9 +153,12 @@ SRC_URI="
             ("https://raw.githubusercontent.com/google/material-design-icons/481507587f1bdfe712939398c4dc0ecc2079ea7c/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf", "MaterialSymbolsRounded-0_p20260724.ttf"),
             ("https://raw.githubusercontent.com/google/material-design-icons/481507587f1bdfe712939398c4dc0ecc2079ea7c/variablefont/MaterialSymbolsSharp%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf", "MaterialSymbolsSharp-0_p20260724.ttf"),
         ]
+        self.assertEqual(uris, expected)
+
     def test_actual_overlay_manifests(self):
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         pkgs = [
+            "dev-python/materialyoucolor",
             "gui-apps/caelestia-cli",
             "gui-apps/caelestia-shell",
             "media-fonts/rubik",

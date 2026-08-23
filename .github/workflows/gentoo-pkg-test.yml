@@ -93,24 +93,35 @@ jobs:
             > /etc/portage/repos.conf/guru.conf
 
           printf "%s\n" \
+            "[hyproverlay]" \
+            "location = /var/db/repos/hyproverlay" \
+            "sync-type = git" \
+            "sync-uri = https://codeberg.org/hyproverlay/hyproverlay.git" \
+            "auto-sync = yes" \
+            > /etc/portage/repos.conf/hyproverlay.conf
+
+          printf "%s\n" \
             "[arrans-overlay]" \
             "location = /var/db/repos/arrans-overlay" \
-            "masters = gentoo guru" \
+            "masters = gentoo" \
             "auto-sync = no" \
             > /etc/portage/repos.conf/arrans-overlay.conf
 
-          # Unmask all packages in the overlay and guru for testing
+          # Unmask all packages in the overlay, guru, and hyproverlay for testing
           # Unmask licenses
           mkdir -p /etc/portage/package.license
           echo "*/*::arrans-overlay *" > /etc/portage/package.license/arrans-overlay
           echo "*/*::guru *" > /etc/portage/package.license/guru
+          echo "*/*::hyproverlay *" > /etc/portage/package.license/hyproverlay
 
           mkdir -p /etc/portage/package.accept_keywords
           echo "*/*::arrans-overlay ~amd64" > /etc/portage/package.accept_keywords/arrans-overlay
           echo "*/*::guru ~amd64" > /etc/portage/package.accept_keywords/guru
+          echo "*/*::hyproverlay ~amd64" > /etc/portage/package.accept_keywords/hyproverlay
 
           emerge -v dev-vcs/git
-          emerge --sync guru || true
+          emerge --sync guru
+          emerge --sync hyproverlay
 
           # Install pkgcheck
           emerge -v dev-util/pkgcheck
