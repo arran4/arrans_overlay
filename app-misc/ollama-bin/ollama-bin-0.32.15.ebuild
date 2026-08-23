@@ -65,7 +65,15 @@ src_prepare() {
 
 pkg_postinst() {
   einfo "Quick guide:"
-  einfo "ollama serve"
-  einfo "ollama run llama3:70b"
+  if use systemd; then
+    einfo "  To start the system-wide service:"
+    einfo "    systemctl start ollama"
+    einfo "  Or to run it manually as your user:"
+  fi
+  einfo "  ollama serve"
+  einfo ""
+  einfo "To run a model:"
+  einfo "  ollama run llama3:70b"
+  einfo ""
   einfo "See available models at https://ollama.com/library"
 }
