@@ -103,7 +103,7 @@ jobs:
           printf "%s\n" \
             "[arrans-overlay]" \
             "location = /var/db/repos/arrans-overlay" \
-            "masters = gentoo" \
+            "masters = gentoo guru hyproverlay" \
             "auto-sync = no" \
             > /etc/portage/repos.conf/arrans-overlay.conf
 

@@ -34,6 +34,7 @@ jobs:
             ghcr.io/pkgcore/pkgcheck:latest \
             bash -euxo pipefail -c '
               mkdir -p /etc/portage/repos.conf
+              ln -snf /var/db/repos/gentoo/profiles/default/linux/amd64/23.0 /etc/portage/make.profile
 
               printf "%s\n" \
                 "[gentoo]" \
@@ -56,13 +57,13 @@ jobs:
               printf "%s\n" \
                 "[arrans-overlay]" \
                 "location = /var/db/repos/arrans-overlay" \
-                "masters = gentoo" \
+                "masters = gentoo guru hyproverlay" \
                 "auto-sync = no" \
                 > /etc/portage/repos.conf/arrans-overlay.conf
 
               cd /var/db/repos/arrans-overlay
               git config --global --add safe.directory /var/db/repos/arrans-overlay
-              pkgcheck scan --keywords=-UnknownManifest --commits
+              pkgcheck scan --exit GentooCI --keywords=-UnknownManifest --commits
             '
 
   unit-tests:

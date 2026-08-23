@@ -17,7 +17,7 @@ LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
 
-RDEPEND="
+RDEPEND+="
 	dev-python/pillow[${PYTHON_USEDEP}]
 	>=dev-python/materialyoucolor-3.0.0[${PYTHON_USEDEP}]
 	app-misc/cliphist
@@ -31,7 +31,9 @@ RDEPEND="
 	x11-libs/libnotify
 "
 # hatch-vcs derives the version from git metadata, which a release tarball lacks.
-BDEPEND="$(python_gen_cond_dep 'dev-python/hatch-vcs[${PYTHON_USEDEP}]')"
+BDEPEND+="
+	$(python_gen_cond_dep 'dev-python/hatch-vcs[${PYTHON_USEDEP}]')
+"
 
 PATCHES=(
 	# Add \`caelestia install --no-packages\` so the dotfiles can be deployed
