@@ -12,7 +12,7 @@ RDEPEND="acct-user/ollama acct-group/ollama"
 S="${WORKDIR}"
 RESTRICT="strip"
 
-inherit xdg-utils
+inherit systemd xdg-utils
 
 MY_PV="${PV/_/-}"
 SRC_URI="  
@@ -39,19 +39,7 @@ src_install() {
   doins -r "${WORKDIR}/lib/ollama/"
   fperms -R +x /opt/Ollama/lib/ollama
   dosym /opt/Ollama/bin/ollama /opt/bin/ollama
-}
-
-src_prepare() {
-  eapply_user
-}
-
-pkg_postinst() {
-  einfo "Quick guide:"
-  einfo "ollama serve"
-  einfo "ollama run llama3:70b"
-  einfo "See available models at https://ollama.com/library"
   if use systemd; then
-    einfo "Creating systemd service file..."
     {
       echo "[Unit]"
       echo "Description=Ollama Service"
@@ -66,12 +54,18 @@ pkg_postinst() {
       echo ""
       echo "[Install]"
       echo "WantedBy=default.target"
-    } > /usr/lib/systemd/system/ollama.service
-    einfo "Service file created at /etc/systemd/system/ollama.service"
-    einfo "Making service user-startable..."
-    mkdir -p /etc/systemd/user
-    ln -s /usr/lib/systemd/system/ollama.service /etc/systemd/user/ollama.service
-    ln -s /usr/lib/systemd/system/ollama.service /etc/systemd/system/ollama.service
+    } > "${T}/ollama.service"
+    systemd_dounit "${T}/ollama.service"
   fi
 }
 
+src_prepare() {
+  eapply_user
+}
+
+pkg_postinst() {
+  einfo "Quick guide:"
+  einfo "ollama serve"
+  einfo "ollama run llama3:70b"
+  einfo "See available models at https://ollama.com/library"
+}
