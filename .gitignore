@@ -1,5 +1,6 @@
 /scratch/
 /output
+/repos/
 site_out
 /*.tar.gz
 /*.zip
@@ -10,3 +11,7 @@ site_out
 Makefile
 actionlint
 xtensa-esp-elf-bin-15.2.0_p20251204.tar.xz
+__pycache__/
+*.py[cod]
+
+

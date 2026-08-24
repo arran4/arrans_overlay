@@ -11,10 +11,10 @@ import shutil
 # Example: ollama-bin-0.10.1.ebuild -> PN=ollama-bin, PV=0.10.1
 # Example: g2-bin-0.0.2.ebuild -> PN=g2-bin, PV=0.0.2
 # This regex is a simplification but covers most cases in this overlay
-EBUILD_FILENAME_PATTERN = re.compile(r'^(?P<pn>.+)-(?P<pv>\d+(\.\d+)*([a-z]|_p\d+|_rc\d+|_beta\d+|_alpha\d+)?(-r\d+)?)\.ebuild$')
+EBUILD_FILENAME_PATTERN = re.compile(r'^(?P<pn>.+)-(?P<pv>\d+(\.\d+)*([a-z]|_p\d+|_rc\d*|_beta\d*|_alpha\d*|_pre\d*)?)(?:-r(?P<pr>\d+))?\.ebuild$')
 
-def parse_ebuild_variables(filename):
-    # Basic parsing for PV, P, PN from filename
+def parse_ebuild_variables(filename, content=""):
+    # Basic parsing for PV, P, PN from filename and assignments from ebuild
     basename = os.path.basename(filename)
 
     match = EBUILD_FILENAME_PATTERN.match(basename)
@@ -24,17 +24,39 @@ def parse_ebuild_variables(filename):
 
     pn = match.group('pn')
     pv = match.group('pv')
-    p = f"{pn}-{pv}"
+    pr = match.group('pr')
 
-    return {
-        'P': p,
+    p = f"{pn}-{pv}"
+    pr_val = f"r{pr}" if pr else "r0"
+    pvr = f"{pv}-r{pr}" if pr else pv
+    pf = f"{pn}-{pvr}"
+
+    variables = {
         'PN': pn,
         'PV': pv,
+        'P': p,
+        'PR': pr_val,
+        'PVR': pvr,
+        'PF': pf,
     }
 
+    # Extract simple VAR="value" or VAR='value' definitions from ebuild
+    for var_match in re.finditer(r'^[ \t]*([A-Za-z0-9_]+)\s*=\s*["\']([^"\'\n]*)["\']', content, re.MULTILINE):
+        key, val = var_match.group(1), var_match.group(2)
+        if key not in variables:
+            variables[key] = val
+
+    # Resolve variables within variables (e.g. MDI_BASE using MDI_COMMIT)
+    for _ in range(3):
+        for k, v in list(variables.items()):
+            variables[k] = resolve_variables(v, variables)
+
+    return variables
+
 def resolve_variables(text, variables):
-    # Replace ${VAR} and $VAR
-    for key, value in variables.items():
+    # Replace ${VAR} and $VAR, sorted by key length descending to prevent prefix collisions
+    for key in sorted(variables.keys(), key=len, reverse=True):
+        value = variables[key]
         text = text.replace(f"${{{key}}}", value)
         text = text.replace(f"${key}", value)
     return text
@@ -54,6 +76,7 @@ def extract_uris(content, variables):
         return []
 
     src_uri_body = match.group(1)
+    src_uri_body = resolve_variables(src_uri_body, variables)
 
     # Simple tokenizer
     tokens = src_uri_body.split()
@@ -74,10 +97,6 @@ def extract_uris(content, variables):
                 i += 3 # skip url, ->, filename
             else:
                 i += 1 # skip url
-
-            # Resolve variables in both URL and filename
-            url = resolve_variables(url, variables)
-            filename = resolve_variables(filename, variables)
 
             uris.append((url, filename))
         else:
@@ -119,13 +138,13 @@ def process_directory(directory):
         ebuild_path = os.path.join(directory, ebuild)
         print(f"  Parsing {ebuild}...")
 
-        variables = parse_ebuild_variables(ebuild)
+        with open(ebuild_path, 'r') as f:
+            content = f.read()
+
+        variables = parse_ebuild_variables(ebuild, content)
         if not variables:
             print(f"  Skipping {ebuild}: Could not parse version/name.")
             continue
-
-        with open(ebuild_path, 'r') as f:
-            content = f.read()
 
         uris = extract_uris(content, variables)
         tasks.extend(uris)

@@ -85,19 +85,39 @@ jobs:
             > /etc/portage/repos.conf/gentoo.conf
 
           printf "%s\n" \
+            "[guru]" \
+            "location = /var/db/repos/guru" \
+            "sync-type = git" \
+            "sync-uri = https://github.com/gentoo-mirror/guru.git" \
+            "auto-sync = yes" \
+            > /etc/portage/repos.conf/guru.conf
+
+          printf "%s\n" \
+            "[hyproverlay]" \
+            "location = /var/db/repos/hyproverlay" \
+            "sync-type = git" \
+            "sync-uri = https://codeberg.org/hyproverlay/hyproverlay.git" \
+            "auto-sync = yes" \
+            > /etc/portage/repos.conf/hyproverlay.conf
+
+          printf "%s\n" \
             "[arrans-overlay]" \
             "location = /var/db/repos/arrans-overlay" \
-            "masters = gentoo" \
+            "masters = gentoo guru hyproverlay" \
             "auto-sync = no" \
             > /etc/portage/repos.conf/arrans-overlay.conf
 
-          # Unmask all packages in the overlay for testing
-          # Unmask licenses
-          mkdir -p /etc/portage/package.license
-          echo "*/*::arrans-overlay *" > /etc/portage/package.license/arrans-overlay
+          # Set up ~amd64 testing environment and accept all licenses
+          echo 'ACCEPT_KEYWORDS="~amd64"' >> /etc/portage/make.conf
+          echo 'ACCEPT_LICENSE="*"' >> /etc/portage/make.conf
 
-          mkdir -p /etc/portage/package.accept_keywords
-          echo "*/*::arrans-overlay ~amd64" > /etc/portage/package.accept_keywords/arrans-overlay
+          # Pre-configure required USE flags for dependencies
+          mkdir -p /etc/portage/package.use
+          echo "dev-qt/qtbase vulkan" > /etc/portage/package.use/qtbase
+
+          emerge -v dev-vcs/git
+          emerge --sync guru
+          emerge --sync hyproverlay
 
           # Install pkgcheck
           emerge -v dev-util/pkgcheck
@@ -115,7 +135,7 @@ jobs:
 
             echo "Building and testing $PKG"
             # Actually build and install the package to verify it works
-            emerge --autounmask-write --autounmask-continue --autounmask-backtrack=y $PKG || true
+            emerge --autounmask-write --autounmask-continue --autounmask-backtrack=y --onlydeps $PKG || true
             etc-update --automode -5
             if ! emerge -v $PKG; then
               echo "Failed to emerge $PKG"
