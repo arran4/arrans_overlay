@@ -159,6 +159,7 @@ SRC_URI="
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         pkgs = [
             "dev-python/materialyoucolor",
+            "gui-apps/quickshell",
             "gui-apps/caelestia-cli",
             "gui-apps/caelestia-shell",
             "media-fonts/rubik",

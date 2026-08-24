@@ -107,17 +107,13 @@ jobs:
             "auto-sync = no" \
             > /etc/portage/repos.conf/arrans-overlay.conf
 
-          # Unmask all packages in the overlay, guru, and hyproverlay for testing
-          # Unmask licenses
-          mkdir -p /etc/portage/package.license
-          echo "*/*::arrans-overlay *" > /etc/portage/package.license/arrans-overlay
-          echo "*/*::guru *" > /etc/portage/package.license/guru
-          echo "*/*::hyproverlay *" > /etc/portage/package.license/hyproverlay
+          # Set up ~amd64 testing environment and accept all licenses
+          echo 'ACCEPT_KEYWORDS="~amd64"' >> /etc/portage/make.conf
+          echo 'ACCEPT_LICENSE="*"' >> /etc/portage/make.conf
 
-          mkdir -p /etc/portage/package.accept_keywords
-          echo "*/*::arrans-overlay ~amd64" > /etc/portage/package.accept_keywords/arrans-overlay
-          echo "*/*::guru ~amd64" > /etc/portage/package.accept_keywords/guru
-          echo "*/*::hyproverlay ~amd64" > /etc/portage/package.accept_keywords/hyproverlay
+          # Pre-configure required USE flags for dependencies
+          mkdir -p /etc/portage/package.use
+          echo "dev-qt/qtbase vulkan" > /etc/portage/package.use/qtbase
 
           emerge -v dev-vcs/git
           emerge --sync guru
@@ -139,7 +135,7 @@ jobs:
 
             echo "Building and testing $PKG"
             # Actually build and install the package to verify it works
-            emerge --autounmask-write --autounmask-continue --autounmask-backtrack=y $PKG || true
+            emerge --autounmask-write --autounmask-continue --autounmask-backtrack=y --only-deps $PKG || true
             etc-update --automode -5
             if ! emerge -v $PKG; then
               echo "Failed to emerge $PKG"

@@ -37,7 +37,7 @@ DEPEND="${COMMON_DEPEND}"
 RDEPEND="
 	${COMMON_DEPEND}
 	>=dev-qt/qtshadertools-6.9:6
-	>=gui-apps/quickshell-0.3.0
+	>=gui-apps/quickshell-0.3.0_p20260710
 	gui-apps/caelestia-cli
 	app-misc/ddcutil
 	app-misc/brightnessctl
