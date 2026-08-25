@@ -1,0 +1,28 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10.2)
+ 
+ project(libviper C)
+ 
++include(GNUInstallDirs)
++
+ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -fPIC -DNCURSES_OPAQUE=0")
+ set(PROJECT_DESCRIPTION "A library for developing windowed apps on ncurses")
+ 
+@@ -87,7 +89,7 @@ set(PKG_CONFIG_LIBS
+     "-lvdk"
+ )
+ 
+-install (TARGETS vdk-static vdk-shared DESTINATION lib)
++install (TARGETS vdk-static vdk-shared DESTINATION ${CMAKE_INSTALL_LIBDIR})
+ install (FILES vdk.h vkmio.h DESTINATION include)
+ 
+ # Install pkgconfig files to libdata on BSD, otherwise lib
+@@ -95,7 +97,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "BSD")
+     set(PKG_CONFIG_INSTALL_DIR "libdata/pkgconfig")
+ else()
+-    set(PKG_CONFIG_INSTALL_DIR "lib/pkgconfig")
++    set(PKG_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+ endif()
+ install (FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}.pc" DESTINATION ${PKG_CONFIG_INSTALL_DIR})
+ 
