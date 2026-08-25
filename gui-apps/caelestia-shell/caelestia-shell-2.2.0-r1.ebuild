@@ -6,7 +6,8 @@ EAPI=8
 inherit cmake
 
 # m3shapes revision pinned in upstream CMakeLists.txt (fetched there via
-# FetchContent git clone, which the Gentoo network sandbox forbids -- ship it
+# FetchContent git clone, which the Gentoo network sandbox forbids
+# -- ship it
 # as a tarball and point FetchContent at the unpacked dir instead).
 M3SHAPES_REV="bdc327b29f95394a732baf3c9b19658ba23755b6"
 
@@ -106,17 +107,22 @@ src_configure() {
 		-DINSTALL_QSCONFDIR="usr/share/quickshell/caelestia"
 		# Use the pre-fetched m3shapes source instead of a network git clone.
 		-DFETCHCONTENT_FULLY_DISCONNECTED=ON
-		-DFETCHCONTENT_SOURCE_DIR_M3SHAPES_EXTERNAL="${WORKDIR}/m3shapes-${M3SHAPES_REV}"
+		-DFETCHCONTENT_SOURCE_DIR_M3SHAPES_EXTERNAL=\
+			"${WORKDIR}/m3shapes-${M3SHAPES_REV}"
 	)
 	cmake_src_configure
 }
 
 pkg_postinst() {
 	elog "Caelestia shell installed. This replaces the manual"
-	elog "cmake/ninja + 'cmake --install' workflow under ~/.config/quickshell/caelestia."
+	elog "cmake/ninja + 'cmake --install' workflow under"
+	elog "~/.config/quickshell/caelestia."
 	elog
-	elog "Your update-safe overrides in ~/.config/caelestia/ are NOT touched by"
-	elog "this package: hypr-user.lua, hypr-vars.lua, user-config.fish, shell.json."
+	elog "Your update-safe overrides in ~/.config/caelestia/ are"
+	elog "NOT touched by"
+	elog "this package: hypr-user.lua, hypr-vars.lua, user-config.fish,"
+	elog "shell.json."
 	elog
-	elog "Launch with:  caelestia shell   (or: qs -p /usr/share/quickshell/caelestia)"
+	elog "Launch with:  caelestia shell"
+	elog "(or: qs -p /usr/share/quickshell/caelestia)"
 }

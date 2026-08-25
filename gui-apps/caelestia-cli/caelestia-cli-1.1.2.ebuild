@@ -8,7 +8,7 @@ PYTHON_COMPAT=( python3_{13..14} )
 
 inherit distutils-r1 shell-completion
 
-DESCRIPTION="CLI for the Caelestia shell (scheme, screenshot, record, wallpaper, ...)"
+DESCRIPTION="CLI for the Caelestia shell (scheme, screenshot, record, etc)"
 HOMEPAGE="https://github.com/caelestia-dots/cli"
 SRC_URI="https://github.com/caelestia-dots/cli/archive/refs/tags/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz"
 S="${WORKDIR}/cli-${PV}"
@@ -30,7 +30,8 @@ RDEPEND+="
 	media-video/gpu-screen-recorder
 	x11-libs/libnotify
 "
-# hatch-vcs derives the version from git metadata, which a release tarball lacks.
+# hatch-vcs derives the version from git metadata,
+# which a release tarball lacks.
 BDEPEND+="
 	$(python_gen_cond_dep 'dev-python/hatch-vcs[${PYTHON_USEDEP}]')
 "
@@ -65,11 +66,13 @@ pkg_postinst() {
 	elog "user-config.fish) are preserved -- they are not in the upstream tree."
 	elog
 	elog "This replaces any old 'uv tool' install: remove"
-	elog "~/.local/share/uv/tools/caelestia and the /usr/local/bin/caelestia symlink."
+	elog "~/.local/share/uv/tools/caelestia and the"
+	elog "/usr/local/bin/caelestia symlink."
 }
 
 src_prepare() {
 	default
-	sed -i -e 's/"qs", "-c", "caelestia"/"qs", "-p", "\/usr\/share\/quickshell\/caelestia"/g' \
+	sed -i -e \
+		's|"qs", "-c", "caelestia"|"qs", "-p", "/usr/share/quickshell/caelestia"|g' \
 		src/caelestia/subcommands/*.py || die
 }
