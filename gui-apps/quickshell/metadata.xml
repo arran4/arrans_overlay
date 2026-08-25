@@ -24,6 +24,15 @@
 		<flag name="greetd">Enable <pkg>gui-libs/greetd</pkg> integration</flag>
 		<flag name="notifications">Enable notifications service integration</flag>
 		<flag name="crash-handler">Enable crash handling using <pkg>dev-cpp/cpptrace</pkg></flag>
+		<flag name="gui">Enable gui</flag>
+		<flag name="jemalloc">Enable jemalloc</flag>
+		<flag name="wayland">Enable wayland</flag>
+		<flag name="X">Enable X</flag>
+		<flag name="pam">Enable pam</flag>
+		<flag name="policykit">Enable policykit</flag>
+		<flag name="upower">Enable upower</flag>
+		<flag name="bluetooth">Enable bluetooth</flag>
+		<flag name="networkmanager">Enable networkmanager</flag>
 	</use>
 	<upstream>
 		<doc>https://quickshell.org/about/</doc>

@@ -18,7 +18,7 @@ SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 
 # Upstream recommends leaving all build options enabled by default
-IUSE="
+IUSE="gui
 	+jemalloc +sockets
 	+wayland +layer-shell +session-lock +toplevel-management
 	+hyprland +screencopy
