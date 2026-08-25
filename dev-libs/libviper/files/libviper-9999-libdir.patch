@@ -9,8 +9,17 @@
  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -fPIC -DNCURSES_OPAQUE=0")
  set(PROJECT_DESCRIPTION "A library for developing windowed apps on ncurses")
  
-@@ -87,7 +89,7 @@ set(PKG_CONFIG_LIBS
+@@ -84,10 +86,13 @@ SET_TARGET_PROPERTIES(vdk-shared PROPERTIES OUTPUT_NAME vdk CLEAN_DIRECT_OUTPUT
+ set(PKG_CONFIG_LIBS
      "-lvdk"
+ )
++set(PKG_CONFIG_INCLUDEDIR "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
++set(PKG_CONFIG_LIBDIR "${CMAKE_INSTALL_FULL_LIBDIR}")
++set(PKG_CONFIG_CFLAGS "-I${CMAKE_INSTALL_FULL_INCLUDEDIR}")
+ 
+ configure_file(
+   "${CMAKE_CURRENT_SOURCE_DIR}/pkg-config.pc.cmake"
+   "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
  )
  
 -install (TARGETS vdk-static vdk-shared DESTINATION lib)
@@ -18,7 +27,7 @@
  install (FILES vdk.h vkmio.h DESTINATION include)
  
  # Install pkgconfig files to libdata on BSD, otherwise lib
-@@ -95,7 +97,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "BSD")
+@@ -95,7 +100,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "BSD")
      set(PKG_CONFIG_INSTALL_DIR "libdata/pkgconfig")
  else()
 -    set(PKG_CONFIG_INSTALL_DIR "lib/pkgconfig")
