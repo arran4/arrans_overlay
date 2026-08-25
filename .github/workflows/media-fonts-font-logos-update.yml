@@ -1,0 +1,62 @@
+name: media-fonts/font-logos Update
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/media-fonts-font-logos-update.yml'
+      - '.github/scripts/update-font-logos.sh'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: media-fonts-font-logos-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Generate latest ebuild
+        id: generate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/scripts/update-font-logos.sh
+
+      - name: Check generated changes
+        if: steps.generate.outputs.changed == 'true'
+        run: |
+          git diff --check
+          test -s "media-fonts/font-logos/font-logos-${{ steps.generate.outputs.version }}.ebuild"
+          test -s media-fonts/font-logos/Manifest
+          test -s media-fonts/font-logos/metadata.xml
+
+      - name: Create update pull request
+        if: steps.generate.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "media-fonts/font-logos: add ${{ steps.generate.outputs.version }}"
+          branch: update-media-fonts-font-logos
+          delete-branch: true
+          title: "media-fonts/font-logos: add ${{ steps.generate.outputs.version }}"
+          body: |
+            Automated update for `media-fonts/font-logos` from the latest upstream GitHub release.
+
+            Upstream release: `${{ steps.generate.outputs.tag }}`
+            Release asset: `${{ steps.generate.outputs.asset_url }}`
+
+            The package installs the prebuilt TTF through Gentoo's `font` eclass; it does not build the font-generation toolchain or install the npm package.
+          labels: automated pr

@@ -1,0 +1,93 @@
+name: media-fonts/font-logos Verification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/scripts/update-font-logos.sh'
+      - '.github/workflows/media-fonts-font-logos-update.yml'
+      - '.github/workflows/media-fonts-font-logos-verify.yml'
+      - 'media-fonts/font-logos/**'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/scripts/update-font-logos.sh'
+      - '.github/workflows/media-fonts-font-logos-update.yml'
+      - '.github/workflows/media-fonts-font-logos-verify.yml'
+      - 'media-fonts/font-logos/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: media-fonts-font-logos-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check generator syntax
+        run: bash -n .github/scripts/update-font-logos.sh
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Generate package in a temporary tree
+        id: generate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          generated_root="${RUNNER_TEMP}/font-logos-generated"
+          mkdir -p "${generated_root}"
+          bash .github/scripts/update-font-logos.sh "${generated_root}"
+
+      - name: Verify generated Gentoo files
+        run: |
+          package_dir="${RUNNER_TEMP}/font-logos-generated/media-fonts/font-logos"
+          ebuild="${package_dir}/font-logos-${{ steps.generate.outputs.version }}.ebuild"
+
+          test -s "${ebuild}"
+          test -s "${package_dir}/Manifest"
+          test -s "${package_dir}/metadata.xml"
+          grep -Fxq 'inherit font' "${ebuild}"
+          grep -Fxq 'FONT_SUFFIX="ttf"' "${ebuild}"
+          grep -Fxq 'FONT_S="${S}/assets"' "${ebuild}"
+          grep -q "DIST font-logos-${{ steps.generate.outputs.version }}.zip " "${package_dir}/Manifest"
+
+          python3 - "${package_dir}/metadata.xml" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+          ET.parse(sys.argv[1])
+          PY
+
+      - name: Verify upstream release asset contents
+        env:
+          ASSET_URL: ${{ steps.generate.outputs.asset_url }}
+          VERSION: ${{ steps.generate.outputs.version }}
+        run: |
+          archive="${RUNNER_TEMP}/font-logos.zip"
+          curl -fsSL --retry 3 -o "${archive}" "${ASSET_URL}"
+          python3 - "${archive}" "${VERSION}" <<'PY'
+          import sys
+          import zipfile
+
+          archive, version = sys.argv[1:]
+          prefix = f"font-logos-{version}/assets/"
+          required = {
+              prefix + "font-logos.ttf",
+              prefix + "font-logos.woff",
+              prefix + "font-logos.woff2",
+              prefix + "font-logos.css",
+          }
+          with zipfile.ZipFile(archive) as zf:
+              names = set(zf.namelist())
+          missing = sorted(required - names)
+          if missing:
+              raise SystemExit("missing expected release files: " + ", ".join(missing))
+          PY
