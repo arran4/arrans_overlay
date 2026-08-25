@@ -67,3 +67,9 @@ pkg_postinst() {
 	elog "This replaces any old 'uv tool' install: remove"
 	elog "~/.local/share/uv/tools/caelestia and the /usr/local/bin/caelestia symlink."
 }
+
+src_prepare() {
+	default
+	sed -i -e 's/"qs", "-c", "caelestia"/"qs", "-p", "\/usr\/share\/quickshell\/caelestia"/g' \
+		src/caelestia/subcommands/*.py || die
+}
