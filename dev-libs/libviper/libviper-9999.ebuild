@@ -1,3 +1,6 @@
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
 EAPI=8
 
 inherit cmake git-r3
@@ -35,27 +38,6 @@ src_install() {
 	if ! use static-libs; then
 		rm "${ED}/usr/$(get_libdir)/libvdk.a" || die
 	fi
-
-	# Upstream's generated pkg-config file leaves includedir/libdir blank.
-	# Install a usable system pkg-config description instead.
-	local private_libs="-lncursesw"
-	use gpm && private_libs+=" -lgpm"
-
-	cat > "${T}/libviper.pc" <<-EOF || die
-		prefix=${EPREFIX}/usr
-		exec_prefix=\${prefix}
-		libdir=\${prefix}/$(get_libdir)
-		includedir=\${prefix}/include
-
-		Name: libviper
-		Description: A library for developing windowed apps on ncurses
-		Version: 7.2.0
-		Libs: -L\${libdir} -lvdk
-		Libs.private: ${private_libs}
-		Cflags: -I\${includedir}
-	EOF
-	insinto "/usr/$(get_libdir)/pkgconfig"
-	doins "${T}/libviper.pc"
 
 	dodoc README.md CHANGELOG
 }
