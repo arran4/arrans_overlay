@@ -1,3 +1,6 @@
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
 EAPI=8
 
 inherit cmake git-r3
@@ -6,7 +9,7 @@ DESCRIPTION="Virtual window manager for the terminal"
 HOMEPAGE="https://github.com/TragicWarrior/vwm"
 EGIT_REPO_URI="https://github.com/TragicWarrior/vwm.git"
 
-LICENSE="GPL-2+ LGPL-2.1+ BSD BitstreamVera"
+LICENSE="GPL-2+ LGPL-2.1+ BSD MIT BitstreamVera"
 SLOT="0"
 KEYWORDS=""
 IUSE="dtach gpm xclip"
