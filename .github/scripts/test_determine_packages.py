@@ -109,8 +109,14 @@ assert "--usepkgonly" not in workflow
 assert "--onlydeps \\\n              --usepkg --getbinpkg --with-bdeps=y" in workflow
 assert "if ! emerge -v --usepkg --getbinpkg" in workflow
 assert 'EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS} --usepkg --getbinpkg"' in workflow
-assert "gentoo-binpkgs-v3-${{ steps.gentoo-environment.outputs.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
-assert "gentoo-binpkgs-v3-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}" not in workflow
+assert "timeout-minutes: 120" in workflow
+assert "gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
+assert """restore-keys: |
+            gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-
+            gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-
+            gentoo-binpkgs-v4-
+""" in workflow
+assert "gentoo-binpkgs-v3-" not in workflow
 assert 'echo "dev-qt/* opengl vulkan" > /etc/portage/package.use/zz-ci-qt' in workflow
 assert "--autounmask-write --autounmask-continue" in workflow
 assert 'printf "%s ~amd64\\n" "$PKG"' in workflow

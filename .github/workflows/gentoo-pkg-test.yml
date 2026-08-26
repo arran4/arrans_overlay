@@ -53,7 +53,7 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.matrix != '{"include":[]}'
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
@@ -91,13 +91,15 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /var/cache/binpkgs
-          # All matrix jobs restore the same compatible environment cache.
-          # The run suffix lets a later run save an expanded immutable cache;
-          # parallel jobs intentionally compete to publish the shared result.
-          key: gentoo-binpkgs-v3-${{ steps.gentoo-environment.outputs.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          # Actions caches are immutable and restore one archive, not a union.
+          # Give each matrix group a distinct lineage so parallel jobs can all
+          # save their results. Prefer that lineage on later runs, then fall
+          # back to one cache from the same compatible Gentoo environment.
+          key: gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            gentoo-binpkgs-v3-${{ steps.gentoo-environment.outputs.cache_id }}-
-            gentoo-binpkgs-v3-
+            gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-
+            gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-
+            gentoo-binpkgs-v4-
 
       - name: Start Gentoo stage3
         run: |
