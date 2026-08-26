@@ -5,12 +5,15 @@ EAPI=8
 
 inherit branding cmake xdg toolchain-funcs
 
-GIT_REVISION="4df562dfb2475a9057f0f33a8db75808efad8670"
+GIT_REVISION="1a4716cde794a59928d9d9fc15f2afc7a95de360"
 
 DESCRIPTION="Toolkit for building desktop widgets using QtQuick"
 HOMEPAGE="https://quickshell.org/"
 
-SRC_URI="https://github.com/quickshell-mirror/${PN}/archive/${GIT_REVISION}.tar.gz -> ${PN}-${GIT_REVISION}.tar.gz"
+SRC_URI="
+	https://github.com/quickshell-mirror/${PN}/archive/${GIT_REVISION}.tar.gz
+	-> ${PN}-${GIT_REVISION}.tar.gz
+"
 S="${WORKDIR}/${PN}-${GIT_REVISION}"
 
 LICENSE="LGPL-3"
@@ -36,7 +39,7 @@ REQUIRED_USE="
 "
 
 RDEPEND="
-	dev-qt/qtbase:6=[dbus,vulkan,X?]
+	dev-qt/qtbase:6=[gui,dbus,vulkan,X?]
 	dev-qt/qtsvg:6=
 	dev-qt/qtdeclarative:6=
 	x11-libs/libdrm
@@ -72,7 +75,7 @@ BDEPEND="
 
 DOCS=( README.md changelog/ )
 
-PATCHES=( "${FILESDIR}/${PN}-0.3.0-strict-aliasing.patch" )
+PATCHES=( "${FILESDIR}/${PN}-0.3.1-strict-aliasing.patch" )
 
 src_configure() {
 	if tc-ld-is-mold; then
