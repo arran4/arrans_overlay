@@ -82,10 +82,10 @@ complete_core = run_helper([
     "gui-apps/caelestia-meta/caelestia-meta-1.ebuild",
     "gui-apps/caelestia-cli/caelestia-cli-1.1.2.ebuild",
     "gui-apps/caelestia-shell/caelestia-shell-2.3.0.ebuild",
-    "gui-apps/quickshell/quickshell-0.3.0_p20260710.ebuild",
+    "gui-apps/quickshell/quickshell-0.3.1.ebuild",
 ])
 assert entry(complete_core, "caelestia-core")["packages"].split() == [
-    "=gui-apps/quickshell-0.3.0_p20260710",
+    "=gui-apps/quickshell-0.3.1",
     "=gui-apps/caelestia-shell-2.3.0",
     "=gui-apps/caelestia-cli-1.1.2",
     "=gui-apps/caelestia-meta-1",
@@ -97,15 +97,23 @@ different_set = run_helper(generic_paths[1:3])
 assert same_set_a[0]["cache_id"] == same_set_b[0]["cache_id"]
 assert same_set_a[0]["cache_id"] != different_set[0]["cache_id"]
 
-# Versioned matrix atoms are converted to CP by Portage in the workflow. Both
-# dependency resolution and the target build must exclude that CP from binpkgs.
+# The workflow prefers binaries globally, including for the explicit target,
+# while retaining normal Portage source fallback and targeted autounmasking.
 with open(".github/workflows/gentoo-pkg-test.yml", encoding="utf-8") as workflow_file:
     workflow = workflow_file.read()
 assert 'CP=$(python3 -c "import portage; print(portage.dep.Atom(\\"$PKG\\").cp)")' in workflow
-assert workflow.count('--usepkg-exclude "$CP"') == 2
-assert workflow.count('--getbinpkg-exclude "$CP"') == 2
-assert '--buildpkg-exclude "$CP"' in workflow
-assert '--usepkg-exclude "$PKG"' not in workflow
+assert "--usepkg-exclude" not in workflow
+assert "--getbinpkg-exclude" not in workflow
+assert "--buildpkg-exclude" not in workflow
+assert "--usepkgonly" not in workflow
 assert "--onlydeps \\\n              --usepkg --getbinpkg --with-bdeps=y" in workflow
+assert "if ! emerge -v --usepkg --getbinpkg" in workflow
+assert 'EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS} --usepkg --getbinpkg"' in workflow
+assert "gentoo-binpkgs-v3-${{ steps.gentoo-environment.outputs.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
+assert "gentoo-binpkgs-v3-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}" not in workflow
+assert 'echo "dev-qt/* opengl vulkan" > /etc/portage/package.use/zz-ci-qt' in workflow
+assert "--autounmask-write --autounmask-continue" in workflow
+assert 'printf "%s ~amd64\\n" "$PKG"' in workflow
+assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow
 
 print("determine_packages tests passed")

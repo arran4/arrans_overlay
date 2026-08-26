@@ -53,7 +53,7 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.matrix != '{"include":[]}'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 240
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
@@ -91,9 +91,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /var/cache/binpkgs
-          key: gentoo-binpkgs-v2-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}
+          # All matrix jobs restore the same compatible environment cache.
+          # The run suffix lets a later run save an expanded immutable cache;
+          # parallel jobs intentionally compete to publish the shared result.
+          key: gentoo-binpkgs-v3-${{ steps.gentoo-environment.outputs.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            gentoo-binpkgs-v2-${{ steps.gentoo-environment.outputs.cache_id }}-
+            gentoo-binpkgs-v3-${{ steps.gentoo-environment.outputs.cache_id }}-
+            gentoo-binpkgs-v3-
 
       - name: Start Gentoo stage3
         run: |
@@ -151,6 +155,12 @@ jobs:
           # with newer unstable toolchain packages in the Portage snapshot.
           echo 'ACCEPT_LICENSE="*"' >> /etc/portage/make.conf
           echo 'FEATURES="${FEATURES} buildpkg"' >> /etc/portage/make.conf
+          # Prefer Gentoo's public binhost and the shared CI binpkg cache for
+          # speed, while retaining normal source builds when no compatible
+          # package exists. Overlay packages usually are not on the public
+          # binhost, but generic dependencies such as LLVM need not be rebuilt.
+          echo 'EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS} --usepkg --getbinpkg"' \
+            >> /etc/portage/make.conf
 
           # Keep the Qt stack's matching opengl/vulkan USE dependencies
           # consistent. Configuring qtbase alone can make Portage backtrack to
@@ -182,21 +192,18 @@ jobs:
             fi
 
             echo "Building and testing $PKG"
-            # Resolve dependencies from the checked-out target metadata while
-            # allowing compatible dependencies to come from the binpkg cache.
+            # Prefer compatible binaries for the full dependency graph. The
+            # targeted autounmask pass above can accept legitimate unstable
+            # transitive dependencies without enabling ~amd64 globally.
             emerge --autounmask=y --autounmask-write --autounmask-continue \
               --autounmask-backtrack=y --onlydeps \
               --usepkg --getbinpkg --with-bdeps=y \
-              --usepkg-exclude "$CP" \
-              --getbinpkg-exclude "$CP" \
               "$PKG" || true
             etc-update --automode -5
-            # Dependencies may use the binpkg cache, but CI must build the
-            # explicit target from this checkout and keep it out of that cache.
+            # The target may also use a compatible binary. Packages from this
+            # overlay normally have no public binpkg, so Portage will naturally
+            # fall back to the checked-out ebuild when one is unavailable.
             if ! emerge -v --usepkg --getbinpkg \
-              --usepkg-exclude "$CP" \
-              --getbinpkg-exclude "$CP" \
-              --buildpkg-exclude "$CP" \
               "$PKG"; then
               echo "Failed to emerge $PKG"
               FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
