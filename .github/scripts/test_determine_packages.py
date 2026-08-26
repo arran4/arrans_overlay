@@ -97,4 +97,15 @@ different_set = run_helper(generic_paths[1:3])
 assert same_set_a[0]["cache_id"] == same_set_b[0]["cache_id"]
 assert same_set_a[0]["cache_id"] != different_set[0]["cache_id"]
 
+# Versioned matrix atoms are converted to CP by Portage in the workflow. Both
+# dependency resolution and the target build must exclude that CP from binpkgs.
+with open(".github/workflows/gentoo-pkg-test.yml", encoding="utf-8") as workflow_file:
+    workflow = workflow_file.read()
+assert 'CP=$(python3 -c "import portage; print(portage.dep.Atom(\\"$PKG\\").cp)")' in workflow
+assert workflow.count('--usepkg-exclude "$CP"') == 2
+assert workflow.count('--getbinpkg-exclude "$CP"') == 2
+assert '--buildpkg-exclude "$CP"' in workflow
+assert '--usepkg-exclude "$PKG"' not in workflow
+assert "--onlydeps \\\n              --usepkg --getbinpkg --with-bdeps=y" in workflow
+
 print("determine_packages tests passed")

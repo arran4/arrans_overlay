@@ -92,6 +92,8 @@ jobs:
         with:
           path: /var/cache/binpkgs
           key: gentoo-binpkgs-v2-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}
+          restore-keys: |
+            gentoo-binpkgs-v2-${{ steps.gentoo-environment.outputs.cache_id }}-
 
       - name: Start Gentoo stage3
         run: |
@@ -178,16 +180,21 @@ jobs:
             fi
 
             echo "Building and testing $PKG"
-            # Actually build and install the package to verify it works
+            # Resolve dependencies from the checked-out target metadata while
+            # allowing compatible dependencies to come from the binpkg cache.
             emerge --autounmask=y --autounmask-write --autounmask-continue \
-              --autounmask-backtrack=y --onlydeps $PKG || true
+              --autounmask-backtrack=y --onlydeps \
+              --usepkg --getbinpkg --with-bdeps=y \
+              --usepkg-exclude "$CP" \
+              --getbinpkg-exclude "$CP" \
+              "$PKG" || true
             etc-update --automode -5
             # Dependencies may use the binpkg cache, but CI must build the
             # explicit target from this checkout and keep it out of that cache.
             if ! emerge -v --usepkg --getbinpkg \
-              --usepkg-exclude "$PKG" \
-              --getbinpkg-exclude "$PKG" \
-              --buildpkg-exclude "$PKG" \
+              --usepkg-exclude "$CP" \
+              --getbinpkg-exclude "$CP" \
+              --buildpkg-exclude "$CP" \
               "$PKG"; then
               echo "Failed to emerge $PKG"
               FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
