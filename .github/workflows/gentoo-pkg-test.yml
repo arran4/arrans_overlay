@@ -152,11 +152,11 @@ jobs:
           echo 'ACCEPT_LICENSE="*"' >> /etc/portage/make.conf
           echo 'FEATURES="${FEATURES} buildpkg"' >> /etc/portage/make.conf
 
-          # Pre-configure required USE flags for dependencies. Qt 6 requires
-          # opengl when wayland is enabled; keep this late in package.use so CI
-          # requirements override stage3/profile convenience entries.
+          # Keep the Qt stack's matching opengl/vulkan USE dependencies
+          # consistent. Configuring qtbase alone can make Portage backtrack to
+          # a mixed Qt stack and select qtbase with -opengl even with wayland.
           mkdir -p /etc/portage/package.use
-          echo "dev-qt/qtbase opengl vulkan" > /etc/portage/package.use/zz-ci-qtbase
+          echo "dev-qt/* opengl vulkan" > /etc/portage/package.use/zz-ci-qt
 
           emerge -v dev-vcs/git
           emerge --sync guru
