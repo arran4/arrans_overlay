@@ -114,8 +114,8 @@ assert "gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ m
 assert """restore-keys: |
             gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-
             gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-
-            gentoo-binpkgs-v4-
 """ in workflow
+assert "            gentoo-binpkgs-v4-\n" not in workflow
 assert "gentoo-binpkgs-v3-" not in workflow
 assert 'echo "dev-qt/* opengl vulkan" > /etc/portage/package.use/zz-ci-qt' in workflow
 assert "--autounmask-write --autounmask-continue" in workflow

@@ -99,7 +99,6 @@ jobs:
           restore-keys: |
             gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-
             gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-
-            gentoo-binpkgs-v4-
 
       - name: Start Gentoo stage3
         run: |
