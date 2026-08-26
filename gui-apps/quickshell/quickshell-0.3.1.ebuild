@@ -23,7 +23,7 @@ IUSE="
 	+jemalloc +sockets
 	+wayland +layer-shell +session-lock +toplevel-management
 	+hyprland +screencopy
-	+gui +X +i3
+	+X +i3
 	+tray +pipewire +mpris +pam +policykit +greetd +upower +notifications
 	+bluetooth +networkmanager +crash-handler
 "
@@ -34,12 +34,10 @@ REQUIRED_USE="
 	hyprland?            ( wayland )
 	screencopy?          ( wayland )
 	i3? ( X )
-	X? ( gui )
-	wayland? ( gui )
 "
 
 RDEPEND="
-	dev-qt/qtbase:6=[gui?,dbus,vulkan,X?]
+	dev-qt/qtbase:6=[gui,dbus,vulkan,X?]
 	dev-qt/qtsvg:6=
 	dev-qt/qtdeclarative:6=
 	x11-libs/libdrm
@@ -75,7 +73,7 @@ BDEPEND="
 
 DOCS=( README.md changelog/ )
 
-
+PATCHES=( "${FILESDIR}/${PN}-0.3.1-strict-aliasing.patch" )
 
 src_configure() {
 	if tc-ld-is-mold; then
