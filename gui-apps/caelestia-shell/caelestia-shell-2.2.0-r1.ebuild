@@ -14,8 +14,10 @@ M3SHAPES_REV="bdc327b29f95394a732baf3c9b19658ba23755b6"
 DESCRIPTION="Caelestia Quickshell desktop shell (Hyprland)"
 HOMEPAGE="https://github.com/caelestia-dots/shell"
 SRC_URI="
-	https://github.com/caelestia-dots/shell/archive/refs/tags/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz
-	https://github.com/soramanew/m3shapes/archive/${M3SHAPES_REV}.tar.gz -> caelestia-m3shapes-${M3SHAPES_REV}.tar.gz
+	https://github.com/caelestia-dots/shell/archive/refs/tags/v${PV}.tar.gz
+		-> ${P}.tar.gz
+	https://github.com/soramanew/m3shapes/archive/${M3SHAPES_REV}.tar.gz
+		-> caelestia-m3shapes-${M3SHAPES_REV}.tar.gz
 "
 S="${WORKDIR}/shell-${PV}"
 
@@ -74,9 +76,8 @@ PATCHES=(
 	# keyboard layout change should produce a notification.
 	"${FILESDIR}/${PN}-ignore-transient-keyboard-layout-gaps.patch"
 
-	# Add missing Qt includes (QObject, QVariant, QQmlEngine, QString, \
+	# Add missing Qt includes (QObject, QVariant, QQmlEngine, QString,
 	# QTimer,
-	# QPointer, QStringList) that upstream relied on transitively; Qt 6.11
 	# dropped those transitive includes so the plugin fails to build \
 	# without them.
 	"${FILESDIR}/${PN}-qt6.11-includes.patch"
@@ -122,6 +123,12 @@ src_configure() {
 			"${WORKDIR}/m3shapes-${M3SHAPES_REV}"
 	)
 	cmake_src_configure
+}
+
+src_install() {
+	cmake_src_install
+	# Move the wrapper script to bin
+	newbin assets/wrap_term_launch.sh caelestia-shell
 }
 
 pkg_postinst() {
