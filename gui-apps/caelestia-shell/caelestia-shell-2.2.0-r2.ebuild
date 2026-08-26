@@ -6,18 +6,18 @@ EAPI=8
 inherit cmake
 
 # m3shapes revision pinned in upstream CMakeLists.txt (fetched there via
-# FetchContent git clone, which the Gentoo network sandbox forbids
-# -- ship it
+# FetchContent git clone, which the Gentoo network sandbox forbids -- ship it
 # as a tarball and point FetchContent at the unpacked dir instead).
 M3SHAPES_REV="bdc327b29f95394a732baf3c9b19658ba23755b6"
+SHELL_ARCHIVE="github.com/caelestia-dots/shell/archive/refs/tags"
+M3SHAPES_ARCHIVE="github.com/soramanew/m3shapes/archive"
+M3SHAPES_DIST="caelestia-m3shapes-${M3SHAPES_REV}.tar.gz"
 
 DESCRIPTION="Caelestia Quickshell desktop shell (Hyprland)"
 HOMEPAGE="https://github.com/caelestia-dots/shell"
 SRC_URI="
-	https://github.com/caelestia-dots/shell/archive/refs/tags/v${PV}.tar.gz
-		-> ${P}.tar.gz
-	https://github.com/soramanew/m3shapes/archive/${M3SHAPES_REV}.tar.gz
-		-> caelestia-m3shapes-${M3SHAPES_REV}.tar.gz
+	https://${SHELL_ARCHIVE}/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz
+	https://${M3SHAPES_ARCHIVE}/${M3SHAPES_REV}.tar.gz -> ${M3SHAPES_DIST}
 "
 S="${WORKDIR}/shell-${PV}"
 
@@ -67,8 +67,7 @@ BDEPEND="
 "
 
 PATCHES=(
-	# Select one provider-neutral facial-authentication context
-	# and add Gaze
+	# Select one provider-neutral facial-authentication context and add Gaze
 	# alongside the existing Howdy PAM backend.
 	"${FILESDIR}/${PN}-configurable-facial-provider.patch"
 
@@ -76,37 +75,29 @@ PATCHES=(
 	# keyboard layout change should produce a notification.
 	"${FILESDIR}/${PN}-ignore-transient-keyboard-layout-gaps.patch"
 
-	# Add missing Qt includes (QObject, QVariant, QQmlEngine, QString,
-	# QTimer, QPointer, QStringList) that upstream relied on
-	# transitively; Qt 6.11
-	# dropped those transitive includes so the plugin fails to build \
-	# without them.
+	# Add missing Qt includes (QObject, QVariant, QQmlEngine, QString, QTimer,
+	# QPointer, QStringList) that upstream relied on transitively; Qt 6.11
+	# dropped those transitive includes, so the plugin fails to build without
+	# them.
 	"${FILESDIR}/${PN}-qt6.11-includes.patch"
 
-	# The Keep Awake idle inhibitor hangs off a PanelWindow built \
-	# once inline
-	# in a Singleton. A monitor hotplug destroys it and nothing \
-	# rebuilds it, so
-	# the toggle silently stops inhibiting while still reporting \
-	# itself active.
+	# The Keep Awake idle inhibitor hangs off a PanelWindow built once inline
+	# in a Singleton. A monitor hotplug destroys it and nothing rebuilds it, so
+	# the toggle silently stops inhibiting while still reporting itself active.
 	"${FILESDIR}/${PN}-rebuild-idle-inhibitor-window.patch"
 
-	# Raise the notification's sender when its default action is \
-	# invoked.
-	# Windows carrying a focus_on_activate=false rule cannot raise \
-	# themselves
-	# (Wayland cannot distinguish an app's self-activation from a \
-	# user click),
-	# and the daemon is the only party that knows the click \
-	# happened.
+	# Raise the notification's sender when its default action is invoked.
+	# Windows carrying a focus_on_activate=false rule cannot raise themselves
+	# (Wayland cannot distinguish an app's self-activation from a user click),
+	# and the daemon is the only party that knows the click happened.
 	"${FILESDIR}/${PN}-focus-sender-on-notification-action.patch"
 )
 
 src_configure() {
+	local m3shapes_dir="${WORKDIR}/m3shapes-${M3SHAPES_REV}"
 	local mycmakeargs=(
-		# Upstream installs with prefix "/" and relative usr/... dests;
-		# the cmake
-		# eclass defaults the prefix to /usr, which would yield /usr/usr/lib.
+		# Upstream installs with prefix "/" and relative usr/... destinations;
+		# the cmake eclass prefix /usr would yield /usr/usr/lib.
 		-DCMAKE_INSTALL_PREFIX="${EPREFIX}/"
 		# GOTCHA: Gentoo ships Qt6 QML under lib64; the upstream default
 		# usr/lib/qt6/qml makes Quickshell fail with
@@ -120,11 +111,9 @@ src_configure() {
 		-DINSTALL_QSCONFDIR="usr/share/quickshell/caelestia"
 		# Use the pre-fetched m3shapes source instead of a network git clone.
 		-DFETCHCONTENT_FULLY_DISCONNECTED=ON
-		-DFETCHCONTENT_SOURCE_DIR_M3SHAPES_EXTERNAL=\
-			"${WORKDIR}/m3shapes-${M3SHAPES_REV}"
+		-DFETCHCONTENT_SOURCE_DIR_M3SHAPES_EXTERNAL="${m3shapes_dir}"
 	)
 	cmake_src_configure
-
 }
 
 pkg_postinst() {
@@ -132,12 +121,10 @@ pkg_postinst() {
 	elog "cmake/ninja + 'cmake --install' workflow under"
 	elog "~/.config/quickshell/caelestia."
 	elog
-	elog "Your update-safe overrides in ~/.config/caelestia/ are"
-	elog "NOT touched by"
+	elog "Your update-safe overrides in ~/.config/caelestia/ are NOT touched by"
 	elog "this package: hypr-user.lua, hypr-vars.lua, user-config.fish,"
 	elog "shell.json."
 	elog
 	elog "Launch with:  caelestia shell"
-	elog "(or: qs -p /usr/share/quickshell/caelestia)"
-
+	elog "               (or: qs -p /usr/share/quickshell/caelestia)"
 }

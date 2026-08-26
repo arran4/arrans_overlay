@@ -1,11 +1,11 @@
 --- a/src/caelestia/subcommands/shell.py
 +++ b/src/caelestia/subcommands/shell.py
 @@ -1,5 +1,7 @@
++import os
  import subprocess
++import sys
  from argparse import Namespace
 
-+import os
-+import sys
  from caelestia.utils.paths import c_cache_dir
 
 @@ -26,7 +28,11 @@
@@ -37,12 +37,12 @@
 --- a/src/caelestia/subcommands/screenshot.py
 +++ b/src/caelestia/subcommands/screenshot.py
 @@ -1,6 +1,8 @@
++import os
  import subprocess
++import sys
  from argparse import Namespace
  from datetime import datetime
 
-+import os
-+import sys
  from caelestia.utils import hypr
  from caelestia.utils.notify import notify
 @@ -21,8 +23,12 @@

@@ -107,8 +107,9 @@ jobs:
             "auto-sync = no" \
             > /etc/portage/repos.conf/arrans-overlay.conf
 
-          # Set up ~amd64 testing environment and accept all licenses
-          echo 'ACCEPT_KEYWORDS="~amd64"' >> /etc/portage/make.conf
+          # Accept all licenses. Keyword only the packages under test below;
+          # globally enabling ~amd64 can make the stable stage3 inconsistent
+          # with newer unstable toolchain packages in the Portage snapshot.
           echo 'ACCEPT_LICENSE="*"' >> /etc/portage/make.conf
 
           # Pre-configure required USE flags for dependencies
@@ -124,6 +125,11 @@ jobs:
 
           PACKAGES="$1"
 
+          mkdir -p /etc/portage/package.accept_keywords
+          for PKG in $PACKAGES; do
+            printf "%s ~amd64\n" "$PKG"
+          done > /etc/portage/package.accept_keywords/ci
+
           FAILED_PACKAGES=""
           for PKG in $PACKAGES; do
             echo "Running pkgcheck on $PKG"
@@ -135,7 +141,8 @@ jobs:
 
             echo "Building and testing $PKG"
             # Actually build and install the package to verify it works
-            emerge --autounmask-write --autounmask-continue --autounmask-backtrack=y --onlydeps $PKG || true
+            emerge --autounmask=y --autounmask-write --autounmask-continue \
+              --autounmask-backtrack=y --onlydeps $PKG || true
             etc-update --automode -5
             if ! emerge -v $PKG; then
               echo "Failed to emerge $PKG"
