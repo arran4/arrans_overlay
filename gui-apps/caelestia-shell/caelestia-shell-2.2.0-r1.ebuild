@@ -65,7 +65,8 @@ BDEPEND="
 "
 
 PATCHES=(
-	# Select one provider-neutral facial-authentication context and add Gaze
+	# Select one provider-neutral facial-authentication context
+	# and add Gaze
 	# alongside the existing Howdy PAM backend.
 	"${FILESDIR}/${PN}-configurable-facial-provider.patch"
 
@@ -73,26 +74,36 @@ PATCHES=(
 	# keyboard layout change should produce a notification.
 	"${FILESDIR}/${PN}-ignore-transient-keyboard-layout-gaps.patch"
 
-	# Add missing Qt includes (QObject, QVariant, QQmlEngine, QString, QTimer,
+	# Add missing Qt includes (QObject, QVariant, QQmlEngine, QString, \
+	# QTimer,
 	# QPointer, QStringList) that upstream relied on transitively; Qt 6.11
-	# dropped those transitive includes so the plugin fails to build without them.
+	# dropped those transitive includes so the plugin fails to build \
+	# without them.
 	"${FILESDIR}/${PN}-qt6.11-includes.patch"
 
-	# The Keep Awake idle inhibitor hangs off a PanelWindow built once inline
-	# in a Singleton. A monitor hotplug destroys it and nothing rebuilds it, so
-	# the toggle silently stops inhibiting while still reporting itself active.
+	# The Keep Awake idle inhibitor hangs off a PanelWindow built \
+	# once inline
+	# in a Singleton. A monitor hotplug destroys it and nothing \
+	# rebuilds it, so
+	# the toggle silently stops inhibiting while still reporting \
+	# itself active.
 	"${FILESDIR}/${PN}-rebuild-idle-inhibitor-window.patch"
 
-	# Raise the notification's sender when its default action is invoked.
-	# Windows carrying a focus_on_activate=false rule cannot raise themselves
-	# (Wayland cannot distinguish an app's self-activation from a user click),
-	# and the daemon is the only party that knows the click happened.
+	# Raise the notification's sender when its default action is \
+	# invoked.
+	# Windows carrying a focus_on_activate=false rule cannot raise \
+	# themselves
+	# (Wayland cannot distinguish an app's self-activation from a \
+	# user click),
+	# and the daemon is the only party that knows the click \
+	# happened.
 	"${FILESDIR}/${PN}-focus-sender-on-notification-action.patch"
 )
 
 src_configure() {
 	local mycmakeargs=(
-		# Upstream installs with prefix "/" and relative usr/... dests; the cmake
+		# Upstream installs with prefix "/" and relative usr/... dests;
+		# the cmake
 		# eclass defaults the prefix to /usr, which would yield /usr/usr/lib.
 		-DCMAKE_INSTALL_PREFIX="${EPREFIX}/"
 		# GOTCHA: Gentoo ships Qt6 QML under lib64; the upstream default

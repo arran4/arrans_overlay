@@ -37,16 +37,20 @@ BDEPEND+="
 "
 
 PATCHES=(
-	# Add \`caelestia install --no-packages\` so the dotfiles can be deployed
-	# without the Arch-only AUR-helper package step (upstream install always
+	# Add \`caelestia install --no-packages\` so the dotfiles can
+	# be deployed
+	# without the Arch-only AUR-helper package step
+	# (upstream install always
 	# invokes an AUR helper, which does not exist on Gentoo).
 	"${FILESDIR}/${PN}-dots-only.patch"
-	# Report installed Caelestia package versions through Portage on Gentoo,
+	# Report installed Caelestia package versions through Portage
+	# on Gentoo,
 	# equivalent to upstream's pacman-based diagnostics on Arch.
 	"${FILESDIR}/${PN}-non-arch-version.patch"
 )
 
-# Feed the version to hatch-vcs (setuptools_scm) since there is no .git here.
+# Feed the version to hatch-vcs (setuptools_scm) since there is
+# no .git here.
 export SETUPTOOLS_SCM_PRETEND_VERSION="${PV}"
 
 src_install() {
@@ -57,13 +61,18 @@ src_install() {
 pkg_postinst() {
 	elog "Deploy the Caelestia dotfiles on Gentoo with:"
 	elog "    caelestia install --no-packages"
-	elog "This deploys the config files (fetched from upstream git) and skips the"
-	elog "Arch AUR-helper package step (added by ${PN}-dots-only.patch). Plain"
+	elog "This deploys the config files (fetched from upstream git) and"
+	elog "skips the"
+	elog "Arch AUR-helper package step (added by"
+	elog "${PN}-dots-only.patch). Plain"
 	elog "'caelestia install' fails here; install deps via Portage instead"
-	elog "(emerge gui-apps/caelestia-meta). Update later with: caelestia update"
+	elog "(emerge gui-apps/caelestia-meta). Update later with:"
+	elog "caelestia update"
 	elog
-	elog "Your ~/.config/caelestia/ overrides (hypr-user.lua, hypr-vars.lua,"
-	elog "user-config.fish) are preserved -- they are not in the upstream tree."
+	elog "Your ~/.config/caelestia/ overrides (hypr-user.lua,"
+	elog "hypr-vars.lua,"
+	elog "user-config.fish) are preserved -- they are not in the"
+	elog "upstream tree."
 	elog
 	elog "This replaces any old 'uv tool' install: remove"
 	elog "~/.local/share/uv/tools/caelestia and the"
@@ -72,7 +81,8 @@ pkg_postinst() {
 
 src_prepare() {
 	default
-	sed -i -e \
-		's|"qs", "-c", "caelestia"|"qs", "-p", "/usr/share/quickshell/caelestia"|g' \
+		sed -i \
+			-e 's|"qs", "-c", "caelestia"|"qs", "-p", \
+			"/usr/share/quickshell/caelestia"|g' \
 		src/caelestia/subcommands/*.py || die
 }
