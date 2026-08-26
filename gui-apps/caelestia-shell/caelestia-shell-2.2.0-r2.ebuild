@@ -9,15 +9,15 @@ inherit cmake
 # FetchContent git clone, which the Gentoo network sandbox forbids -- ship it
 # as a tarball and point FetchContent at the unpacked dir instead).
 M3SHAPES_REV="bdc327b29f95394a732baf3c9b19658ba23755b6"
-SHELL_SRC="https://github.com/caelestia-dots/shell/archive/refs/tags"
-M3SHAPES_SRC="https://github.com/soramanew/m3shapes/archive"
+SHELL_ARCHIVE="github.com/caelestia-dots/shell/archive/refs/tags"
+M3SHAPES_ARCHIVE="github.com/soramanew/m3shapes/archive"
 M3SHAPES_DIST="caelestia-m3shapes-${M3SHAPES_REV}.tar.gz"
 
 DESCRIPTION="Caelestia Quickshell desktop shell (Hyprland)"
 HOMEPAGE="https://github.com/caelestia-dots/shell"
 SRC_URI="
-	${SHELL_SRC}/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz
-	${M3SHAPES_SRC}/${M3SHAPES_REV}.tar.gz -> ${M3SHAPES_DIST}
+	https://${SHELL_ARCHIVE}/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz
+	https://${M3SHAPES_ARCHIVE}/${M3SHAPES_REV}.tar.gz -> ${M3SHAPES_DIST}
 "
 S="${WORKDIR}/shell-${PV}"
 
