@@ -10,8 +10,10 @@ GIT_REVISION="1a4716cde794a59928d9d9fc15f2afc7a95de360"
 DESCRIPTION="Toolkit for building desktop widgets using QtQuick"
 HOMEPAGE="https://quickshell.org/"
 
-SRC_URI="https://github.com/quickshell-mirror/${PN}/archive/${GIT_REVISION}.tar.gz
-	-> ${PN}-${GIT_REVISION}.tar.gz"
+SRC_URI="
+	https://github.com/quickshell-mirror/${PN}/archive/${GIT_REVISION}.tar.gz
+	-> ${PN}-${GIT_REVISION}.tar.gz
+"
 S="${WORKDIR}/${PN}-${GIT_REVISION}"
 
 LICENSE="LGPL-3"
