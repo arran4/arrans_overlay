@@ -4,9 +4,13 @@ on:
   push:
     paths:
       - '.github/workflows/**'
+      - '.github/scripts/determine_packages.py'
+      - '.github/scripts/test_determine_packages.py'
   pull_request:
     paths:
       - '.github/workflows/**'
+      - '.github/scripts/determine_packages.py'
+      - '.github/scripts/test_determine_packages.py'
 
 jobs:
   actionlint:
@@ -18,3 +22,10 @@ jobs:
         run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
       - name: Check workflow files
         run: ./actionlint -color -ignore 'action is too old' -ignore 'SC2016' -ignore 'SC2028' -ignore 'SC2034' -ignore 'SC2086' -ignore 'SC2196' -ignore 'SC2015' -ignore 'SC2001' -ignore 'SC2129' -ignore 'SC2181'
+
+  test-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test package matrix helper
+        run: python3 .github/scripts/test_determine_packages.py
