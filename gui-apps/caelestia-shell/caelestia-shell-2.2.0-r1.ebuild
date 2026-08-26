@@ -124,8 +124,8 @@ src_configure() {
 			"${WORKDIR}/m3shapes-${M3SHAPES_REV}"
 	)
 	cmake_src_configure
-}
 
+}
 
 pkg_postinst() {
 	elog "Caelestia shell installed. This replaces the manual"
@@ -139,4 +139,5 @@ pkg_postinst() {
 	elog
 	elog "Launch with:  caelestia shell"
 	elog "(or: qs -p /usr/share/quickshell/caelestia)"
+
 }

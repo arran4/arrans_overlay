@@ -48,7 +48,7 @@ PATCHES=(
 	"${FILESDIR}/${PN}-dots-only.patch"
 	# Report installed Caelestia package versions through Portage
 	# on Gentoo,
-	# equivalent to upstream\'s pacman-based diagnostics on Arch.
+	# equivalent to upstream's pacman-based diagnostics on Arch.
 	"${FILESDIR}/${PN}-non-arch-version.patch"
 	"${FILESDIR}/${PN}-quickshell-data-path.patch"
 )
