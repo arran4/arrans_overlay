@@ -77,7 +77,8 @@ PATCHES=(
 	"${FILESDIR}/${PN}-ignore-transient-keyboard-layout-gaps.patch"
 
 	# Add missing Qt includes (QObject, QVariant, QQmlEngine, QString,
-	# QTimer,
+	# QTimer, QPointer, QStringList) that upstream relied on
+	# transitively; Qt 6.11
 	# dropped those transitive includes so the plugin fails to build \
 	# without them.
 	"${FILESDIR}/${PN}-qt6.11-includes.patch"
@@ -124,6 +125,7 @@ src_configure() {
 	)
 	cmake_src_configure
 }
+
 
 pkg_postinst() {
 	elog "Caelestia shell installed. This replaces the manual"
