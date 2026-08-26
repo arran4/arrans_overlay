@@ -10,7 +10,10 @@ inherit distutils-r1 shell-completion
 
 DESCRIPTION="CLI for the Caelestia shell (scheme, screenshot, record, etc)"
 HOMEPAGE="https://github.com/caelestia-dots/cli"
-SRC_URI="https://github.com/caelestia-dots/cli/archive/refs/tags/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz"
+SRC_URI="
+	https://github.com/caelestia-dots/cli/archive/refs/tags/v${PV}.tar.gz
+		-> ${P}.tar.gz
+"
 S="${WORKDIR}/cli-${PV}"
 
 LICENSE="GPL-3"
@@ -45,8 +48,9 @@ PATCHES=(
 	"${FILESDIR}/${PN}-dots-only.patch"
 	# Report installed Caelestia package versions through Portage
 	# on Gentoo,
-	# equivalent to upstream's pacman-based diagnostics on Arch.
+	# equivalent to upstream\'s pacman-based diagnostics on Arch.
 	"${FILESDIR}/${PN}-non-arch-version.patch"
+	"${FILESDIR}/${PN}-quickshell-data-path.patch"
 )
 
 # Feed the version to hatch-vcs (setuptools_scm) since there is
@@ -77,12 +81,4 @@ pkg_postinst() {
 	elog "This replaces any old 'uv tool' install: remove"
 	elog "~/.local/share/uv/tools/caelestia and the"
 	elog "/usr/local/bin/caelestia symlink."
-}
-
-src_prepare() {
-	default
-		sed -i \
-			-e 's|"qs", "-c", "caelestia"|"qs", "-p", \
-			"/usr/share/quickshell/caelestia"|g' \
-		src/caelestia/subcommands/*.py || die
 }

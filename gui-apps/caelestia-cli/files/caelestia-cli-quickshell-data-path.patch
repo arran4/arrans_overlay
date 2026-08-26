@@ -1,0 +1,62 @@
+--- a/src/caelestia/subcommands/shell.py
++++ b/src/caelestia/subcommands/shell.py
+@@ -1,5 +1,6 @@
+ import subprocess
+ from argparse import Namespace
++import os
+
+ from caelestia.utils.paths import c_cache_dir
+
+@@ -26,7 +27,11 @@
+             self.message(*self.args.message)
+         else:
+             # Start the shell
+-            args = ["qs", "-c", "caelestia", "-n"]
++            if os.path.exists("/usr/share/quickshell/caelestia/shell.qml"):
++                args = ["qs", "-p", "/usr/share/quickshell/caelestia", "-n"]
++            else:
++                print("gui-apps/caelestia-shell is not installed. Please emerge gui-apps/caelestia-shell.")
++                exit(1)
+             if self.args.log_rules:
+                 args.extend(["--log-rules", self.args.log_rules])
+             if self.args.daemon:
+@@ -40,7 +45,11 @@
+                             print(line, end="")
+
+     def shell(self, *args: str) -> str:
+-        return subprocess.check_output(["qs", "-c", "caelestia", *args], text=True)
++        if os.path.exists("/usr/share/quickshell/caelestia/shell.qml"):
++            qs_args = ["qs", "-p", "/usr/share/quickshell/caelestia"]
++        else:
++            print("gui-apps/caelestia-shell is not installed. Please emerge gui-apps/caelestia-shell.")
++            exit(1)
++        return subprocess.check_output([*qs_args, *args], text=True)
+
+     def filter_log(self, line: str) -> bool:
+         return f"Cannot open: file://{c_cache_dir}/imagecache/" not in line
+--- a/src/caelestia/subcommands/screenshot.py
++++ b/src/caelestia/subcommands/screenshot.py
+@@ -1,6 +1,7 @@
+ import os
+ import subprocess
+ from argparse import Namespace
++import sys
+
+ from caelestia.utils.notify import send_notification
+ from caelestia.utils.paths import c_cache_dir, c_state_dir
+@@ -21,8 +22,13 @@
+             save_path = f"{os.path.expanduser('~/Pictures/Screenshots')}/{file_name}"
+         else:
+             save_path = f"{c_cache_dir}/screenshot.png"
++
++        if os.path.exists("/usr/share/quickshell/caelestia/shell.qml"):
++            qs_args = ["qs", "-p", "/usr/share/quickshell/caelestia"]
++        else:
++            print("gui-apps/caelestia-shell is not installed. Please emerge gui-apps/caelestia-shell.")
++            sys.exit(1)
+
+         coords = subprocess.run(
+-            ["qs", "-c", "caelestia", "ipc", "call", "picker", "openFreeze" if self.args.freeze else "open"],
++            [*qs_args, "ipc", "call", "picker", "openFreeze" if self.args.freeze else "open"],
+             capture_output=True,
+             text=True,
