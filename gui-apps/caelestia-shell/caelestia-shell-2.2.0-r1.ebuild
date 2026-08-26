@@ -125,12 +125,6 @@ src_configure() {
 	cmake_src_configure
 }
 
-src_install() {
-	cmake_src_install
-	# Move the wrapper script to bin
-	newbin assets/wrap_term_launch.sh caelestia-shell
-}
-
 pkg_postinst() {
 	elog "Caelestia shell installed. This replaces the manual"
 	elog "cmake/ninja + 'cmake --install' workflow under"
