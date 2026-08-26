@@ -108,6 +108,7 @@ src_configure() {
 		-DVERSION="${PV}"
 		-DGIT_REVISION="v${PV}"
 		-DDISTRIBUTOR="arrans_overlay"
+		-DINSTALL_QSCONFDIR="usr/share/quickshell/caelestia"
 		# Use the pre-fetched m3shapes source instead of a network git clone.
 		-DFETCHCONTENT_FULLY_DISCONNECTED=ON
 		-DFETCHCONTENT_SOURCE_DIR_M3SHAPES_EXTERNAL="${m3shapes_dir}"
@@ -124,5 +125,6 @@ pkg_postinst() {
 	elog "this package: hypr-user.lua, hypr-vars.lua, user-config.fish,"
 	elog "shell.json."
 	elog
-	elog "Launch with:  caelestia shell   (or: qs -c caelestia)"
+	elog "Launch with:  caelestia shell"
+	elog "               (or: qs -p /usr/share/quickshell/caelestia)"
 }
