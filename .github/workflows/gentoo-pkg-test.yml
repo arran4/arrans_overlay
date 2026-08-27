@@ -201,6 +201,15 @@ jobs:
           emerge --sync guru
           emerge --sync hyproverlay
 
+          # The independently published stage3 and Portage images can briefly
+          # describe different system transitions (for example, an installed
+          # Perl 5.42 graph while the current repository and binhost require
+          # Perl 5.44, or Wayland and wayland-scanner on opposite sides of a
+          # version block). Reconcile the disposable base system before
+          # resolving a large overlay dependency graph. This remains
+          # binary-first through EMERGE_DEFAULT_OPTS.
+          emerge -v --update --deep --newuse @world
+
           # Install pkgcheck
           emerge -v dev-util/pkgcheck
 
