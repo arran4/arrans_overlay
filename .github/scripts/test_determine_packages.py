@@ -174,6 +174,8 @@ assert "            gentoo-binpkgs-v5-\n" not in workflow
 assert "            gentoo-binpkgs-v4-\n" not in workflow
 assert "gentoo-binpkgs-v3-" not in workflow
 assert "dev-qt/* opengl vulkan" not in workflow
+assert 'echo "dev-qt/qtbase opengl" > /etc/portage/package.use/zz-ci-qtbase' in workflow
+assert "dev-qt/qtbase opengl vulkan" not in workflow
 assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$PKG\")" in workflow
 assert 'docker exec gentoo /tmp/test_packages.sh "$PACKAGE" "$SOURCE_TARGET"' in workflow
 assert 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' in workflow

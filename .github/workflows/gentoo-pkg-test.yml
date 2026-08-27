@@ -178,6 +178,12 @@ jobs:
           echo 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' \
             >> /etc/portage/make.conf
 
+          # Qt's public binhost contains multiple builds with opposing qtbase
+          # OpenGL requirements. Overlay targets require qtbase[opengl], so
+          # constrain only qtbase and let Portage select matching Qt binaries.
+          mkdir -p /etc/portage/package.use
+          echo "dev-qt/qtbase opengl" > /etc/portage/package.use/zz-ci-qtbase
+
           emerge -v dev-vcs/git
           emerge --sync guru
           emerge --sync hyproverlay
