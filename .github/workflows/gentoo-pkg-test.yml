@@ -172,10 +172,9 @@ jobs:
           # Prefer Gentoo's public binhost and the shared CI binpkg cache for
           # speed, while retaining normal source builds when no compatible
           # package exists. Overlay packages usually are not on the public
-          # binhost, but generic dependencies need not be rebuilt. Relaxing
-          # local USE equality still leaves binary USE metadata subject to
-          # explicit dependency atoms, and Portage continues to autounmask
-          # required USE changes for source packages when this value is "n".
+          # binhost, but generic dependencies need not be rebuilt. Keep normal
+          # binary USE compatibility so binaries cannot introduce an
+          # inconsistent multilib or init-system dependency lineage.
           echo 'EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS} --usepkg --getbinpkg"' \
             >> /etc/portage/make.conf
           # This disposable CI container lets Portage persist only its
@@ -234,8 +233,9 @@ jobs:
           # stale binary whose recorded dependency subslots conflict with
           # the installed graph and select a compatible source build.
           if ! emerge -v \
-            --usepkg --getbinpkg --binpkg-respect-use=n --binpkg-changed-deps=y \
+            --usepkg --getbinpkg --binpkg-changed-deps=y \
             --autounmask=y --autounmask-write=y --autounmask-continue=y \
+            --autounmask-backtrack=y \
             --backtrack=50 \
             "${TARGET_BINARY_OPTIONS[@]}" \
             "$PKG"; then
