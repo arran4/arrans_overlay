@@ -92,7 +92,7 @@ jobs:
         with:
           path: /var/cache/binpkgs
           # Actions caches are immutable and restore one archive, not a union.
-          # Give each matrix group a distinct lineage so parallel jobs can all
+          # Give each package job a distinct lineage so parallel jobs can all
           # save their results. Prefer that lineage on later runs, then fall
           # back to one cache from the same compatible Gentoo environment.
           key: gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -114,7 +114,7 @@ jobs:
 
       - name: Install and test packages
         run: |
-          PACKAGES="${{ matrix.packages }}"
+          PACKAGE="${{ matrix.package }}"
 
           # Create a script to run inside the docker container
           cat << 'INNEREOF' > test_packages.sh
@@ -182,39 +182,35 @@ jobs:
           # Install pkgcheck
           emerge -v dev-util/pkgcheck
 
-          PACKAGES="$1"
+          PKG="$1"
 
           mkdir -p /etc/portage/package.accept_keywords
-          for PKG in $PACKAGES; do
-            printf "%s ~amd64\n" "$PKG"
-          done > /etc/portage/package.accept_keywords/ci
+          printf "%s ~amd64\n" "$PKG" > /etc/portage/package.accept_keywords/ci
 
           FAILED_PACKAGES=""
-          for PKG in $PACKAGES; do
-            echo "Running pkgcheck on $PKG"
-            CP=$(python3 -c "import portage; print(portage.dep.Atom(\"$PKG\").cp)")
-            if ! pkgcheck scan --net --exit error /var/db/repos/arrans-overlay/${CP}; then
-              echo "pkgcheck failed for $PKG"
-              FAILED_PACKAGES="$FAILED_PACKAGES $PKG (pkgcheck)"
-            fi
+          echo "Running pkgcheck on $PKG"
+          CP=$(python3 -c "import portage; print(portage.dep.Atom(\"$PKG\").cp)")
+          if ! pkgcheck scan --net --exit error /var/db/repos/arrans-overlay/${CP}; then
+            echo "pkgcheck failed for $PKG"
+            FAILED_PACKAGES="$FAILED_PACKAGES $PKG (pkgcheck)"
+          fi
 
-            echo "Building and testing $PKG"
-            # Resolve and install in one operation so autounmask-continue can
-            # apply all proposed changes to this graph without an expensive
-            # second calculation. Prefer compatible binaries for dependencies
-            # and the target, with normal source fallback for unavailable or
-            # incompatible binpkgs. Extra backtracking helps Portage reject a
-            # stale binary whose recorded dependency subslots conflict with
-            # the installed graph and select a compatible source build.
-            if ! emerge -v \
-              --usepkg --getbinpkg --with-bdeps=y \
-              --autounmask=y --autounmask-write=y --autounmask-continue=y \
-              --backtrack=50 \
-              "$PKG"; then
-              echo "Failed to emerge $PKG"
-              FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
-            fi
-          done
+          echo "Building and testing $PKG"
+          # Resolve and install in one operation so autounmask-continue can
+          # apply all proposed changes to this graph without an expensive
+          # second calculation. Prefer compatible binaries for dependencies
+          # and the target, with normal source fallback for unavailable or
+          # incompatible binpkgs. Extra backtracking helps Portage reject a
+          # stale binary whose recorded dependency subslots conflict with
+          # the installed graph and select a compatible source build.
+          if ! emerge -v \
+            --usepkg --getbinpkg --with-bdeps=y \
+            --autounmask=y --autounmask-write=y --autounmask-continue=y \
+            --backtrack=50 \
+            "$PKG"; then
+            echo "Failed to emerge $PKG"
+            FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
+          fi
 
           if [ -n "$FAILED_PACKAGES" ]; then
             echo "The following packages failed to build, install, or pass pkgcheck: $FAILED_PACKAGES"
@@ -225,7 +221,7 @@ jobs:
 
           chmod +x test_packages.sh
           docker cp test_packages.sh gentoo:/tmp/test_packages.sh
-          docker exec gentoo /tmp/test_packages.sh "$PACKAGES"
+          docker exec gentoo /tmp/test_packages.sh "$PACKAGE"
 
       - name: Stop and clean up containers
         if: always()

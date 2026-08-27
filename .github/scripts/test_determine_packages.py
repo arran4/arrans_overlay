@@ -20,17 +20,17 @@ def run_helper(paths):
         env=env,
     )
     matrix = json.loads(result.stdout)
-    assert all(set(entry) == {"group", "packages", "cache_id"} for entry in matrix)
+    assert all(set(entry) == {"group", "package", "cache_id"} for entry in matrix)
     assert all(entry["cache_id"] for entry in matrix)
     return matrix
 
 
-def entry(matrix, group):
-    return next(item for item in matrix if item["group"] == group)
-
-
 generic = run_helper(["app-misc/example/example-1.0.ebuild"])
-assert generic[0]["packages"] == "=app-misc/example-1.0"
+assert generic == [{
+    "group": "generic",
+    "package": "=app-misc/example-1.0",
+    "cache_id": generic[0]["cache_id"],
+}]
 
 python = run_helper(["dev-python/materialyoucolor/materialyoucolor-3.0.4.ebuild"])
 assert python[0]["group"] == "caelestia-python"
@@ -45,7 +45,7 @@ mixed = run_helper([
     "media-fonts/material-symbols-variable/material-symbols-variable-0_p20260724.ebuild",
 ])
 assert [item["group"] for item in mixed] == [
-    "caelestia-core", "caelestia-python", "caelestia-fonts", "generic-0"
+    "caelestia-core", "caelestia-python", "caelestia-fonts", "generic"
 ]
 
 for forced_path in (
@@ -53,8 +53,8 @@ for forced_path in (
     ".github/scripts/determine_packages.py",
 ):
     forced = run_helper([forced_path])
-    assert [item["group"] for item in forced] == ["caelestia-core"]
-    assert forced[0]["packages"].split() == [
+    assert [item["group"] for item in forced] == ["caelestia-core"] * 4
+    assert [item["package"] for item in forced] == [
         "gui-apps/quickshell",
         "gui-apps/caelestia-shell",
         "gui-apps/caelestia-cli",
@@ -71,13 +71,10 @@ duplicated = run_helper([
 assert duplicated == generic
 
 generic_paths = [f"app-misc/package-{index:02d}/package-{index:02d}-1.ebuild" for index in range(23)]
-chunked = run_helper(list(reversed(generic_paths)))
-assert [item["group"] for item in chunked] == ["generic-0", "generic-1", "generic-2"]
-assert max(len(item["packages"].split()) for item in chunked) <= 10
-assert [package for item in chunked for package in item["packages"].split()] == sorted(
-    package for item in chunked for package in item["packages"].split()
-)
-assert chunked == run_helper(generic_paths)
+independent = run_helper(list(reversed(generic_paths)))
+assert [item["group"] for item in independent] == ["generic"] * 23
+assert [item["package"] for item in independent] == sorted(item["package"] for item in independent)
+assert independent == run_helper(generic_paths)
 
 complete_core = run_helper([
     "gui-apps/caelestia-meta/caelestia-meta-1.ebuild",
@@ -85,7 +82,7 @@ complete_core = run_helper([
     "gui-apps/caelestia-shell/caelestia-shell-2.3.0.ebuild",
     "gui-apps/quickshell/quickshell-0.3.1.ebuild",
 ])
-assert entry(complete_core, "caelestia-core")["packages"].split() == [
+assert [item["package"] for item in complete_core] == [
     "=gui-apps/quickshell-0.3.1",
     "=gui-apps/caelestia-shell-2.3.0",
     "=gui-apps/caelestia-cli-1.1.2",
@@ -95,14 +92,32 @@ assert entry(complete_core, "caelestia-core")["packages"].split() == [
 same_set_a = run_helper(generic_paths[:2])
 same_set_b = run_helper(list(reversed(generic_paths[:2])))
 different_set = run_helper(generic_paths[1:3])
-assert same_set_a[0]["cache_id"] == same_set_b[0]["cache_id"]
-assert same_set_a[0]["cache_id"] != different_set[0]["cache_id"]
+assert same_set_a == same_set_b
+assert len({item["cache_id"] for item in same_set_a}) == len(same_set_a)
+assert same_set_a[1]["cache_id"] == different_set[0]["cache_id"]
+
+# A logical group containing multiple changed packages retains its group
+# identity but expands to independent, deduplicated execution jobs.
+multi_font = run_helper([
+    "media-fonts/rubik/rubik-1.0-r1.ebuild",
+    "media-fonts/material-symbols-variable/material-symbols-variable-1.ebuild",
+    "./media-fonts/rubik/rubik-1.0-r1.ebuild",
+])
+assert [item["group"] for item in multi_font] == ["caelestia-fonts"] * 2
+assert [item["package"] for item in multi_font] == [
+    "=media-fonts/material-symbols-variable-1",
+    "=media-fonts/rubik-1.0-r1",
+]
+assert len({item["cache_id"] for item in multi_font}) == 2
 
 # The workflow prefers binaries globally, including for the explicit target,
 # while retaining normal Portage source fallback and targeted autounmasking.
 with open(".github/workflows/gentoo-pkg-test.yml", encoding="utf-8") as workflow_file:
     workflow = workflow_file.read()
 assert 'CP=$(python3 -c "import portage; print(portage.dep.Atom(\\"$PKG\\").cp)")' in workflow
+assert 'PACKAGE="${{ matrix.package }}"' in workflow
+assert "matrix.packages" not in workflow
+assert "for PKG in $PACKAGES" not in workflow
 assert "--usepkg-exclude" not in workflow
 assert "--getbinpkg-exclude" not in workflow
 assert "--buildpkg-exclude" not in workflow

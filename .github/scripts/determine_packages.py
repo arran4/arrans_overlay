@@ -21,9 +21,6 @@ FORCE_CAELESTIA_PATHS = {
     ".github/workflows/gentoo-pkg-test.yml",
     ".github/scripts/determine_packages.py",
 }
-GENERIC_CHUNK_SIZE = 10
-
-
 def normalize_path(path):
     while path.startswith("./"):
         path = path[2:]
@@ -51,16 +48,16 @@ def cp_from_atom(atom):
     return None
 
 
-def cache_id(packages):
-    canonical = "\n".join(sorted(packages)).encode()
+def cache_id(group, package):
+    canonical = f"{group}\n{package}".encode()
     return hashlib.sha256(canonical).hexdigest()[:16]
 
 
-def matrix_entry(group, packages):
+def matrix_entry(group, package):
     return {
         "group": group,
-        "packages": " ".join(packages),
-        "cache_id": cache_id(packages),
+        "package": package,
+        "cache_id": cache_id(group, package),
     }
 
 
@@ -98,16 +95,15 @@ def build_matrix(changed_files):
         ordered_core = []
         for package in CORE_PACKAGES:
             ordered_core.extend(sorted(atom for atom in core_atoms if cp_from_atom(atom) == package))
-        matrix.append(matrix_entry("caelestia-core", ordered_core))
+        matrix.extend(matrix_entry("caelestia-core", package) for package in ordered_core)
 
     for group in ("caelestia-python", "caelestia-fonts"):
-        if grouped[group]:
-            matrix.append(matrix_entry(group, sorted(grouped[group])))
+        matrix.extend(matrix_entry(group, package) for package in sorted(grouped[group]))
 
-    generic_atoms = sorted(grouped["generic"])
-    for offset in range(0, len(generic_atoms), GENERIC_CHUNK_SIZE):
-        chunk = generic_atoms[offset:offset + GENERIC_CHUNK_SIZE]
-        matrix.append(matrix_entry(f"generic-{offset // GENERIC_CHUNK_SIZE}", chunk))
+    matrix.extend(
+        matrix_entry("generic", package)
+        for package in sorted(grouped["generic"])
+    )
 
     return matrix
 
