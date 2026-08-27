@@ -216,7 +216,6 @@ jobs:
           # the installed graph and select a compatible source build.
           if ! emerge -v \
             --usepkg --getbinpkg --binpkg-changed-deps=y \
-            --useoldpkg-atoms='*/*' \
             --autounmask=y --autounmask-write=y --autounmask-continue=y \
             --backtrack=50 \
             "${TARGET_BINARY_OPTIONS[@]}" \

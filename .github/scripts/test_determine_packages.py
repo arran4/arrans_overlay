@@ -140,6 +140,7 @@ assert "--binpkg-respect-use=n" not in workflow
 assert "--binpkg-changed-deps=n" not in workflow
 assert "--ignore-built-slot-operator-deps" not in workflow
 assert "--with-bdeps=y" not in workflow
+assert "--useoldpkg-atoms" not in workflow
 assert "--onlydeps" not in workflow
 assert "\n            etc-update " not in workflow
 package_emerge = re.search(r"if ! emerge -v \\\n(?P<options>.*?)\"\$PKG\"; then", workflow, re.DOTALL)
@@ -149,7 +150,6 @@ for option in (
     "--usepkg",
     "--getbinpkg",
     "--binpkg-changed-deps=y",
-    "--useoldpkg-atoms='*/*'",
     "--autounmask=y",
     "--autounmask-write=y",
     "--autounmask-continue=y",
