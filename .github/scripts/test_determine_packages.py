@@ -22,7 +22,10 @@ def run_helper(paths, source_paths=None):
     )
     matrix = json.loads(result.stdout)
     assert all(
-        set(entry) == {"group", "package", "source_target", "binary_excludes", "cache_id"}
+        set(entry) == {
+            "group", "package", "source_target", "binary_excludes",
+            "cache_id", "cache_lineage",
+        }
         for entry in matrix
     )
     assert all(entry["cache_id"] for entry in matrix)
@@ -36,6 +39,7 @@ assert generic == [{
     "source_target": True,
     "binary_excludes": "",
     "cache_id": generic[0]["cache_id"],
+    "cache_lineage": f"generic-{generic[0]['cache_id']}",
 }]
 
 python = run_helper(["dev-python/materialyoucolor/materialyoucolor-3.0.4.ebuild"])
@@ -67,6 +71,7 @@ for forced_path in (
         "gui-apps/caelestia-meta",
     ]
     assert not any(item["source_target"] for item in forced)
+    assert all(item["cache_lineage"] == "caelestia-core" for item in forced)
     assert all(item["binary_excludes"].split() == [
         "gui-apps/quickshell",
         "gui-apps/caelestia-shell",
@@ -169,9 +174,11 @@ assert "timeout-minutes: 105" in workflow
 assert workflow.count("actions/cache/restore@v4") == 1
 assert workflow.count("actions/cache/save@v4") == 1
 assert "if: always()\n        uses: actions/cache/save@v4" in workflow
-assert "gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
+assert "gentoo-binpkgs-restore-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ github.run_id }}-${{ matrix.cache_id }}" in workflow
+assert "gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
 assert """restore-keys: |
-            gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-
+            gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_lineage }}-
+            gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_lineage }}-
             gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-
             gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-
             gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-

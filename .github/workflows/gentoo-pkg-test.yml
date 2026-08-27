@@ -99,9 +99,13 @@ jobs:
           # Give each package job a distinct lineage so parallel jobs can all
           # save their results. Prefer that lineage on later runs, then fall
           # back to one cache from the same compatible Gentoo environment.
-          key: gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          # This lookup-only primary key is never saved. It prevents the cache
+          # action's implicit primary-key prefix match from bypassing the
+          # explicitly ordered group/package restore lineages below.
+          key: gentoo-binpkgs-restore-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ github.run_id }}-${{ matrix.cache_id }}
           restore-keys: |
-            gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-
+            gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_lineage }}-
+            gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_lineage }}-
             gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-
             gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-
             gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-
@@ -265,7 +269,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: /var/cache/binpkgs
-          key: gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Stop and clean up containers
         if: always()

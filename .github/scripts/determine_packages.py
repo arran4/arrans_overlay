@@ -61,12 +61,14 @@ def cache_id(group, package):
 
 
 def matrix_entry(group, package, source_target):
+    cache_lineage = group if group.startswith("caelestia-") else f"{group}-{cache_id(group, package)}"
     return {
         "group": group,
         "package": package,
         "source_target": source_target,
         "binary_excludes": " ".join(CAELESTIA_BINARY_EXCLUDES) if group == "caelestia-core" else "",
         "cache_id": cache_id(group, package),
+        "cache_lineage": cache_lineage,
     }
 
 
