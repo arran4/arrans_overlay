@@ -194,6 +194,7 @@ jobs:
             "media-libs/freetype harfbuzz" \
             "media-libs/libglvnd X" \
             "x11-libs/cairo X" \
+            "media-sound/pulseaudio-daemon -webrtc-aec" \
             > /etc/portage/package.use/zz-ci-required-use
 
           emerge -v dev-vcs/git
@@ -232,10 +233,12 @@ jobs:
           # incompatible binpkgs. Extra backtracking helps Portage reject a
           # stale binary whose recorded dependency subslots conflict with
           # the installed graph and select a compatible source build.
+          # The stage3 is disposable: resolve the requested target rather than
+          # preserving unrelated packages inherited through its @world set, so
+          # Portage may complete soft-blocked installed-package transitions.
           if ! emerge -v \
-            --usepkg --getbinpkg --binpkg-changed-deps=y \
+            --usepkg --getbinpkg --binpkg-changed-deps=y --ignore-world=y \
             --autounmask=y --autounmask-write=y --autounmask-continue=y \
-            --autounmask-backtrack=y \
             --backtrack=50 \
             "${TARGET_BINARY_OPTIONS[@]}" \
             "$PKG"; then

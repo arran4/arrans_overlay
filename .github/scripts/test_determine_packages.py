@@ -155,10 +155,10 @@ for option in (
     "--usepkg",
     "--getbinpkg",
     "--binpkg-changed-deps=y",
+    "--ignore-world=y",
     "--autounmask=y",
     "--autounmask-write=y",
     "--autounmask-continue=y",
-    "--autounmask-backtrack=y",
     "--backtrack=50",
 ):
     assert option in package_emerge_options
@@ -189,6 +189,7 @@ assert '"dev-qt/qtdeclarative opengl"' in workflow
 assert '"media-libs/freetype harfbuzz"' in workflow
 assert '"media-libs/libglvnd X"' in workflow
 assert '"x11-libs/cairo X"' in workflow
+assert '"media-sound/pulseaudio-daemon -webrtc-aec"' in workflow
 assert "dev-qt/qtbase opengl vulkan" not in workflow
 assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$PKG\")" in workflow
 assert '"$PACKAGE" "$SOURCE_TARGET"' in workflow
