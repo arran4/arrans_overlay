@@ -141,7 +141,7 @@ assert "for PKG in $PACKAGES" not in workflow
 assert "--getbinpkg-exclude" not in workflow
 assert "--buildpkg-exclude" not in workflow
 assert "--usepkgonly" not in workflow
-assert "--binpkg-respect-use=n" not in workflow
+assert "--binpkg-respect-use=y" not in workflow
 assert "--binpkg-changed-deps=n" not in workflow
 assert "--ignore-built-slot-operator-deps" not in workflow
 assert "--with-bdeps=y" not in workflow
@@ -154,6 +154,7 @@ package_emerge_options = package_emerge.group("options")
 for option in (
     "--usepkg",
     "--getbinpkg",
+    "--binpkg-respect-use=n",
     "--binpkg-changed-deps=y",
     "--autounmask=y",
     "--autounmask-write=y",
