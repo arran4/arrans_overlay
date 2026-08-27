@@ -181,7 +181,8 @@ assert "            gentoo-binpkgs-v5-\n" not in workflow
 assert "            gentoo-binpkgs-v4-\n" not in workflow
 assert "gentoo-binpkgs-v3-" not in workflow
 assert "dev-qt/* opengl vulkan" not in workflow
-assert 'echo "dev-qt/qtbase opengl" > /etc/portage/package.use/zz-ci-qtbase' in workflow
+assert '"dev-qt/qtbase opengl"' in workflow
+assert '"dev-qt/qtdeclarative opengl"' in workflow
 assert "dev-qt/qtbase opengl vulkan" not in workflow
 assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$PKG\")" in workflow
 assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$BINARY_EXCLUDES\")" in workflow

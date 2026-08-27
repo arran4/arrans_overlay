@@ -183,7 +183,10 @@ jobs:
           # OpenGL requirements. Overlay targets require qtbase[opengl], so
           # constrain only qtbase and let Portage select matching Qt binaries.
           mkdir -p /etc/portage/package.use
-          echo "dev-qt/qtbase opengl" > /etc/portage/package.use/zz-ci-qtbase
+          printf "%s\n" \
+            "dev-qt/qtbase opengl" \
+            "dev-qt/qtdeclarative opengl" \
+            > /etc/portage/package.use/zz-ci-qt-opengl
 
           emerge -v dev-vcs/git
           emerge --sync guru
