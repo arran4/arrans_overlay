@@ -201,6 +201,14 @@ jobs:
           emerge --sync guru
           emerge --sync hyproverlay
 
+          mkdir -p /etc/portage/package.accept_keywords
+          # Let Portage complete transitions for packages inherited from the
+          # disposable stage3 when the compatible replacement is unstable.
+          # This writes individual installed CP atoms, not a global ~amd64
+          # policy; new dependencies remain targeted by autounmask below.
+          python3 -c 'import portage; vardb = portage.db[portage.root]["vartree"].dbapi; print("\n".join(f"{cp} ~amd64" for cp in sorted(vardb.cp_all())))' \
+            > /etc/portage/package.accept_keywords/ci-stage3-transitions
+
           # The independently published stage3 and Portage images can briefly
           # describe different system transitions (for example, an installed
           # Perl 5.42 graph while the current repository and binhost require
@@ -216,13 +224,6 @@ jobs:
           PKG="$1"
           SOURCE_TARGET="$2"
 
-          mkdir -p /etc/portage/package.accept_keywords
-          # Let Portage complete transitions for packages inherited from the
-          # disposable stage3 when the compatible replacement is unstable.
-          # This writes individual installed CP atoms, not a global ~amd64
-          # policy; new dependencies remain targeted by autounmask below.
-          python3 -c 'import portage; vardb = portage.db[portage.root]["vartree"].dbapi; print("\n".join(f"{cp} ~amd64" for cp in sorted(vardb.cp_all())))' \
-            > /etc/portage/package.accept_keywords/ci-stage3-transitions
           printf "%s ~amd64\n" "$PKG" > /etc/portage/package.accept_keywords/ci
 
           FAILED_PACKAGES=""
