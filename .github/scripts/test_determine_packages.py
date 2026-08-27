@@ -159,6 +159,8 @@ package_emerge = re.search(r"if ! emerge -v \\\n(?P<options>.*?)\"\$PKG\"; then"
 assert package_emerge is not None
 package_emerge_options = package_emerge.group("options")
 for option in (
+    "--update",
+    "--deep",
     "--usepkg",
     "--getbinpkg",
     "--binpkg-changed-deps=y",
@@ -174,6 +176,8 @@ assert "timeout-minutes: 105" in workflow
 assert workflow.count("actions/cache/restore@v4") == 1
 assert workflow.count("actions/cache/save@v4") == 1
 assert "if: always()\n        uses: actions/cache/save@v4" in workflow
+assert 'sudo chown -R "$(id -u):$(id -g)" /var/cache/distfiles /var/cache/binpkgs' in workflow
+assert "sudo chmod 777 /var/cache/distfiles /var/cache/binpkgs" not in workflow
 assert "gentoo-binpkgs-restore-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ github.run_id }}-${{ matrix.cache_id }}" in workflow
 assert "gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
 assert """restore-keys: |
