@@ -37,14 +37,18 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             CHANGED_FILES=$(git diff --diff-filter=ACMR --name-only "origin/${{ github.base_ref }}...HEAD")
+            SOURCE_FILES="$CHANGED_FILES"
           elif [ "${{ github.event_name }}" = "push" ]; then
             CHANGED_FILES=$(git diff --diff-filter=ACMR --name-only \
               "${{ github.event.before }}" "${{ github.sha }}")
+            SOURCE_FILES="$CHANGED_FILES"
           else
             CHANGED_FILES=$(find . -name '*.ebuild')
+            SOURCE_FILES=""
           fi
 
           export CHANGED_FILES
+          export SOURCE_FILES
           MATRIX_JSON=$(python3 .github/scripts/determine_packages.py)
           echo "matrix={\"include\":$MATRIX_JSON}" >> "$GITHUB_OUTPUT"
           echo "Generated matrix: $MATRIX_JSON"
@@ -87,17 +91,20 @@ jobs:
           restore-keys: |
             gentoo-distfiles-v1-
 
-      - name: Cache binpkgs
-        uses: actions/cache@v4
+      - name: Restore binpkgs
+        uses: actions/cache/restore@v4
         with:
           path: /var/cache/binpkgs
           # Actions caches are immutable and restore one archive, not a union.
           # Give each package job a distinct lineage so parallel jobs can all
           # save their results. Prefer that lineage on later runs, then fall
           # back to one cache from the same compatible Gentoo environment.
-          key: gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-
             gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-
+            gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-
+            gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-
             gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-
 
       - name: Start Gentoo stage3
@@ -113,8 +120,10 @@ jobs:
             sleep infinity
 
       - name: Install and test packages
+        timeout-minutes: 105
         run: |
           PACKAGE="${{ matrix.package }}"
+          SOURCE_TARGET="${{ matrix.source_target }}"
 
           # Create a script to run inside the docker container
           cat << 'INNEREOF' > test_packages.sh
@@ -169,12 +178,6 @@ jobs:
           echo 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' \
             >> /etc/portage/make.conf
 
-          # Keep the Qt stack's matching opengl/vulkan USE dependencies
-          # consistent. Configuring qtbase alone can make Portage backtrack to
-          # a mixed Qt stack and select qtbase with -opengl even with wayland.
-          mkdir -p /etc/portage/package.use
-          echo "dev-qt/* opengl vulkan" > /etc/portage/package.use/zz-ci-qt
-
           emerge -v dev-vcs/git
           emerge --sync guru
           emerge --sync hyproverlay
@@ -183,6 +186,7 @@ jobs:
           emerge -v dev-util/pkgcheck
 
           PKG="$1"
+          SOURCE_TARGET="$2"
 
           mkdir -p /etc/portage/package.accept_keywords
           printf "%s ~amd64\n" "$PKG" > /etc/portage/package.accept_keywords/ci
@@ -196,6 +200,13 @@ jobs:
           fi
 
           echo "Building and testing $PKG"
+          TARGET_BINARY_OPTIONS=()
+          if [ "$SOURCE_TARGET" = "true" ]; then
+            # A cached binary for this exact CPV may predate the checked-out
+            # ebuild. Dependencies remain binary-first, but a directly changed
+            # target must be built from the source under test.
+            TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$PKG")
+          fi
           # Resolve and install in one operation so autounmask-continue can
           # apply all proposed changes to this graph without an expensive
           # second calculation. Prefer compatible binaries for dependencies
@@ -204,9 +215,11 @@ jobs:
           # stale binary whose recorded dependency subslots conflict with
           # the installed graph and select a compatible source build.
           if ! emerge -v \
-            --usepkg --getbinpkg --with-bdeps=y \
+            --usepkg --getbinpkg --binpkg-changed-deps=y \
+            --useoldpkg-atoms='*/*' \
             --autounmask=y --autounmask-write=y --autounmask-continue=y \
             --backtrack=50 \
+            "${TARGET_BINARY_OPTIONS[@]}" \
             "$PKG"; then
             echo "Failed to emerge $PKG"
             FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
@@ -221,7 +234,18 @@ jobs:
 
           chmod +x test_packages.sh
           docker cp test_packages.sh gentoo:/tmp/test_packages.sh
-          docker exec gentoo /tmp/test_packages.sh "$PACKAGE"
+          docker exec gentoo /tmp/test_packages.sh "$PACKAGE" "$SOURCE_TARGET"
+
+      - name: Stop active Gentoo build
+        if: always()
+        run: docker stop gentoo || true
+
+      - name: Save built binpkgs
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: /var/cache/binpkgs
+          key: gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Stop and clean up containers
         if: always()

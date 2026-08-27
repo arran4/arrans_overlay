@@ -21,6 +21,8 @@ FORCE_CAELESTIA_PATHS = {
     ".github/workflows/gentoo-pkg-test.yml",
     ".github/scripts/determine_packages.py",
 }
+
+
 def normalize_path(path):
     while path.startswith("./"):
         path = path[2:]
@@ -53,16 +55,22 @@ def cache_id(group, package):
     return hashlib.sha256(canonical).hexdigest()[:16]
 
 
-def matrix_entry(group, package):
+def matrix_entry(group, package, source_target):
     return {
         "group": group,
         "package": package,
+        "source_target": source_target,
         "cache_id": cache_id(group, package),
     }
 
 
-def build_matrix(changed_files):
+def build_matrix(changed_files, source_files=()):
     normalized_files = {normalize_path(path) for path in changed_files}
+    source_atoms = {
+        atom
+        for path in source_files
+        if (atom := atom_from_path(path)) is not None
+    }
     grouped = {
         "caelestia-core": set(),
         "caelestia-python": set(),
@@ -94,14 +102,25 @@ def build_matrix(changed_files):
     if core_atoms:
         ordered_core = []
         for package in CORE_PACKAGES:
-            ordered_core.extend(sorted(atom for atom in core_atoms if cp_from_atom(atom) == package))
-        matrix.extend(matrix_entry("caelestia-core", package) for package in ordered_core)
+            package_atoms = sorted(atom for atom in core_atoms if cp_from_atom(atom) == package)
+            versioned_atoms = [atom for atom in package_atoms if atom != package]
+            # Forced integration coverage contributes an unversioned atom. If
+            # the same package has a directly changed ebuild, test that exact
+            # CPV instead of creating a duplicate integration job.
+            ordered_core.extend(versioned_atoms or package_atoms)
+        matrix.extend(
+            matrix_entry("caelestia-core", package, package in source_atoms)
+            for package in ordered_core
+        )
 
     for group in ("caelestia-python", "caelestia-fonts"):
-        matrix.extend(matrix_entry(group, package) for package in sorted(grouped[group]))
+        matrix.extend(
+            matrix_entry(group, package, package in source_atoms)
+            for package in sorted(grouped[group])
+        )
 
     matrix.extend(
-        matrix_entry("generic", package)
+        matrix_entry("generic", package, package in source_atoms)
         for package in sorted(grouped["generic"])
     )
 
@@ -109,4 +128,7 @@ def build_matrix(changed_files):
 
 
 if __name__ == "__main__":
-    print(json.dumps(build_matrix(os.environ.get("CHANGED_FILES", "").split())))
+    print(json.dumps(build_matrix(
+        os.environ.get("CHANGED_FILES", "").split(),
+        os.environ.get("SOURCE_FILES", "").split(),
+    )))
