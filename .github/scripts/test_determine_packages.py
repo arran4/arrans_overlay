@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import subprocess
 
 
@@ -106,8 +107,26 @@ assert "--usepkg-exclude" not in workflow
 assert "--getbinpkg-exclude" not in workflow
 assert "--buildpkg-exclude" not in workflow
 assert "--usepkgonly" not in workflow
-assert "--onlydeps \\\n              --usepkg --getbinpkg --with-bdeps=y" in workflow
-assert "if ! emerge -v --usepkg --getbinpkg" in workflow
+assert "--binpkg-respect-use=n" not in workflow
+assert "--binpkg-changed-deps=n" not in workflow
+assert "--onlydeps" not in workflow
+assert "\n            etc-update " not in workflow
+package_emerge = re.search(
+    r"if ! emerge -v \\\n(?P<options>(?:\s+--.*\\\n)+)\s+\"\$PKG\"; then",
+    workflow,
+)
+assert package_emerge is not None
+package_emerge_options = package_emerge.group("options")
+for option in (
+    "--usepkg",
+    "--getbinpkg",
+    "--with-bdeps=y",
+    "--autounmask=y",
+    "--autounmask-write=y",
+    "--autounmask-continue=y",
+    "--backtrack=50",
+):
+    assert option in package_emerge_options
 assert 'EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS} --usepkg --getbinpkg"' in workflow
 assert "timeout-minutes: 120" in workflow
 assert "gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
@@ -118,7 +137,7 @@ assert """restore-keys: |
 assert "            gentoo-binpkgs-v4-\n" not in workflow
 assert "gentoo-binpkgs-v3-" not in workflow
 assert 'echo "dev-qt/* opengl vulkan" > /etc/portage/package.use/zz-ci-qt' in workflow
-assert "--autounmask-write --autounmask-continue" in workflow
+assert 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' in workflow
 assert 'printf "%s ~amd64\\n" "$PKG"' in workflow
 assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow
 

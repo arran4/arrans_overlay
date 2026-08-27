@@ -162,6 +162,12 @@ jobs:
           # binhost, but generic dependencies such as LLVM need not be rebuilt.
           echo 'EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS} --usepkg --getbinpkg"' \
             >> /etc/portage/make.conf
+          # This disposable CI container lets Portage persist only its
+          # package-scoped autounmask configuration directly. Otherwise
+          # CONFIG_PROTECT creates ._cfg files, which a later emerge can not
+          # see without a separate etc-update and dependency calculation.
+          echo 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' \
+            >> /etc/portage/make.conf
 
           # Keep the Qt stack's matching opengl/vulkan USE dependencies
           # consistent. Configuring qtbase alone can make Portage backtrack to
@@ -193,18 +199,17 @@ jobs:
             fi
 
             echo "Building and testing $PKG"
-            # Prefer compatible binaries for the full dependency graph. The
-            # targeted autounmask pass above can accept legitimate unstable
-            # transitive dependencies without enabling ~amd64 globally.
-            emerge --autounmask=y --autounmask-write --autounmask-continue \
-              --autounmask-backtrack=y --onlydeps \
+            # Resolve and install in one operation so autounmask-continue can
+            # apply all proposed changes to this graph without an expensive
+            # second calculation. Prefer compatible binaries for dependencies
+            # and the target, with normal source fallback for unavailable or
+            # incompatible binpkgs. Extra backtracking helps Portage reject a
+            # stale binary whose recorded dependency subslots conflict with
+            # the installed graph and select a compatible source build.
+            if ! emerge -v \
               --usepkg --getbinpkg --with-bdeps=y \
-              "$PKG" || true
-            etc-update --automode -5
-            # The target may also use a compatible binary. Packages from this
-            # overlay normally have no public binpkg, so Portage will naturally
-            # fall back to the checked-out ebuild when one is unavailable.
-            if ! emerge -v --usepkg --getbinpkg \
+              --autounmask=y --autounmask-write=y --autounmask-continue=y \
+              --backtrack=50 \
               "$PKG"; then
               echo "Failed to emerge $PKG"
               FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
