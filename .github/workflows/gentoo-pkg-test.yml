@@ -239,7 +239,6 @@ jobs:
           # stale binary whose recorded dependency subslots conflict with
           # the installed graph and select a compatible source build.
           if ! emerge -v \
-            --update --deep \
             --usepkg --getbinpkg --binpkg-changed-deps=y \
             --autounmask=y --autounmask-write=y --autounmask-continue=y \
             --backtrack=50 \

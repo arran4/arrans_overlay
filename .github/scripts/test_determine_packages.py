@@ -159,8 +159,6 @@ package_emerge = re.search(r"if ! emerge -v \\\n(?P<options>.*?)\"\$PKG\"; then"
 assert package_emerge is not None
 package_emerge_options = package_emerge.group("options")
 for option in (
-    "--update",
-    "--deep",
     "--usepkg",
     "--getbinpkg",
     "--binpkg-changed-deps=y",
