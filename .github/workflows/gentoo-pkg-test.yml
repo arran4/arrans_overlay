@@ -186,7 +186,10 @@ jobs:
           printf "%s\n" \
             "dev-qt/qtbase opengl" \
             "dev-qt/qtdeclarative opengl" \
-            > /etc/portage/package.use/zz-ci-qt-opengl
+            "media-libs/freetype harfbuzz" \
+            "media-libs/libglvnd X" \
+            "x11-libs/cairo X" \
+            > /etc/portage/package.use/zz-ci-required-use
 
           emerge -v dev-vcs/git
           emerge --sync guru
