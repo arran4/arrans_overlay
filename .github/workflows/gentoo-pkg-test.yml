@@ -124,6 +124,7 @@ jobs:
         run: |
           PACKAGE="${{ matrix.package }}"
           SOURCE_TARGET="${{ matrix.source_target }}"
+          BINARY_EXCLUDES="${{ matrix.binary_excludes }}"
 
           # Create a script to run inside the docker container
           cat << 'INNEREOF' > test_packages.sh
@@ -193,6 +194,7 @@ jobs:
 
           PKG="$1"
           SOURCE_TARGET="$2"
+          BINARY_EXCLUDES="$3"
 
           mkdir -p /etc/portage/package.accept_keywords
           printf "%s ~amd64\n" "$PKG" > /etc/portage/package.accept_keywords/ci
@@ -207,6 +209,12 @@ jobs:
 
           echo "Building and testing $PKG"
           TARGET_BINARY_OPTIONS=()
+          if [ -n "$BINARY_EXCLUDES" ]; then
+            # Cached Caelestia target binaries embed dependency USE metadata
+            # from earlier CI configurations. Build these overlay packages
+            # from current ebuilds while continuing to reuse dependency bins.
+            TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$BINARY_EXCLUDES")
+          fi
           if [ "$SOURCE_TARGET" = "true" ]; then
             # A cached binary for this exact CPV may predate the checked-out
             # ebuild. Dependencies remain binary-first, but a directly changed
@@ -239,7 +247,8 @@ jobs:
 
           chmod +x test_packages.sh
           docker cp test_packages.sh gentoo:/tmp/test_packages.sh
-          docker exec gentoo /tmp/test_packages.sh "$PACKAGE" "$SOURCE_TARGET"
+          docker exec gentoo /tmp/test_packages.sh \
+            "$PACKAGE" "$SOURCE_TARGET" "$BINARY_EXCLUDES"
 
       - name: Stop active Gentoo build
         if: always()
