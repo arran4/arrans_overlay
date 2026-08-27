@@ -238,6 +238,7 @@ jobs:
           # Portage may complete soft-blocked installed-package transitions.
           if ! emerge -v \
             --usepkg --getbinpkg --binpkg-changed-deps=y --ignore-world=y \
+            --useoldpkg-atoms='*/*' \
             --autounmask=y --autounmask-write=y --autounmask-continue=y \
             --backtrack=50 \
             "${TARGET_BINARY_OPTIONS[@]}" \
