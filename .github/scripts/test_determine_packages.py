@@ -145,6 +145,8 @@ assert "--binpkg-respect-use=n" not in workflow
 assert "--binpkg-changed-deps=n" not in workflow
 assert "--ignore-built-slot-operator-deps" not in workflow
 assert "--with-bdeps=y" not in workflow
+assert "--useoldpkg-atoms" not in workflow
+assert "--ignore-world" not in workflow
 assert "--onlydeps" not in workflow
 assert "\n            etc-update " not in workflow
 package_emerge = re.search(r"if ! emerge -v \\\n(?P<options>.*?)\"\$PKG\"; then", workflow, re.DOTALL)
@@ -154,8 +156,6 @@ for option in (
     "--usepkg",
     "--getbinpkg",
     "--binpkg-changed-deps=y",
-    "--ignore-world=y",
-    "--useoldpkg-atoms='*/*'",
     "--autounmask=y",
     "--autounmask-write=y",
     "--autounmask-continue=y",
@@ -196,6 +196,9 @@ assert '"$PACKAGE" "$SOURCE_TARGET"' in workflow
 assert "binary_excludes" not in workflow
 assert 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' in workflow
 assert 'printf "%s ~amd64\\n" "$PKG"' in workflow
+assert 'for cp in sorted(vardb.cp_all())' in workflow
+assert "> /etc/portage/package.accept_keywords/ci-stage3-transitions" in workflow
 assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow
+assert "*/* ~amd64" not in workflow
 
 print("determine_packages tests passed")

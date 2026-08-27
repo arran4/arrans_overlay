@@ -208,6 +208,12 @@ jobs:
           SOURCE_TARGET="$2"
 
           mkdir -p /etc/portage/package.accept_keywords
+          # Let Portage complete transitions for packages inherited from the
+          # disposable stage3 when the compatible replacement is unstable.
+          # This writes individual installed CP atoms, not a global ~amd64
+          # policy; new dependencies remain targeted by autounmask below.
+          python3 -c 'import portage; vardb = portage.db[portage.root]["vartree"].dbapi; print("\n".join(f"{cp} ~amd64" for cp in sorted(vardb.cp_all())))' \
+            > /etc/portage/package.accept_keywords/ci-stage3-transitions
           printf "%s ~amd64\n" "$PKG" > /etc/portage/package.accept_keywords/ci
 
           FAILED_PACKAGES=""
@@ -233,12 +239,8 @@ jobs:
           # incompatible binpkgs. Extra backtracking helps Portage reject a
           # stale binary whose recorded dependency subslots conflict with
           # the installed graph and select a compatible source build.
-          # The stage3 is disposable: resolve the requested target rather than
-          # preserving unrelated packages inherited through its @world set, so
-          # Portage may complete soft-blocked installed-package transitions.
           if ! emerge -v \
-            --usepkg --getbinpkg --binpkg-changed-deps=y --ignore-world=y \
-            --useoldpkg-atoms='*/*' \
+            --usepkg --getbinpkg --binpkg-changed-deps=y \
             --autounmask=y --autounmask-write=y --autounmask-continue=y \
             --backtrack=50 \
             "${TARGET_BINARY_OPTIONS[@]}" \
