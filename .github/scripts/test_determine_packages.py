@@ -23,7 +23,7 @@ def run_helper(paths, source_paths=None):
     matrix = json.loads(result.stdout)
     assert all(
         set(entry) == {
-            "group", "package", "source_target", "binary_excludes",
+            "group", "package", "source_target",
             "cache_id", "cache_lineage",
         }
         for entry in matrix
@@ -37,7 +37,6 @@ assert generic == [{
     "group": "generic",
     "package": "=app-misc/example-1.0",
     "source_target": True,
-    "binary_excludes": "",
     "cache_id": generic[0]["cache_id"],
     "cache_lineage": f"generic-{generic[0]['cache_id']}",
 }]
@@ -72,11 +71,6 @@ for forced_path in (
     ]
     assert not any(item["source_target"] for item in forced)
     assert all(item["cache_lineage"] == "caelestia-core" for item in forced)
-    assert all(item["binary_excludes"].split() == [
-        "gui-apps/quickshell",
-        "gui-apps/caelestia-shell",
-        "gui-apps/caelestia-meta",
-    ] for item in forced)
 
 forced_with_changed_target = run_helper([
     ".github/workflows/gentoo-pkg-test.yml",
@@ -142,7 +136,6 @@ with open(".github/workflows/gentoo-pkg-test.yml", encoding="utf-8") as workflow
 assert 'CP=$(python3 -c "import portage; print(portage.dep.Atom(\\"$PKG\\").cp)")' in workflow
 assert 'PACKAGE="${{ matrix.package }}"' in workflow
 assert 'SOURCE_TARGET="${{ matrix.source_target }}"' in workflow
-assert 'BINARY_EXCLUDES="${{ matrix.binary_excludes }}"' in workflow
 assert "matrix.packages" not in workflow
 assert "for PKG in $PACKAGES" not in workflow
 assert "--getbinpkg-exclude" not in workflow
@@ -197,8 +190,8 @@ assert '"media-libs/libglvnd X"' in workflow
 assert '"x11-libs/cairo X"' in workflow
 assert "dev-qt/qtbase opengl vulkan" not in workflow
 assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$PKG\")" in workflow
-assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$BINARY_EXCLUDES\")" in workflow
-assert '"$PACKAGE" "$SOURCE_TARGET" "$BINARY_EXCLUDES"' in workflow
+assert '"$PACKAGE" "$SOURCE_TARGET"' in workflow
+assert "binary_excludes" not in workflow
 assert 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' in workflow
 assert 'printf "%s ~amd64\\n" "$PKG"' in workflow
 assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow

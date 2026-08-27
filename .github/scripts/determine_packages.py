@@ -12,11 +12,6 @@ CORE_PACKAGES = (
     "gui-apps/caelestia-cli",
     "gui-apps/caelestia-meta",
 )
-CAELESTIA_BINARY_EXCLUDES = (
-    "gui-apps/quickshell",
-    "gui-apps/caelestia-shell",
-    "gui-apps/caelestia-meta",
-)
 PYTHON_PACKAGES = {"dev-python/materialyoucolor"}
 FONT_PACKAGES = {
     "media-fonts/material-symbols-variable",
@@ -66,7 +61,6 @@ def matrix_entry(group, package, source_target):
         "group": group,
         "package": package,
         "source_target": source_target,
-        "binary_excludes": " ".join(CAELESTIA_BINARY_EXCLUDES) if group == "caelestia-core" else "",
         "cache_id": cache_id(group, package),
         "cache_lineage": cache_lineage,
     }
