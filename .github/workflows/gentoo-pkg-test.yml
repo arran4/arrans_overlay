@@ -227,8 +227,11 @@ jobs:
           for cp, boundary in (("dev-lang/perl", "5.44"), ("dev-libs/wayland", "1.26")):
               matches = vardb.match(cp)
               if not matches or vercmp(catpkgsplit(matches[-1])[2], boundary) < 0:
-                  mask_cp = cp if cp == "dev-lang/perl" else "dev-util/wayland-scanner"
-                  print(f">={mask_cp}-{boundary}")
+                  if cp == "dev-lang/perl":
+                      print(f">={cp}-{boundary}")
+                  else:
+                      print("<dev-libs/wayland-1.25.0")
+                      print(">=dev-util/wayland-scanner-1.26")
           ' > /etc/portage/package.mask/ci-stage3-compat
 
           FAILED_PACKAGES=""
