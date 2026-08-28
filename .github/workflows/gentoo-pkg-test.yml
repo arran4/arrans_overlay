@@ -215,12 +215,17 @@ jobs:
           # rather than mixing unstable Perl or wayland-scanner binaries into
           # its installed graph. Target dependencies remain free to use
           # package-scoped autounmasking below.
-          INSTALLED_PERL=$(portageq best_version / dev-lang/perl)
-          INSTALLED_WAYLAND=$(portageq best_version / dev-libs/wayland)
           mkdir -p /etc/portage/package.mask
-          printf ">%s\n>dev-util/wayland-scanner-%s\n" \
-            "$INSTALLED_PERL" "${INSTALLED_WAYLAND#dev-libs/wayland-}" \
-            > /etc/portage/package.mask/ci-stage3-compat
+          python3 -c '
+          import portage
+          from portage.versions import catpkgsplit, vercmp
+          vardb = portage.db[portage.root]["vartree"].dbapi
+          for cp, boundary in (("dev-lang/perl", "5.44"), ("dev-libs/wayland", "1.26")):
+              cpv = vardb.match(cp)[-1]
+              if vercmp(catpkgsplit(cpv)[2], boundary) < 0:
+                  mask_cp = cp if cp == "dev-lang/perl" else "dev-util/wayland-scanner"
+                  print(f">={mask_cp}-{boundary}")
+          ' > /etc/portage/package.mask/ci-stage3-compat
 
           FAILED_PACKAGES=""
           echo "Running pkgcheck on $PKG"
@@ -247,7 +252,8 @@ jobs:
           # the installed graph and select a compatible source build.
           if ! emerge -v \
             --usepkg --getbinpkg --binpkg-changed-deps=y \
-            --autounmask=y --autounmask-write=y --autounmask-continue=y \
+            --autounmask=y --autounmask-keep-masks=y \
+            --autounmask-write=y --autounmask-continue=y \
             --backtrack=50 \
             "${TARGET_BINARY_OPTIONS[@]}" \
             "$PKG"; then
