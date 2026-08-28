@@ -216,7 +216,8 @@ jobs:
           # version block). Reconcile the disposable base system before
           # resolving a large overlay dependency graph. This remains
           # binary-first through EMERGE_DEFAULT_OPTS.
-          emerge -v --update --deep --newuse @world
+          emerge -v --update --deep --newuse \
+            --complete-graph=y --backtrack=50 @world
 
           # Install pkgcheck
           emerge -v dev-util/pkgcheck
