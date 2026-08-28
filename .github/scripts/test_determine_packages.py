@@ -198,6 +198,7 @@ assert 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_
 assert 'printf "%s ~amd64\\n" "$PKG"' in workflow
 assert '("dev-lang/perl", "5.44")' in workflow
 assert '("dev-libs/wayland", "1.26")' in workflow
+assert '=dev-libs/wayland-1.25.0 ~amd64' in workflow
 assert "> /etc/portage/package.mask/ci-stage3-compat" in workflow
 assert "--autounmask-keep-masks=y" in package_emerge_options
 assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow

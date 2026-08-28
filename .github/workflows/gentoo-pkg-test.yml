@@ -209,6 +209,10 @@ jobs:
 
           mkdir -p /etc/portage/package.accept_keywords
           printf "%s ~amd64\n" "$PKG" > /etc/portage/package.accept_keywords/ci
+          # wayland-scanner-1.25 requires the matching unstable Wayland floor.
+          # Keep both below 1.26, whose transition is newer than this stage3.
+          printf "%s\n" "=dev-libs/wayland-1.25.0 ~amd64" \
+            >> /etc/portage/package.accept_keywords/ci
 
           # stage3 and Portage are independently published. Keep core
           # subslot-coupled packages on the versions represented by stage3,
