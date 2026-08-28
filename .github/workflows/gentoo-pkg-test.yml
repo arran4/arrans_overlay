@@ -201,21 +201,26 @@ jobs:
           emerge --sync guru
           emerge --sync hyproverlay
 
-          mkdir -p /etc/portage/package.accept_keywords
-          # Let Portage complete transitions for packages inherited from the
-          # disposable stage3 when the compatible replacement is unstable.
-          # This writes individual installed CP atoms, not a global ~amd64
-          # policy; new dependencies remain targeted by autounmask below.
-          python3 -c 'import portage; vardb = portage.db[portage.root]["vartree"].dbapi; print("\n".join(f"{cp} ~amd64" for cp in sorted(vardb.cp_all())))' \
-            > /etc/portage/package.accept_keywords/ci-stage3-transitions
-
           # Install pkgcheck
           emerge -v dev-util/pkgcheck
 
           PKG="$1"
           SOURCE_TARGET="$2"
 
+          mkdir -p /etc/portage/package.accept_keywords
           printf "%s ~amd64\n" "$PKG" > /etc/portage/package.accept_keywords/ci
+
+          # stage3 and Portage are independently published. Keep core
+          # subslot-coupled packages on the versions represented by stage3,
+          # rather than mixing unstable Perl or wayland-scanner binaries into
+          # its installed graph. Target dependencies remain free to use
+          # package-scoped autounmasking below.
+          INSTALLED_PERL=$(portageq best_version / dev-lang/perl)
+          INSTALLED_WAYLAND=$(portageq best_version / dev-libs/wayland)
+          mkdir -p /etc/portage/package.mask
+          printf ">%s\n>dev-util/wayland-scanner-%s\n" \
+            "$INSTALLED_PERL" "${INSTALLED_WAYLAND#dev-libs/wayland-}" \
+            > /etc/portage/package.mask/ci-stage3-compat
 
           FAILED_PACKAGES=""
           echo "Running pkgcheck on $PKG"
@@ -241,9 +246,9 @@ jobs:
           # stale binary whose recorded dependency subslots conflict with
           # the installed graph and select a compatible source build.
           if ! emerge -v \
-            --update --deep --complete-graph=y \
             --usepkg --getbinpkg --binpkg-changed-deps=y \
-            --autounmask=y --autounmask-write=y --autounmask-continue=y \
+            --autounmask=y --autounmask-unmask=n \
+            --autounmask-write=y --autounmask-continue=y \
             --backtrack=50 \
             "${TARGET_BINARY_OPTIONS[@]}" \
             "$PKG"; then

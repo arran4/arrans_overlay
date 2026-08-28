@@ -196,8 +196,10 @@ assert '"$PACKAGE" "$SOURCE_TARGET"' in workflow
 assert "binary_excludes" not in workflow
 assert 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' in workflow
 assert 'printf "%s ~amd64\\n" "$PKG"' in workflow
-assert 'for cp in sorted(vardb.cp_all())' in workflow
-assert "> /etc/portage/package.accept_keywords/ci-stage3-transitions" in workflow
+assert "portageq best_version / dev-lang/perl" in workflow
+assert "portageq best_version / dev-libs/wayland" in workflow
+assert "> /etc/portage/package.mask/ci-stage3-compat" in workflow
+assert "--autounmask-unmask=n" in package_emerge_options
 assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow
 assert "*/* ~amd64" not in workflow
 
