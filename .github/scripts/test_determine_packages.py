@@ -202,6 +202,7 @@ assert '=dev-libs/wayland-1.25.0 ~amd64' in workflow
 assert '<dev-libs/wayland-1.25.0' in workflow
 assert "> /etc/portage/package.mask/ci-stage3-compat" in workflow
 assert "--autounmask-keep-masks=y" in package_emerge_options
+assert "CI_GRAPH_PREREQUISITES=(dev-util/vulkan-headers)" in workflow
 assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow
 assert "*/* ~amd64" not in workflow
 
