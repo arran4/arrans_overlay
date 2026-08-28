@@ -4,19 +4,63 @@ on:
   schedule:
     - cron: '0 0 1 * *' # Once a month
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '**/*.ebuild'
+      - '.github/workflows/gentoo-pkg-test.yml'
+      - '.github/scripts/determine_packages.py'
   pull_request:
     paths:
       - '**/*.ebuild'
       - '.github/workflows/gentoo-pkg-test.yml'
+      - '.github/scripts/determine_packages.py'
 
 concurrency:
   group: gentoo-pkg-test-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test-packages:
+  prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine changed packages
+        id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --diff-filter=ACMR --name-only "origin/${{ github.base_ref }}...HEAD")
+            SOURCE_FILES="$CHANGED_FILES"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            CHANGED_FILES=$(git diff --diff-filter=ACMR --name-only \
+              "${{ github.event.before }}" "${{ github.sha }}")
+            SOURCE_FILES="$CHANGED_FILES"
+          else
+            CHANGED_FILES=$(find . -name '*.ebuild')
+            SOURCE_FILES=""
+          fi
+
+          export CHANGED_FILES
+          export SOURCE_FILES
+          MATRIX_JSON=$(python3 .github/scripts/determine_packages.py)
+          echo "matrix={\"include\":$MATRIX_JSON}" >> "$GITHUB_OUTPUT"
+          echo "Generated matrix: $MATRIX_JSON"
+
+  test-packages:
+    needs: prepare
+    if: needs.prepare.outputs.matrix != '{"include":[]}'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
 
     steps:
       - name: Checkout repository
@@ -24,53 +68,66 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Start Gentoo stage3
+      - name: Resolve Gentoo build environment
+        id: gentoo-environment
         run: |
           docker pull gentoo/stage3:latest
           docker pull gentoo/portage:latest
+          STAGE3_ID=$(docker image inspect --format='{{.Id}}' gentoo/stage3:latest)
+          PORTAGE_ID=$(docker image inspect --format='{{.Id}}' gentoo/portage:latest)
+          ENVIRONMENT_ID=$(printf '%s\n%s\n' "$STAGE3_ID" "$PORTAGE_ID" | sha256sum | cut -c1-16)
+          echo "cache_id=$ENVIRONMENT_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare cache directories
+        run: |
+          sudo mkdir -p /var/cache/distfiles /var/cache/binpkgs
+          sudo chown -R "$(id -u):$(id -g)" /var/cache/distfiles /var/cache/binpkgs
+
+      - name: Cache distfiles
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/distfiles
+          key: gentoo-distfiles-v1-${{ github.sha }}-${{ matrix.cache_id }}
+          restore-keys: |
+            gentoo-distfiles-v1-
+
+      - name: Restore binpkgs
+        uses: actions/cache/restore@v4
+        with:
+          path: /var/cache/binpkgs
+          # Actions caches are immutable and restore one archive, not a union.
+          # Give each package job a distinct lineage so parallel jobs can all
+          # save their results. Prefer that lineage on later runs, then fall
+          # back to one cache from the same compatible Gentoo environment.
+          # This lookup-only primary key is never saved. It prevents the cache
+          # action's implicit primary-key prefix match from bypassing the
+          # explicitly ordered group/package restore lineages below.
+          key: gentoo-binpkgs-restore-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ github.run_id }}-${{ matrix.cache_id }}
+          restore-keys: |
+            gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_lineage }}-
+            gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_lineage }}-
+            gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-
+            gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-
+            gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-
+            gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-
+
+      - name: Start Gentoo stage3
+        run: |
           docker create --name portage gentoo/portage:latest
           docker run --detach \
             --name gentoo \
             --volumes-from portage \
             --volume "${GITHUB_WORKSPACE}:/var/db/repos/arrans-overlay:ro" \
+            --volume "/var/cache/distfiles:/var/cache/distfiles:rw" \
+            --volume "/var/cache/binpkgs:/var/cache/binpkgs:rw" \
             gentoo/stage3:latest \
             sleep infinity
 
-      - name: Determine changed packages
-        id: changed-packages
-        run: |
-          # If it's a pull request, get changed files (Added, Copied, Modified, Renamed)
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            CHANGED_FILES=$(git diff --diff-filter=ACMR --name-only origin/${{ github.base_ref }} HEAD)
-          else
-            # For manual or schedule, test all packages in overlay
-            CHANGED_FILES=$(find . -name "*.ebuild")
-          fi
-
-          PACKAGES=""
-          for FILE in $CHANGED_FILES; do
-            if [[ $FILE == *.ebuild ]]; then
-              # Strip leading ./ if present
-              FILE=${FILE#./}
-              CATEGORY=$(echo $FILE | cut -d/ -f1)
-              PACKAGE=$(echo $FILE | cut -d/ -f2)
-              # Extract package version from filename to test the specific ebuild
-              EBUILD_NAME=$(basename $FILE)
-              VERSION=${EBUILD_NAME%.ebuild}
-              PACKAGES="$PACKAGES =$CATEGORY/$VERSION"
-            fi
-          done
-
-          # Remove duplicates
-          PACKAGES=$(echo $PACKAGES | tr ' ' '\n' | sort -u | tr '\n' ' ')
-
-          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
-          echo "Packages to test: $PACKAGES"
-
       - name: Install and test packages
-        if: steps.changed-packages.outputs.packages != ''
+        timeout-minutes: 105
         run: |
-          PACKAGES="${{ steps.changed-packages.outputs.packages }}"
+          PACKAGE="${{ matrix.package }}"
+          SOURCE_TARGET="${{ matrix.source_target }}"
 
           # Create a script to run inside the docker container
           cat << 'INNEREOF' > test_packages.sh
@@ -111,10 +168,34 @@ jobs:
           # globally enabling ~amd64 can make the stable stage3 inconsistent
           # with newer unstable toolchain packages in the Portage snapshot.
           echo 'ACCEPT_LICENSE="*"' >> /etc/portage/make.conf
+          echo 'FEATURES="${FEATURES} buildpkg"' >> /etc/portage/make.conf
+          # Prefer Gentoo's public binhost and the shared CI binpkg cache for
+          # speed, while retaining normal source builds when no compatible
+          # package exists. Overlay packages usually are not on the public
+          # binhost, but generic dependencies need not be rebuilt. Keep normal
+          # binary USE compatibility so binaries cannot introduce an
+          # inconsistent multilib or init-system dependency lineage.
+          echo 'EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS} --usepkg --getbinpkg"' \
+            >> /etc/portage/make.conf
+          # This disposable CI container lets Portage persist only its
+          # package-scoped autounmask configuration directly. Otherwise
+          # CONFIG_PROTECT creates ._cfg files, which a later emerge can not
+          # see without a separate etc-update and dependency calculation.
+          echo 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' \
+            >> /etc/portage/make.conf
 
-          # Pre-configure required USE flags for dependencies
+          # Qt's public binhost contains multiple builds with opposing qtbase
+          # OpenGL requirements. Overlay targets require qtbase[opengl], so
+          # constrain only qtbase and let Portage select matching Qt binaries.
           mkdir -p /etc/portage/package.use
-          echo "dev-qt/qtbase vulkan" > /etc/portage/package.use/qtbase
+          printf "%s\n" \
+            "dev-qt/qtbase opengl" \
+            "dev-qt/qtdeclarative opengl" \
+            "media-libs/freetype harfbuzz" \
+            "media-libs/libglvnd X" \
+            "x11-libs/cairo X" \
+            "media-sound/pulseaudio-daemon -webrtc-aec" \
+            > /etc/portage/package.use/zz-ci-required-use
 
           emerge -v dev-vcs/git
           emerge --sync guru
@@ -123,32 +204,72 @@ jobs:
           # Install pkgcheck
           emerge -v dev-util/pkgcheck
 
-          PACKAGES="$1"
+          PKG="$1"
+          SOURCE_TARGET="$2"
 
           mkdir -p /etc/portage/package.accept_keywords
-          for PKG in $PACKAGES; do
-            printf "%s ~amd64\n" "$PKG"
-          done > /etc/portage/package.accept_keywords/ci
+          printf "%s ~amd64\n" "$PKG" > /etc/portage/package.accept_keywords/ci
+          # wayland-scanner-1.25 requires the matching unstable Wayland floor.
+          # Keep both below 1.26, whose transition is newer than this stage3.
+          printf "%s\n" "=dev-libs/wayland-1.25.0 ~amd64" \
+            >> /etc/portage/package.accept_keywords/ci
+
+          # stage3 and Portage are independently published. Keep core
+          # subslot-coupled packages on the versions represented by stage3,
+          # rather than mixing unstable Perl or wayland-scanner binaries into
+          # its installed graph. Target dependencies remain free to use
+          # package-scoped autounmasking below.
+          mkdir -p /etc/portage/package.mask
+          python3 -c '
+          import portage
+          from portage.versions import catpkgsplit, vercmp
+          vardb = portage.db[portage.root]["vartree"].dbapi
+          for cp, boundary in (("dev-lang/perl", "5.44"), ("dev-libs/wayland", "1.26")):
+              matches = vardb.match(cp)
+              if not matches or vercmp(catpkgsplit(matches[-1])[2], boundary) < 0:
+                  if cp == "dev-lang/perl":
+                      print(f">={cp}-{boundary}")
+                  else:
+                      print("<dev-libs/wayland-1.25.0")
+                      print(">=dev-util/wayland-scanner-1.26")
+          ' > /etc/portage/package.mask/ci-stage3-compat
 
           FAILED_PACKAGES=""
-          for PKG in $PACKAGES; do
-            echo "Running pkgcheck on $PKG"
-            CP=$(python3 -c "import portage; print(portage.dep.Atom(\"$PKG\").cp)")
-            if ! pkgcheck scan --net --exit error /var/db/repos/arrans-overlay/${CP}; then
-              echo "pkgcheck failed for $PKG"
-              FAILED_PACKAGES="$FAILED_PACKAGES $PKG (pkgcheck)"
-            fi
+          echo "Running pkgcheck on $PKG"
+          CP=$(python3 -c "import portage; print(portage.dep.Atom(\"$PKG\").cp)")
+          if ! pkgcheck scan --net --exit error /var/db/repos/arrans-overlay/${CP}; then
+            echo "pkgcheck failed for $PKG"
+            FAILED_PACKAGES="$FAILED_PACKAGES $PKG (pkgcheck)"
+          fi
 
-            echo "Building and testing $PKG"
-            # Actually build and install the package to verify it works
-            emerge --autounmask=y --autounmask-write --autounmask-continue \
-              --autounmask-backtrack=y --onlydeps $PKG || true
-            etc-update --automode -5
-            if ! emerge -v $PKG; then
-              echo "Failed to emerge $PKG"
-              FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
-            fi
-          done
+          echo "Building and testing $PKG"
+          # GURU's gpu-screen-recorder builds FFmpeg's Vulkan encoder but does
+          # not currently pull in the headers that hwcontext_vulkan.h needs.
+          CI_GRAPH_PREREQUISITES=(dev-util/vulkan-headers)
+          TARGET_BINARY_OPTIONS=()
+          if [ "$SOURCE_TARGET" = "true" ]; then
+            # A cached binary for this exact CPV may predate the checked-out
+            # ebuild. Dependencies remain binary-first, but a directly changed
+            # target must be built from the source under test.
+            TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$PKG")
+          fi
+          # Resolve and install in one operation so autounmask-continue can
+          # apply all proposed changes to this graph without an expensive
+          # second calculation. Prefer compatible binaries for dependencies
+          # and the target, with normal source fallback for unavailable or
+          # incompatible binpkgs. Extra backtracking helps Portage reject a
+          # stale binary whose recorded dependency subslots conflict with
+          # the installed graph and select a compatible source build.
+          if ! emerge -v \
+            --usepkg --getbinpkg --binpkg-changed-deps=y \
+            --autounmask=y --autounmask-keep-masks=y \
+            --autounmask-write=y --autounmask-continue=y \
+            --backtrack=50 \
+            "${TARGET_BINARY_OPTIONS[@]}" \
+            "${CI_GRAPH_PREREQUISITES[@]}" "$PKG"; then
+            echo "Failed to emerge $PKG"
+            FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
+          fi
 
           if [ -n "$FAILED_PACKAGES" ]; then
             echo "The following packages failed to build, install, or pass pkgcheck: $FAILED_PACKAGES"
@@ -159,7 +280,19 @@ jobs:
 
           chmod +x test_packages.sh
           docker cp test_packages.sh gentoo:/tmp/test_packages.sh
-          docker exec gentoo /tmp/test_packages.sh "$PACKAGES"
+          docker exec gentoo /tmp/test_packages.sh \
+            "$PACKAGE" "$SOURCE_TARGET"
+
+      - name: Stop active Gentoo build
+        if: always()
+        run: docker stop gentoo || true
+
+      - name: Save built binpkgs
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: /var/cache/binpkgs
+          key: gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Stop and clean up containers
         if: always()
