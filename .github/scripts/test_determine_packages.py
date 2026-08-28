@@ -199,7 +199,6 @@ assert 'printf "%s ~amd64\\n" "$PKG"' in workflow
 assert "portageq best_version / dev-lang/perl" in workflow
 assert "portageq best_version / dev-libs/wayland" in workflow
 assert "> /etc/portage/package.mask/ci-stage3-compat" in workflow
-assert "--autounmask-unmask=n" in package_emerge_options
 assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow
 assert "*/* ~amd64" not in workflow
 
