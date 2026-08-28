@@ -221,8 +221,8 @@ jobs:
           from portage.versions import catpkgsplit, vercmp
           vardb = portage.db[portage.root]["vartree"].dbapi
           for cp, boundary in (("dev-lang/perl", "5.44"), ("dev-libs/wayland", "1.26")):
-              cpv = vardb.match(cp)[-1]
-              if vercmp(catpkgsplit(cpv)[2], boundary) < 0:
+              matches = vardb.match(cp)
+              if not matches or vercmp(catpkgsplit(matches[-1])[2], boundary) < 0:
                   mask_cp = cp if cp == "dev-lang/perl" else "dev-util/wayland-scanner"
                   print(f">={mask_cp}-{boundary}")
           ' > /etc/portage/package.mask/ci-stage3-compat
