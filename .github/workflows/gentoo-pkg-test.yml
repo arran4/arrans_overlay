@@ -209,16 +209,6 @@ jobs:
           python3 -c 'import portage; vardb = portage.db[portage.root]["vartree"].dbapi; print("\n".join(f"{cp} ~amd64" for cp in sorted(vardb.cp_all())))' \
             > /etc/portage/package.accept_keywords/ci-stage3-transitions
 
-          # The independently published stage3 and Portage images can briefly
-          # describe different system transitions (for example, an installed
-          # Perl 5.42 graph while the current repository and binhost require
-          # Perl 5.44, or Wayland and wayland-scanner on opposite sides of a
-          # version block). Reconcile the disposable base system before
-          # resolving a large overlay dependency graph. This remains
-          # binary-first through EMERGE_DEFAULT_OPTS.
-          emerge -v --update --deep --newuse \
-            --complete-graph=y --backtrack=50 @world
-
           # Install pkgcheck
           emerge -v dev-util/pkgcheck
 
@@ -251,6 +241,7 @@ jobs:
           # stale binary whose recorded dependency subslots conflict with
           # the installed graph and select a compatible source build.
           if ! emerge -v \
+            --update --deep --complete-graph=y \
             --usepkg --getbinpkg --binpkg-changed-deps=y \
             --autounmask=y --autounmask-write=y --autounmask-continue=y \
             --backtrack=50 \
