@@ -81,6 +81,7 @@ jobs:
       # flutter-bin's UPSTREAM_PV). Reconcile every Manifest touched by the
       # cleanup before proposing its changes so the daily job cannot publish an
       # incomplete Manifest while the upstream fix is pending.
+      # Pending: https://github.com/arran4/g2/issues/483
       - name: Reconcile cleaned manifests
         shell: bash
         run: |
