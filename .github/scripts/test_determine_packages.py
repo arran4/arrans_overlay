@@ -189,6 +189,7 @@ assert '"dev-qt/qtdeclarative opengl"' in workflow
 assert '"media-libs/freetype harfbuzz"' in workflow
 assert '"media-libs/libglvnd X"' in workflow
 assert '"x11-libs/cairo X"' in workflow
+    assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$CP\")" in workflow
 assert '"media-sound/pulseaudio-daemon -webrtc-aec"' in workflow
 assert "dev-qt/qtbase opengl vulkan" not in workflow
 
