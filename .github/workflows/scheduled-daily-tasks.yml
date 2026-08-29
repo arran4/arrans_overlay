@@ -76,6 +76,29 @@ jobs:
         run: |
           g2 manifest clean .
 
+      # g2 manifest clean can currently remove a still-referenced distfile when
+      # an ebuild uses an explicit upstream-version variable (for example,
+      # flutter-bin's UPSTREAM_PV). Reconcile every Manifest touched by the
+      # cleanup before proposing its changes so the daily job cannot publish an
+      # incomplete Manifest while the upstream fix is pending.
+      # Pending: https://github.com/arran4/g2/issues/483
+      - name: Reconcile cleaned manifests
+        shell: bash
+        run: |
+          mapfile -t manifest_dirs < <(
+            git diff --name-only -- '**/Manifest' |
+              xargs -r -n1 dirname |
+              sort -u
+          )
+
+          if (( ${#manifest_dirs[@]} == 0 )); then
+            echo "Manifest cleanup made no changes."
+            exit 0
+          fi
+
+          printf 'Reconciling %s\n' "${manifest_dirs[@]}"
+          python3 scripts/verify_manifest.py "${manifest_dirs[@]}"
+
       - name: Run egencache update
         id: egencache
         if: ${{ inputs.run_egencache == true }}
