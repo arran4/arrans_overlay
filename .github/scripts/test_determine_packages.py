@@ -191,7 +191,7 @@ assert '"media-libs/libglvnd X"' in workflow
 assert '"x11-libs/cairo X"' in workflow
 assert '"media-sound/pulseaudio-daemon -webrtc-aec"' in workflow
 assert "dev-qt/qtbase opengl vulkan" not in workflow
-assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$PKG\")" in workflow
+assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"${PKG#=}\")" in workflow
 assert '"$PACKAGE" "$SOURCE_TARGET"' in workflow
 assert "binary_excludes" not in workflow
 assert 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' in workflow
