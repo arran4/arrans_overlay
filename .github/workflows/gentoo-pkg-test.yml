@@ -251,7 +251,7 @@ jobs:
             # A cached binary for this exact CPV may predate the checked-out
             # ebuild. Dependencies remain binary-first, but a directly changed
             # target must be built from the source under test.
-            TARGET_BINARY_OPTIONS+=(--usepkg-exclude "${PKG#=}")
+            TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$CP")
           fi
           # Resolve and install in one operation so autounmask-continue can
           # apply all proposed changes to this graph without an expensive
