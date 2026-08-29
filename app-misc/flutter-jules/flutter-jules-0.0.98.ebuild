@@ -6,12 +6,12 @@ DESCRIPTION="A Flutter-based app for interacting with the Google Jules API"
 HOMEPAGE="https://github.com/arran4/flutter_jules"
 SRC_URI="https://github.com/arran4/flutter_jules/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
-RESTRICT="network-sandbox"
 LICENSE="MIT"
 SLOT="0"
-S="${WORKDIR}/${PN/-/_}-${PV}"
-
 KEYWORDS="~amd64"
+RESTRICT="network-sandbox"
+
+S="${WORKDIR}/${PN/-/_}-${PV}"
 
 RDEPEND="!app-misc/flutter-jules-bin x11-libs/gtk+:3 x11-libs/pango dev-cpp/gtkmm:3.0"
 BDEPEND="dev-lang/flutter-bin dev-build/ninja dev-build/cmake virtual/pkgconfig llvm-core/clang"

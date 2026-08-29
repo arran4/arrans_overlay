@@ -1,0 +1,11 @@
+BDEPEND=dev-lang/flutter-bin dev-build/ninja dev-build/cmake virtual/pkgconfig llvm-core/clang
+DESCRIPTION=A Flutter-based app for interacting with the Google Jules API
+SRC_URI=https://github.com/arran4/flutter_jules/archive/refs/tags/v0.0.98.tar.gz -> flutter-jules-0.0.98.tar.gz
+SLOT=0
+EAPI=8
+RESTRICT=network-sandbox
+HOMEPAGE=https://github.com/arran4/flutter_jules
+KEYWORDS=~amd64
+RDEPEND=!app-misc/flutter-jules-bin x11-libs/gtk+:3 x11-libs/pango dev-cpp/gtkmm:3.0
+LICENSE=MIT
+_md5_=ee4e2cff36c240227c90ed975d769c2a
