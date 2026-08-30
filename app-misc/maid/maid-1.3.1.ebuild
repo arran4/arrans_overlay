@@ -143,7 +143,7 @@ LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
 
-RDEPEND="!app-misc/maid-appimage x11-libs/gtk+:3 x11-libs/pango dev-cpp/gtkmm:3.0"
+RDEPEND="!app-misc/maid-appimage x11-libs/gtk+:3 x11-libs/pango"
 BDEPEND="dev-lang/flutter-bin dev-build/ninja dev-build/cmake virtual/pkgconfig llvm-core/clang dev-vcs/git"
 
 

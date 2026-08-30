@@ -115,5 +115,5 @@ jobs:
             echo "No package files changed. Skipping lint."
           else
             echo "Running g2 lint on changed directories: $DIRS"
-            g2 lint -disable-rule Md5CacheMissing,IndentingWhitespace,UnstableOnly $DIRS
+            g2 lint -disable-rule Md5CacheMissing $DIRS
           fi
