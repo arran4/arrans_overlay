@@ -7,7 +7,145 @@ inherit desktop xdg
 
 DESCRIPTION="A Flutter-based app for interacting with the Google Jules API"
 HOMEPAGE="https://github.com/arran4/flutter_jules"
-SRC_URI="https://github.com/arran4/flutter_jules/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/arran4/flutter_jules/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz \
+	https://pub.dev/api/archives/_fe_analyzer_shared-92.0.0.tar.gz -> _fe_analyzer_shared-92.0.0.tar.gz \
+	https://pub.dev/api/archives/analyzer-9.0.0.tar.gz -> analyzer-9.0.0.tar.gz \
+	https://pub.dev/api/archives/archive-4.0.7.tar.gz -> archive-4.0.7.tar.gz \
+	https://pub.dev/api/archives/args-2.7.0.tar.gz -> args-2.7.0.tar.gz \
+	https://pub.dev/api/archives/async-2.13.0.tar.gz -> async-2.13.0.tar.gz \
+	https://pub.dev/api/archives/boolean_selector-2.1.2.tar.gz -> boolean_selector-2.1.2.tar.gz \
+	https://pub.dev/api/archives/build-4.0.3.tar.gz -> build-4.0.3.tar.gz \
+	https://pub.dev/api/archives/build_config-1.2.0.tar.gz -> build_config-1.2.0.tar.gz \
+	https://pub.dev/api/archives/build_daemon-4.1.1.tar.gz -> build_daemon-4.1.1.tar.gz \
+	https://pub.dev/api/archives/build_runner-2.10.4.tar.gz -> build_runner-2.10.4.tar.gz \
+	https://pub.dev/api/archives/built_collection-5.1.1.tar.gz -> built_collection-5.1.1.tar.gz \
+	https://pub.dev/api/archives/built_value-8.12.1.tar.gz -> built_value-8.12.1.tar.gz \
+	https://pub.dev/api/archives/characters-1.4.0.tar.gz -> characters-1.4.0.tar.gz \
+	https://pub.dev/api/archives/checked_yaml-2.0.4.tar.gz -> checked_yaml-2.0.4.tar.gz \
+	https://pub.dev/api/archives/cli_util-0.4.2.tar.gz -> cli_util-0.4.2.tar.gz \
+	https://pub.dev/api/archives/clock-1.1.2.tar.gz -> clock-1.1.2.tar.gz \
+	https://pub.dev/api/archives/code_builder-4.11.0.tar.gz -> code_builder-4.11.0.tar.gz \
+	https://pub.dev/api/archives/collection-1.19.1.tar.gz -> collection-1.19.1.tar.gz \
+	https://pub.dev/api/archives/convert-3.1.2.tar.gz -> convert-3.1.2.tar.gz \
+	https://pub.dev/api/archives/cross_file-0.3.5+1.tar.gz -> cross_file-0.3.5+1.tar.gz \
+	https://pub.dev/api/archives/crypto-3.0.7.tar.gz -> crypto-3.0.7.tar.gz \
+	https://pub.dev/api/archives/dart_style-3.1.3.tar.gz -> dart_style-3.1.3.tar.gz \
+	https://pub.dev/api/archives/dartobjectutils-0.1.1.tar.gz -> dartobjectutils-0.1.1.tar.gz \
+	https://pub.dev/api/archives/dbus-0.7.11.tar.gz -> dbus-0.7.11.tar.gz \
+	https://pub.dev/api/archives/desktop_multi_window-0.2.1.tar.gz -> desktop_multi_window-0.2.1.tar.gz \
+	https://pub.dev/api/archives/duration-4.0.3.tar.gz -> duration-4.0.3.tar.gz \
+	https://pub.dev/api/archives/fake_async-1.3.3.tar.gz -> fake_async-1.3.3.tar.gz \
+	https://pub.dev/api/archives/ffi-2.1.4.tar.gz -> ffi-2.1.4.tar.gz \
+	https://pub.dev/api/archives/file-7.0.1.tar.gz -> file-7.0.1.tar.gz \
+	https://pub.dev/api/archives/file_selector-1.1.0.tar.gz -> file_selector-1.1.0.tar.gz \
+	https://pub.dev/api/archives/file_selector_android-0.5.2+4.tar.gz -> file_selector_android-0.5.2+4.tar.gz \
+	https://pub.dev/api/archives/file_selector_ios-0.5.3+5.tar.gz -> file_selector_ios-0.5.3+5.tar.gz \
+	https://pub.dev/api/archives/file_selector_linux-0.9.4.tar.gz -> file_selector_linux-0.9.4.tar.gz \
+	https://pub.dev/api/archives/file_selector_macos-0.9.5.tar.gz -> file_selector_macos-0.9.5.tar.gz \
+	https://pub.dev/api/archives/file_selector_platform_interface-2.7.0.tar.gz -> file_selector_platform_interface-2.7.0.tar.gz \
+	https://pub.dev/api/archives/file_selector_web-0.9.4+2.tar.gz -> file_selector_web-0.9.4+2.tar.gz \
+	https://pub.dev/api/archives/file_selector_windows-0.9.3+5.tar.gz -> file_selector_windows-0.9.3+5.tar.gz \
+	https://pub.dev/api/archives/fixnum-1.1.1.tar.gz -> fixnum-1.1.1.tar.gz \
+	https://pub.dev/api/archives/flutter_launcher_icons-0.13.1.tar.gz -> flutter_launcher_icons-0.13.1.tar.gz \
+	https://pub.dev/api/archives/flutter_lints-2.0.3.tar.gz -> flutter_lints-2.0.3.tar.gz \
+	https://pub.dev/api/archives/flutter_local_notifications-17.2.4.tar.gz -> flutter_local_notifications-17.2.4.tar.gz \
+	https://pub.dev/api/archives/flutter_local_notifications_linux-4.0.1.tar.gz -> flutter_local_notifications_linux-4.0.1.tar.gz \
+	https://pub.dev/api/archives/flutter_local_notifications_platform_interface-7.2.0.tar.gz -> flutter_local_notifications_platform_interface-7.2.0.tar.gz \
+	https://pub.dev/api/archives/flutter_markdown-0.7.7+1.tar.gz -> flutter_markdown-0.7.7+1.tar.gz \
+	https://pub.dev/api/archives/flutter_secure_storage-9.2.4.tar.gz -> flutter_secure_storage-9.2.4.tar.gz \
+	https://pub.dev/api/archives/flutter_secure_storage_linux-1.2.3.tar.gz -> flutter_secure_storage_linux-1.2.3.tar.gz \
+	https://pub.dev/api/archives/flutter_secure_storage_macos-3.1.3.tar.gz -> flutter_secure_storage_macos-3.1.3.tar.gz \
+	https://pub.dev/api/archives/flutter_secure_storage_platform_interface-1.1.2.tar.gz -> flutter_secure_storage_platform_interface-1.1.2.tar.gz \
+	https://pub.dev/api/archives/flutter_secure_storage_web-1.2.1.tar.gz -> flutter_secure_storage_web-1.2.1.tar.gz \
+	https://pub.dev/api/archives/flutter_secure_storage_windows-3.1.2.tar.gz -> flutter_secure_storage_windows-3.1.2.tar.gz \
+	https://pub.dev/api/archives/glob-2.1.3.tar.gz -> glob-2.1.3.tar.gz \
+	https://pub.dev/api/archives/google_identity_services_web-0.3.3+1.tar.gz -> google_identity_services_web-0.3.3+1.tar.gz \
+	https://pub.dev/api/archives/google_sign_in-6.3.0.tar.gz -> google_sign_in-6.3.0.tar.gz \
+	https://pub.dev/api/archives/google_sign_in_android-6.2.1.tar.gz -> google_sign_in_android-6.2.1.tar.gz \
+	https://pub.dev/api/archives/google_sign_in_ios-5.9.0.tar.gz -> google_sign_in_ios-5.9.0.tar.gz \
+	https://pub.dev/api/archives/google_sign_in_platform_interface-2.5.0.tar.gz -> google_sign_in_platform_interface-2.5.0.tar.gz \
+	https://pub.dev/api/archives/google_sign_in_web-0.12.4+4.tar.gz -> google_sign_in_web-0.12.4+4.tar.gz \
+	https://pub.dev/api/archives/graphs-2.3.2.tar.gz -> graphs-2.3.2.tar.gz \
+	https://pub.dev/api/archives/http-1.6.0.tar.gz -> http-1.6.0.tar.gz \
+	https://pub.dev/api/archives/http_multi_server-3.2.2.tar.gz -> http_multi_server-3.2.2.tar.gz \
+	https://pub.dev/api/archives/http_parser-4.1.2.tar.gz -> http_parser-4.1.2.tar.gz \
+	https://pub.dev/api/archives/image-4.7.2.tar.gz -> image-4.7.2.tar.gz \
+	https://pub.dev/api/archives/intl-0.18.1.tar.gz -> intl-0.18.1.tar.gz \
+	https://pub.dev/api/archives/io-1.0.5.tar.gz -> io-1.0.5.tar.gz \
+	https://pub.dev/api/archives/js-0.6.7.tar.gz -> js-0.6.7.tar.gz \
+	https://pub.dev/api/archives/json_annotation-4.9.0.tar.gz -> json_annotation-4.9.0.tar.gz \
+	https://pub.dev/api/archives/leak_tracker-11.0.2.tar.gz -> leak_tracker-11.0.2.tar.gz \
+	https://pub.dev/api/archives/leak_tracker_flutter_testing-3.0.10.tar.gz -> leak_tracker_flutter_testing-3.0.10.tar.gz \
+	https://pub.dev/api/archives/leak_tracker_testing-3.0.2.tar.gz -> leak_tracker_testing-3.0.2.tar.gz \
+	https://pub.dev/api/archives/lints-2.1.1.tar.gz -> lints-2.1.1.tar.gz \
+	https://pub.dev/api/archives/logging-1.3.0.tar.gz -> logging-1.3.0.tar.gz \
+	https://pub.dev/api/archives/markdown-7.3.0.tar.gz -> markdown-7.3.0.tar.gz \
+	https://pub.dev/api/archives/matcher-0.12.17.tar.gz -> matcher-0.12.17.tar.gz \
+	https://pub.dev/api/archives/material_color_utilities-0.11.1.tar.gz -> material_color_utilities-0.11.1.tar.gz \
+	https://pub.dev/api/archives/menu_base-0.1.1.tar.gz -> menu_base-0.1.1.tar.gz \
+	https://pub.dev/api/archives/meta-1.17.0.tar.gz -> meta-1.17.0.tar.gz \
+	https://pub.dev/api/archives/mime-2.0.0.tar.gz -> mime-2.0.0.tar.gz \
+	https://pub.dev/api/archives/mockito-5.6.1.tar.gz -> mockito-5.6.1.tar.gz \
+	https://pub.dev/api/archives/nested-1.0.0.tar.gz -> nested-1.0.0.tar.gz \
+	https://pub.dev/api/archives/package_config-2.2.0.tar.gz -> package_config-2.2.0.tar.gz \
+	https://pub.dev/api/archives/pasteboard-0.4.0.tar.gz -> pasteboard-0.4.0.tar.gz \
+	https://pub.dev/api/archives/path-1.9.1.tar.gz -> path-1.9.1.tar.gz \
+	https://pub.dev/api/archives/path_provider-2.1.5.tar.gz -> path_provider-2.1.5.tar.gz \
+	https://pub.dev/api/archives/path_provider_android-2.2.22.tar.gz -> path_provider_android-2.2.22.tar.gz \
+	https://pub.dev/api/archives/path_provider_foundation-2.5.1.tar.gz -> path_provider_foundation-2.5.1.tar.gz \
+	https://pub.dev/api/archives/path_provider_linux-2.2.1.tar.gz -> path_provider_linux-2.2.1.tar.gz \
+	https://pub.dev/api/archives/path_provider_platform_interface-2.1.2.tar.gz -> path_provider_platform_interface-2.1.2.tar.gz \
+	https://pub.dev/api/archives/path_provider_windows-2.3.0.tar.gz -> path_provider_windows-2.3.0.tar.gz \
+	https://pub.dev/api/archives/petitparser-7.0.1.tar.gz -> petitparser-7.0.1.tar.gz \
+	https://pub.dev/api/archives/platform-3.1.6.tar.gz -> platform-3.1.6.tar.gz \
+	https://pub.dev/api/archives/plugin_platform_interface-2.1.8.tar.gz -> plugin_platform_interface-2.1.8.tar.gz \
+	https://pub.dev/api/archives/pool-1.5.2.tar.gz -> pool-1.5.2.tar.gz \
+	https://pub.dev/api/archives/posix-6.0.3.tar.gz -> posix-6.0.3.tar.gz \
+	https://pub.dev/api/archives/provider-6.1.5+1.tar.gz -> provider-6.1.5+1.tar.gz \
+	https://pub.dev/api/archives/pub_semver-2.2.0.tar.gz -> pub_semver-2.2.0.tar.gz \
+	https://pub.dev/api/archives/pubspec_parse-1.5.0.tar.gz -> pubspec_parse-1.5.0.tar.gz \
+	https://pub.dev/api/archives/screen_retriever-0.1.9.tar.gz -> screen_retriever-0.1.9.tar.gz \
+	https://pub.dev/api/archives/shared_preferences-2.5.4.tar.gz -> shared_preferences-2.5.4.tar.gz \
+	https://pub.dev/api/archives/shared_preferences_android-2.4.18.tar.gz -> shared_preferences_android-2.4.18.tar.gz \
+	https://pub.dev/api/archives/shared_preferences_foundation-2.5.6.tar.gz -> shared_preferences_foundation-2.5.6.tar.gz \
+	https://pub.dev/api/archives/shared_preferences_linux-2.4.1.tar.gz -> shared_preferences_linux-2.4.1.tar.gz \
+	https://pub.dev/api/archives/shared_preferences_platform_interface-2.4.1.tar.gz -> shared_preferences_platform_interface-2.4.1.tar.gz \
+	https://pub.dev/api/archives/shared_preferences_web-2.4.3.tar.gz -> shared_preferences_web-2.4.3.tar.gz \
+	https://pub.dev/api/archives/shared_preferences_windows-2.4.1.tar.gz -> shared_preferences_windows-2.4.1.tar.gz \
+	https://pub.dev/api/archives/shelf-1.4.2.tar.gz -> shelf-1.4.2.tar.gz \
+	https://pub.dev/api/archives/shelf_web_socket-3.0.0.tar.gz -> shelf_web_socket-3.0.0.tar.gz \
+	https://pub.dev/api/archives/shortid-0.1.2.tar.gz -> shortid-0.1.2.tar.gz \
+	https://pub.dev/api/archives/source_gen-4.1.1.tar.gz -> source_gen-4.1.1.tar.gz \
+	https://pub.dev/api/archives/source_span-1.10.1.tar.gz -> source_span-1.10.1.tar.gz \
+	https://pub.dev/api/archives/stack_trace-1.12.1.tar.gz -> stack_trace-1.12.1.tar.gz \
+	https://pub.dev/api/archives/stream_channel-2.1.4.tar.gz -> stream_channel-2.1.4.tar.gz \
+	https://pub.dev/api/archives/stream_transform-2.1.1.tar.gz -> stream_transform-2.1.1.tar.gz \
+	https://pub.dev/api/archives/string_scanner-1.4.1.tar.gz -> string_scanner-1.4.1.tar.gz \
+	https://pub.dev/api/archives/term_glyph-1.2.2.tar.gz -> term_glyph-1.2.2.tar.gz \
+	https://pub.dev/api/archives/test_api-0.7.7.tar.gz -> test_api-0.7.7.tar.gz \
+	https://pub.dev/api/archives/timezone-0.9.4.tar.gz -> timezone-0.9.4.tar.gz \
+	https://pub.dev/api/archives/tray_manager-0.2.4.tar.gz -> tray_manager-0.2.4.tar.gz \
+	https://pub.dev/api/archives/typed_data-1.4.0.tar.gz -> typed_data-1.4.0.tar.gz \
+	https://pub.dev/api/archives/url_launcher-6.3.2.tar.gz -> url_launcher-6.3.2.tar.gz \
+	https://pub.dev/api/archives/url_launcher_android-6.3.28.tar.gz -> url_launcher_android-6.3.28.tar.gz \
+	https://pub.dev/api/archives/url_launcher_ios-6.3.6.tar.gz -> url_launcher_ios-6.3.6.tar.gz \
+	https://pub.dev/api/archives/url_launcher_linux-3.2.2.tar.gz -> url_launcher_linux-3.2.2.tar.gz \
+	https://pub.dev/api/archives/url_launcher_macos-3.2.5.tar.gz -> url_launcher_macos-3.2.5.tar.gz \
+	https://pub.dev/api/archives/url_launcher_platform_interface-2.3.2.tar.gz -> url_launcher_platform_interface-2.3.2.tar.gz \
+	https://pub.dev/api/archives/url_launcher_web-2.4.1.tar.gz -> url_launcher_web-2.4.1.tar.gz \
+	https://pub.dev/api/archives/url_launcher_windows-3.1.5.tar.gz -> url_launcher_windows-3.1.5.tar.gz \
+	https://pub.dev/api/archives/uuid-4.5.2.tar.gz -> uuid-4.5.2.tar.gz \
+	https://pub.dev/api/archives/vector_math-2.2.0.tar.gz -> vector_math-2.2.0.tar.gz \
+	https://pub.dev/api/archives/vm_service-15.0.2.tar.gz -> vm_service-15.0.2.tar.gz \
+	https://pub.dev/api/archives/watcher-1.2.0.tar.gz -> watcher-1.2.0.tar.gz \
+	https://pub.dev/api/archives/web-1.1.1.tar.gz -> web-1.1.1.tar.gz \
+	https://pub.dev/api/archives/web_socket-1.0.1.tar.gz -> web_socket-1.0.1.tar.gz \
+	https://pub.dev/api/archives/web_socket_channel-3.0.3.tar.gz -> web_socket_channel-3.0.3.tar.gz \
+	https://pub.dev/api/archives/win32-5.15.0.tar.gz -> win32-5.15.0.tar.gz \
+	https://pub.dev/api/archives/window_manager-0.3.9.tar.gz -> window_manager-0.3.9.tar.gz \
+	https://pub.dev/api/archives/xdg_directories-1.1.0.tar.gz -> xdg_directories-1.1.0.tar.gz \
+	https://pub.dev/api/archives/xml-6.6.1.tar.gz -> xml-6.6.1.tar.gz \
+	https://pub.dev/api/archives/yaml-3.1.3.tar.gz -> yaml-3.1.3.tar.gz"
 
 LICENSE="MIT"
 SLOT="0"
@@ -18,10 +156,27 @@ S="${WORKDIR}/${PN/-/_}-${PV}"
 RDEPEND="!app-misc/flutter-jules-bin x11-libs/gtk+:3 x11-libs/pango dev-cpp/gtkmm:3.0"
 BDEPEND="dev-lang/flutter-bin dev-build/ninja dev-build/cmake virtual/pkgconfig llvm-core/clang"
 
+
+src_unpack() {
+	unpack ${P}.tar.gz
+	export PUB_CACHE="${WORKDIR}/pub-cache"
+	mkdir -p "${PUB_CACHE}/hosted/pub.dev"
+
+	for file in ${A}; do
+		if [[ ${file} != ${P}.tar.gz ]]; then
+			pkg_ver=${file%.tar.gz}
+			mkdir -p "${PUB_CACHE}/hosted/pub.dev/${pkg_ver}"
+			tar -xzf "${DISTDIR}/${file}" -C "${PUB_CACHE}/hosted/pub.dev/${pkg_ver}"
+		fi
+	done
+}
+
 src_compile() {
 	flutter config --no-analytics || die
-	flutter pub get || die
-	flutter build linux || die
+	export PUB_CACHE="${WORKDIR}/pub-cache"
+	flutter pub get --offline || die
+	export PUB_CACHE="${WORKDIR}/pub-cache"
+	flutter build linux --no-pub || die
 }
 
 src_install() {
