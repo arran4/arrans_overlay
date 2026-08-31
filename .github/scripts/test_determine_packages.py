@@ -57,28 +57,20 @@ assert [item["group"] for item in mixed] == [
     "caelestia-core", "caelestia-python", "caelestia-fonts", "generic"
 ]
 
-for forced_path in (
+workflow_only = run_helper([
     ".github/workflows/gentoo-pkg-test.yml",
     ".github/scripts/determine_packages.py",
-):
-    forced = run_helper([forced_path], source_paths=[])
-    assert [item["group"] for item in forced] == ["caelestia-core"] * 4
-    assert [item["package"] for item in forced] == [
-        "gui-apps/quickshell",
-        "gui-apps/caelestia-shell",
-        "gui-apps/caelestia-cli",
-        "gui-apps/caelestia-meta",
-    ]
-    assert not any(item["source_target"] for item in forced)
-    assert all(item["cache_lineage"] == "caelestia-core" for item in forced)
+], source_paths=[])
+assert workflow_only == []
 
-forced_with_changed_target = run_helper([
+workflow_with_changed_target = run_helper([
     ".github/workflows/gentoo-pkg-test.yml",
     "gui-apps/caelestia-shell/caelestia-shell-2.3.0.ebuild",
 ])
-assert [item["source_target"] for item in forced_with_changed_target] == [
-    False, True, False, False,
+assert [item["package"] for item in workflow_with_changed_target] == [
+    "=gui-apps/caelestia-shell-2.3.0",
 ]
+assert workflow_with_changed_target[0]["source_target"] is True
 
 prefixed = run_helper(["./app-misc/example/example-1.0.ebuild"])
 assert prefixed == generic
