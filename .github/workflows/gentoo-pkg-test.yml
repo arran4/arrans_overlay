@@ -248,10 +248,10 @@ jobs:
           CI_GRAPH_PREREQUISITES=(dev-util/vulkan-headers)
           TARGET_BINARY_OPTIONS=()
           if [ "$SOURCE_TARGET" = "true" ]; then
-            # A cached binary for this exact CPV may predate the checked-out
-            # ebuild. Dependencies remain binary-first, but a directly changed
-            # target must be built from the source under test.
-            TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$PKG")
+            # A cached binary for this CP may predate the checked-out ebuild.
+            # Portage accepts package/slot atoms (not exact-version atoms) for
+            # --usepkg-exclude, while the emerge target remains the exact CPV.
+            TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$CP")
           fi
           # Resolve and install in one operation so autounmask-continue can
           # apply all proposed changes to this graph without an expensive
