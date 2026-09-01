@@ -13,7 +13,8 @@ not included explicitly, avoiding reliance on transitive Qt includes.
  plugin/src/Caelestia/Services/sessionmanager.cpp  | 1 +
  plugin/src/Caelestia/Services/storage.hpp         | 2 ++
  plugin/src/Caelestia/Services/usagefmt.hpp        | 2 ++
- 6 files changed, 8 insertions(+)
+ plugin/src/Caelestia/toaster.hpp                  | 2 ++
+ 7 files changed, 10 insertions(+)
 
 diff --git a/plugin/src/Caelestia/Images/iutils.hpp b/plugin/src/Caelestia/Images/iutils.hpp
 --- a/plugin/src/Caelestia/Images/iutils.hpp
@@ -87,5 +88,17 @@ diff --git a/plugin/src/Caelestia/Services/usagefmt.hpp b/plugin/src/Caelestia/S
 +#include <qstring.h>
  
  namespace caelestia::services::usagefmt {
+diff --git a/plugin/src/Caelestia/toaster.hpp b/plugin/src/Caelestia/toaster.hpp
+--- a/plugin/src/Caelestia/toaster.hpp
++++ b/plugin/src/Caelestia/toaster.hpp
+@@ -1,7 +1,9 @@
+ #pragma once
+ 
++#include <qjsengine.h>
+ #include <qobject.h>
++#include <qqmlengine.h>
+ #include <qqmlintegration.h>
+ #include <qqmllist.h>
+ #include <qset.h>
 --
 2.55.0
