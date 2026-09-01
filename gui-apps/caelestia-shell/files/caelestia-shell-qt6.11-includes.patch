@@ -42,7 +42,7 @@ diff --git a/plugin/src/Caelestia/Services/lyriccandidate.hpp b/plugin/src/Caele
 diff --git a/plugin/src/Caelestia/Services/lyrics.hpp b/plugin/src/Caelestia/Services/lyrics.hpp
 --- a/plugin/src/Caelestia/Services/lyrics.hpp
 +++ b/plugin/src/Caelestia/Services/lyrics.hpp
-@@ -5,6 +5,7 @@
+@@ -5,7 +5,8 @@
  #include <qhash.h>
  #include <qjsonobject.h>
  #include <qnetworkaccessmanager.h>
@@ -65,7 +65,7 @@ diff --git a/plugin/src/Caelestia/Services/sessionmanager.cpp b/plugin/src/Caele
 diff --git a/plugin/src/Caelestia/Services/storage.hpp b/plugin/src/Caelestia/Services/storage.hpp
 --- a/plugin/src/Caelestia/Services/storage.hpp
 +++ b/plugin/src/Caelestia/Services/storage.hpp
-@@ -4,9 +4,11 @@
+@@ -4,8 +4,10 @@
  #include "tickingservice.hpp"
  
  #include <qbytearrayview.h>
@@ -79,7 +79,7 @@ diff --git a/plugin/src/Caelestia/Services/storage.hpp b/plugin/src/Caelestia/Se
 diff --git a/plugin/src/Caelestia/Services/usagefmt.hpp b/plugin/src/Caelestia/Services/usagefmt.hpp
 --- a/plugin/src/Caelestia/Services/usagefmt.hpp
 +++ b/plugin/src/Caelestia/Services/usagefmt.hpp
-@@ -1,6 +1,8 @@
+@@ -1,5 +1,7 @@
  #pragma once
  
 +#include <qobject.h>
