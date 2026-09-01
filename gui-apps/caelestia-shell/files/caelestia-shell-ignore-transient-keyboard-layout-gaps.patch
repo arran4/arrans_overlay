@@ -8,9 +8,9 @@ into HyprKeyboard. Keep the last real keymap separately from the transient
 IPC value so an empty/Unknown refresh neither produces a blank notification
 nor makes restoration of the same layout look like a layout change.
 ---
- plugin/src/Caelestia/Services/hyprdevices.cpp | 13 ++++++++++---
+ plugin/src/Caelestia/Services/hyprdevices.cpp | 14 ++++++++++----
  plugin/src/Caelestia/Services/hyprdevices.hpp |  1 +
- 2 files changed, 11 insertions(+), 3 deletions(-)
+ 2 files changed, 11 insertions(+), 4 deletions(-)
 
 diff --git a/plugin/src/Caelestia/Services/hyprdevices.cpp b/plugin/src/Caelestia/Services/hyprdevices.cpp
 --- a/plugin/src/Caelestia/Services/hyprdevices.cpp
@@ -25,7 +25,7 @@ diff --git a/plugin/src/Caelestia/Services/hyprdevices.cpp b/plugin/src/Caelesti
  
  QVariantHash HyprKeyboard::lastIpcObject() const {
      return m_lastIpcObject.toVariantHash();
-@@ -93,11 +94,17 @@ bool HyprKeyboard::updateLastIpcObject(QJsonObject object) {
+@@ -93,11 +94,16 @@ bool HyprKeyboard::updateLastIpcObject(QJsonObject object) {
          dirty = true;
          emit layoutChanged();
      }
