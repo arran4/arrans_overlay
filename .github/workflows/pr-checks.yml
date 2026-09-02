@@ -115,5 +115,7 @@ jobs:
             echo "No package files changed. Skipping lint."
           else
             echo "Running g2 lint on changed directories: $DIRS"
-            g2 lint -disable-rule Md5CacheMissing $DIRS
+            # UnstableOnly is informational for an overlay where packages can
+            # intentionally remain ~arch indefinitely; it must not block PRs.
+            g2 lint -disable-rule Md5CacheMissing,UnstableOnly $DIRS
           fi

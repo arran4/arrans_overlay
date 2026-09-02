@@ -18,17 +18,16 @@ diff --git a/README.md b/README.md
 index 61d58f3e..3610f661 100644
 --- a/README.md
 +++ b/README.md
-@@ -240,7 +240,8 @@ For example, to disable the bar on DP-1:
- >   `favouriteApps`, `hiddenApps`, `actions`)
- > - `launcher.useFuzzy` (`apps`, `actions`, `schemes`, `variants`, `wallpapers`)
- > - `notifs` (`expire`, `fullscreen`, `defaultExpireTimeout`, `fullscreenExpireTimeout`, `actionOnClick`)
--> - `lock` (`enableFprint`, `maxFprintTries`)
-+> - `lock` (`enableFprint`, `maxFprintTries`, `facialProvider`, `maxFacialTries`,
-+>   `triggerFacialOnWake`)
- > - `nexus` (`networkRescanInterval`)
- > - `utilities.toasts` (all except `fullscreen`)
- > - `utilities.vpn` (`enabled`, `provider`)
-@@ -251,6 +252,17 @@ For example, to disable the bar on DP-1:
+@@ -232,7 +232,7 @@
+ > - `dashboard`: `mediaUpdateInterval`, `resourceUpdateInterval`
+ > - `general`: `apps.*`, `battery.*`, `idle.*`, `logo`
+ > - `launcher`: `actionPrefix`, `actions`, `enableDangerousActions`, `favouriteApps`, `hiddenApps`, `specialPrefix`, `useFuzzy.*`, `vimKeybinds`
+-> - `lock`: `enableFprint`, `enableHowdy`, `maxFprintTries`, `maxHowdyTries`, `triggerHowdyOnWake`
++> - `lock`: `enableFprint`, `facialProvider`, `maxFprintTries`, `maxFacialTries`, `triggerFacialOnWake`
+ > - `nexus`: `networkRescanInterval`
+ > - `notifs`: `actionOnClick`, `defaultExpireTimeout`, `expire`, `fullscreen`, `fullscreenExpireTimeout`
+ > - `paths`: `lyricsDir`, `wallpaperDir`
+@@ -242,6 +242,17 @@
  >
  > </details>
 
@@ -45,8 +44,8 @@ index 61d58f3e..3610f661 100644
 +
  ### Example configuration
 
- > [!NOTE]
-@@ -697,9 +709,9 @@ For example, to disable the bar on DP-1:
+ > [!WARNING]
+@@ -695,9 +706,9 @@
          "recolourLogo": true,
          "enableFprint": true,
          "maxFprintTries": 3,
