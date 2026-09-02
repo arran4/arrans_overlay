@@ -158,7 +158,6 @@ S="${WORKDIR}/${PN/-/_}-${PV}"
 RDEPEND="!app-misc/flutter-jules-bin x11-libs/gtk+:3 x11-libs/pango"
 BDEPEND="dev-lang/flutter-bin dev-build/ninja dev-build/cmake virtual/pkgconfig"
 
-
 src_unpack() {
 	unpack ${P}.tar.gz
 	export PUB_CACHE="${WORKDIR}/pub-cache"

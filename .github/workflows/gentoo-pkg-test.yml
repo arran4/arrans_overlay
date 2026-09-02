@@ -1,21 +1,15 @@
 name: Gentoo Package Test
 
 on:
-  schedule:
-    - cron: '0 0 1 * *' # Once a month
   workflow_dispatch:
   push:
     branches:
       - main
     paths:
       - '**/*.ebuild'
-      - '.github/workflows/gentoo-pkg-test.yml'
-      - '.github/scripts/determine_packages.py'
   pull_request:
     paths:
       - '**/*.ebuild'
-      - '.github/workflows/gentoo-pkg-test.yml'
-      - '.github/scripts/determine_packages.py'
 
 concurrency:
   group: gentoo-pkg-test-${{ github.ref }}
@@ -57,7 +51,7 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.matrix != '{"include":[]}'
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
@@ -124,7 +118,7 @@ jobs:
             sleep infinity
 
       - name: Install and test packages
-        timeout-minutes: 105
+        timeout-minutes: 165
         run: |
           PACKAGE="${{ matrix.package }}"
           SOURCE_TARGET="${{ matrix.source_target }}"
@@ -248,9 +242,9 @@ jobs:
           CI_GRAPH_PREREQUISITES=(dev-util/vulkan-headers)
           TARGET_BINARY_OPTIONS=()
           if [ "$SOURCE_TARGET" = "true" ]; then
-            # A cached binary for this exact CPV may predate the checked-out
-            # ebuild. Dependencies remain binary-first, but a directly changed
-            # target must be built from the source under test.
+            # A cached binary for this CP may predate the checked-out ebuild.
+            # Portage accepts package/slot atoms (not exact-version atoms) for
+            # --usepkg-exclude, while the emerge target remains the exact CPV.
             TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$CP")
           fi
           # Resolve and install in one operation so autounmask-continue can

@@ -14,7 +14,7 @@ RESTRICT="strip"
 inherit xdg-utils
 
 SRC_URI="
-  amd64? ( https://github.com/LykosAI/StabilityMatrix/releases/download/v2.16.2/StabilityMatrix-linux-x64.zip -> ${P}-StabilityMatrix-linux-x64.zip )
+  amd64? ( https://github.com/LykosAI/StabilityMatrix/releases/download/v2.16.3/StabilityMatrix-linux-x64.zip -> ${P}-StabilityMatrix-linux-x64.zip )
 "
 
 src_unpack() {
