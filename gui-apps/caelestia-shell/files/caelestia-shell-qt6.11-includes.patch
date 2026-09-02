@@ -91,7 +91,7 @@ diff --git a/plugin/src/Caelestia/Services/usagefmt.hpp b/plugin/src/Caelestia/S
 diff --git a/plugin/src/Caelestia/toaster.hpp b/plugin/src/Caelestia/toaster.hpp
 --- a/plugin/src/Caelestia/toaster.hpp
 +++ b/plugin/src/Caelestia/toaster.hpp
-@@ -1,7 +1,9 @@
+@@ -1,6 +1,8 @@
  #pragma once
  
 +#include <qjsengine.h>
