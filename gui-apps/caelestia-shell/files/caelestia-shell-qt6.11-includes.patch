@@ -7,7 +7,8 @@ Caelestia 2.4.0 incorporated several of the explicit Qt includes previously
 carried by this patch. Keep only the headers that are still used directly but
 not included explicitly, avoiding reliance on transitive Qt includes.
 ---
- plugin/src/Caelestia/Images/iutils.hpp             | 1 +
+ plugin/src/Caelestia/Config/enums.hpp              | 1 +
+ plugin/src/Caelestia/Images/iutils.hpp             | 2 ++
  plugin/src/Caelestia/Services/lyriccandidate.hpp  | 1 +
  plugin/src/Caelestia/Services/lyrics.hpp          | 1 +
  plugin/src/Caelestia/Services/sessionmanager.cpp  | 1 +
@@ -15,14 +16,21 @@ not included explicitly, avoiding reliance on transitive Qt includes.
  plugin/src/Caelestia/Services/usagefmt.hpp        | 2 ++
  plugin/src/Caelestia/Settings/settingsfile.cpp    | 1 +
  plugin/src/Caelestia/toaster.hpp                  | 2 ++
- 8 files changed, 11 insertions(+)
+ 9 files changed, 13 insertions(+)
 
+diff --git a/plugin/src/Caelestia/Config/enums.hpp b/plugin/src/Caelestia/Config/enums.hpp
+--- a/plugin/src/Caelestia/Config/enums.hpp
++++ b/plugin/src/Caelestia/Config/enums.hpp
+@@ -3 +3,2 @@
++#include <qobject.h>
+ #include <qqmlintegration.h>
 diff --git a/plugin/src/Caelestia/Images/iutils.hpp b/plugin/src/Caelestia/Images/iutils.hpp
 --- a/plugin/src/Caelestia/Images/iutils.hpp
 +++ b/plugin/src/Caelestia/Images/iutils.hpp
-@@ -1,7 +1,8 @@
+@@ -1,7 +1,9 @@
  #pragma once
  
++#include <qjsengine.h>
  #include <qobject.h>
  #include <qqmlintegration.h>
 +#include <qqmlengine.h>
