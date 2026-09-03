@@ -73,6 +73,7 @@ jobs:
                 echo ""
                 echo "EAPI=8"
                 echo ""
+                echo "ECM_TEST=\"true\""
                 echo "inherit ecm"
                 echo ""
                 echo "DESCRIPTION=\"$description\""
@@ -83,12 +84,10 @@ jobs:
                 echo 'LICENSE="GPL-3"'
                 echo "SLOT=\"0\""
                 echo 'KEYWORDS="~amd64"'
-                echo 'IUSE="debug test"'
-                echo 'RESTRICT="!test? ( test )"'
+                echo 'IUSE="debug"'
                 echo ""
                 echo 'DEPEND="'
                 echo '	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]'
-                echo '	test? ( dev-qt/qtbase:6[test] )'
                 echo '	kde-frameworks/kcoreaddons:6'
                 echo '	kde-frameworks/ki18n:6'
                 echo '	kde-frameworks/kxmlgui:6'
@@ -108,12 +107,6 @@ jobs:
                 echo "	ecm_src_prepare"
                 echo "}"
                 echo ""
-                echo "src_configure() {"
-                echo "	local mycmakeargs=("
-                echo "		-DBUILD_TESTING=OFF"
-                echo "	)"
-                echo "	ecm_src_configure"
-                echo "}"
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild

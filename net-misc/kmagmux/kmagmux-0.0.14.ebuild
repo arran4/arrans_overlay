@@ -6,6 +6,7 @@
 
 EAPI=8
 
+ECM_TEST="true"
 inherit ecm
 
 DESCRIPTION="Torrent file and Magnet link handler for routing to programs/services"
@@ -16,12 +17,10 @@ S="${WORKDIR}/KMagMux-${PV}"
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="debug test"
-RESTRICT="!test? ( test )"
+IUSE="debug"
 
 DEPEND="
 	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]
-	test? ( dev-qt/qtbase:6[test] )
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kxmlgui:6
@@ -39,11 +38,4 @@ BDEPEND="
 
 src_prepare() {
 	ecm_src_prepare
-}
-
-src_configure() {
-	local mycmakeargs=(
-		-DBUILD_TESTING=OFF
-	)
-	ecm_src_configure
 }

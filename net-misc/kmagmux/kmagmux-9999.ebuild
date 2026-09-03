@@ -3,6 +3,7 @@
 
 EAPI=8
 
+ECM_TEST="true"
 inherit ecm git-r3
 
 DESCRIPTION="Torrent file and Magnet link handler for routing to programs/services"
@@ -12,12 +13,10 @@ EGIT_REPO_URI="https://github.com/arran4/KMagMux.git"
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS=""
-IUSE="debug test"
-RESTRICT="!test? ( test )"
+IUSE="debug"
 
 DEPEND="
 	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]
-	test? ( dev-qt/qtbase:6[test] )
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kxmlgui:6
