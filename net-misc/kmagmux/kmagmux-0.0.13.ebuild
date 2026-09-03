@@ -1,12 +1,17 @@
-# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/net-misc-kmagmux-update.yaml
+# Copyright 2024 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+# Generated via:
+# https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/net-misc-kmagmux-update.yaml
+
 EAPI=8
 
 inherit ecm
 
-DESCRIPTION="Torrent file and Magnet link handler for routing to programs / services."
+DESCRIPTION="Torrent file and Magnet link handler for routing to programs/services"
 HOMEPAGE="https://github.com/arran4/KMagMux"
-SRC_URI="https://github.com/arran4/KMagMux/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
-S="${WORKDIR}/${P}"
+U="github.com/arran4/KMagMux/archive/refs/tags"
+SRC_URI="https://${U}/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-3.0-or-later"
 SLOT="0"
