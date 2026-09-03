@@ -17,11 +17,10 @@ DESCRIPTION="Caelestia Quickshell desktop shell (Hyprland)"
 HOMEPAGE="https://github.com/caelestia-dots/shell"
 SRC_URI="
 	https://${SHELL_ARCHIVE}/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz
-	https://${M3SHAPES_ARCHIVE}/${M3SHAPES_REV}.tar.gz -> ${M3SHAPES_DIST}
-"
+	https://${M3SHAPES_ARCHIVE}/${M3SHAPES_REV}.tar.gz -> ${M3SHAPES_DIST}"
+LICENSE="GPL-3"
 S="${WORKDIR}/shell-${PV}"
 
-LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
 
