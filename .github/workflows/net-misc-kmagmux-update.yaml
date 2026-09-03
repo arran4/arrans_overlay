@@ -83,10 +83,12 @@ jobs:
                 echo 'LICENSE="GPL-3"'
                 echo "SLOT=\"0\""
                 echo 'KEYWORDS="~amd64"'
-                echo 'IUSE="debug"'
+                echo 'IUSE="debug test"'
+                echo 'RESTRICT="!test? ( test )"'
                 echo ""
                 echo 'DEPEND="'
                 echo '	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]'
+                echo '	test? ( dev-qt/qtbase:6[test] )'
                 echo '	kde-frameworks/kcoreaddons:6'
                 echo '	kde-frameworks/ki18n:6'
                 echo '	kde-frameworks/kxmlgui:6'

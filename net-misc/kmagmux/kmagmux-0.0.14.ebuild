@@ -16,10 +16,12 @@ S="${WORKDIR}/KMagMux-${PV}"
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="debug"
+IUSE="debug test"
+RESTRICT="!test? ( test )"
 
 DEPEND="
 	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]
+	test? ( dev-qt/qtbase:6[test] )
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kxmlgui:6
