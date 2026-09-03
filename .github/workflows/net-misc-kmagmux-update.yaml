@@ -65,15 +65,20 @@ jobs:
             if [ ! -f "$ebuild_file" ]; then
               # Create ebuild script
               {
-                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/net-misc-kmagmux-update.yaml"
+                echo "# Copyright 2024 Gentoo Authors"
+                echo "# Distributed under the terms of the GNU General Public License v2"
+                echo ""
+                echo "# Generated via:"
+                echo "# https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/net-misc-kmagmux-update.yaml"
+                echo ""
                 echo "EAPI=8"
                 echo ""
                 echo "inherit ecm"
                 echo ""
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
-                echo 'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
-                echo 'S="${WORKDIR}/${P}"'
+                echo 'U="github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags"'
+                echo 'SRC_URI="https://${U}/v${PV}.tar.gz -> ${P}.tar.gz"'
                 echo ""
                 echo 'LICENSE="GPL-3.0-or-later"'
                 echo "SLOT=\"0\""
