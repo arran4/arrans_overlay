@@ -8,7 +8,7 @@ EAPI=8
 
 inherit ecm
 
-DESCRIPTION="Torrent file and Magnet link handler for routing to programs / services."
+DESCRIPTION="Torrent file and Magnet link handler for routing to programs/services"
 HOMEPAGE="https://github.com/arran4/KMagMux"
 U="github.com/arran4/KMagMux/archive/refs/tags"
 SRC_URI="https://${U}/v${PV}.tar.gz -> ${P}.tar.gz"
@@ -19,8 +19,7 @@ IUSE="debug"
 KEYWORDS="~amd64"
 
 DEPEND="
-	dev-qt/qtbase:6
-	dev-qt/qtdeclarative:6
+	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent,test]
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kxmlgui:6

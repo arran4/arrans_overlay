@@ -86,8 +86,7 @@ jobs:
                 echo 'KEYWORDS="~amd64"'
                 echo ""
                 echo 'DEPEND="'
-                echo '	dev-qt/qtbase:6'
-                echo '	dev-qt/qtdeclarative:6'
+                echo '	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent,test]'
                 echo '	kde-frameworks/kcoreaddons:6'
                 echo '	kde-frameworks/ki18n:6'
                 echo '	kde-frameworks/kxmlgui:6'
