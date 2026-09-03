@@ -19,7 +19,7 @@ KEYWORDS="~amd64"
 IUSE="debug"
 
 DEPEND="
-	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent,test]
+	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kxmlgui:6
@@ -29,6 +29,11 @@ DEPEND="
 	kde-frameworks/kwallet:6
 "
 RDEPEND="${DEPEND}"
+BDEPEND="
+	dev-qt/qttools:6[linguist]
+	virtual/pkgconfig
+	kde-frameworks/extra-cmake-modules:0
+"
 
 src_prepare() {
 	ecm_src_prepare

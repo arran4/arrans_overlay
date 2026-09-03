@@ -86,7 +86,7 @@ jobs:
                 echo 'IUSE="debug"'
                 echo ""
                 echo 'DEPEND="'
-                echo '	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent,test]'
+                echo '	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent]'
                 echo '	kde-frameworks/kcoreaddons:6'
                 echo '	kde-frameworks/ki18n:6'
                 echo '	kde-frameworks/kxmlgui:6'
@@ -96,6 +96,11 @@ jobs:
                 echo '	kde-frameworks/kwallet:6'
                 echo '"'
                 echo 'RDEPEND="${DEPEND}"'
+                echo 'BDEPEND="'
+                echo '	dev-qt/qttools:6[linguist]'
+                echo '	virtual/pkgconfig'
+                echo '	kde-frameworks/extra-cmake-modules:0'
+                echo '"'
                 echo ""
                 echo "src_prepare() {"
                 echo "	ecm_src_prepare"
