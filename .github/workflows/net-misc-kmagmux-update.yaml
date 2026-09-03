@@ -78,6 +78,7 @@ jobs:
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
                 echo 'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
+                echo 'S="${WORKDIR}/KMagMux-${PV}"'
                 echo ""
                 echo 'LICENSE="GPL-3"'
                 echo "SLOT=\"0\""
