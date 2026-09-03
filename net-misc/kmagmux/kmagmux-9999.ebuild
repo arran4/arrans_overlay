@@ -6,7 +6,7 @@ EAPI=8
 ECM_TEST="true"
 inherit ecm git-r3
 
-DESCRIPTION="Torrent file and Magnet link handler for routing to programs/services"
+DESCRIPTION="Torrent file and Magnet link handler routing to programs/services"
 HOMEPAGE="https://github.com/arran4/KMagMux"
 EGIT_REPO_URI="https://github.com/arran4/KMagMux.git"
 
