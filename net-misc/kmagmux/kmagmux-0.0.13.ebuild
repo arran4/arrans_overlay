@@ -1,9 +1,7 @@
 # Copyright 2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-# Generated via:
-# https://github.com/arran4/arrans_overlay/blob/main/\
-# .github/workflows/net-misc-kmagmux-update.yaml
+# Generator: .github/workflows/net-misc-kmagmux-update.yaml
 
 EAPI=8
 
