@@ -9,7 +9,7 @@ DESCRIPTION="Torrent file and Magnet link handler for routing to programs/servic
 HOMEPAGE="https://github.com/arran4/KMagMux"
 EGIT_REPO_URI="https://github.com/arran4/KMagMux.git"
 
-LICENSE="GPL-3.0-or-later"
+LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS=""
 IUSE="debug"

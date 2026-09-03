@@ -10,13 +10,12 @@ inherit ecm
 
 DESCRIPTION="Torrent file and Magnet link handler for routing to programs/services"
 HOMEPAGE="https://github.com/arran4/KMagMux"
-U="github.com/arran4/KMagMux/archive/refs/tags"
-SRC_URI="https://${U}/v${PV}.tar.gz -> ${P}.tar.gz"
+SRC_URI="https://github.com/arran4/KMagMux/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
 
-LICENSE="GPL-3.0-or-later"
+LICENSE="GPL-3"
 SLOT="0"
-IUSE="debug"
 KEYWORDS="~amd64"
+IUSE="debug"
 
 DEPEND="
 	dev-qt/qtbase:6[dbus,gui,network,widgets,concurrent,test]
