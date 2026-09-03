@@ -20,7 +20,7 @@ env:
   ebuild_name: kmagmux
   github_owner: arran4
   github_repo: KMagMux
-  description: "Torrent file and Magnet link handler for routing to programs / services."
+  description: "Torrent file and Magnet link handler for routing to programs/services"
   homepage: "https://github.com/arran4/KMagMux"
 
 jobs:
