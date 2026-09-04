@@ -12,10 +12,15 @@ PUB="pub.dev/api/archives"
 JULES_SRC="github.com/arran4/flutter_jules/archive/refs/tags"
 FLUTTER_PV="3.47.2"
 FLUTTER_ENGINE_COMMIT="a804b261645ef8c13eb3d5c44a5c2fb0340c5539"
+GCS="storage.googleapis.com/flutter_infra_release/flutter"
+FLUTTER_STORAGE="${GCS}/${FLUTTER_ENGINE_COMMIT}"
 SRC_URI="https://${JULES_SRC}/v${PV}.tar.gz -> flutter-jules-${PV}.tar.gz \
-	https://storage.googleapis.com/flutter_infra_release/flutter/${FLUTTER_ENGINE_COMMIT}/linux-x64-debug/linux-x64-flutter-gtk.zip -> flutter-linux-x64-debug-${FLUTTER_ENGINE_COMMIT}.zip \
-	https://storage.googleapis.com/flutter_infra_release/flutter/${FLUTTER_ENGINE_COMMIT}/linux-x64-profile/linux-x64-flutter-gtk.zip -> flutter-linux-x64-profile-${FLUTTER_ENGINE_COMMIT}.zip \
-	https://storage.googleapis.com/flutter_infra_release/flutter/${FLUTTER_ENGINE_COMMIT}/linux-x64-release/linux-x64-flutter-gtk.zip -> flutter-linux-x64-release-${FLUTTER_ENGINE_COMMIT}.zip \
+	https://${FLUTTER_STORAGE}/linux-x64-debug/linux-x64-flutter-gtk.zip
+		-> flutter-linux-x64-debug-${FLUTTER_ENGINE_COMMIT}.zip \
+	https://${FLUTTER_STORAGE}/linux-x64-profile/linux-x64-flutter-gtk.zip
+		-> flutter-linux-x64-profile-${FLUTTER_ENGINE_COMMIT}.zip \
+	https://${FLUTTER_STORAGE}/linux-x64-release/linux-x64-flutter-gtk.zip
+		-> flutter-linux-x64-release-${FLUTTER_ENGINE_COMMIT}.zip \
 	https://${PUB}/_fe_analyzer_shared-92.0.0.tar.gz \
 	https://${PUB}/analyzer-9.0.0.tar.gz \
 	https://${PUB}/archive-4.0.7.tar.gz \
@@ -159,9 +164,24 @@ KEYWORDS="~amd64"
 
 S="${WORKDIR}/${PN/-/_}-${PV}"
 
-RDEPEND="!app-misc/flutter-jules-bin app-crypt/libsecret dev-libs/libayatana-appindicator x11-libs/gtk+:3 x11-libs/pango"
-DEPEND="${RDEPEND}"
-BDEPEND="=dev-lang/flutter-bin-${FLUTTER_PV}* app-arch/unzip dev-build/ninja dev-build/cmake virtual/pkgconfig"
+COMMON_DEPEND="
+	app-crypt/libsecret
+	dev-libs/libayatana-appindicator
+	x11-libs/gtk+:3
+	x11-libs/pango
+"
+RDEPEND="
+	${COMMON_DEPEND}
+	!app-misc/flutter-jules-bin
+"
+DEPEND="${COMMON_DEPEND}"
+BDEPEND="
+	=dev-lang/flutter-bin-${FLUTTER_PV}*
+	app-arch/unzip
+	dev-build/ninja
+	dev-build/cmake
+	virtual/pkgconfig
+"
 
 src_unpack() {
 	local file pkg_ver
@@ -173,29 +193,38 @@ src_unpack() {
 	for file in ${A}; do
 		if [[ ${file} == *.tar.gz && ${file} != ${P}.tar.gz ]]; then
 			pkg_ver=${file%.tar.gz}
-			mkdir -p "${pub_cache}/hosted/pub.dev/${pkg_ver}" || die
-			tar -xzf "${DISTDIR}/${file}" \
-				-C "${pub_cache}/hosted/pub.dev/${pkg_ver}" || die
+			local dest="${pub_cache}/hosted/pub.dev/${pkg_ver}"
+			mkdir -p "${dest}" || die
+			tar -xzf "${DISTDIR}/${file}" -C "${dest}" || die
 		fi
 	done
 }
 
 src_compile() {
-	local mode
+	local mode dir
 
 	export FLUTTER_CACHE_DIR="${WORKDIR}/flutter-cache"
 	export PUB_CACHE="${WORKDIR}/pub-cache"
 	mkdir -p "${FLUTTER_CACHE_DIR}" || die
-	cp -a --reflink=auto /opt/flutter/bin/cache/. "${FLUTTER_CACHE_DIR}/" || die
+	cp -a --reflink=auto /opt/flutter/bin/cache/. \
+		"${FLUTTER_CACHE_DIR}/" || die
 	chmod -R u+rwX "${FLUTTER_CACHE_DIR}" || die
 	for mode in debug profile release; do
-		mkdir -p "${FLUTTER_CACHE_DIR}/artifacts/engine/linux-x64-${mode}" || die
-		unzip -q \
-			"${DISTDIR}/flutter-linux-x64-${mode}-${FLUTTER_ENGINE_COMMIT}.zip" \
-			-d "${FLUTTER_CACHE_DIR}/artifacts/engine/linux-x64-${mode}" || die
+		if [[ ${mode} == "debug" ]]; then
+			dir="linux-x64"
+		else
+			dir="linux-x64-${mode}"
+		fi
+		local eng_dir="${FLUTTER_CACHE_DIR}/artifacts/engine/${dir}"
+		local eng_zip="flutter-linux-x64-${mode}"
+		eng_zip+="-${FLUTTER_ENGINE_COMMIT}.zip"
+		mkdir -p "${eng_dir}" || die
+		unzip -qo "${DISTDIR}/${eng_zip}" -d "${eng_dir}" || die
 	done
 	printf '%s\n' "${FLUTTER_ENGINE_COMMIT}" \
 		> "${FLUTTER_CACHE_DIR}/linux-sdk.stamp" || die
+
+	mkdir -p build/native_assets/linux || die
 
 	flutter config --no-analytics || die
 	flutter pub get --offline || die
@@ -208,8 +237,8 @@ src_install() {
 	fperms +x /opt/flutter_jules/flutter_jules
 	dosym ../../opt/flutter_jules/flutter_jules /usr/bin/flutter_jules
 
-	newicon -s 1024 \
-		macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png \
-		com.arran4.flutter_jules.png
+	local icon="macos/Runner/Assets.xcassets"
+	icon+="/AppIcon.appiconset/app_icon_1024.png"
+	newicon -s 1024 "${icon}" com.arran4.flutter_jules.png
 	domenu linux/com.arran4.flutter_jules.desktop
 }

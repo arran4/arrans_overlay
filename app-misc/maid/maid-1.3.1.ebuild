@@ -10,18 +10,29 @@ LICENSE="MIT"
 HOMEPAGE="https://github.com/Mobile-Artificial-Intelligence/maid"
 PUB="pub.dev/api/archives"
 MAID_SRC="github.com/Mobile-Artificial-Intelligence/maid/archive/refs/tags"
+MAID_LLM_SRC="github.com/Mobile-Artificial-Intelligence/maid_llm/archive"
+BABYLON_SRC="github.com/KevinSerres/babylon_tts/archive"
+LLAMA_SRC="github.com/ggml-org/llama.cpp/archive"
 MAID_LLM_COMMIT="c73dd4b70c9e0463f88222b5fd2d8a60f80af16d"
 BABYLON_TTS_COMMIT="94b9ba2228a822be661bc479fe3a323a21023840"
 LLAMA_CPP_COMMIT="7237e1ffe2803f8fe6facf8990610c4f17254793"
 FLUTTER_PV="3.47.2"
 FLUTTER_ENGINE_COMMIT="a804b261645ef8c13eb3d5c44a5c2fb0340c5539"
+GCS="storage.googleapis.com/flutter_infra_release/flutter"
+FLUTTER_STORAGE="${GCS}/${FLUTTER_ENGINE_COMMIT}"
 SRC_URI="https://${MAID_SRC}/${PV}.tar.gz -> maid-${PV}.tar.gz \
-	https://github.com/Mobile-Artificial-Intelligence/maid_llm/archive/${MAID_LLM_COMMIT}.tar.gz -> maid_llm-${MAID_LLM_COMMIT}.tar.gz \
-	https://github.com/KevinSerres/babylon_tts/archive/${BABYLON_TTS_COMMIT}.tar.gz -> babylon_tts-${BABYLON_TTS_COMMIT}.tar.gz \
-	https://github.com/ggml-org/llama.cpp/archive/${LLAMA_CPP_COMMIT}.tar.gz -> llama.cpp-${LLAMA_CPP_COMMIT}.tar.gz \
-	https://storage.googleapis.com/flutter_infra_release/flutter/${FLUTTER_ENGINE_COMMIT}/linux-x64-debug/linux-x64-flutter-gtk.zip -> flutter-linux-x64-debug-${FLUTTER_ENGINE_COMMIT}.zip \
-	https://storage.googleapis.com/flutter_infra_release/flutter/${FLUTTER_ENGINE_COMMIT}/linux-x64-profile/linux-x64-flutter-gtk.zip -> flutter-linux-x64-profile-${FLUTTER_ENGINE_COMMIT}.zip \
-	https://storage.googleapis.com/flutter_infra_release/flutter/${FLUTTER_ENGINE_COMMIT}/linux-x64-release/linux-x64-flutter-gtk.zip -> flutter-linux-x64-release-${FLUTTER_ENGINE_COMMIT}.zip \
+	https://${MAID_LLM_SRC}/${MAID_LLM_COMMIT}.tar.gz
+		-> maid_llm-${MAID_LLM_COMMIT}.tar.gz \
+	https://${BABYLON_SRC}/${BABYLON_TTS_COMMIT}.tar.gz
+		-> babylon_tts-${BABYLON_TTS_COMMIT}.tar.gz \
+	https://${LLAMA_SRC}/${LLAMA_CPP_COMMIT}.tar.gz
+		-> llama.cpp-${LLAMA_CPP_COMMIT}.tar.gz \
+	https://${FLUTTER_STORAGE}/linux-x64-debug/linux-x64-flutter-gtk.zip
+		-> flutter-linux-x64-debug-${FLUTTER_ENGINE_COMMIT}.zip \
+	https://${FLUTTER_STORAGE}/linux-x64-profile/linux-x64-flutter-gtk.zip
+		-> flutter-linux-x64-profile-${FLUTTER_ENGINE_COMMIT}.zip \
+	https://${FLUTTER_STORAGE}/linux-x64-release/linux-x64-flutter-gtk.zip
+		-> flutter-linux-x64-release-${FLUTTER_ENGINE_COMMIT}.zip \
 	https://${PUB}/_fe_analyzer_shared-67.0.0.tar.gz \
 	https://${PUB}/analyzer-6.4.1.tar.gz \
 	https://${PUB}/archive-3.6.1.tar.gz \
@@ -155,10 +166,28 @@ SRC_URI="https://${MAID_SRC}/${PV}.tar.gz -> maid-${PV}.tar.gz \
 SLOT="0"
 KEYWORDS="~amd64"
 
-RDEPEND="!app-misc/maid-appimage media-libs/gstreamer:1.0 media-libs/gst-plugins-base:1.0 media-libs/vulkan-loader x11-libs/gtk+:3 x11-libs/pango"
-DEPEND="${RDEPEND} dev-util/vulkan-headers"
-BDEPEND="=dev-lang/flutter-bin-${FLUTTER_PV}* app-arch/unzip dev-build/ninja dev-build/cmake"
-BDEPEND+=" virtual/pkgconfig"
+COMMON_DEPEND="
+	media-libs/gstreamer:1.0
+	media-libs/gst-plugins-base:1.0
+	media-libs/vulkan-loader
+	x11-libs/gtk+:3
+	x11-libs/pango
+"
+RDEPEND="
+	${COMMON_DEPEND}
+	!app-misc/maid-appimage
+"
+DEPEND="
+	${COMMON_DEPEND}
+	dev-util/vulkan-headers
+"
+BDEPEND="
+	=dev-lang/flutter-bin-${FLUTTER_PV}*
+	app-arch/unzip
+	dev-build/ninja
+	dev-build/cmake
+	virtual/pkgconfig
+"
 
 src_unpack() {
 	local file pkg_ver
@@ -175,20 +204,28 @@ src_unpack() {
 	tar -xzf "${DISTDIR}/babylon_tts-${BABYLON_TTS_COMMIT}.tar.gz" \
 		-C "${S}/packages/babylon_tts" --strip-components=1 || die
 	tar -xzf "${DISTDIR}/llama.cpp-${LLAMA_CPP_COMMIT}.tar.gz" \
-		-C "${S}/packages/maid_llm/src/llama_cpp" --strip-components=1 || die
+		--strip-components=1 \
+		-C "${S}/packages/maid_llm/src/llama_cpp" || die
 
 	for file in ${A}; do
 		case ${file} in
-			"${P}.tar.gz"|"maid_llm-${MAID_LLM_COMMIT}.tar.gz"|"babylon_tts-${BABYLON_TTS_COMMIT}.tar.gz"|"llama.cpp-${LLAMA_CPP_COMMIT}.tar.gz")
+			"${P}.tar.gz"|\
+			"maid_llm-${MAID_LLM_COMMIT}.tar.gz"|\
+			"babylon_tts-${BABYLON_TTS_COMMIT}.tar.gz"|\
+			"llama.cpp-${LLAMA_CPP_COMMIT}.tar.gz"|\
+			flutter-linux-x64-*)
 				continue
 				;;
+			*.tar.gz)
+				pkg_ver=${file%.tar.gz}
+				local dest
+				dest="${pub_cache}/hosted/pub.dev"
+				dest+="/${pkg_ver}"
+				mkdir -p "${dest}" || die
+				tar -xzf "${DISTDIR}/${file}" \
+					-C "${dest}" || die
+				;;
 		esac
-		[[ ${file} == *.tar.gz ]] || continue
-
-		pkg_ver=${file%.tar.gz}
-		mkdir -p "${pub_cache}/hosted/pub.dev/${pkg_ver}" || die
-		tar -xzf "${DISTDIR}/${file}" \
-			-C "${pub_cache}/hosted/pub.dev/${pkg_ver}" || die
 	done
 }
 
@@ -197,26 +234,39 @@ src_prepare() {
 
 	# These old LangChain releases work with collection-1.19, but their
 	# published upper bounds predate the version required by Flutter 3.47.
-	sed -i '/^dev_dependencies:/i dependency_overrides:\n  collection: 1.19.1\n' \
-		pubspec.yaml || die
+	local override="dependency_overrides:\n  collection: 1.19.1\n"
+	sed -i "/^dev_dependencies:/i ${override}" pubspec.yaml || die
+
+	# Fix DialogTheme -> DialogThemeData for Flutter 3.47+ compatibility
+	sed -i 's/dialogTheme: DialogTheme(/dialogTheme: DialogThemeData(/' \
+		lib/classes/static/themes.dart || die
 }
 
 src_compile() {
-	local mode
+	local mode dir
 
 	export FLUTTER_CACHE_DIR="${WORKDIR}/flutter-cache"
 	export PUB_CACHE="${WORKDIR}/pub-cache"
 	mkdir -p "${FLUTTER_CACHE_DIR}" || die
-	cp -a --reflink=auto /opt/flutter/bin/cache/. "${FLUTTER_CACHE_DIR}/" || die
+	cp -a --reflink=auto /opt/flutter/bin/cache/. \
+		"${FLUTTER_CACHE_DIR}/" || die
 	chmod -R u+rwX "${FLUTTER_CACHE_DIR}" || die
 	for mode in debug profile release; do
-		mkdir -p "${FLUTTER_CACHE_DIR}/artifacts/engine/linux-x64-${mode}" || die
-		unzip -q \
-			"${DISTDIR}/flutter-linux-x64-${mode}-${FLUTTER_ENGINE_COMMIT}.zip" \
-			-d "${FLUTTER_CACHE_DIR}/artifacts/engine/linux-x64-${mode}" || die
+		if [[ ${mode} == "debug" ]]; then
+			dir="linux-x64"
+		else
+			dir="linux-x64-${mode}"
+		fi
+		local eng_dir="${FLUTTER_CACHE_DIR}/artifacts/engine/${dir}"
+		local eng_zip="flutter-linux-x64-${mode}"
+		eng_zip+="-${FLUTTER_ENGINE_COMMIT}.zip"
+		mkdir -p "${eng_dir}" || die
+		unzip -qo "${DISTDIR}/${eng_zip}" -d "${eng_dir}" || die
 	done
 	printf '%s\n' "${FLUTTER_ENGINE_COMMIT}" \
 		> "${FLUTTER_CACHE_DIR}/linux-sdk.stamp" || die
+
+	mkdir -p build/native_assets/linux || die
 
 	flutter config --no-analytics || die
 	flutter pub get --offline || die
