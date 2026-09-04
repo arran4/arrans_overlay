@@ -2,8 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 # Generated via:
-# https://github.com/arran4/arrans_overlay/blob/main\
-# /.github/workflows/dev-lang-dart-bin-update.yaml
+# .github/workflows/dev-lang-dart-bin-update.yaml
 EAPI=8
 
 DESCRIPTION="The Dart SDK, including the VM, dart2js, core libraries, and more."

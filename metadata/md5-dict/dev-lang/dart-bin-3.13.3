@@ -1,3 +1,5 @@
+SLOT=0
+KEYWORDS=~amd64 ~arm ~arm64 ~riscv
 SRC_URI=
 	amd64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/3.13.3/sdk/dartsdk-linux-x64-release.zip -> dart-bin-3.13.3.amd64.zip )
 	arm? ( https://storage.googleapis.com/dart-archive/channels/stable/release/3.13.3/sdk/dartsdk-linux-arm-release.zip -> dart-bin-3.13.3.arm.zip )
@@ -6,9 +8,7 @@ SRC_URI=
 
 LICENSE=BSD
 EAPI=8
-HOMEPAGE=https://dart.dev/
-KEYWORDS=~amd64 ~arm ~arm64 ~riscv
 RDEPEND=app-arch/unzip
 DESCRIPTION=The Dart SDK, including the VM, dart2js, core libraries, and more.
-SLOT=0
-_md5_=7194595f79dd5f5943bd1669b9bd16f3
+HOMEPAGE=https://dart.dev/
+_md5_=ea6b8d205fca573a9586d401f62c6a12

@@ -2,8 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 # Generated via:
-# https://github.com/arran4/arrans_overlay/blob/main\
-# /.github/workflows/net-misc-kmagmux-update.yaml
+# .github/workflows/net-misc-kmagmux-update.yaml
 EAPI=8
 
 inherit ecm
