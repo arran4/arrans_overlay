@@ -181,10 +181,10 @@ jobs:
           # Qt's public binhost contains multiple builds with opposing qtbase
           # OpenGL requirements. Overlay targets require qtbase[opengl], so
           # constrain only qtbase and let Portage select matching Qt binaries.
+          # We no longer force opengl globally for qtbase/qtdeclarative, allowing
+          # targets like KMagMux to resolve dependencies (like icu) without conflict.
           mkdir -p /etc/portage/package.use
           printf "%s\n" \
-            "dev-qt/qtbase opengl" \
-            "dev-qt/qtdeclarative opengl" \
             "media-libs/freetype harfbuzz" \
             "media-libs/libglvnd X" \
             "x11-libs/cairo X" \
@@ -261,8 +261,17 @@ jobs:
             --backtrack=50 \
             "${TARGET_BINARY_OPTIONS[@]}" \
             "${CI_GRAPH_PREREQUISITES[@]}" "$PKG"; then
-            echo "Failed to emerge $PKG"
-            FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
+            echo "First emerge failed. Retrying in case of autounmask changes..."
+            if ! emerge -v \
+              --usepkg --getbinpkg --binpkg-changed-deps=y \
+              --autounmask=y --autounmask-keep-masks=y \
+              --autounmask-write=y --autounmask-continue=y \
+              --backtrack=50 \
+              "${TARGET_BINARY_OPTIONS[@]}" \
+              "${CI_GRAPH_PREREQUISITES[@]}" "$PKG"; then
+              echo "Failed to emerge $PKG after second attempt."
+              FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
+            fi
           fi
 
           if [ -n "$FAILED_PACKAGES" ]; then
