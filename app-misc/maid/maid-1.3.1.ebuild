@@ -246,6 +246,18 @@ src_prepare() {
 src_compile() {
 	local mode dir
 
+	if ! command -v clang++ >/dev/null 2>&1; then
+		local llvm_bin
+		for llvm_bin in $(ls -d "${BROOT}"/usr/lib/llvm/*/bin \
+			2>/dev/null | sort -V -r); do
+			if [[ -x "${llvm_bin}/clang++" ]]; then
+				export PATH="${llvm_bin}:${PATH}"
+				break
+			fi
+		done
+	fi
+	command -v clang++ >/dev/null 2>&1 || die "clang++ not found in PATH"
+
 	export FLUTTER_CACHE_DIR="${WORKDIR}/flutter-cache"
 	export PUB_CACHE="${WORKDIR}/pub-cache"
 	mkdir -p "${FLUTTER_CACHE_DIR}" || die
