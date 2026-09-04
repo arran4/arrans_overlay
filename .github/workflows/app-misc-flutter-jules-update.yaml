@@ -1,0 +1,104 @@
+name: app-misc/flutter-jules source update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '17 0 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/app-misc-flutter-jules-update.yaml'
+
+concurrency:
+  group: app-misc-flutter-jules-update-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  EBUILD_CATEGORY: app-misc
+  EBUILD_NAME: flutter-jules
+  UPSTREAM_OWNER: arran4
+  UPSTREAM_REPO: flutter_jules
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Find latest stable SemVer tag
+        id: update
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ebuild_dir="${EBUILD_CATEGORY}/${EBUILD_NAME}"
+          manifest="${ebuild_dir}/Manifest"
+          latest_tag=$(
+            gh api --paginate "repos/${UPSTREAM_OWNER}/${UPSTREAM_REPO}/tags?per_page=100" --jq '.[].name' |
+              grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
+              sort -V |
+              tail -n 1
+          )
+          [[ -n "${latest_tag}" ]] || {
+            echo "No stable SemVer tags found upstream" >&2
+            exit 1
+          }
+
+          version=${latest_tag#v}
+          existing_ebuild=$(find "${ebuild_dir}" -maxdepth 1 -type f \
+            \( -name "${EBUILD_NAME}-${version}.ebuild" -o -name "${EBUILD_NAME}-${version}-r[0-9]*.ebuild" \) \
+            -print -quit)
+
+          if [[ -z "${existing_ebuild}" ]]; then
+            template=$(find "${ebuild_dir}" -maxdepth 1 -type f -name "${EBUILD_NAME}-*.ebuild" -print | sort -V | tail -n 1)
+            [[ -n "${template}" ]] || {
+              echo "No existing source ebuild is available as a template" >&2
+              exit 1
+            }
+
+            new_ebuild="${ebuild_dir}/${EBUILD_NAME}-${version}.ebuild"
+            cp "${template}" "${new_ebuild}"
+            echo "Created ${new_ebuild} from ${template}"
+          else
+            echo "${EBUILD_NAME}-${version} already exists as ${existing_ebuild}"
+          fi
+
+          source_url="https://github.com/${UPSTREAM_OWNER}/${UPSTREAM_REPO}/archive/refs/tags/${latest_tag}.tar.gz"
+          distfile="${EBUILD_NAME}-${version}.tar.gz"
+          g2 manifest upsert-from-url "${source_url}" "${distfile}" "${manifest}"
+          g2 ebuild deduplicate "${ebuild_dir}"
+
+          echo "latest_tag=${latest_tag}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          if [[ -n "$(git status --porcelain -- "${ebuild_dir}")" ]]; then
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Lint generated package
+        if: steps.update.outputs.changed == 'true'
+        shell: bash
+        run: g2 lint . "${EBUILD_CATEGORY}/${EBUILD_NAME}"
+
+      - name: Commit update
+        if: steps.update.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "${EBUILD_CATEGORY}/${EBUILD_NAME}"
+          git commit -m "app-misc/flutter-jules: update to ${{ steps.update.outputs.version }}"
+          git pull --rebase
+          git push

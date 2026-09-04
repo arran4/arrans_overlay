@@ -1,0 +1,109 @@
+name: app-misc/flutter-jules source integration
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'app-misc/flutter-jules/**'
+      - 'scripts/test_flutter_jules_source.sh'
+      - '.github/workflows/app-misc-flutter-jules-test.yaml'
+      - '.github/workflows/app-misc-flutter-jules-update.yaml'
+
+concurrency:
+  group: flutter-jules-source-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start Gentoo stage3
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull gentoo/stage3:latest
+          docker pull gentoo/portage:latest
+          docker create --name flutter-jules-portage gentoo/portage:latest
+          docker run --detach \
+            --name flutter-jules-gentoo \
+            --volumes-from flutter-jules-portage \
+            --volume "${GITHUB_WORKSPACE}:/var/db/repos/arrans_overlay:ro" \
+            gentoo/stage3:latest \
+            sleep infinity
+
+      - name: Build and install flutter-jules from source
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec flutter-jules-gentoo bash -euxo pipefail -c '
+            mkdir -p /etc/portage/repos.conf /etc/portage/package.use
+            printf "%s\n" \
+              "[arrans-overlay]" \
+              "location = /var/db/repos/arrans_overlay" \
+              "masters = gentoo" \
+              "auto-sync = no" \
+              > /etc/portage/repos.conf/arrans-overlay.conf
+
+            # libayatana-appindicator requires libdbusmenu[gtk3]. A normal
+            # Gentoo desktop already carries the relevant USE state; spell it
+            # out for the intentionally minimal stage3 test root.
+            printf "%s\n" "dev-libs/libdbusmenu gtk3" \
+              > /etc/portage/package.use/flutter-jules-ci
+
+            # The stage3 image can lag the separately mounted current Portage
+            # snapshot. Bring its declared system set forward first.
+            emerge --getbinpkg --update --deep --newuse --with-bdeps=y @world
+
+            # Docker stage3 intentionally has no world file, so depclean cannot
+            # identify old Perl modules as removable. When the current Portage
+            # tree has moved to a new Perl subslot, explicitly remove the stale
+            # Perl stack from this disposable test root and let the package
+            # resolver install a coherent current stack below.
+            if [ -d /var/db/pkg/dev-lang/perl-5.42.2 ]; then
+              perl_atoms=()
+              for pkgdir in \
+                /var/db/pkg/dev-perl/* \
+                /var/db/pkg/perl-core/* \
+                /var/db/pkg/virtual/perl-* \
+                /var/db/pkg/dev-lang/perl-*; do
+                [ -d "${pkgdir}" ] || continue
+                category=$(basename "$(dirname "${pkgdir}")")
+                pf_installed=$(basename "${pkgdir}")
+                perl_atoms+=("=${category}/${pf_installed}")
+              done
+              printf "Removing stale stage3 Perl packages:\n%s\n" "${perl_atoms[*]}"
+              emerge --unmerge "${perl_atoms[@]}"
+            fi
+
+            ebuild_file=$(find /var/db/repos/arrans_overlay/app-misc/flutter-jules -maxdepth 1 -type f -name "flutter-jules-*.ebuild" -print | sort -V | tail -n 1)
+            [ -n "${ebuild_file}" ]
+            pf=$(basename "${ebuild_file}" .ebuild)
+            atom="=app-misc/${pf}"
+
+            echo "Testing ${atom} from ${ebuild_file}"
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --getbinpkg --oneshot "${atom}"; then
+              build_log=$(find "/var/tmp/portage/app-misc/${pf}" -path "*/temp/build.log" -print -quit 2>/dev/null || true)
+              if [ -n "${build_log}" ]; then
+                echo "===== flutter-jules Portage build.log ====="
+                cat "${build_log}"
+                echo "===== end flutter-jules Portage build.log ====="
+              fi
+              exit 1
+            fi
+
+            bash /var/db/repos/arrans_overlay/scripts/test_flutter_jules_source.sh
+          '
+
+      - name: Clean up containers
+        if: always()
+        shell: bash
+        run: |
+          docker rm --force flutter-jules-gentoo || true
+          docker rm --force flutter-jules-portage || true
