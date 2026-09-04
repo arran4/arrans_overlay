@@ -180,6 +180,7 @@ BDEPEND="
 	app-arch/unzip
 	dev-build/ninja
 	dev-build/cmake
+	llvm-core/clang
 	virtual/pkgconfig
 "
 
