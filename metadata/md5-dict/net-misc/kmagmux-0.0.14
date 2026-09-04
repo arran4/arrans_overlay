@@ -1,7 +1,8 @@
-EAPI=8
-INHERITED=ecm
-SRC_URI=https://github.com/arran4/KMagMux/archive/v0.0.14.tar.gz -> kmagmux-0.0.14.tar.gz
 LICENSE=GPL-3
+SLOT=0
+EAPI=8
+IUSE=debug
+DESCRIPTION=Torrent file and Magnet link handler for programs/services.
 KEYWORDS=~amd64
 RDEPEND=
 	dev-qt/qtbase:6[concurrent,gui,network,widgets]
@@ -10,8 +11,11 @@ RDEPEND=
 	kde-frameworks/kwallet:6
 	kde-frameworks/kxmlgui:6
 
-HOMEPAGE=https://github.com/arran4/KMagMux
-DESCRIPTION=Torrent file and Magnet link handler for programs/services.
+BDEPEND=
+	dev-qt/qttools:6[linguist]
+	kde-frameworks/extra-cmake-modules:0
+	virtual/pkgconfig
+
 DEPEND=
 	dev-qt/qtbase:6[concurrent,gui,network,widgets]
 	kde-frameworks/kcoreaddons:6
@@ -19,11 +23,7 @@ DEPEND=
 	kde-frameworks/kwallet:6
 	kde-frameworks/kxmlgui:6
 
-IUSE=debug
-SLOT=0
-BDEPEND=
-	dev-qt/qttools:6[linguist]
-	kde-frameworks/extra-cmake-modules:0
-	virtual/pkgconfig
-
+INHERITED=ecm
+HOMEPAGE=https://github.com/arran4/KMagMux
+SRC_URI=https://github.com/arran4/KMagMux/archive/v0.0.14.tar.gz -> kmagmux-0.0.14.tar.gz
 _md5_=3b64cc853bedc6d6302c8a29e401a2f8

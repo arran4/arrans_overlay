@@ -1,3 +1,9 @@
+INHERITED=cmake
+EAPI=8
+BDEPEND=
+	>=dev-qt/qtshadertools-6.9:6
+	virtual/pkgconfig
+
 DEPEND=
 	>=dev-qt/qtbase-6.9:6[concurrent,dbus,gui,network,sql,widgets]
 	>=dev-qt/qtdeclarative-6.9:6
@@ -8,7 +14,6 @@ DEPEND=
 	sys-apps/lm-sensors
 	sci-libs/fftw:3.0=
 
-LICENSE=GPL-3
 RDEPEND=
 
 	>=dev-qt/qtbase-6.9:6[concurrent,dbus,gui,network,sql,widgets]
@@ -42,18 +47,13 @@ RDEPEND=
 	x11-libs/libnotify
 	x11-misc/xkeyboard-config
 
-INHERITED=cmake
 DESCRIPTION=Caelestia Quickshell desktop shell (Hyprland)
 KEYWORDS=~amd64
-BDEPEND=
-	>=dev-qt/qtshadertools-6.9:6
-	virtual/pkgconfig
-
+HOMEPAGE=https://github.com/caelestia-dots/shell
 SRC_URI=
 	https://github.com/caelestia-dots/shell/archive/refs/tags/v2.4.0.tar.gz -> caelestia-shell-2.4.0.tar.gz
 	https://github.com/soramanew/m3shapes/archive/bdc327b29f95394a732baf3c9b19658ba23755b6.tar.gz -> caelestia-m3shapes-bdc327b29f95394a732baf3c9b19658ba23755b6.tar.gz
 
+LICENSE=GPL-3
 SLOT=0
-HOMEPAGE=https://github.com/caelestia-dots/shell
-EAPI=8
 _md5_=a9df533b9807fd4a5f38863a8dc3f664
