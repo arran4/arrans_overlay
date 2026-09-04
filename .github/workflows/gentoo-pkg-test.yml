@@ -183,8 +183,6 @@ jobs:
           # constrain only qtbase and let Portage select matching Qt binaries.
           mkdir -p /etc/portage/package.use
           printf "%s\n" \
-            "dev-qt/qtbase opengl" \
-            "dev-qt/qtdeclarative opengl" \
             "media-libs/freetype harfbuzz" \
             "media-libs/libglvnd X" \
             "x11-libs/cairo X" \

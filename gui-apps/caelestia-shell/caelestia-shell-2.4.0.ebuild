@@ -19,9 +19,9 @@ SRC_URI="
 	https://${SHELL_ARCHIVE}/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz
 	https://${M3SHAPES_ARCHIVE}/${M3SHAPES_REV}.tar.gz -> ${M3SHAPES_DIST}
 "
-S="${WORKDIR}/shell-${PV}"
 
 LICENSE="GPL-3"
+S="${WORKDIR}/shell-${PV}"
 SLOT="0"
 KEYWORDS="~amd64"
 
