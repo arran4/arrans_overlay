@@ -166,6 +166,20 @@ KEYWORDS="~amd64"
 
 S="${WORKDIR}/${PN/-/_}-${PV}"
 
+QA_PREBUILT="opt/flutter_jules/*"
+
+_trap_err() {
+	local status=$?
+	if [[ ${status} -ne 0 ]]; then
+		local msg="phase=${EBUILD_PHASE} status=${status} "
+		if [[ -f "${T}/build.log" ]]; then
+			msg+=$(tail -n 25 "${T}/build.log" |
+				tr '\n' ' ' | tr -d '\r')
+		fi
+		echo "::error title=BUILD_FAILED::${msg}"
+	fi
+}
+
 COMMON_DEPEND="
 	app-crypt/libsecret
 	dev-libs/libayatana-appindicator
@@ -187,6 +201,7 @@ BDEPEND="
 "
 
 pkg_setup() {
+	trap _trap_err EXIT
 	if [[ -z ${LLVM_SLOT} ]]; then
 		local s prefix="${BROOT:-${EPREFIX}}"
 		for s in 22 21 20 19 18 17; do
@@ -200,6 +215,7 @@ pkg_setup() {
 }
 
 src_unpack() {
+	trap _trap_err EXIT
 	local dest file pkg_ver
 	local pub_cache="${WORKDIR}/pub-cache"
 
@@ -217,6 +233,7 @@ src_unpack() {
 }
 
 src_compile() {
+	trap _trap_err EXIT
 	local dir mode
 	local llvm_bin=""
 
@@ -281,6 +298,7 @@ src_compile() {
 }
 
 src_install() {
+	trap _trap_err EXIT
 	insinto /opt/flutter_jules
 	doins -r build/linux/x64/release/bundle/data
 
@@ -290,7 +308,7 @@ src_install() {
 	exeinto /opt/flutter_jules/lib
 	doexe build/linux/x64/release/bundle/lib/*.so
 
-	dosym ../../opt/flutter_jules/flutter_jules /usr/bin/flutter_jules
+	dosym -r /opt/flutter_jules/flutter_jules /usr/bin/flutter_jules
 
 	local icon="macos/Runner/Assets.xcassets"
 	icon+="/AppIcon.appiconset/app_icon_1024.png"
