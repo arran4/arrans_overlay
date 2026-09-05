@@ -218,21 +218,29 @@ src_unpack() {
 
 src_compile() {
 	local dir mode
+	local llvm_bin=""
 
-	if [[ -n ${LLVM_SLOT} ]]; then
-		llvm_prepend_path -b "${LLVM_SLOT}"
-	fi
-	if ! command -v clang++ >/dev/null 2>&1; then
-		local llvm_bin
-		for llvm_bin in $(ls -d "${BROOT}"/usr/lib/llvm/*/bin \
+	if [[ -n ${LLVM_SLOT} && \
+		-x "${BROOT}"/usr/lib/llvm/${LLVM_SLOT}/bin/clang++ ]]; then
+		llvm_bin="${BROOT}/usr/lib/llvm/${LLVM_SLOT}/bin"
+	else
+		local b
+		for b in $(ls -d "${BROOT}"/usr/lib/llvm/*/bin \
 			2>/dev/null | sort -V -r); do
-			if [[ -x "${llvm_bin}/clang++" ]]; then
-				export PATH="${llvm_bin}:${PATH}"
+			if [[ -x "${b}/clang++" ]]; then
+				llvm_bin="${b}"
 				break
 			fi
 		done
 	fi
-	command -v clang++ >/dev/null 2>&1 || die "clang++ not found in PATH"
+	[[ -n "${llvm_bin}" ]] || die "clang++ not found"
+
+	mkdir -p "${T}/bin" || die
+	ln -sf "${llvm_bin}/clang" "${T}/bin/clang" || die
+	ln -sf "${llvm_bin}/clang++" "${T}/bin/clang++" || die
+	export PATH="${T}/bin:${llvm_bin}:${PATH}"
+	export CC="${llvm_bin}/clang"
+	export CXX="${llvm_bin}/clang++"
 
 	export FLUTTER_CACHE_DIR="${WORKDIR}/flutter-cache"
 	export PUB_CACHE="${WORKDIR}/pub-cache"
@@ -253,18 +261,23 @@ src_compile() {
 	done
 	printf '%s\n' "${FLUTTER_ENGINE_COMMIT}" \
 		> "${FLUTTER_CACHE_DIR}/linux-sdk.stamp" || die
+	printf '%s\n' "${FLUTTER_PV}" \
+		> "${FLUTTER_CACHE_DIR}/.gentoo-flutter-seed-version" || die
+	printf '%s\n' "${FLUTTER_PV}" \
+		> "${PUB_CACHE}/.gentoo-flutter-pub-seed-version" || die
 
 	mkdir -p build/native_assets/linux || die
 
 	flutter config --no-analytics || die
 	flutter pub get --offline || die
-	flutter build linux --release --no-pub || die
+	flutter build linux --release --no-pub -v || die
 }
 
 src_install() {
 	insinto /opt/flutter_jules
 	doins -r build/linux/x64/release/bundle/*
 	fperms +x /opt/flutter_jules/flutter_jules
+	fperms 0755 /opt/flutter_jules/lib/*.so
 	dosym ../../opt/flutter_jules/flutter_jules /usr/bin/flutter_jules
 
 	local icon="macos/Runner/Assets.xcassets"
