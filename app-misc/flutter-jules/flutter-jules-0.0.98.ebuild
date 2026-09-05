@@ -190,8 +190,12 @@ _trap_err() {
 
 COMMON_DEPEND="
 	app-crypt/libsecret
+	dev-libs/glib:2
 	dev-libs/libayatana-appindicator
-	x11-libs/gtk+:3
+	media-libs/fontconfig
+	media-libs/libepoxy
+	x11-libs/cairo
+	x11-libs/gtk+:3[X,wayland]
 	x11-libs/pango
 "
 RDEPEND="
