@@ -3,7 +3,9 @@
 
 EAPI=8
 
-inherit desktop xdg
+LLVM_COMPAT=( {17..22} )
+
+inherit desktop llvm-r2 xdg
 
 DESCRIPTION="A Flutter-based app for interacting with the Google Jules API"
 LICENSE="MIT"
@@ -14,13 +16,13 @@ FLUTTER_PV="3.47.2"
 FLUTTER_ENGINE_COMMIT="a804b261645ef8c13eb3d5c44a5c2fb0340c5539"
 GCS="storage.googleapis.com/flutter_infra_release/flutter"
 FLUTTER_STORAGE="${GCS}/${FLUTTER_ENGINE_COMMIT}"
-SRC_URI="https://${JULES_SRC}/v${PV}.tar.gz -> flutter-jules-${PV}.tar.gz \
+SRC_URI="https://${JULES_SRC}/v${PV}.tar.gz -> flutter-jules-${PV}.tar.gz
 	https://${FLUTTER_STORAGE}/linux-x64-debug/linux-x64-flutter-gtk.zip
-		-> flutter-linux-x64-debug-${FLUTTER_ENGINE_COMMIT}.zip \
+		-> ${P}-flutter-linux-x64-debug.zip
 	https://${FLUTTER_STORAGE}/linux-x64-profile/linux-x64-flutter-gtk.zip
-		-> flutter-linux-x64-profile-${FLUTTER_ENGINE_COMMIT}.zip \
+		-> ${P}-flutter-linux-x64-profile.zip
 	https://${FLUTTER_STORAGE}/linux-x64-release/linux-x64-flutter-gtk.zip
-		-> flutter-linux-x64-release-${FLUTTER_ENGINE_COMMIT}.zip \
+		-> ${P}-flutter-linux-x64-release.zip
 	https://${PUB}/_fe_analyzer_shared-92.0.0.tar.gz \
 	https://${PUB}/analyzer-9.0.0.tar.gz \
 	https://${PUB}/archive-4.0.7.tar.gz \
@@ -180,12 +182,16 @@ BDEPEND="
 	app-arch/unzip
 	dev-build/ninja
 	dev-build/cmake
-	llvm-core/clang
 	virtual/pkgconfig
+	$(llvm_gen_dep 'llvm-core/clang:${LLVM_SLOT}')
 "
 
+pkg_setup() {
+	llvm-r2_pkg_setup
+}
+
 src_unpack() {
-	local file pkg_ver
+	local dest file pkg_ver
 	local pub_cache="${WORKDIR}/pub-cache"
 
 	unpack "${P}.tar.gz"
@@ -194,7 +200,7 @@ src_unpack() {
 	for file in ${A}; do
 		if [[ ${file} == *.tar.gz && ${file} != ${P}.tar.gz ]]; then
 			pkg_ver=${file%.tar.gz}
-			local dest="${pub_cache}/hosted/pub.dev/${pkg_ver}"
+			dest="${pub_cache}/hosted/pub.dev/${pkg_ver}"
 			mkdir -p "${dest}" || die
 			tar -xzf "${DISTDIR}/${file}" -C "${dest}" || die
 		fi
@@ -202,19 +208,7 @@ src_unpack() {
 }
 
 src_compile() {
-	local mode dir
-
-	if ! command -v clang++ >/dev/null 2>&1; then
-		local llvm_bin
-		for llvm_bin in $(ls -d "${BROOT}"/usr/lib/llvm/*/bin \
-			2>/dev/null | sort -V -r); do
-			if [[ -x "${llvm_bin}/clang++" ]]; then
-				export PATH="${llvm_bin}:${PATH}"
-				break
-			fi
-		done
-	fi
-	command -v clang++ >/dev/null 2>&1 || die "clang++ not found in PATH"
+	local dir mode
 
 	export FLUTTER_CACHE_DIR="${WORKDIR}/flutter-cache"
 	export PUB_CACHE="${WORKDIR}/pub-cache"
@@ -229,8 +223,7 @@ src_compile() {
 			dir="linux-x64-${mode}"
 		fi
 		local eng_dir="${FLUTTER_CACHE_DIR}/artifacts/engine/${dir}"
-		local eng_zip="flutter-linux-x64-${mode}"
-		eng_zip+="-${FLUTTER_ENGINE_COMMIT}.zip"
+		local eng_zip="${P}-flutter-linux-x64-${mode}.zip"
 		mkdir -p "${eng_dir}" || die
 		unzip -qo "${DISTDIR}/${eng_zip}" -d "${eng_dir}" || die
 	done
