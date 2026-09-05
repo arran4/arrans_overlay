@@ -265,19 +265,31 @@ src_compile() {
 		> "${FLUTTER_CACHE_DIR}/.gentoo-flutter-seed-version" || die
 	printf '%s\n' "${FLUTTER_PV}" \
 		> "${PUB_CACHE}/.gentoo-flutter-pub-seed-version" || die
+	printf '%s\n' "${FLUTTER_PV}" \
+		> "${PUB_CACHE}/.gentoo-flutter-pub-preload-version" || die
 
 	mkdir -p build/native_assets/linux || die
 
 	flutter config --no-analytics || die
 	flutter pub get --offline || die
-	flutter build linux --release --no-pub -v || die
+	if ! flutter build linux --release --no-pub -v; then
+		if [[ -f build/linux/x64/release/.ninja_log ]]; then
+			tail -n 100 build/linux/x64/release/.ninja_log
+		fi
+		die "flutter build linux failed"
+	fi
 }
 
 src_install() {
 	insinto /opt/flutter_jules
-	doins -r build/linux/x64/release/bundle/*
-	fperms +x /opt/flutter_jules/flutter_jules
-	fperms 0755 /opt/flutter_jules/lib/*.so
+	doins -r build/linux/x64/release/bundle/data
+
+	exeinto /opt/flutter_jules
+	doexe build/linux/x64/release/bundle/flutter_jules
+
+	exeinto /opt/flutter_jules/lib
+	doexe build/linux/x64/release/bundle/lib/*.so
+
 	dosym ../../opt/flutter_jules/flutter_jules /usr/bin/flutter_jules
 
 	local icon="macos/Runner/Assets.xcassets"
