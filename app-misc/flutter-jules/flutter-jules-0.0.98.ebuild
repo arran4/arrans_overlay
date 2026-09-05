@@ -187,6 +187,15 @@ BDEPEND="
 "
 
 pkg_setup() {
+	if [[ -z ${LLVM_SLOT} ]]; then
+		local s prefix="${BROOT:-${EPREFIX}}"
+		for s in 22 21 20 19 18 17; do
+			if [[ -d "${prefix}/usr/lib/llvm/${s}/bin" ]]; then
+				LLVM_SLOT="${s}"
+				break
+			fi
+		done
+	fi
 	llvm-r2_pkg_setup
 }
 
@@ -209,6 +218,21 @@ src_unpack() {
 
 src_compile() {
 	local dir mode
+
+	if [[ -n ${LLVM_SLOT} ]]; then
+		llvm_prepend_path -b "${LLVM_SLOT}"
+	fi
+	if ! command -v clang++ >/dev/null 2>&1; then
+		local llvm_bin
+		for llvm_bin in $(ls -d "${BROOT}"/usr/lib/llvm/*/bin \
+			2>/dev/null | sort -V -r); do
+			if [[ -x "${llvm_bin}/clang++" ]]; then
+				export PATH="${llvm_bin}:${PATH}"
+				break
+			fi
+		done
+	fi
+	command -v clang++ >/dev/null 2>&1 || die "clang++ not found in PATH"
 
 	export FLUTTER_CACHE_DIR="${WORKDIR}/flutter-cache"
 	export PUB_CACHE="${WORKDIR}/pub-cache"
