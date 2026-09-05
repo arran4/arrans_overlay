@@ -1,32 +1,30 @@
 # Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-09-05 08:31:03.002735311 +0000 UTC m=+0.007944884
 
-name: app-misc/anytype-to-linkwarden-bin update
+name: app-emulation/quickemu-bin update
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '6 12 * * *'
+    - cron: '28 14 * * *'
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/app-misc-anytype-to-linkwarden-bin-update.yaml'
+      - '.github/workflows/app-emulation-quickemu-bin-update.yaml'
 
 env:
-  ecn: app-misc
-  epn: anytype-to-linkwarden-bin
-  description: "Simple application for migrating AnyType bookmarks to Linkwarden"
-  homepage: ""
-  github_owner: arran4
-  github_repo: anytype-to-linkwarden
-  keywords: ~amd64 ~arm64
-  workflow_filename: app-misc-anytype-to-linkwarden-bin-update.yaml
-  anytype-to-linkwarden_binary_installed_name: 'anytype-to-linkwarden'
-  anytype-to-linkwarden_binary_archived_name_amd64: 'anytype-to-linkwarden'
-  anytype-to-linkwarden_release_name_amd64: 'anytype-to-linkwarden_${version}_linux_amd64.tar.gz'
-  anytype-to-linkwarden_binary_archived_name_arm64: 'anytype-to-linkwarden'
-  anytype-to-linkwarden_release_name_arm64: 'anytype-to-linkwarden_${version}_linux_arm64.tar.gz'
+  ecn: app-emulation
+  epn: quickemu-bin
+  description: "Quickly create and run optimised Windows, macOS and Linux desktop virtual machines."
+  homepage: "https://github.com/quickemu-project/quickemu"
+  github_owner: quickemu-project
+  github_repo: quickemu
+  keywords: ~any
+  workflow_filename: app-emulation-quickemu-bin-update.yaml
+  quickemu_binary_installed_name: 'chunkcheck'
+  quickemu_binary_archived_name_any: 'usr/bin/quickemu'
+  quickemu_release_name_any: 'quickemu_${version}-1_all.deb'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -53,7 +51,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
-          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:arran4/anytype-to-linkwarden" --use-add "doc:Install documentation" "$metadata_file"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:quickemu-project/quickemu" "$metadata_file"
           declare -A releaseTypes=()
           tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
@@ -90,49 +88,33 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-anytype-to-linkwarden_\${PV}_linux_arm64.tar.gz  )  "
+                echo "	any? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-quickemu_\${PV}-1_all.deb  )  "
                 echo '"'
-                echo 'LICENSE="unknown"'
+                echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo -n 'IUSE="'
-                echo -n ' doc'
                 echo '"'
                 echo ''
                 echo -n 'REQUIRED_USE="'
                 echo '"'
                 echo ''
                 echo -n 'RDEPEND="'
+                echo -n 'app-arch/unzip app-emulation/qemu app-misc/jq net-misc/curl net-misc/socat net-misc/wget sys-apps/coreutils sys-apps/grep sys-apps/pciutils sys-apps/util-linux x11-apps/xrandr '
                 echo '"'
                 echo ''
                 echo 'S="${WORKDIR}"'
                 echo ''
                 echo 'src_unpack() {'
-                echo '  if use amd64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-anytype-to-linkwarden_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-anytype-to-linkwarden_\${PV}_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  if use any; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-quickemu_\${PV}-1_all.deb\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '}'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
-                echo '  if use amd64; then'
-                echo '    newexe "${{ env.anytype-to-linkwarden_binary_archived_name_amd64 }}" "${{ env.anytype-to-linkwarden_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use arm64; then'
-                echo '    newexe "${{ env.anytype-to-linkwarden_binary_archived_name_arm64 }}" "${{ env.anytype-to-linkwarden_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use doc; then'
-                echo '    if use amd64; then'
-                echo '      dodoc "readme.md" || die "Failed to install document readme.md"'
-                echo '      dodoc "readme.md" || die "Failed to install document readme.md"'
-                echo '    fi'
-                echo '    if use arm64; then'
-                echo '      dodoc "readme.md" || die "Failed to install document readme.md"'
-                echo '    fi'
+                echo '  if use any; then'
+                echo '    newexe "${{ env.quickemu_binary_archived_name_any }}" "${{ env.quickemu_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '}'
               } > "$tmp_ebuild_file"
@@ -147,8 +129,7 @@ jobs:
                   continue
               fi
               failed=0
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-anytype-to-linkwarden_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-anytype-to-linkwarden_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-quickemu_${version}-1_all.deb" "${ebuild_dir}/Manifest"; then failed=1; fi
               if [ "$failed" -eq 1 ]; then
                   echo "Failed to generate manifest for $tag. Skipping..."
                   rm -f "$ebuild_file"
