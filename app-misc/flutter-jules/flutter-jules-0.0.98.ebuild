@@ -173,6 +173,14 @@ _trap_err() {
 	if [[ ${status} -ne 0 ]]; then
 		local msg="phase=${EBUILD_PHASE} status=${status} "
 		if [[ -f "${T}/build.log" ]]; then
+			local errs
+			errs=$(grep -E -i \
+				"error:|FAILED:|undefined reference|cannot find" \
+				"${T}/build.log" | tail -n 15 |
+				tr '\n' ' ' | tr -d '\r')
+			if [[ -n "${errs}" ]]; then
+				msg+="ERRORS: ${errs} "
+			fi
 			msg+=$(tail -n 25 "${T}/build.log" |
 				tr '\n' ' ' | tr -d '\r')
 		fi
@@ -289,12 +297,8 @@ src_compile() {
 
 	flutter config --no-analytics || die
 	flutter pub get --offline || die
-	if ! flutter build linux --release --no-pub -v; then
-		if [[ -f build/linux/x64/release/.ninja_log ]]; then
-			tail -n 100 build/linux/x64/release/.ninja_log
-		fi
+	flutter build linux --release --no-pub -v ||
 		die "flutter build linux failed"
-	fi
 }
 
 src_install() {
