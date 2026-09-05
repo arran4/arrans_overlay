@@ -175,7 +175,7 @@ COMMON_DEPEND="
 	media-libs/fontconfig
 	media-libs/libepoxy
 	x11-libs/cairo
-	x11-libs/gtk+:3
+	x11-libs/gtk+:3[X,wayland]
 	x11-libs/pango
 "
 RDEPEND="
@@ -247,11 +247,6 @@ src_compile() {
 	export PATH="${T}/bin:${llvm_bin}:${PATH}"
 	export CC="${llvm_bin}/clang"
 	export CXX="${llvm_bin}/clang++"
-
-	# Prebuilt Flutter engine references both X11 and Wayland symbols.
-	# Allow unresolved shared library symbols so linking succeeds with
-	# any gtk+:3 backend combination.
-	export LDFLAGS="${LDFLAGS} -Wl,--allow-shlib-undefined"
 
 	export FLUTTER_CACHE_DIR="${WORKDIR}/flutter-cache"
 	export PUB_CACHE="${WORKDIR}/pub-cache"
