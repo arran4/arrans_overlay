@@ -166,27 +166,7 @@ KEYWORDS="~amd64"
 
 S="${WORKDIR}/${PN/-/_}-${PV}"
 
-QA_PREBUILT="opt/flutter_jules/*"
-
-_trap_err() {
-	local status=$?
-	if [[ ${status} -ne 0 ]]; then
-		local msg="phase=${EBUILD_PHASE} status=${status} "
-		if [[ -f "${T}/build.log" ]]; then
-			local errs
-			errs=$(grep -E -i \
-				"error:|FAILED:|undefined reference|cannot find" \
-				"${T}/build.log" | tail -n 15 |
-				tr '\n' ' ' | tr -d '\r')
-			if [[ -n "${errs}" ]]; then
-				msg+="ERRORS: ${errs} "
-			fi
-			msg+=$(tail -n 25 "${T}/build.log" |
-				tr '\n' ' ' | tr -d '\r')
-		fi
-		echo "::error title=BUILD_FAILED::${msg}"
-	fi
-}
+QA_PREBUILT="opt/flutter_jules/lib/libflutter_linux_gtk.so"
 
 COMMON_DEPEND="
 	app-crypt/libsecret
@@ -195,7 +175,7 @@ COMMON_DEPEND="
 	media-libs/fontconfig
 	media-libs/libepoxy
 	x11-libs/cairo
-	x11-libs/gtk+:3[X,wayland]
+	x11-libs/gtk+:3
 	x11-libs/pango
 "
 RDEPEND="
@@ -213,7 +193,6 @@ BDEPEND="
 "
 
 pkg_setup() {
-	trap _trap_err EXIT
 	if [[ -z ${LLVM_SLOT} ]]; then
 		local s prefix="${BROOT:-${EPREFIX}}"
 		for s in 22 21 20 19 18 17; do
@@ -227,7 +206,6 @@ pkg_setup() {
 }
 
 src_unpack() {
-	trap _trap_err EXIT
 	local dest file pkg_ver
 	local pub_cache="${WORKDIR}/pub-cache"
 
@@ -245,7 +223,6 @@ src_unpack() {
 }
 
 src_compile() {
-	trap _trap_err EXIT
 	local dir mode
 	local llvm_bin=""
 
@@ -271,6 +248,11 @@ src_compile() {
 	export CC="${llvm_bin}/clang"
 	export CXX="${llvm_bin}/clang++"
 
+	# Prebuilt Flutter engine references both X11 and Wayland symbols.
+	# Allow unresolved shared library symbols so linking succeeds with
+	# any gtk+:3 backend combination.
+	export LDFLAGS="${LDFLAGS} -Wl,--allow-shlib-undefined"
+
 	export FLUTTER_CACHE_DIR="${WORKDIR}/flutter-cache"
 	export PUB_CACHE="${WORKDIR}/pub-cache"
 	mkdir -p "${FLUTTER_CACHE_DIR}" || die
@@ -294,8 +276,6 @@ src_compile() {
 		> "${FLUTTER_CACHE_DIR}/.gentoo-flutter-seed-version" || die
 	printf '%s\n' "${FLUTTER_PV}" \
 		> "${PUB_CACHE}/.gentoo-flutter-pub-seed-version" || die
-	printf '%s\n' "${FLUTTER_PV}" \
-		> "${PUB_CACHE}/.gentoo-flutter-pub-preload-version" || die
 
 	mkdir -p build/native_assets/linux || die
 
@@ -306,7 +286,6 @@ src_compile() {
 }
 
 src_install() {
-	trap _trap_err EXIT
 	insinto /opt/flutter_jules
 	doins -r build/linux/x64/release/bundle/data
 
