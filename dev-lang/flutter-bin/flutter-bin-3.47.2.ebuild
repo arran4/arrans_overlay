@@ -13,7 +13,6 @@ HOMEPAGE="https://flutter.dev/"
 # this value when copying the packaging to a new upstream Flutter release.
 UPSTREAM_PV="3.47.2"
 SRC_URI="amd64? ( https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${UPSTREAM_PV}-stable.tar.xz -> ${PN}-${UPSTREAM_PV}.amd64.tar.xz )"
-S="${WORKDIR}/flutter"
 
 LICENSE="BSD"
 SLOT="0"
@@ -21,6 +20,9 @@ KEYWORDS="~amd64"
 
 RDEPEND="!dev-lang/flutter app-arch/tar app-arch/xz-utils dev-vcs/git sys-apps/coreutils sys-apps/util-linux"
 
+
+
+S="${WORKDIR}/flutter"
 
 PATCHES=(
 	"${FILESDIR}/${PN}-xdg-cache.patch"

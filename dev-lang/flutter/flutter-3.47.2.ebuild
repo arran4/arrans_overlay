@@ -13,7 +13,6 @@ HOMEPAGE="https://flutter.dev/"
 # this value when copying the packaging to a new upstream Flutter release.
 UPSTREAM_PV="3.47.2"
 SRC_URI="https://github.com/flutter/flutter/archive/refs/tags/${UPSTREAM_PV}.tar.gz -> ${P}.tar.gz"
-S="${WORKDIR}/flutter-${UPSTREAM_PV}"
 
 LICENSE="BSD"
 SLOT="0"
@@ -23,6 +22,9 @@ RESTRICT="network-sandbox"
 RDEPEND="!dev-lang/flutter-bin app-arch/tar app-arch/xz-utils dev-vcs/git sys-apps/coreutils sys-apps/util-linux"
 DEPEND="|| ( dev-lang/dart dev-lang/dart-bin )"
 
+
+
+S="${WORKDIR}/flutter-${UPSTREAM_PV}"
 
 PATCHES=(
 	"${FILESDIR}/${PN}-xdg-cache.patch"
