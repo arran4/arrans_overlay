@@ -19,7 +19,6 @@ RDEPEND+=" net-misc/socat net-misc/spice-gtk[gtk3] net-misc/wget net-misc/zsync"
 RDEPEND+=" sys-apps/coreutils sys-apps/pciutils sys-apps/usbutils"
 RDEPEND+=" sys-apps/util-linux sys-process/procps x11-apps/mesa-progs"
 RDEPEND+=" x11-apps/xrandr x11-misc/xdg-user-dirs"
-DEPEND="${RDEPEND}"
 
 src_unpack() {
 	unpack "${P}.tar.gz"
