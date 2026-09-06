@@ -1,10 +1,9 @@
-DEPEND=>=app-emulation/qemu-6.0.0 app-arch/unzip app-cdr/cdrtools  app-emulation/spice app-misc/jq dev-python/python-exec net-misc/curl  net-misc/socat net-misc/wget net-misc/zsync sys-apps/coreutils  sys-apps/pciutils sys-apps/usbutils sys-apps/util-linux  sys-process/procps x11-apps/mesa-progs x11-apps/xrandr  x11-misc/xdg-user-dirs
+KEYWORDS=~amd64 ~arm64
+SRC_URI=https://github.com/quickemu-project/quickemu/archive/refs/tags/4.9.9.tar.gz -> quickemu-bin-4.9.9.tar.gz
+RDEPEND=>=app-emulation/qemu-6.0.0 app-arch/unzip app-cdr/cdrtools  app-crypt/swtpm app-misc/jq dev-lang/python net-misc/curl  net-misc/socat net-misc/spice-gtk net-misc/wget net-misc/zsync  sys-apps/coreutils sys-apps/pciutils sys-apps/usbutils  sys-apps/util-linux sys-process/procps x11-apps/mesa-progs  x11-apps/xrandr x11-misc/xdg-user-dirs
+LICENSE=MIT
 EAPI=8
+DESCRIPTION=Quickly create and run Windows, macOS and Linux virtual machines
 HOMEPAGE=https://github.com/quickemu-project/quickemu
 SLOT=0
-SRC_URI=https://github.com/quickemu-project/quickemu/archive/refs/tags/4.9.9.tar.gz -> quickemu-bin-4.9.9.tar.gz
-RDEPEND=>=app-emulation/qemu-6.0.0 app-arch/unzip app-cdr/cdrtools  app-emulation/spice app-misc/jq dev-python/python-exec net-misc/curl  net-misc/socat net-misc/wget net-misc/zsync sys-apps/coreutils  sys-apps/pciutils sys-apps/usbutils sys-apps/util-linux  sys-process/procps x11-apps/mesa-progs x11-apps/xrandr  x11-misc/xdg-user-dirs
-LICENSE=MIT
-DESCRIPTION=Quickly create and run macOS and Linux virtual machines
-KEYWORDS=~amd64 ~arm64
-_md5_=8703ed07a4576e7556b858577c1c973c
+_md5_=5e300f60f4408ae3bc14149551fbb767
