@@ -13,7 +13,7 @@ LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 
-RDEPEND="app-arch/unzip app-cdr/genisoimage app-emulation/qemu"
+RDEPEND="app-arch/unzip app-cdr/cdrtools app-emulation/qemu"
 RDEPEND+=" app-emulation/spice app-misc/jq net-misc/curl net-misc/socat"
 RDEPEND+=" net-misc/wget sys-apps/coreutils sys-apps/pciutils"
 RDEPEND+=" sys-apps/usbutils sys-apps/util-linux sys-process/procps"
