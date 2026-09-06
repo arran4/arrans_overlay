@@ -1,0 +1,105 @@
+#!/bin/sh
+set -eu
+
+flutter_root=/opt/flutter
+
+if [ -z "${FLUTTER_CACHE_DIR:-}" ] || [ -z "${PUB_CACHE:-}" ]; then
+	if [ -n "${XDG_CACHE_HOME:-}" ]; then
+		cache_home=${XDG_CACHE_HOME}
+	elif [ -n "${HOME:-}" ]; then
+		cache_home=${HOME}/.cache
+	else
+		echo "flutter: XDG_CACHE_HOME or HOME must be set when cache paths are not explicit" >&2
+		exit 1
+	fi
+fi
+
+if [ -z "${FLUTTER_CACHE_DIR:-}" ]; then
+	FLUTTER_CACHE_DIR="${cache_home}/flutter/@PV@/bin-cache"
+	export FLUTTER_CACHE_DIR
+fi
+
+if [ -z "${PUB_CACHE:-}" ]; then
+	PUB_CACHE="${cache_home}/flutter/pub-cache"
+	export PUB_CACHE
+fi
+
+seed_dir() {
+	source_dir=$1
+	destination_dir=$2
+	stamp_name=$3
+
+	mkdir -p "${destination_dir}"
+
+	# Multiple Flutter processes can be started together by IDEs. Serialize the
+	# initial copy so none of them sees a half-populated Dart/artifact cache.
+	exec 9>"${destination_dir}/.gentoo-seed.lock"
+	flock 9
+
+	if [ ! -f "${destination_dir}/${stamp_name}" ] || \
+		[ "$(cat "${destination_dir}/${stamp_name}" 2>/dev/null || true)" != "@PVR@" ]; then
+		cp -a --reflink=auto --no-preserve=ownership "${source_dir}/." "${destination_dir}/"
+		# The package-managed seed may deliberately be read-only. cp -a preserves
+		# those modes, so restore owner write access in the per-user copy.
+		chmod -R u+rwX "${destination_dir}"
+		printf '%s\n' '@PVR@' > "${destination_dir}/${stamp_name}"
+	fi
+
+	flock -u 9
+	exec 9>&-
+}
+
+preload_pub_cache() {
+	preload_dir=$1
+	destination_dir=$2
+	stamp_name=$3
+
+	mkdir -p "${destination_dir}"
+
+	# Flutter installation bundles ship pub packages as compressed preload
+	# archives rather than as a ready .pub-cache. Because this wrapper sets
+	# PUB_CACHE explicitly, Flutter's own automatic preload path is bypassed.
+	# Populate the user's selected cache here exactly once per Flutter version.
+	exec 9>"${destination_dir}/.gentoo-preload.lock"
+	flock 9
+
+	if [ ! -f "${destination_dir}/${stamp_name}" ] || \
+		[ "$(cat "${destination_dir}/${stamp_name}" 2>/dev/null || true)" != "@PVR@" ]; then
+		set -- "${preload_dir}"/*.tar.gz
+		if [ ! -e "$1" ]; then
+			echo "flutter: installation bundle contains no pub preload archives" >&2
+			exit 1
+		fi
+
+		PUB_CACHE="${destination_dir}" \
+			"${FLUTTER_CACHE_DIR}/dart-sdk/bin/dart" \
+			pub --suppress-analytics cache preload "$@"
+		printf '%s\n' '@PVR@' > "${destination_dir}/${stamp_name}"
+	fi
+
+	flock -u 9
+	exec 9>&-
+}
+
+# The official Flutter archive is already populated with the Dart SDK and
+# binary artifacts. Treat the package-managed copy as an immutable seed and
+# give every user a writable cache of their own.
+seed_dir "${flutter_root}/bin/cache" "${FLUTTER_CACHE_DIR}" .gentoo-flutter-seed-version
+
+# Flutter 3.47 installation bundles carry pub packages in .pub-preload-cache.
+# Preload those archives into the explicit per-user PUB_CACHE. This mirrors
+# Flutter's first-run behavior without writing to or deleting anything in
+# /opt/flutter, and allows the first project creation to work offline.
+if [ -d "${flutter_root}/.pub-preload-cache" ]; then
+	preload_pub_cache \
+		"${flutter_root}/.pub-preload-cache" \
+		"${PUB_CACHE}" \
+		.gentoo-flutter-pub-preload-version
+elif [ -d "${flutter_root}/.pub-cache" ]; then
+	# Retain compatibility with bundles that contain an expanded pub cache.
+	seed_dir "${flutter_root}/.pub-cache" "${PUB_CACHE}" .gentoo-flutter-pub-seed-version
+else
+	mkdir -p "${PUB_CACHE}"
+fi
+
+exec "${flutter_root}/bin/flutter" "$@"
