@@ -6,21 +6,23 @@ EAPI=8
 DESCRIPTION="Quickly create and run macOS and Linux virtual machines"
 HOMEPAGE="https://github.com/quickemu-project/quickemu"
 PUB="github.com/quickemu-project/quickemu/archive/refs/tags"
-SRC_URI="https://${PUB}/${PV}.tar.gz -> ${P}-v${PV}.tar.gz"
+SRC_URI="https://${PUB}/${PV}.tar.gz -> ${P}.tar.gz"
 S="${WORKDIR}"
 
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 
-RDEPEND="app-arch/unzip app-cdr/cdrtools app-emulation/qemu"
-RDEPEND+=" app-emulation/spice app-misc/jq net-misc/curl net-misc/socat"
-RDEPEND+=" net-misc/wget sys-apps/coreutils sys-apps/pciutils"
-RDEPEND+=" sys-apps/usbutils sys-apps/util-linux sys-process/procps"
-RDEPEND+=" x11-apps/xrandr"
+RDEPEND=">=app-emulation/qemu-6.0.0 app-arch/unzip app-cdr/cdrtools"
+RDEPEND+=" app-emulation/spice app-misc/jq dev-python/python-exec net-misc/curl"
+RDEPEND+=" net-misc/socat net-misc/wget net-misc/zsync sys-apps/coreutils"
+RDEPEND+=" sys-apps/pciutils sys-apps/usbutils sys-apps/util-linux"
+RDEPEND+=" sys-process/procps x11-apps/mesa-progs x11-apps/xrandr"
+RDEPEND+=" x11-misc/xdg-user-dirs"
+DEPEND="${RDEPEND}"
 
 src_unpack() {
-	unpack "${P}-v${PV}.tar.gz"
+	unpack "${P}.tar.gz"
 }
 
 src_install() {
