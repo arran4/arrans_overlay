@@ -16,8 +16,17 @@ SLOT="0"
 KEYWORDS="~amd64"
 RESTRICT="network-sandbox"
 
-RDEPEND="app-arch/tar app-arch/xz-utils dev-vcs/git sys-apps/coreutils sys-apps/util-linux"
-DEPEND="dev-lang/dart-bin"
+RDEPEND="
+	!dev-lang/flutter-bin
+	app-arch/tar
+	app-arch/xz-utils
+	dev-vcs/git
+	sys-apps/coreutils
+	sys-apps/util-linux
+"
+DEPEND="
+	|| ( dev-lang/dart dev-lang/dart-bin )
+"
 
 S="${WORKDIR}/flutter-${UPSTREAM_PV}"
 

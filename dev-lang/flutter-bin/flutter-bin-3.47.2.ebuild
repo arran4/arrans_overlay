@@ -20,6 +20,7 @@ SLOT="0"
 KEYWORDS="~amd64"
 
 RDEPEND="
+	!dev-lang/flutter
 	app-arch/tar
 	app-arch/xz-utils
 	dev-vcs/git

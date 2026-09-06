@@ -1,11 +1,20 @@
+SRC_URI=https://github.com/flutter/flutter/archive/refs/tags/3.47.2.tar.gz -> flutter-3.47.2.tar.gz
+SLOT=0
+RDEPEND=
+	!dev-lang/flutter-bin
+	app-arch/tar
+	app-arch/xz-utils
+	dev-vcs/git
+	sys-apps/coreutils
+	sys-apps/util-linux
+
+HOMEPAGE=https://flutter.dev/
+DESCRIPTION=Flutter makes it easy and fast to build beautiful apps for mobile and beyond
+LICENSE=BSD
 KEYWORDS=~amd64
 RESTRICT=network-sandbox
-LICENSE=BSD
-DESCRIPTION=Flutter makes it easy and fast to build beautiful apps for mobile and beyond
-RDEPEND=app-arch/tar app-arch/xz-utils dev-vcs/git sys-apps/coreutils sys-apps/util-linux
-HOMEPAGE=https://flutter.dev/
-DEPEND=dev-lang/dart-bin
-SRC_URI=https://github.com/flutter/flutter/archive/refs/tags/3.47.2.tar.gz -> flutter-3.47.2.tar.gz
+DEPEND=
+	|| ( dev-lang/dart dev-lang/dart-bin )
+
 EAPI=8
-SLOT=0
-_md5_=6df50db1195fb5eb86da5d3b452d8921
+_md5_=4c12ac321f20640227f146542200f4ea
