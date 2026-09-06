@@ -114,5 +114,5 @@ src_install() {
 
 	# Preserve the old overlay entry point while making /usr/bin/flutter the
 	# canonical launcher.
-	dosym -r "/usr/bin/flutter" "/opt/bin/flutter"
+	dosym "../../usr/bin/flutter" "/opt/bin/flutter"
 }

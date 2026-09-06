@@ -17,10 +17,9 @@ SRC_URI="https://github.com/flutter/flutter/archive/refs/tags/${UPSTREAM_PV}.tar
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64"
-RESTRICT="network-sandbox"
 
-RDEPEND="!dev-lang/flutter-bin app-arch/tar app-arch/xz-utils dev-vcs/git sys-apps/coreutils sys-apps/util-linux"
-DEPEND="|| ( dev-lang/dart dev-lang/dart-bin )"
+RDEPEND="!dev-lang/flutter-bin dev-lang/dart dev-libs/flutter-engine app-arch/tar app-arch/xz-utils dev-vcs/git sys-apps/coreutils sys-apps/util-linux"
+DEPEND="dev-lang/dart dev-libs/flutter-engine"
 
 S="${WORKDIR}/flutter-${UPSTREAM_PV}"
 
@@ -61,7 +60,7 @@ src_compile() {
 	(
 		cd "${tools}" || return 1
 		HOME="${build_home}" PUB_CACHE="${pub_cache}" \
-			"${dart}" pub --suppress-analytics get
+			"${dart}" pub --suppress-analytics get --offline
 	) || die "failed to prepare flutter_tools dependencies"
 
 	[[ -f "${package_config}" ]] ||
@@ -89,10 +88,7 @@ src_compile() {
 		die "flutter_tools package config references Portage build root"
 	fi
 
-	# We also need to fetch flutter engine components
-	HOME="${build_home}" PUB_CACHE="${pub_cache}" "${S}/bin/flutter" \
-		precache || die "failed to precache flutter engine"
-}
+	}
 
 src_install() {
 	local wrapper="${T}/flutter"
@@ -107,5 +103,5 @@ src_install() {
 
 	# Preserve the old overlay entry point while making /usr/bin/flutter the
 	# canonical launcher.
-	dosym -r "/usr/bin/flutter" "/opt/bin/flutter"
+	dosym "../../usr/bin/flutter" "/opt/bin/flutter"
 }
