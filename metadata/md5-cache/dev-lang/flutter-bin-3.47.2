@@ -1,20 +1,9 @@
-HOMEPAGE=https://flutter.dev/
-SLOT=0
-KEYWORDS=~amd64
-RDEPEND=
-	!dev-lang/flutter
-	app-arch/tar
-	app-arch/xz-utils
-	dev-vcs/git
-	sys-apps/coreutils
-	sys-apps/util-linux
-
-SRC_URI=
-	amd64? (
-		https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.2-stable.tar.xz -> flutter-bin-3.47.2.amd64.tar.xz
-	)
-
-DESCRIPTION=Flutter makes it easy and fast to build beautiful apps for mobile and beyond
-EAPI=8
+RDEPEND=!dev-lang/flutter app-arch/tar app-arch/xz-utils dev-vcs/git sys-apps/coreutils sys-apps/util-linux
 LICENSE=BSD
-_md5_=5843dce7de1569f0db577ef971bfd3b0
+SRC_URI=amd64? ( https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.47.2-stable.tar.xz -> flutter-bin-3.47.2.amd64.tar.xz )
+KEYWORDS=~amd64
+SLOT=0
+DESCRIPTION=Flutter makes it easy and fast to build beautiful apps for mobile and beyond
+HOMEPAGE=https://flutter.dev/
+EAPI=8
+_md5_=ae591b66b02c9a9427b108b767fcac15
