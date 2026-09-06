@@ -93,6 +93,7 @@ jobs:
               tmp_ebuild="${ebuild_file}.tmp"
               tmp_manifest="${ebuild_dir}/Manifest.tmp"
               rm -f "$tmp_ebuild" "$tmp_manifest"
+              cp "${ebuild_dir}/Manifest" "$tmp_manifest" 2>/dev/null || touch "$tmp_manifest"
               trap 'rm -f "$tmp_ebuild" "$tmp_manifest"' EXIT
 
               {
