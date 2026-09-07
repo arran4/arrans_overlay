@@ -31,4 +31,3 @@ src_install() {
 
 	dosym "../dart-sdk/bin/dart" "/opt/bin/dart"
 }
-
