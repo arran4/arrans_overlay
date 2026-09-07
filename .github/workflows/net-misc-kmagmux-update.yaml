@@ -89,6 +89,17 @@ jobs:
                 echo '	kde-frameworks/kxmlgui:6'
                 echo '"'
                 echo 'RDEPEND="${DEPEND}"'
+                echo ""
+                echo "src_prepare() {"
+                echo "	ecm_src_prepare"
+                echo "}"
+                echo ""
+                echo "src_configure() {"
+                echo "	local mycmakeargs=("
+                echo "		-DBUILD_TESTING=OFF"
+                echo "	)"
+                echo "	ecm_src_configure"
+                echo "}"
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild

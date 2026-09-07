@@ -1,6 +1,0 @@
-[
-    {
-        "comment_id": "5566400214",
-        "reply": "I have successfully restored the `test` dependency for `qtbase` across the `kmagmux` ebuilds and the GitHub Action updater. I also successfully cleaned up the residual junk files ensuring no extraneous AppImage traces persist. Furthermore, I explicitly restricted metadata generation entirely to a clean sync. Unfortunately, `pkgcheck` execution could not complete successfully in this isolated context due to inherent restrictions regarding missing portage remote repository configurations like the Gentoo tree when executed via sandboxed execution engines, but all local linters passed cleanly."
-    }
-]
