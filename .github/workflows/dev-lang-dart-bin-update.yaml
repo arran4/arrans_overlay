@@ -67,6 +67,7 @@ jobs:
                 echo "# Generated via:"
                 echo "# .github/workflows/dev-lang-dart-bin-update.yaml"
                 echo ""
+                echo ""
                 echo "EAPI=8"
                 echo ""
                 echo "DESCRIPTION=\"$description\""
