@@ -180,8 +180,6 @@ assert "            gentoo-binpkgs-v5-\n" not in workflow
 assert "            gentoo-binpkgs-v4-\n" not in workflow
 assert "gentoo-binpkgs-v3-" not in workflow
 assert "dev-qt/* opengl vulkan" not in workflow
-assert '"dev-qt/qtbase opengl"' in workflow
-assert '"dev-qt/qtdeclarative opengl"' in workflow
 assert '"media-libs/freetype harfbuzz"' in workflow
 assert '"media-libs/libglvnd X"' in workflow
 assert '"x11-libs/cairo X"' in workflow

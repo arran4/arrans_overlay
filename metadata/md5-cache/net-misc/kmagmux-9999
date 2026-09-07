@@ -1,0 +1,27 @@
+HOMEPAGE=https://github.com/arran4/KMagMux
+INHERITED=ecm git-r3
+LICENSE=GPL-3
+DESCRIPTION=Torrent file and Magnet link handler for programs/services.
+RDEPEND=
+	dev-qt/qtbase:6[concurrent,gui,network,widgets]
+	kde-frameworks/kcoreaddons:6
+	kde-frameworks/ki18n:6
+	kde-frameworks/kwallet:6
+	kde-frameworks/kxmlgui:6
+
+EAPI=8
+DEPEND=
+	dev-qt/qtbase:6[concurrent,gui,network,widgets]
+	kde-frameworks/kcoreaddons:6
+	kde-frameworks/ki18n:6
+	kde-frameworks/kwallet:6
+	kde-frameworks/kxmlgui:6
+
+SLOT=0
+IUSE=debug
+BDEPEND=
+	dev-qt/qttools:6[linguist]
+	kde-frameworks/extra-cmake-modules:0
+	virtual/pkgconfig
+
+_md5_=e2db0201b099e6505fbd07763a0c5afc
