@@ -20,7 +20,7 @@ concurrency:
 env:
   ecn: app-misc
   epn: ollama-bin
-  description: "Get up and running with Llama 3, Mistral, Gemma, and other large language models."
+  description: "Get up and running with Llama 3, Mistral, Gemma, and other large language models"
   homepage: "https://ollama.com"
   github_owner: ollama
   github_repo: ollama
@@ -99,30 +99,32 @@ jobs:
               trap 'rm -f "$tmp_ebuild"; rm -rf "$tmp_manifest_dir"' EXIT
 
               {
-                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-ollama-bin-update.yaml"
+                echo "# Copyright 2024-$(date +%Y) Arran Ubels"
+                echo "# Distributed under the terms of the GNU General Public License v2"
+                echo ""
+                echo "# Generated via:"
+                echo "# https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-ollama-bin-update.yaml"
                 echo 'EAPI=8'
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
+                echo 'MY_URI="https://github.com/ollama/ollama/releases/download/v${PV/_/-}"'
+                echo 'SRC_URI="'
+                echo -e '\tamd64? ( ${MY_URI}/ollama-linux-amd64.'${ext}' -> ${P}.amd64.'${ext}' )'
+                echo -e '\tarm64? ( ${MY_URI}/ollama-linux-arm64.'${ext}' -> ${P}.arm64.'${ext}' )'
+                echo -e '\trocm? ( ${MY_URI}/ollama-linux-amd64-rocm.'${ext}' -> ${P}.rocm.'${ext}' )"'
+                echo 'S="${WORKDIR}"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="~amd64 ~arm64"'
-                echo 'IUSE="+systemd -rocm"'
+                echo 'IUSE="+systemd rocm"'
+                echo 'RESTRICT="strip"'
                 if [ -n "$bdepend" ]; then
                   echo "$bdepend"
                 fi
                 echo 'DEPEND="acct-user/ollama acct-group/ollama"'
                 echo 'RDEPEND="acct-user/ollama acct-group/ollama"'
-                echo 'S="${WORKDIR}"'
-                echo 'RESTRICT="strip"'
                 echo ''
-                echo "inherit systemd xdg-utils"
-                echo ''
-                echo 'MY_PV="${PV/_/-}"'
-                echo 'SRC_URI="  '
-                echo '  amd64? ( https://github.com/ollama/ollama/releases/download/v${MY_PV}/ollama-linux-amd64.'${ext}'  -> $P.amd64.'${ext}'  )'
-                echo '  arm64? ( https://github.com/ollama/ollama/releases/download/v${MY_PV}/ollama-linux-arm64.'${ext}'  -> $P.arm64.'${ext}'  )'
-                echo '  rocm? ( https://github.com/ollama/ollama/releases/download/v${MY_PV}/ollama-linux-amd64-rocm.'${ext}' -> $P.rocm.'${ext}' )'
-                echo '" '
+                echo "inherit systemd"
                 echo ''
                 echo "src_unpack() {"
                 if [ "${ext}" = "tar.zst" ]; then
@@ -147,49 +149,47 @@ jobs:
                 echo "}"
                 echo ""
                 echo "src_install() {"
-                echo '  exeinto /opt/Ollama/bin'
-                echo '  doexe "${WORKDIR}/bin/ollama" || die "Failed to install binary"'
-                echo '  insinto /opt/Ollama/lib'
-                echo '  doins -r "${WORKDIR}/lib/ollama/"'
-                echo '  fperms -R +x /opt/Ollama/lib/ollama'
-                echo '  dosym /opt/Ollama/bin/ollama /opt/bin/ollama'
-                echo '  if use systemd; then'
-                echo '    {'
-                echo '      echo "[Unit]"'
-                echo '      echo "Description=Ollama Service"'
-                echo '      echo "After=network-online.target"'
-                echo '      echo ""'
-                echo '      echo "[Service]"'
-                echo '      echo "ExecStart=/opt/Ollama/bin/ollama serve"'
-                echo '      echo "User=ollama"'
-                echo '      echo "Group=ollama"'
-                echo '      echo "Restart=always"'
-                echo '      echo "RestartSec=3"'
-                echo '      echo ""'
-                echo '      echo "[Install]"'
-                echo '      echo "WantedBy=default.target"'
-                echo '    } > "${T}/ollama.service"'
-                echo '    systemd_dounit "${T}/ollama.service"'
-                echo '  fi'
+                echo -e '\texeinto /opt/Ollama/bin'
+                echo -e '\tdoexe "${WORKDIR}/bin/ollama" || die "Failed to install binary"'
+                echo -e '\tinsinto /opt/Ollama/lib'
+                echo -e '\tdoins -r "${WORKDIR}/lib/ollama/"'
+                echo -e '\tfperms -R +x /opt/Ollama/lib/ollama'
+                echo -e '\tdosym ../Ollama/bin/ollama /opt/bin/ollama'
+                echo -e '\t{'
+                echo -e '\t\techo "[Unit]"'
+                echo -e '\t\techo "Description=Ollama Service"'
+                echo -e '\t\techo "After=network-online.target"'
+                echo -e '\t\techo ""'
+                echo -e '\t\techo "[Service]"'
+                echo -e '\t\techo "ExecStart=/opt/Ollama/bin/ollama serve"'
+                echo -e '\t\techo "User=ollama"'
+                echo -e '\t\techo "Group=ollama"'
+                echo -e '\t\techo "Restart=always"'
+                echo -e '\t\techo "RestartSec=3"'
+                echo -e '\t\techo ""'
+                echo -e '\t\techo "[Install]"'
+                echo -e '\t\techo "WantedBy=default.target"'
+                echo -e '\t} > "${T}/ollama.service"'
+                echo -e '\tsystemd_dounit "${T}/ollama.service"'
                 echo "}"
                 echo ""
                 echo "src_prepare() {"
-                echo "  eapply_user"
+                echo -e '\teapply_user'
                 echo "}"
                 echo ""
                 echo "pkg_postinst() {"
-                echo "  einfo \"Quick guide:\""
-                echo "  if use systemd; then"
-                echo "    einfo \"  To start the system-wide service:\""
-                echo "    einfo \"    systemctl start ollama\""
-                echo "    einfo \"  Or to run it manually as your user:\""
-                echo "  fi"
-                echo "  einfo \"  ollama serve\""
-                echo "  einfo \"\""
-                echo "  einfo \"To run a model:\""
-                echo "  einfo \"  ollama run llama3:70b\""
-                echo "  einfo \"\""
-                echo "  einfo \"See available models at https://ollama.com/library\""
+                echo -e '\teinfo "Quick guide:"'
+                echo -e '\tif use systemd; then'
+                echo -e '\t\teinfo "  To start the system-wide service:"'
+                echo -e '\t\teinfo "    systemctl start ollama"'
+                echo -e '\t\teinfo "  Or to run it manually as your user:"'
+                echo -e '\tfi'
+                echo -e '\teinfo "  ollama serve"'
+                echo -e '\teinfo ""'
+                echo -e '\teinfo "To run a model:"'
+                echo -e '\teinfo "  ollama run llama3:70b"'
+                echo -e '\teinfo ""'
+                echo -e '\teinfo "See available models at https://ollama.com/library"'
                 echo "}"
                 echo ""
               } > "$tmp_ebuild"
