@@ -2,15 +2,25 @@
 # Distributed under the terms of the GNU General Public License v2
 
 # Generated via:
-# https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-ollama-bin-update.yaml
+# https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/
+# app-misc-ollama-bin-update.yaml
 EAPI=8
-DESCRIPTION="Get up and running with Llama 3, Mistral, Gemma, and other large language models"
+DESCRIPTION="Get up and running with Llama 3, Mistral, Gemma, and other LLMs"
 HOMEPAGE="https://ollama.com"
-MY_URI="https://github.com/ollama/ollama/releases/download/v${PV/_/-}"
+MY_PV="${PV/_/-}"
 SRC_URI="
-	amd64? ( ${MY_URI}/ollama-linux-amd64.tar.zst -> ${P}.amd64.tar.zst )
-	arm64? ( ${MY_URI}/ollama-linux-arm64.tar.zst -> ${P}.arm64.tar.zst )
-	rocm? ( ${MY_URI}/ollama-linux-amd64-rocm.tar.zst -> ${P}.rocm.tar.zst )"
+	amd64? (
+		https://github.com/ollama/ollama/releases/download/v${MY_PV}/ollama-linux-amd64.tar.zst
+			-> ${P}.amd64.tar.zst
+	)
+	arm64? (
+		https://github.com/ollama/ollama/releases/download/v${MY_PV}/ollama-linux-arm64.tar.zst
+			-> ${P}.arm64.tar.zst
+	)
+	rocm? (
+		https://github.com/ollama/ollama/releases/download/v${MY_PV}/ollama-linux-amd64-rocm.tar.zst
+			-> ${P}.rocm.tar.zst
+	)"
 S="${WORKDIR}"
 LICENSE="MIT"
 SLOT="0"
@@ -25,12 +35,15 @@ inherit systemd
 
 src_unpack() {
 	if use rocm; then
-		tar --zstd -xf "${DISTDIR}/${P}.rocm.tar.zst" -C "${WORKDIR}" || die "Failed to unpack rocm"
+		tar --zstd -xf "${DISTDIR}/${P}.rocm.tar.zst" \
+			-C "${WORKDIR}" || die "Failed to unpack rocm"
 	fi
 	if use amd64; then
-		tar --zstd -xf "${DISTDIR}/${P}.amd64.tar.zst" -C "${WORKDIR}" || die "Failed to unpack amd64"
+		tar --zstd -xf "${DISTDIR}/${P}.amd64.tar.zst" \
+			-C "${WORKDIR}" || die "Failed to unpack amd64"
 	elif use arm64; then
-		tar --zstd -xf "${DISTDIR}/${P}.arm64.tar.zst" -C "${WORKDIR}" || die "Failed to unpack arm64"
+		tar --zstd -xf "${DISTDIR}/${P}.arm64.tar.zst" \
+			-C "${WORKDIR}" || die "Failed to unpack arm64"
 	fi
 }
 
