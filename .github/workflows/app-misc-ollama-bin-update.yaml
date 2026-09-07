@@ -91,10 +91,12 @@ jobs:
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
             if [ ! -f "$ebuild_file" ]; then
               tmp_ebuild="${ebuild_file}.tmp"
-              tmp_manifest="${ebuild_dir}/Manifest.tmp"
-              rm -f "$tmp_ebuild" "$tmp_manifest"
-              cp "${ebuild_dir}/Manifest" "$tmp_manifest" 2>/dev/null || touch "$tmp_manifest"
-              trap 'rm -f "$tmp_ebuild" "$tmp_manifest"' EXIT
+              tmp_manifest_dir="${ebuild_dir}/Manifest.tmp"
+              rm -f "$tmp_ebuild"
+              rm -rf "$tmp_manifest_dir"
+              mkdir -p "$tmp_manifest_dir"
+              cp "${ebuild_dir}/Manifest" "$tmp_manifest_dir/Manifest" 2>/dev/null || touch "$tmp_manifest_dir/Manifest"
+              trap 'rm -f "$tmp_ebuild"; rm -rf "$tmp_manifest_dir"' EXIT
 
               {
                 echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-ollama-bin-update.yaml"
@@ -195,16 +197,17 @@ jobs:
               # Validate and fully build the replacement Manifest before removing
               # the currently published version.
               bash -n "$tmp_ebuild"
-              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64.${ext} ${{ env.epn }}-${version}.amd64.${ext} "$tmp_manifest"
-              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-arm64.${ext} ${{ env.epn }}-${version}.arm64.${ext} "$tmp_manifest"
-              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64-rocm.${ext} ${{ env.epn }}-${version}.rocm.${ext} "$tmp_manifest"
+              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64.${ext} ${{ env.epn }}-${version}.amd64.${ext} "$tmp_manifest_dir"
+              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-arm64.${ext} ${{ env.epn }}-${version}.arm64.${ext} "$tmp_manifest_dir"
+              g2 manifest upsert-from-url https://github.com/ollama/ollama/releases/download/${tag}/ollama-linux-amd64-rocm.${ext} ${{ env.epn }}-${version}.rocm.${ext} "$tmp_manifest_dir"
               test -s "$tmp_ebuild"
-              test -s "$tmp_manifest"
+              test -s "$tmp_manifest_dir/Manifest"
 
               # Only after all replacement artifacts are ready do we publish the
               # new version and perform one-version-per-grade retention cleanup.
               mv "$tmp_ebuild" "$ebuild_file"
-              mv "$tmp_manifest" "${ebuild_dir}/Manifest"
+              mv "$tmp_manifest_dir/Manifest" "${ebuild_dir}/Manifest"
+              rm -rf "$tmp_manifest_dir"
               find "$ebuild_dir" -maxdepth 1 -type f -name '${{ env.epn }}-*.ebuild' ! -name "$(basename "$ebuild_file")" -delete
               trap - EXIT
 
