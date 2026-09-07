@@ -168,7 +168,7 @@ S="${WORKDIR}/${PN/-/_}-${PV}"
 
 QA_PREBUILT="opt/flutter_jules/lib/libflutter_linux_gtk.so"
 
-COMMON_DEPEND="\n
+COMMON_DEPEND="
 	app-crypt/libsecret
 	dev-libs/glib:2
 	dev-libs/libayatana-appindicator
