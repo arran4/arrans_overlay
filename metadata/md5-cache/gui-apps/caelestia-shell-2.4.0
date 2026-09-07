@@ -9,4 +9,5 @@ INHERITED=cmake
 HOMEPAGE=https://github.com/caelestia-dots/shell
 SRC_URI=https://github.com/caelestia-dots/shell/archive/refs/tags/v2.4.0.tar.gz -> caelestia-shell-2.4.0.tar.gz https://github.com/soramanew/m3shapes/archive/bdc327b29f95394a732baf3c9b19658ba23755b6.tar.gz -> caelestia-m3shapes-bdc327b29f95394a732baf3c9b19658ba23755b6.tar.gz
 EAPI=8
+_eclasses_=cmake c1108253a817ccfb6d5815cf1ebec383
 _md5_=50a21af64b8eeed1edbbcc33989c9df3

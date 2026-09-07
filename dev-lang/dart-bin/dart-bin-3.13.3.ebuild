@@ -1,8 +1,8 @@
 # Copyright 2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
+
 # Generated via:
 # .github/workflows/dev-lang-dart-bin-update.yaml
-
 
 EAPI=8
 

@@ -65,6 +65,9 @@ jobs:
             if [ ! -f "$ebuild_file" ]; then
               # Create ebuild script
               {
+                echo "# Copyright 2024 Gentoo Authors"
+                echo "# Distributed under the terms of the GNU General Public License v2"
+                echo ""
                 echo "# Generated via:"
                 echo "# .github/workflows/net-misc-kmagmux-update.yaml"
                 echo ""
