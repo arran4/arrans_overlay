@@ -292,8 +292,11 @@ src_install() {
 
 	dosym -r /opt/flutter_jules/flutter_jules /usr/bin/flutter_jules
 
-	local icon="macos/Runner/Assets.xcassets"
-	icon+="/AppIcon.appiconset/app_icon_1024.png"
-	newicon -s 1024 "${icon}" com.arran4.flutter_jules.png
+	local icon_dir="macos/Runner/Assets.xcassets/AppIcon.appiconset"
+	local s
+	for s in 16 32 64 128 256 512 1024; do
+		newicon -s "${s}" \
+			"${icon_dir}/app_icon_${s}.png" com.arran4.flutter_jules.png
+	done
 	domenu linux/com.arran4.flutter_jules.desktop
 }
