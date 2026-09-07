@@ -15,7 +15,7 @@ IUSE="debug"
 KEYWORDS="~amd64"
 
 DEPEND="
-	dev-qt/qtbase:6[concurrent,gui,network,widgets]
+	dev-qt/qtbase:6[concurrent,gui,network,widgets,test]
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kwallet:6
