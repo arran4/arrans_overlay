@@ -95,7 +95,7 @@ jobs:
               rm -f "$tmp_ebuild"
               rm -rf "$tmp_manifest_dir"
               mkdir -p "$tmp_manifest_dir"
-              cp "${ebuild_dir}/Manifest" "$tmp_manifest_dir/Manifest" 2>/dev/null || touch "$tmp_manifest_dir/Manifest"
+              touch "$tmp_manifest_dir/Manifest"
               trap 'rm -f "$tmp_ebuild"; rm -rf "$tmp_manifest_dir"' EXIT
 
               {
