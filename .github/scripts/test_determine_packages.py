@@ -57,28 +57,20 @@ assert [item["group"] for item in mixed] == [
     "caelestia-core", "caelestia-python", "caelestia-fonts", "generic"
 ]
 
-for forced_path in (
+workflow_only = run_helper([
     ".github/workflows/gentoo-pkg-test.yml",
     ".github/scripts/determine_packages.py",
-):
-    forced = run_helper([forced_path], source_paths=[])
-    assert [item["group"] for item in forced] == ["caelestia-core"] * 4
-    assert [item["package"] for item in forced] == [
-        "gui-apps/quickshell",
-        "gui-apps/caelestia-shell",
-        "gui-apps/caelestia-cli",
-        "gui-apps/caelestia-meta",
-    ]
-    assert not any(item["source_target"] for item in forced)
-    assert all(item["cache_lineage"] == "caelestia-core" for item in forced)
+], source_paths=[])
+assert workflow_only == []
 
-forced_with_changed_target = run_helper([
+workflow_with_changed_target = run_helper([
     ".github/workflows/gentoo-pkg-test.yml",
     "gui-apps/caelestia-shell/caelestia-shell-2.3.0.ebuild",
 ])
-assert [item["source_target"] for item in forced_with_changed_target] == [
-    False, True, False, False,
+assert [item["package"] for item in workflow_with_changed_target] == [
+    "=gui-apps/caelestia-shell-2.3.0",
 ]
+assert workflow_with_changed_target[0]["source_target"] is True
 
 prefixed = run_helper(["./app-misc/example/example-1.0.ebuild"])
 assert prefixed == generic
@@ -163,8 +155,12 @@ for option in (
 ):
     assert option in package_emerge_options
 assert 'EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS} --usepkg --getbinpkg"' in workflow
-assert "timeout-minutes: 120" in workflow
-assert "timeout-minutes: 105" in workflow
+assert "timeout-minutes: 180" in workflow
+assert "timeout-minutes: 165" in workflow
+assert "\n  schedule:\n" not in workflow
+assert workflow.count("- '**/*.ebuild'") == 2
+assert "- '.github/workflows/gentoo-pkg-test.yml'" not in workflow
+assert "- '.github/scripts/determine_packages.py'" not in workflow
 assert workflow.count("actions/cache/restore@v4") == 1
 assert workflow.count("actions/cache/save@v4") == 1
 assert "if: always()\n        uses: actions/cache/save@v4" in workflow
@@ -191,7 +187,8 @@ assert '"media-libs/libglvnd X"' in workflow
 assert '"x11-libs/cairo X"' in workflow
 assert '"media-sound/pulseaudio-daemon -webrtc-aec"' in workflow
 assert "dev-qt/qtbase opengl vulkan" not in workflow
-assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$PKG\")" in workflow
+assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$CP\")" in workflow
+assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$PKG\")" not in workflow
 assert '"$PACKAGE" "$SOURCE_TARGET"' in workflow
 assert "binary_excludes" not in workflow
 assert 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' in workflow

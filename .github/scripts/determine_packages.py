@@ -17,10 +17,6 @@ FONT_PACKAGES = {
     "media-fonts/material-symbols-variable",
     "media-fonts/rubik",
 }
-FORCE_CAELESTIA_PATHS = {
-    ".github/workflows/gentoo-pkg-test.yml",
-    ".github/scripts/determine_packages.py",
-}
 
 
 def normalize_path(path):
@@ -80,11 +76,6 @@ def build_matrix(changed_files, source_files=()):
         "generic": set(),
     }
 
-    if normalized_files & FORCE_CAELESTIA_PATHS:
-        # Unversioned atoms let Portage select the latest visible ebuild using
-        # Gentoo version semantics rather than unreliable filename sorting.
-        grouped["caelestia-core"].update(CORE_PACKAGES)
-
     for path in normalized_files:
         atom = atom_from_path(path)
         if atom is None:
@@ -105,11 +96,7 @@ def build_matrix(changed_files, source_files=()):
         ordered_core = []
         for package in CORE_PACKAGES:
             package_atoms = sorted(atom for atom in core_atoms if cp_from_atom(atom) == package)
-            versioned_atoms = [atom for atom in package_atoms if atom != package]
-            # Forced integration coverage contributes an unversioned atom. If
-            # the same package has a directly changed ebuild, test that exact
-            # CPV instead of creating a duplicate integration job.
-            ordered_core.extend(versioned_atoms or package_atoms)
+            ordered_core.extend(package_atoms)
         matrix.extend(
             matrix_entry("caelestia-core", package, package in source_atoms)
             for package in ordered_core

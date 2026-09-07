@@ -1,53 +1,60 @@
-From b952f02bc0880361aa923602a8aa926275338a88 Mon Sep 17 00:00:00 2001
-From: Chua Zheng Leong <melynx@gmail.com>
-Date: Mon, 13 Jul 2026 15:07:15 +0800
+From 7d4f23a0f4e7d901d8cd9cc6a03ac624fcf592a1 Mon Sep 17 00:00:00 2001
+From: Arran Ubels <arran4@gmail.com>
+Date: Tue, 1 Sep 2026 09:20:00 +1000
 Subject: [PATCH] fix: ignore transient keyboard layout gaps
 
+Caelestia 2.4.0 moved keyboard-layout notifications from services/Hypr.qml
+into HyprKeyboard. Keep the last real keymap separately from the transient
+IPC value so an empty/Unknown refresh neither produces a blank notification
+nor makes restoration of the same layout look like a layout change.
 ---
- services/Hypr.qml | 23 ++++++++++++++++++++---
- 1 file changed, 20 insertions(+), 3 deletions(-)
+ plugin/src/Caelestia/Services/hyprdevices.cpp | 14 ++++++++++----
+ plugin/src/Caelestia/Services/hyprdevices.hpp |  1 +
+ 2 files changed, 11 insertions(+), 4 deletions(-)
 
-diff --git a/services/Hypr.qml b/services/Hypr.qml
-index d890f098..232db1c8 100644
---- a/services/Hypr.qml
-+++ b/services/Hypr.qml
-@@ -38,6 +38,7 @@ Singleton {
-     readonly property alias devices: extras.devices
+diff --git a/plugin/src/Caelestia/Services/hyprdevices.cpp b/plugin/src/Caelestia/Services/hyprdevices.cpp
+--- a/plugin/src/Caelestia/Services/hyprdevices.cpp
++++ b/plugin/src/Caelestia/Services/hyprdevices.cpp
+@@ -42,7 +42,8 @@ void toastKbLayout(const QString& layout) {
 
-     property bool hadKeyboard
-+    property string lastKbLayout: ""
-     property string lastSpecialWorkspace: ""
+ HyprKeyboard::HyprKeyboard(QJsonObject ipcObject, QObject* parent)
+     : QObject(parent)
+-    , m_lastIpcObject(ipcObject) {}
++    , m_lastIpcObject(ipcObject)
++    , m_lastValidKeymap(ipcObject.value(u"active_keymap"_s).toString()) {}
 
-     signal configReloaded
-@@ -118,10 +119,26 @@ Singleton {
+ QVariantHash HyprKeyboard::lastIpcObject() const {
+     return m_lastIpcObject.toVariantHash();
+@@ -93,11 +94,16 @@ bool HyprKeyboard::updateLastIpcObject(QJsonObject object) {
+         dirty = true;
+         emit layoutChanged();
      }
-
-     onKbLayoutFullChanged: {
--        if (hadKeyboard && GlobalConfig.utilities.toasts.kbLayoutChanged)
--            Toaster.toast(qsTr("Keyboard layout changed"), qsTr("Layout changed to: %1").arg(kbLayoutFull), "keyboard");
-+        const layout = keyboard?.activeKeymap ?? "";
-
--        hadKeyboard = !!keyboard;
-+        if (!keyboard || !layout || layout === "Unknown") {
-+            hadKeyboard = false;
-+            return;
+-    if (last.value(u"active_keymap"_s) != object.value(u"active_keymap"_s)) {
++    const auto keymap = object.value(u"active_keymap"_s).toString();
++    if (last.value(u"active_keymap"_s).toString() != keymap) {
+         dirty = true;
+         emit activeKeymapChanged();
+-        if (isMain && !last.value(u"active_keymap"_s).toString().isEmpty())
+-            toastKbLayout(object.value(u"active_keymap"_s).toString());
++        if (isMain && !keymap.isEmpty() && keymap != u"Unknown"_s) {
++            if (!m_lastValidKeymap.isEmpty() && m_lastValidKeymap != u"Unknown"_s && keymap != m_lastValidKeymap)
++                toastKbLayout(keymap);
++
++            m_lastValidKeymap = keymap;
 +        }
-+
-+        if (!hadKeyboard) {
-+            hadKeyboard = true;
-+
-+            if (!lastKbLayout) {
-+                lastKbLayout = layout;
-+                return;
-+            }
-+        }
-+
-+        if (layout !== lastKbLayout && GlobalConfig.utilities.toasts.kbLayoutChanged)
-+            Toaster.toast(qsTr("Keyboard layout changed"), qsTr("Layout changed to: %1").arg(layout), "keyboard");
-+
-+        lastKbLayout = layout;
      }
+     if (last.value(u"capsLock"_s) != object.value(u"capsLock"_s)) {
+         dirty = true;
+diff --git a/plugin/src/Caelestia/Services/hyprdevices.hpp b/plugin/src/Caelestia/Services/hyprdevices.hpp
+--- a/plugin/src/Caelestia/Services/hyprdevices.hpp
++++ b/plugin/src/Caelestia/Services/hyprdevices.hpp
+@@ -42,6 +42,7 @@ signals:
 
-     Connections {
+ private:
+     QJsonObject m_lastIpcObject;
++    QString m_lastValidKeymap;
+ };
+
+ class HyprDevices : public QObject {
 --
 2.55.0

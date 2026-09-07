@@ -10,7 +10,7 @@ DEPEND=""
 RDEPEND=""
 S="${WORKDIR}"
 RESTRICT="strip"
-SRC_URI="https://beeper-desktop.download.beeper.com/builds/Beeper-4.3.73-x86_64.AppImage -> ${P}.AppImage"
+SRC_URI="https://beeper-desktop.download.beeper.com/builds/Beeper-4.3.89-x86_64.AppImage -> ${P}.AppImage"
 
 src_install() {
   cp "${DISTDIR}/${P}.AppImage" "${P}.AppImage" || die "Failed to copy AppImage"
