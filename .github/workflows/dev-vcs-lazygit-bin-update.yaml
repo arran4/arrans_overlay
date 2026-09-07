@@ -1,32 +1,36 @@
 # Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.43 Github Binary Release current.config 2026-09-05 22:43:02.713774268 +0000 UTC m=+0.006937948
 
-name: app-misc/gocdm-bin update
+name: dev-vcs/lazygit-bin update
 
 permissions:
   contents: write
 
 on:
   schedule:
-    - cron: '42 8 * * *'
+    - cron: '52 12 * * *'
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/app-misc-gocdm-bin-update.yaml'
+      - '.github/workflows/dev-vcs-lazygit-bin-update.yaml'
 
 env:
-  ecn: app-misc
-  epn: gocdm-bin
-  description: "The Console Display Manager (Go Port)"
-  homepage: "https://github.com/arran4/gocdm"
-  github_owner: arran4
-  github_repo: gocdm
-  keywords: ~amd64 ~arm64
-  workflow_filename: app-misc-gocdm-bin-update.yaml
-  gocdm_binary_installed_name: 'gocdm'
-  gocdm_binary_archived_name_amd64: 'gocdm'
-  gocdm_release_name_amd64: 'gocdm_${version}_linux_amd64.tar.gz'
-  gocdm_binary_archived_name_arm64: 'gocdm'
-  gocdm_release_name_arm64: 'gocdm_${version}_linux_arm64.tar.gz'
+  ecn: dev-vcs
+  epn: lazygit-bin
+  description: "simple terminal UI for git commands"
+  homepage: "https://github.com/jesseduffield/lazygit"
+  github_owner: jesseduffield
+  github_repo: lazygit
+  keywords: ~amd64 ~arm ~arm64 ~x86
+  workflow_filename: dev-vcs-lazygit-bin-update.yaml
+  lazygit_binary_installed_name: 'lazygit'
+  lazygit_binary_archived_name_amd64: 'lazygit'
+  lazygit_release_name_amd64: 'lazygit_${version}_linux_x86_64.tar.gz'
+  lazygit_binary_archived_name_arm: 'lazygit'
+  lazygit_release_name_arm: 'lazygit_${version}_linux_armv6.tar.gz'
+  lazygit_binary_archived_name_arm64: 'lazygit'
+  lazygit_release_name_arm64: 'lazygit_${version}_linux_arm64.tar.gz'
+  lazygit_binary_archived_name_x86: 'lazygit'
+  lazygit_release_name_x86: 'lazygit_${version}_linux_32-bit.tar.gz'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -53,7 +57,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
-          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:arran4/gocdm" "$metadata_file"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:jesseduffield/lazygit" --use-add "doc:Install documentation" "$metadata_file"
           declare -A releaseTypes=()
           tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
@@ -90,13 +94,16 @@ jobs:
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-gocdm_\${PV}_linux_amd64.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-gocdm_\${PV}_linux_arm64.tar.gz  )  "
+                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-lazygit_\${PV}_linux_x86_64.tar.gz  )  "
+                echo "	arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-lazygit_\${PV}_linux_armv6.tar.gz  )  "
+                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-lazygit_\${PV}_linux_arm64.tar.gz  )  "
+                echo "	x86? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-lazygit_\${PV}_linux_32-bit.tar.gz  )  "
                 echo '"'
-                echo 'LICENSE="GNU General Public License v2.0"'
+                echo 'LICENSE="MIT License"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo -n 'IUSE="'
+                echo -n ' doc'
                 echo '"'
                 echo ''
                 echo -n 'REQUIRED_USE="'
@@ -109,20 +116,36 @@ jobs:
                 echo ''
                 echo 'src_unpack() {'
                 echo '  if use amd64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-gocdm_\${PV}_linux_amd64.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-lazygit_\${PV}_linux_x86_64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use arm; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-lazygit_\${PV}_linux_armv6.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-gocdm_\${PV}_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo "    unpack \"\${DISTDIR}/\${P}-lazygit_\${PV}_linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
+                echo '  fi'
+                echo '  if use x86; then'
+                echo "    unpack \"\${DISTDIR}/\${P}-lazygit_\${PV}_linux_32-bit.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
                 echo '}'
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
                 echo '  if use amd64; then'
-                echo '    newexe "${{ env.gocdm_binary_archived_name_amd64 }}" "${{ env.gocdm_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.lazygit_binary_archived_name_amd64 }}" "${{ env.lazygit_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use arm; then'
+                echo '    newexe "${{ env.lazygit_binary_archived_name_arm }}" "${{ env.lazygit_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
                 echo '  if use arm64; then'
-                echo '    newexe "${{ env.gocdm_binary_archived_name_arm64 }}" "${{ env.gocdm_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '    newexe "${{ env.lazygit_binary_archived_name_arm64 }}" "${{ env.lazygit_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use x86; then'
+                echo '    newexe "${{ env.lazygit_binary_archived_name_x86 }}" "${{ env.lazygit_binary_installed_name }}" || die "Failed to install Binary"'
+                echo '  fi'
+                echo '  if use doc; then'
+                echo '    dodoc "LICENSE" || die "Failed to install document LICENSE"'
+                echo '    dodoc "README.md" || die "Failed to install document README.md"'
                 echo '  fi'
                 echo '}'
               } > "$tmp_ebuild_file"
@@ -137,8 +160,10 @@ jobs:
                   continue
               fi
               failed=0
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-gocdm_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-gocdm_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-lazygit_${version}_linux_x86_64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-lazygit_${version}_linux_armv6.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-lazygit_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-lazygit_${version}_linux_32-bit.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
               if [ "$failed" -eq 1 ]; then
                   echo "Failed to generate manifest for $tag. Skipping..."
                   rm -f "$ebuild_file"
