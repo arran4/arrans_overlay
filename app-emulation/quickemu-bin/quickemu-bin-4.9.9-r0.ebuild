@@ -6,8 +6,8 @@ EAPI=8
 DESCRIPTION="Quickly create and run Windows, macOS and Linux virtual machines"
 HOMEPAGE="https://github.com/quickemu-project/quickemu"
 PUB="github.com/quickemu-project/quickemu/archive/refs/tags"
-SRC_URI="https://${PUB}/4.9.9.tar.gz -> quickemu-bin-4.9.9.tar.gz"
-S="${WORKDIR}/quickemu-4.9.9"
+SRC_URI="https://${PUB}/${PV}.tar.gz -> ${P}.tar.gz"
+S="${WORKDIR}/quickemu-${PV}"
 
 LICENSE="MIT"
 SLOT="0"
@@ -21,7 +21,7 @@ RDEPEND+=" sys-apps/util-linux sys-process/procps x11-apps/mesa-progs"
 RDEPEND+=" x11-apps/xrandr x11-misc/xdg-user-dirs"
 
 src_unpack() {
-	unpack "quickemu-bin-4.9.9.tar.gz"
+	unpack "${P}.tar.gz"
 }
 
 src_install() {
