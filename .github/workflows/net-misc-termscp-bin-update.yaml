@@ -133,12 +133,12 @@ jobs:
                 echo 'src_unpack() {'
                 printf '\t%s\n' 'if use amd64; then'
                 printf '\t\t%s\n' "unpack \\"
-                printf '\t\t\t%s\n' "\"${DISTDIR}/\${P}-termscp-v\${PV}-x86_64-unknown-linux-musl.tar.gz\" \\"
+                printf '\t\t\t%s\n' "\"\${DISTDIR}/\${P}-termscp-v\${PV}-x86_64-unknown-linux-musl.tar.gz\" \\"
                 printf '\t\t\t%s\n' "|| die \"Can't unpack archive file\""
                 printf '\t%s\n' 'fi'
                 printf '\t%s\n' 'if use arm64; then'
                 printf '\t\t%s\n' "unpack \\"
-                printf '\t\t\t%s\n' "\"${DISTDIR}/\${P}-termscp-v\${PV}-aarch64-unknown-linux-musl.tar.gz\" \\"
+                printf '\t\t\t%s\n' "\"\${DISTDIR}/\${P}-termscp-v\${PV}-aarch64-unknown-linux-musl.tar.gz\" \\"
                 printf '\t\t\t%s\n' "|| die \"Can't unpack archive file\""
                 printf '\t%s\n' 'fi'
                 echo '}'
