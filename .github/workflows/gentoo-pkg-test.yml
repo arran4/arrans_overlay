@@ -217,8 +217,8 @@ jobs:
           fi
           if [[ "$PKG" == *"caelestia-shell"* ]]; then
             mkdir -p /etc/portage/package.unmask
-            echo "dev-util/wayland-scanner" >> /etc/portage/package.unmask/ci
-            echo "dev-util/wayland-scanner ~amd64" >> /etc/portage/package.accept_keywords/ci
+            echo ">=dev-util/wayland-scanner-1.26.0" >> /etc/portage/package.unmask/ci
+            echo ">=dev-util/wayland-scanner-1.26.0 ~amd64" >> /etc/portage/package.accept_keywords/ci
           fi
           # wayland-scanner-1.25 requires the matching unstable Wayland floor.
           # Keep both below 1.26, whose transition is newer than this stage3.
