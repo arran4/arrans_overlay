@@ -10,8 +10,7 @@ SHELL_ARCHIVE="github.com/caelestia-dots/shell/archive/refs/tags"
 DESCRIPTION="Caelestia Quickshell desktop shell (Hyprland)"
 HOMEPAGE="https://github.com/caelestia-dots/shell"
 SRC_URI="
-	https://${SHELL_ARCHIVE}/v${PV}.tar.gz
-	-> ${PN}-${PV}.tar.gz
+	https://${SHELL_ARCHIVE}/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz
 "
 
 S="${WORKDIR}/shell-${PV}"

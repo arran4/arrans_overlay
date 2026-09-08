@@ -1,25 +1,25 @@
-DEPEND=
-	>=dev-qt/qtbase-6.8:6
-	>=dev-qt/qtdeclarative-6.8:6
-	>=dev-qt/qtshadertools-6.8:6
-
-INHERITED=cmake
-HOMEPAGE=https://github.com/soramanew/m3shapes
-KEYWORDS=~amd64
-BDEPEND=
-	>=dev-qt/qtshadertools-6.8:6
-
-SRC_URI=
-	https://github.com/soramanew/m3shapes/archive/32ad9ce328bb77ed349b40a3be10ee9ea610b8ab.tar.gz
-	-> m3shapes-1.0.0.tar.gz
-
-LICENSE=MIT
-EAPI=8
-DESCRIPTION=Material 3 Shapes QML module
 SLOT=0
+EAPI=8
+HOMEPAGE=https://github.com/soramanew/m3shapes
+LICENSE=MIT
 RDEPEND=
 	>=dev-qt/qtbase-6.8:6
 	>=dev-qt/qtdeclarative-6.8:6
 	>=dev-qt/qtshadertools-6.8:6
 
-_md5_=3fc1d1291e6e9846dfadab0efaf584e4
+INHERITED=cmake
+SRC_URI=
+	https://github.com/soramanew/m3shapes/archive/32ad9ce328bb77ed349b40a3be10ee9ea610b8ab.tar.gz
+	-> m3shapes-1.0.0.tar.gz
+
+KEYWORDS=~amd64
+BDEPEND=
+	>=dev-qt/qtshadertools-6.8:6
+
+DESCRIPTION=Material 3 Shapes QML module
+DEPEND=
+	>=dev-qt/qtbase-6.8:6
+	>=dev-qt/qtdeclarative-6.8:6
+	>=dev-qt/qtshadertools-6.8:6
+
+_md5_=9b4e25b077b8cd8c7da9262bc6363089

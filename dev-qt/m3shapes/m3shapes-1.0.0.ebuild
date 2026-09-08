@@ -12,7 +12,7 @@ DESCRIPTION="Material 3 Shapes QML module"
 HOMEPAGE="https://github.com/soramanew/m3shapes"
 SRC_URI="
 	https://github.com/soramanew/m3shapes/archive/${M3SHAPES_REV}.tar.gz
-	-> ${PN}-${PV}.tar.gz
+	-> ${PN}-${PVR}.tar.gz
 "
 
 S="${WORKDIR}/${PN}-${M3SHAPES_REV}"
