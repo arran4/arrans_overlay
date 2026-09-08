@@ -128,6 +128,8 @@ jobs:
           #!/bin/bash
           set -euxo pipefail
 
+          chmod 777 /var/cache/distfiles /var/cache/binpkgs
+
           mkdir -p /etc/portage/repos.conf
           printf "%s\n" \
             "[gentoo]" \
