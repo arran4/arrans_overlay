@@ -1,0 +1,13 @@
+EAPI=8
+INHERITED=git-r3
+DESCRIPTION=A lightweight raster and vector graphics editor in your browser.
+HOMEPAGE=https://graphite.rs/
+LICENSE=Apache-2.0
+BDEPEND=
+    net-libs/nodejs
+    dev-lang/rust
+    sys-apps/yarn
+
+SLOT=0
+RDEPEND=dev-lang/python
+_md5_=8896b225b9e0c3a53fef34f13129a325
