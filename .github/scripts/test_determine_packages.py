@@ -202,5 +202,9 @@ assert "--autounmask-keep-masks=y" in package_emerge_options
 assert "CI_GRAPH_PREREQUISITES=(dev-util/vulkan-headers)" in workflow
 assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow
 assert "*/* ~amd64" not in workflow
+assert "=net-misc/kmagmux-9999" in workflow
+assert "dev-qt/qtbase icu test" in workflow
+assert "dev-qt/qt5compat icu" in workflow
+assert ">=dev-util/wayland-scanner-1.26.0" in workflow
 
 print("determine_packages tests passed")

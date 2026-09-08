@@ -203,6 +203,21 @@ jobs:
 
           mkdir -p /etc/portage/package.accept_keywords
           printf "%s ~amd64\n" "$PKG" > /etc/portage/package.accept_keywords/ci
+          if [[ "$PKG" == *"kmagmux-9999"* ]]; then
+            printf "%s **\n" "=net-misc/kmagmux-9999" >> /etc/portage/package.accept_keywords/ci
+          fi
+          if [[ "$PKG" == *"kmagmux"* ]]; then
+            mkdir -p /etc/portage/package.use
+            printf "%s\n" \
+              "dev-qt/qtbase icu test" \
+              "dev-qt/qt5compat icu" \
+              >> /etc/portage/package.use/ci-kmagmux
+          fi
+          if [[ "$PKG" == *"caelestia-shell"* ]]; then
+            mkdir -p /etc/portage/package.unmask
+            echo ">=dev-util/wayland-scanner-1.26.0" >> /etc/portage/package.unmask/ci
+            echo ">=dev-util/wayland-scanner-1.26.0 ~amd64" >> /etc/portage/package.accept_keywords/ci
+          fi
           # wayland-scanner-1.25 requires the matching unstable Wayland floor.
           # Keep both below 1.26, whose transition is newer than this stage3.
           printf "%s\n" "=dev-libs/wayland-1.25.0 ~amd64" \
@@ -261,8 +276,17 @@ jobs:
             --backtrack=50 \
             "${TARGET_BINARY_OPTIONS[@]}" \
             "${CI_GRAPH_PREREQUISITES[@]}" "$PKG"; then
-            echo "Failed to emerge $PKG"
-            FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
+            echo "First emerge attempt exited. Retrying emerge to pick up any autounmask changes..."
+            if ! emerge -v \
+              --usepkg --getbinpkg --binpkg-changed-deps=y \
+              --autounmask=y --autounmask-keep-masks=y \
+              --autounmask-write=y --autounmask-continue=y \
+              --backtrack=50 \
+              "${TARGET_BINARY_OPTIONS[@]}" \
+              "${CI_GRAPH_PREREQUISITES[@]}" "$PKG"; then
+              echo "Failed to emerge $PKG"
+              FAILED_PACKAGES="$FAILED_PACKAGES $PKG (emerge)"
+            fi
           fi
 
           if [ -n "$FAILED_PACKAGES" ]; then
