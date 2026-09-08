@@ -27,7 +27,7 @@ jobs:
 
           if [ -z "$LATEST_M3SHAPES_PIN" ]; then
             echo "Failed to extract M3Shapes pin from upstream flake.nix. Format may have changed."
-            return 1 2>/dev/null || true
+            bash -c "exit 1"
           fi
 
           echo "shell=$LATEST_SHELL" >> $GITHUB_OUTPUT
@@ -39,7 +39,8 @@ jobs:
           CURRENT_CLI=$(find gui-apps/caelestia-cli -maxdepth 1 -name "caelestia-cli-*.ebuild" | sed -E 's/.*caelestia-cli-([0-9.]+)(-r[0-9]+)?\.ebuild/\1/' | sort -V | tail -n 1)
 
           # Find current M3Shapes pinned revision from our ebuild
-          CURRENT_M3SHAPES_PIN=$(grep 'M3SHAPES_REV=' $(find dev-qt/m3shapes -maxdepth 1 -name "m3shapes-*.ebuild" | sort -V | tail -n 1) | cut -d'"' -f2)
+          M3SHAPES_LATEST_EBUILD="$(find dev-qt/m3shapes -maxdepth 1 -name "m3shapes-*.ebuild" | sort -V | tail -n 1)"
+          CURRENT_M3SHAPES_PIN=$(grep 'M3SHAPES_REV=' "$M3SHAPES_LATEST_EBUILD" | cut -d'"' -f2)
 
           echo "current_shell=$CURRENT_SHELL" >> $GITHUB_OUTPUT
           echo "current_cli=$CURRENT_CLI" >> $GITHUB_OUTPUT
