@@ -3,16 +3,16 @@
 
 EAPI=8
 
-inherit systemd xdg desktop
+inherit xdg desktop
 
 DESCRIPTION="Anytype Desktop application"
 HOMEPAGE="https://github.com/anyproto/anytype-ts"
 SRC_URI="https://github.com/anyproto/anytype-ts/archive/refs/tags/v${PV}-alpha.tar.gz -> ${P}-alpha.tar.gz"
 
-LICENSE="ASAL-1.0"
+LICENSE="ASAL"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE=""
+
 
 # Needs anytype-heart and nodejs dependencies
 DEPEND="

@@ -9,10 +9,10 @@ DESCRIPTION="Core engine for Anytype"
 HOMEPAGE="https://github.com/anyproto/anytype-heart"
 SRC_URI="https://github.com/anyproto/anytype-heart/archive/refs/tags/v${PV/_rc/-rc}.tar.gz -> ${P}.tar.gz"
 
-LICENSE="ASAL-1.0"
+LICENSE="ASAL"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE=""
+
 
 DEPEND="
 	dev-lang/go
