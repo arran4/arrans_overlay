@@ -63,8 +63,6 @@ jobs:
             CURRENT_SHELL_EBUILD=$(find gui-apps/caelestia-shell -maxdepth 1 -name "caelestia-shell-*.ebuild" | sort -V | tail -n 1)
             cp "$CURRENT_SHELL_EBUILD" "gui-apps/caelestia-shell/caelestia-shell-${SHELL_VER}.ebuild"
             g2 manifest upsert-from-url "https://github.com/caelestia-dots/shell/archive/refs/tags/v${SHELL_VER}.tar.gz" "caelestia-shell-${SHELL_VER}.tar.gz" gui-apps/caelestia-shell/Manifest
-            M3_REV=$(grep 'M3SHAPES_REV=' "gui-apps/caelestia-shell/caelestia-shell-${SHELL_VER}.ebuild" | cut -d'"' -f2)
-            g2 manifest upsert-from-url "https://github.com/soramanew/m3shapes/archive/${M3_REV}.tar.gz" "caelestia-m3shapes-${M3_REV}.tar.gz" gui-apps/caelestia-shell/Manifest
           fi
 
           if [ -n "$CLI_VER" ] && [ "$CLI_VER" != "null" ] && [ "$CLI_VER" != "$CURRENT_CLI" ]; then
