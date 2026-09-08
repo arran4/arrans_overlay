@@ -13,7 +13,6 @@ LICENSE="ASAL"
 SLOT="0"
 KEYWORDS="~amd64"
 
-
 DEPEND="
 	dev-lang/go
 "
@@ -30,15 +29,19 @@ src_prepare() {
 }
 
 src_compile() {
-	emake build-server
+	# TODO: Must make Go dependency graph fully offline via proper go-module source/vendor inputs.
+	# emake build-server
+	einfo "Source build blocked pending offline Go dependencies."
 }
 
 src_install() {
-	dobin dist/server
+	# dobin dist/server
 
-	insinto /usr/share/${PN}/pb
-	doins -r pb/*
+	# insinto /usr/share/${PN}/pb
+	# doins -r pb/*
 
-	insinto /usr/share/${PN}/pkg
-	doins -r pkg/*
+	# insinto /usr/share/${PN}/pkg
+	# doins -r pkg/*
+
+	einfo "Source install blocked pending build step."
 }
