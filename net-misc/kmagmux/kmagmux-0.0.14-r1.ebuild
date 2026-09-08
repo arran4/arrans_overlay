@@ -10,12 +10,20 @@ inherit ecm
 DESCRIPTION="Torrent file and Magnet link handler for programs/services"
 HOMEPAGE="https://github.com/arran4/KMagMux"
 SRC_URI="https://github.com/arran4/KMagMux/archive/v${PV}.tar.gz -> ${P}.tar.gz"
+S="${WORKDIR}/KMagMux-${PV}"
 
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE="debug"
 
-"
-"
-S="${WORKDIR}/KMagMux-${PV}"
+DEPEND="dev-qt/qtbase:6[concurrent,gui,network,test,widgets] kde-frameworks/kcoreaddons:6 kde-frameworks/ki18n:6 kde-frameworks/kwallet:6 kde-frameworks/kxmlgui:6"
+RDEPEND="${DEPEND}"
+BDEPEND="dev-qt/qttools:6[linguist] kde-frameworks/extra-cmake-modules:0 virtual/pkgconfig"
+
+src_configure() {
+	local mycmakeargs=(
+		-DBUILD_TESTING=OFF
+	)
+	ecm_src_configure
+}
