@@ -27,7 +27,7 @@ jobs:
 
           if [ -z "$LATEST_M3SHAPES_PIN" ]; then
             echo "Failed to extract M3Shapes pin from upstream flake.nix. Format may have changed."
-            bash -c "exit 1"
+            exit 1
           fi
 
           echo "shell=$LATEST_SHELL" >> $GITHUB_OUTPUT

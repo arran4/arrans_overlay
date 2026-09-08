@@ -21,7 +21,7 @@ if [ "$PIN" = "32ad9ce328bb77ed349b40a3be10ee9ea610b8ab" ]; then
     echo "PASS: Extracted pin successfully"
 else
     echo "FAIL: Could not extract pin. Got '$PIN'"
-    return 1 2>/dev/null || bash -c "exit 1"
+    exit 1
 fi
 
 echo "Testing failure on invalid pin format..."
@@ -41,7 +41,7 @@ if [ -z "$PIN_BAD" ]; then
     echo "PASS: Properly failed to extract missing pin"
 else
     echo "FAIL: Expected empty pin, got '$PIN_BAD'"
-    return 1 2>/dev/null || bash -c "exit 1"
+    exit 1
 fi
 
 echo "All tests passed."
