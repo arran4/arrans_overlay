@@ -1,0 +1,122 @@
+name: Repair package Manifest
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to repair (category/package)'
+        required: true
+        type: string
+      issue_number:
+        description: 'Optional related issue number to close from the generated PR'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    container:
+      image: gentoo/stage3
+      options: --user root
+      volumes:
+        - /var/cache/distfiles
+    steps:
+      - name: Install dependencies
+        run: |
+          mkdir -p /var/db/repos/gentoo
+          emerge-webrsync
+          emerge --quiet dev-vcs/git dev-util/github-cli
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure overlay
+        run: |
+          mkdir -p /etc/portage/repos.conf
+          cat > /etc/portage/repos.conf/arrans-overlay.conf <<EOF
+          [arrans-overlay]
+          location = $(pwd)
+          masters = gentoo
+          EOF
+
+      - name: Repair selected Manifest with Portage
+        id: repair
+        shell: bash
+        env:
+          PACKAGE: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$PACKAGE" =~ ^[A-Za-z0-9+_.-]+/[A-Za-z0-9+_.-]+$ ]]; then
+            echo "Invalid package path: $PACKAGE" >&2
+            exit 2
+          fi
+          if [[ ! -d "$PACKAGE" ]]; then
+            echo "Package directory not found: $PACKAGE" >&2
+            exit 2
+          fi
+
+          mapfile -t ebuilds < <(find "$PACKAGE" -maxdepth 1 -type f -name '*.ebuild' -print | sort -V)
+          if (( ${#ebuilds[@]} == 0 )); then
+            echo "No ebuilds found in $PACKAGE" >&2
+            exit 2
+          fi
+
+          for ebuild_file in "${ebuilds[@]}"; do
+            echo "Regenerating Manifest via Portage: $ebuild_file"
+            ebuild "$ebuild_file" manifest
+          done
+
+          slug=${PACKAGE//\//-}
+          echo "slug=$slug" >> "$GITHUB_OUTPUT"
+
+      - name: Check for Manifest changes
+        id: changes
+        shell: bash
+        env:
+          PACKAGE: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- "$PACKAGE/Manifest"; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff -- "$PACKAGE/Manifest"
+          fi
+
+      - name: Build PR body
+        if: steps.changes.outputs.changed == 'true'
+        shell: bash
+        env:
+          PACKAGE: ${{ inputs.package }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+        run: |
+          {
+            echo "Regenerates \`$PACKAGE/Manifest\` using Portage's own ebuild evaluation."
+            echo
+            echo "This workflow is package-scoped so downloads/checksumming are limited to the selected package."
+            if [[ -n "$ISSUE_NUMBER" ]]; then
+              echo
+              echo "Fixes #$ISSUE_NUMBER"
+            fi
+          } > /tmp/pr-body.md
+
+      - name: Create pull request
+        if: steps.changes.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "fix: repair ${{ inputs.package }} Manifest"
+          title: "fix: repair ${{ inputs.package }} Manifest"
+          body-path: /tmp/pr-body.md
+          branch: "fix/manifest-${{ steps.repair.outputs.slug }}"
+          delete-branch: true
+          base: main
