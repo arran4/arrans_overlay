@@ -5,12 +5,20 @@ EAPI=8
 
 inherit cmake
 
+# m3shapes revision pinned in upstream CMakeLists.txt (fetched there via
+# FetchContent git clone, which the Gentoo network sandbox forbids -- ship it
+# as a tarball and point FetchContent at the unpacked dir instead).
+M3SHAPES_REV="bdc327b29f95394a732baf3c9b19658ba23755b6"
 SHELL_ARCHIVE="github.com/caelestia-dots/shell/archive/refs/tags"
+M3SHAPES_ARCHIVE="github.com/soramanew/m3shapes/archive"
+M3SHAPES_DIST="caelestia-m3shapes-${M3SHAPES_REV}.tar.gz"
 
 DESCRIPTION="Caelestia Quickshell desktop shell (Hyprland)"
 HOMEPAGE="https://github.com/caelestia-dots/shell"
-SRC_URI="https://${SHELL_ARCHIVE}/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz"
-
+SRC_URI="
+	https://${SHELL_ARCHIVE}/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz
+	https://${M3SHAPES_ARCHIVE}/${M3SHAPES_REV}.tar.gz -> ${M3SHAPES_DIST}
+"
 S="${WORKDIR}/shell-${PV}"
 
 LICENSE="GPL-3"
@@ -18,10 +26,45 @@ SLOT="0"
 KEYWORDS="~amd64"
 
 # Qt6 6.9+ (upstream: qt_standard_project_setup(REQUIRES 6.9)).
-COMMON_DEPEND="dev-qt/m3shapes >=dev-qt/qtbase-6.9:6[concurrent,dbus,gui,network,sql,widgets] >=dev-qt/qtdeclarative-6.9:6 sci-libs/libqalculate media-libs/aubio media-video/pipewire media-sound/libcava sys-apps/lm-sensors sci-libs/fftw:3.0="
+COMMON_DEPEND="
+	>=dev-qt/qtbase-6.9:6[concurrent,dbus,gui,network,sql,widgets]
+	>=dev-qt/qtdeclarative-6.9:6
+	sci-libs/libqalculate
+	media-libs/aubio
+	media-video/pipewire
+	media-sound/libcava
+	sys-apps/lm-sensors
+	sci-libs/fftw:3.0=
+"
 DEPEND="${COMMON_DEPEND}"
-RDEPEND="${COMMON_DEPEND} >=dev-qt/qtshadertools-6.9:6 >=gui-apps/quickshell-0.3.0_p20260710 gui-apps/caelestia-cli app-misc/ddcutil app-misc/brightnessctl app-shells/fish dev-libs/libxml2 gui-apps/swappy gui-apps/wl-clipboard gui-wm/hyprland media-fonts/material-symbols-variable media-fonts/rubik media-fonts/cascadia-code media-fonts/noto media-fonts/noto-cjk media-fonts/noto-emoji net-misc/networkmanager sys-power/power-profiles-daemon sys-process/procps x11-libs/libnotify x11-misc/xkeyboard-config"
-BDEPEND=">=dev-qt/qtshadertools-6.9:6 virtual/pkgconfig"
+RDEPEND="
+	${COMMON_DEPEND}
+	>=dev-qt/qtshadertools-6.9:6
+	>=gui-apps/quickshell-0.3.0_p20260710
+	gui-apps/caelestia-cli
+	app-misc/ddcutil
+	app-misc/brightnessctl
+	app-shells/fish
+	dev-libs/libxml2
+	gui-apps/swappy
+	gui-apps/wl-clipboard
+	gui-wm/hyprland
+	media-fonts/material-symbols-variable
+	media-fonts/rubik
+	media-fonts/cascadia-code
+	media-fonts/noto
+	media-fonts/noto-cjk
+	media-fonts/noto-emoji
+	net-misc/networkmanager
+	sys-power/power-profiles-daemon
+	sys-process/procps
+	x11-libs/libnotify
+	x11-misc/xkeyboard-config
+"
+BDEPEND="
+	>=dev-qt/qtshadertools-6.9:6
+	virtual/pkgconfig
+"
 
 PATCHES=(
 	# Select one provider-neutral facial-authentication context and add Gaze
@@ -51,6 +94,7 @@ PATCHES=(
 )
 
 src_configure() {
+	local m3shapes_dir="${WORKDIR}/m3shapes-${M3SHAPES_REV}"
 	local mycmakeargs=(
 		# Upstream installs with prefix "/" and relative usr/... destinations;
 		# the cmake eclass prefix /usr would yield /usr/usr/lib.
@@ -65,6 +109,9 @@ src_configure() {
 		-DGIT_REVISION="v${PV}"
 		-DDISTRIBUTOR="arrans_overlay"
 		-DINSTALL_QSCONFDIR="usr/share/quickshell/caelestia"
+		# Use the pre-fetched m3shapes source instead of a network git clone.
+		-DFETCHCONTENT_FULLY_DISCONNECTED=ON
+		-DFETCHCONTENT_SOURCE_DIR_M3SHAPES_EXTERNAL="${m3shapes_dir}"
 	)
 	cmake_src_configure
 }

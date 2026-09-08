@@ -20,7 +20,7 @@ env:
   ebuild_name: kmagmux
   github_owner: arran4
   github_repo: KMagMux
-  description: "Torrent file and Magnet link handler for routing to programs / services."
+  description: "Torrent file and Magnet link handler for programs/services"
   homepage: "https://github.com/arran4/KMagMux"
 
 jobs:
@@ -62,7 +62,12 @@ jobs:
               continue;
             fi
             ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
-            if [ ! -f "$ebuild_file" ]; then
+            # Check if any ebuild for this version exists (including revisions)
+            ebuild_exists=false
+            for f in "${ebuild_dir}/${ebuild_name}-${version}".ebuild "${ebuild_dir}/${ebuild_name}-${version}"-r*.ebuild; do
+              if [ -f "$f" ]; then ebuild_exists=true; break; fi
+            done
+            if [ "$ebuild_exists" = false ]; then
               # Create ebuild script
               {
                 echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/net-misc-kmagmux-update.yaml"
@@ -72,26 +77,20 @@ jobs:
                 echo ""
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
-                echo 'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
-                echo 'S="${WORKDIR}/${P}"'
+                echo 'SRC_URI="https://github.com/arran4/KMagMux/archive/v${PV}.tar.gz -> ${P}.tar.gz"'
+                echo 'S="${WORKDIR}/KMagMux-${PV}"'
                 echo ""
-                echo 'LICENSE="GPL-3.0-or-later"'
+                echo 'LICENSE="GPL-3"'
                 echo "SLOT=\"0\""
                 echo 'IUSE="debug"'
                 echo 'KEYWORDS="~amd64"'
                 echo ""
-                echo 'DEPEND="'
-                echo '	dev-qt/qtbase:6'
-                echo '	dev-qt/qtdeclarative:6'
-                echo '	kde-frameworks/kcoreaddons:6'
-                echo '	kde-frameworks/ki18n:6'
-                echo '	kde-frameworks/kxmlgui:6'
-                echo '	kde-plasma/plasma-workspace:6'
-                echo '	kde-frameworks/kio:6'
-                echo '	kde-frameworks/knotifications:6'
-                echo '	kde-frameworks/kwallet:6'
-                echo '"'
+                echo 'DEPEND="dev-qt/qtbase:6[concurrent,gui,network,test,widgets]"'
+                echo 'DEPEND+=" kde-frameworks/kcoreaddons:6 kde-frameworks/ki18n:6"'
+                echo 'DEPEND+=" kde-frameworks/kwallet:6 kde-frameworks/kxmlgui:6"'
                 echo 'RDEPEND="${DEPEND}"'
+                echo 'BDEPEND="dev-qt/qttools:6[linguist]"'
+                echo 'BDEPEND+=" kde-frameworks/extra-cmake-modules:0 virtual/pkgconfig"'
                 echo ""
                 echo "src_prepare() {"
                 echo "	ecm_src_prepare"

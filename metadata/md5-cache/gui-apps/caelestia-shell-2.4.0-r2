@@ -1,60 +1,12 @@
-SRC_URI=
-	https://github.com/caelestia-dots/shell/archive/refs/tags/v2.4.0.tar.gz -> caelestia-shell-2.4.0.tar.gz
-
+SRC_URI=https://github.com/caelestia-dots/shell/archive/refs/tags/v2.4.0.tar.gz -> caelestia-shell-2.4.0.tar.gz
 SLOT=0
-LICENSE=GPL-3
-HOMEPAGE=https://github.com/caelestia-dots/shell
-EAPI=8
-DEPEND=
-	dev-qt/m3shapes
-	>=dev-qt/qtbase-6.9:6[concurrent,dbus,gui,network,sql,widgets]
-	>=dev-qt/qtdeclarative-6.9:6
-	sci-libs/libqalculate
-	media-libs/aubio
-	media-video/pipewire
-	media-sound/libcava
-	sys-apps/lm-sensors
-	sci-libs/fftw:3.0=
-
+BDEPEND=>=dev-qt/qtshadertools-6.9:6 virtual/pkgconfig
 INHERITED=cmake
 DESCRIPTION=Caelestia Quickshell desktop shell (Hyprland)
+HOMEPAGE=https://github.com/caelestia-dots/shell
+DEPEND=dev-qt/m3shapes >=dev-qt/qtbase-6.9:6[concurrent,dbus,gui,network,sql,widgets] >=dev-qt/qtdeclarative-6.9:6 sci-libs/libqalculate media-libs/aubio media-video/pipewire media-sound/libcava sys-apps/lm-sensors sci-libs/fftw:3.0=
+RDEPEND=dev-qt/m3shapes >=dev-qt/qtbase-6.9:6[concurrent,dbus,gui,network,sql,widgets] >=dev-qt/qtdeclarative-6.9:6 sci-libs/libqalculate media-libs/aubio media-video/pipewire media-sound/libcava sys-apps/lm-sensors sci-libs/fftw:3.0= >=dev-qt/qtshadertools-6.9:6 >=gui-apps/quickshell-0.3.0_p20260710 gui-apps/caelestia-cli app-misc/ddcutil app-misc/brightnessctl app-shells/fish dev-libs/libxml2 gui-apps/swappy gui-apps/wl-clipboard gui-wm/hyprland media-fonts/material-symbols-variable media-fonts/rubik media-fonts/cascadia-code media-fonts/noto media-fonts/noto-cjk media-fonts/noto-emoji net-misc/networkmanager sys-power/power-profiles-daemon sys-process/procps x11-libs/libnotify x11-misc/xkeyboard-config
+EAPI=8
+LICENSE=GPL-3
 KEYWORDS=~amd64
-RDEPEND=
-
-	dev-qt/m3shapes
-	>=dev-qt/qtbase-6.9:6[concurrent,dbus,gui,network,sql,widgets]
-	>=dev-qt/qtdeclarative-6.9:6
-	sci-libs/libqalculate
-	media-libs/aubio
-	media-video/pipewire
-	media-sound/libcava
-	sys-apps/lm-sensors
-	sci-libs/fftw:3.0=
-
-	>=dev-qt/qtshadertools-6.9:6
-	>=gui-apps/quickshell-0.3.0_p20260710
-	gui-apps/caelestia-cli
-	app-misc/ddcutil
-	app-misc/brightnessctl
-	app-shells/fish
-	dev-libs/libxml2
-	gui-apps/swappy
-	gui-apps/wl-clipboard
-	gui-wm/hyprland
-	media-fonts/material-symbols-variable
-	media-fonts/rubik
-	media-fonts/cascadia-code
-	media-fonts/noto
-	media-fonts/noto-cjk
-	media-fonts/noto-emoji
-	net-misc/networkmanager
-	sys-power/power-profiles-daemon
-	sys-process/procps
-	x11-libs/libnotify
-	x11-misc/xkeyboard-config
-
-BDEPEND=
-	>=dev-qt/qtshadertools-6.9:6
-	virtual/pkgconfig
-
-_md5_=0812c24a270390881b8c9d727c2c3fff
+_md5_=873f46949e55ab26b9797d6c04fdd766
