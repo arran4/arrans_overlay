@@ -14,16 +14,5 @@ SLOT="0"
 KEYWORDS=""
 IUSE="debug"
 
-DEPEND="
-	dev-qt/qtbase:6[concurrent,gui,network,test,widgets]
-	kde-frameworks/kcoreaddons:6
-	kde-frameworks/ki18n:6
-	kde-frameworks/kwallet:6
-	kde-frameworks/kxmlgui:6
 "
-RDEPEND="${DEPEND}"
-BDEPEND="
-	dev-qt/qttools:6[linguist]
-	kde-frameworks/extra-cmake-modules:0
-	virtual/pkgconfig
 "
