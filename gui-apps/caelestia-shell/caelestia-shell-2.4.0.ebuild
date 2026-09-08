@@ -9,7 +9,10 @@ SHELL_ARCHIVE="github.com/caelestia-dots/shell/archive/refs/tags"
 
 DESCRIPTION="Caelestia Quickshell desktop shell (Hyprland)"
 HOMEPAGE="https://github.com/caelestia-dots/shell"
-SRC_URI="https://${SHELL_ARCHIVE}/v${PV}.tar.gz -> ${PN}-${PV}.tar.gz"
+SRC_URI="
+	https://${SHELL_ARCHIVE}/v${PV}.tar.gz
+	-> ${PN}-${PV}.tar.gz
+"
 
 S="${WORKDIR}/shell-${PV}"
 
@@ -18,24 +21,46 @@ SLOT="0"
 KEYWORDS="~amd64"
 
 # Qt6 6.9+ (upstream: qt_standard_project_setup(REQUIRES 6.9)).
-COMMON_DEPEND="dev-qt/m3shapes"
-COMMON_DEPEND+=" >=dev-qt/qtbase-6.9:6[concurrent,dbus,gui,network,sql,widgets]"
-COMMON_DEPEND+=" >=dev-qt/qtdeclarative-6.9:6 sci-libs/libqalculate"
-COMMON_DEPEND+=" media-libs/aubio media-video/pipewire"
-COMMON_DEPEND+=" media-sound/libcava sys-apps/lm-sensors sci-libs/fftw:3.0="
-
+COMMON_DEPEND="
+	dev-qt/m3shapes
+	>=dev-qt/qtbase-6.9:6[concurrent,dbus,gui,network,sql,widgets]
+	>=dev-qt/qtdeclarative-6.9:6
+	sci-libs/libqalculate
+	media-libs/aubio
+	media-video/pipewire
+	media-sound/libcava
+	sys-apps/lm-sensors
+	sci-libs/fftw:3.0=
+"
 DEPEND="${COMMON_DEPEND}"
-RDEPEND="${COMMON_DEPEND} >=dev-qt/qtshadertools-6.9:6"
-RDEPEND+=" >=gui-apps/quickshell-0.3.0_p20260710 gui-apps/caelestia-cli"
-RDEPEND+=" app-misc/ddcutil app-misc/brightnessctl app-shells/fish"
-RDEPEND+=" dev-libs/libxml2 gui-apps/swappy gui-apps/wl-clipboard"
-RDEPEND+=" gui-wm/hyprland media-fonts/material-symbols-variable"
-RDEPEND+=" media-fonts/rubik media-fonts/cascadia-code"
-RDEPEND+=" media-fonts/noto media-fonts/noto-cjk media-fonts/noto-emoji"
-RDEPEND+=" net-misc/networkmanager sys-power/power-profiles-daemon"
-RDEPEND+=" sys-process/procps x11-libs/libnotify x11-misc/xkeyboard-config"
-
-BDEPEND=">=dev-qt/qtshadertools-6.9:6 virtual/pkgconfig"
+RDEPEND="
+	${COMMON_DEPEND}
+	>=dev-qt/qtshadertools-6.9:6
+	>=gui-apps/quickshell-0.3.0_p20260710
+	gui-apps/caelestia-cli
+	app-misc/ddcutil
+	app-misc/brightnessctl
+	app-shells/fish
+	dev-libs/libxml2
+	gui-apps/swappy
+	gui-apps/wl-clipboard
+	gui-wm/hyprland
+	media-fonts/material-symbols-variable
+	media-fonts/rubik
+	media-fonts/cascadia-code
+	media-fonts/noto
+	media-fonts/noto-cjk
+	media-fonts/noto-emoji
+	net-misc/networkmanager
+	sys-power/power-profiles-daemon
+	sys-process/procps
+	x11-libs/libnotify
+	x11-misc/xkeyboard-config
+"
+BDEPEND="
+	>=dev-qt/qtshadertools-6.9:6
+	virtual/pkgconfig
+"
 
 PATCHES=(
 	# Select one provider-neutral facial-authentication context and add Gaze

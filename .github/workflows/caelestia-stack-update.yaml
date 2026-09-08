@@ -21,15 +21,23 @@ jobs:
           LATEST_SHELL=$(curl -s https://api.github.com/repos/caelestia-dots/shell/releases/latest | jq -r '.tag_name' | sed 's/^v//')
           LATEST_CLI=$(curl -s https://api.github.com/repos/caelestia-dots/cli/releases/latest | jq -r '.tag_name' | sed 's/^v//')
 
+          # Check Caelestia flake.nix for M3Shapes pinned commit
+          LATEST_M3SHAPES_PIN=$(curl -s "https://raw.githubusercontent.com/caelestia-dots/shell/refs/tags/v${LATEST_SHELL}/flake.nix" | grep -A 1 'm3shapes = {' | grep 'rev = ' | awk -F'"' '{print $2}')
+
           echo "shell=$LATEST_SHELL" >> $GITHUB_OUTPUT
           echo "cli=$LATEST_CLI" >> $GITHUB_OUTPUT
+          echo "m3shapes_pin=$LATEST_M3SHAPES_PIN" >> $GITHUB_OUTPUT
 
           # Find current versions from our ebuilds
           CURRENT_SHELL=$(find gui-apps/caelestia-shell -maxdepth 1 -name "caelestia-shell-*.ebuild" | sed -E 's/.*caelestia-shell-([0-9.]+)(-r[0-9]+)?\.ebuild/\1/' | sort -V | tail -n 1)
           CURRENT_CLI=$(find gui-apps/caelestia-cli -maxdepth 1 -name "caelestia-cli-*.ebuild" | sed -E 's/.*caelestia-cli-([0-9.]+)(-r[0-9]+)?\.ebuild/\1/' | sort -V | tail -n 1)
 
+          # Find current M3Shapes pinned revision from our ebuild
+          CURRENT_M3SHAPES_PIN=$(grep 'M3SHAPES_REV=' "dev-qt/m3shapes/m3shapes-1.0.0.ebuild" | cut -d'"' -f2)
+
           echo "current_shell=$CURRENT_SHELL" >> $GITHUB_OUTPUT
           echo "current_cli=$CURRENT_CLI" >> $GITHUB_OUTPUT
+          echo "current_m3shapes_pin=$CURRENT_M3SHAPES_PIN" >> $GITHUB_OUTPUT
 
       - name: Check if Update Needed
         id: update_needed
@@ -38,10 +46,14 @@ jobs:
           CURRENT_SHELL="${{ steps.versions.outputs.current_shell }}"
           CLI_VER="${{ steps.versions.outputs.cli }}"
           CURRENT_CLI="${{ steps.versions.outputs.current_cli }}"
+          M3SHAPES_PIN="${{ steps.versions.outputs.m3shapes_pin }}"
+          CURRENT_M3SHAPES_PIN="${{ steps.versions.outputs.current_m3shapes_pin }}"
 
           if [ -n "$SHELL_VER" ] && [ "$SHELL_VER" != "null" ] && [ "$SHELL_VER" != "$CURRENT_SHELL" ]; then
             echo "needed=true" >> $GITHUB_OUTPUT
           elif [ -n "$CLI_VER" ] && [ "$CLI_VER" != "null" ] && [ "$CLI_VER" != "$CURRENT_CLI" ]; then
+            echo "needed=true" >> $GITHUB_OUTPUT
+          elif [ -n "$M3SHAPES_PIN" ] && [ "$M3SHAPES_PIN" != "null" ] && [ "$M3SHAPES_PIN" != "$CURRENT_M3SHAPES_PIN" ]; then
             echo "needed=true" >> $GITHUB_OUTPUT
           else
             echo "needed=false" >> $GITHUB_OUTPUT
@@ -58,6 +70,18 @@ jobs:
           CURRENT_SHELL="${{ steps.versions.outputs.current_shell }}"
           CLI_VER="${{ steps.versions.outputs.cli }}"
           CURRENT_CLI="${{ steps.versions.outputs.current_cli }}"
+          M3SHAPES_PIN="${{ steps.versions.outputs.m3shapes_pin }}"
+          CURRENT_M3SHAPES_PIN="${{ steps.versions.outputs.current_m3shapes_pin }}"
+
+          # Handle M3Shapes first if the pin changed so Caelestia picks up the new dependency logic if we needed to revbump M3Shapes.
+          # Here we update dev-qt/m3shapes in place or revbump it based on policy (doing in-place update for pinned snapshots is simpler for this action).
+          if [ -n "$M3SHAPES_PIN" ] && [ "$M3SHAPES_PIN" != "null" ] && [ "$M3SHAPES_PIN" != "$CURRENT_M3SHAPES_PIN" ]; then
+            M3SHAPES_EBUILD=$(find dev-qt/m3shapes -maxdepth 1 -name "m3shapes-*.ebuild" | sort -V | tail -n 1)
+            sed -i "s/M3SHAPES_REV=\"$CURRENT_M3SHAPES_PIN\"/M3SHAPES_REV=\"$M3SHAPES_PIN\"/" "$M3SHAPES_EBUILD"
+
+            # Re-generate manifest for new M3Shapes tarball
+            g2 manifest upsert-from-url "https://github.com/soramanew/m3shapes/archive/${M3SHAPES_PIN}.tar.gz" "m3shapes-${M3SHAPES_PIN}.tar.gz" dev-qt/m3shapes/Manifest
+          fi
 
           if [ -n "$SHELL_VER" ] && [ "$SHELL_VER" != "null" ] && [ "$SHELL_VER" != "$CURRENT_SHELL" ]; then
             CURRENT_SHELL_EBUILD=$(find gui-apps/caelestia-shell -maxdepth 1 -name "caelestia-shell-*.ebuild" | sort -V | tail -n 1)
@@ -83,6 +107,7 @@ jobs:
             Updates Caelestia stack:
             - **Caelestia Shell:** ${{ steps.versions.outputs.current_shell }} -> ${{ steps.versions.outputs.shell }}
             - **Caelestia CLI:** ${{ steps.versions.outputs.current_cli }} -> ${{ steps.versions.outputs.cli }}
+            - **M3Shapes Pin:** ${{ steps.versions.outputs.current_m3shapes_pin }} -> ${{ steps.versions.outputs.m3shapes_pin }}
 
             This is an automated PR. Please review dependencies, patches, and QuickShell compatibility before merging.
 
