@@ -1,0 +1,44 @@
+# Copyright 2024-2025 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+EAPI=8
+
+inherit go-module
+
+DESCRIPTION="Core engine for Anytype"
+HOMEPAGE="https://github.com/anyproto/anytype-heart"
+SRC_URI="https://github.com/anyproto/anytype-heart/archive/refs/tags/v${PV/_rc/-rc}.tar.gz -> ${P}.tar.gz"
+
+LICENSE="ASAL-1.0"
+SLOT="0"
+KEYWORDS="~amd64"
+IUSE=""
+
+DEPEND="
+	dev-lang/go
+"
+RDEPEND="${DEPEND}"
+
+S="${WORKDIR}/${PN}-${PV/_rc/-rc}"
+
+src_unpack() {
+	default
+}
+
+src_prepare() {
+	default
+}
+
+src_compile() {
+	emake build-server
+}
+
+src_install() {
+	dobin dist/server
+
+	insinto /usr/share/${PN}/pb
+	doins -r pb/*
+
+	insinto /usr/share/${PN}/pkg
+	doins -r pkg/*
+}
