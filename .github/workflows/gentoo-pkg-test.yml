@@ -183,6 +183,7 @@ jobs:
           # constrain only qtbase and let Portage select matching Qt binaries.
           mkdir -p /etc/portage/package.use
           printf "%s\n" \
+            "dev-qt/qtbase icu opengl" \
             "media-libs/freetype harfbuzz" \
             "media-libs/libglvnd X" \
             "x11-libs/cairo X" \
@@ -201,6 +202,14 @@ jobs:
 
           mkdir -p /etc/portage/package.accept_keywords
           printf "%s ~amd64\n" "$PKG" > /etc/portage/package.accept_keywords/ci
+          if [[ "$PKG" == *"kmagmux-9999"* ]]; then
+            printf "%s **\n" "=net-misc/kmagmux-9999" >> /etc/portage/package.accept_keywords/ci
+          fi
+          if [[ "$PKG" == *"caelestia-shell"* ]]; then
+            mkdir -p /etc/portage/package.unmask
+            echo ">=dev-util/wayland-scanner-1.26.0" >> /etc/portage/package.unmask/ci
+            echo ">=dev-util/wayland-scanner-1.26.0 ~amd64" >> /etc/portage/package.accept_keywords/ci
+          fi
           # wayland-scanner-1.25 requires the matching unstable Wayland floor.
           # Keep both below 1.26, whose transition is newer than this stage3.
           printf "%s\n" "=dev-libs/wayland-1.25.0 ~amd64" \

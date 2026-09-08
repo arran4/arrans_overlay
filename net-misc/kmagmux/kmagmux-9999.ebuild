@@ -5,7 +5,7 @@ EAPI=8
 
 inherit ecm git-r3
 
-DESCRIPTION="Torrent file and Magnet link handler for programs/services."
+DESCRIPTION="Torrent file and Magnet link handler for programs/services"
 HOMEPAGE="https://github.com/arran4/KMagMux"
 EGIT_REPO_URI="https://github.com/arran4/KMagMux.git"
 
@@ -15,7 +15,7 @@ KEYWORDS=""
 IUSE="debug"
 
 DEPEND="
-	dev-qt/qtbase:6[concurrent,gui,network,widgets,test]
+	dev-qt/qtbase:6[concurrent,gui,network,test,widgets]
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/ki18n:6
 	kde-frameworks/kwallet:6
@@ -27,7 +27,3 @@ BDEPEND="
 	kde-frameworks/extra-cmake-modules:0
 	virtual/pkgconfig
 "
-
-src_install() {
-	ecm_src_install
-}

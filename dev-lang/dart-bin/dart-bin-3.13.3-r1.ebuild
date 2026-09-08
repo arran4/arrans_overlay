@@ -1,13 +1,11 @@
-# Copyright 2024 Gentoo Authors
+# Copyright 2023-2024 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 # Generated via:
 # .github/workflows/dev-lang-dart-bin-update.yaml
-
-
 EAPI=8
 
-DESCRIPTION="The Dart SDK, including the VM, dart2js, core libraries, and more."
+DESCRIPTION="The Dart SDK, including the VM, dart2js, core libraries, and more"
 HOMEPAGE="https://dart.dev/"
 
 U="storage.googleapis.com/dart-archive/channels/stable/release/${PV}/sdk"
