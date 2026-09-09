@@ -229,7 +229,7 @@ declare -A GIT_CRATES=(
 	[tantivy-tokenizer-api]="${TANTIVY_CRATE}/tokenizer-api"
 )
 
-inherit cargo
+inherit cargo toolchain-funcs
 
 DESCRIPTION="Source-built Tantivy C library for the Anytype Go bindings"
 HOMEPAGE="https://github.com/anyproto/tantivy-go"
@@ -252,10 +252,37 @@ BDEPEND="
 "
 
 src_prepare() {
+	local tantivy_uri="https://github.com/anyproto/tantivy"
+	local tantivy_dir="${WORKDIR}/tantivy-${TANTIVY_COMMIT}"
+	local tantivy_source="git = \"${tantivy_uri}.git\", rev = \"${TANTIVY_COMMIT}\""
+	local tantivy_path="path = \"${tantivy_dir}\""
+	local jieba_uri="https://github.com/anyproto/tantivy-jieba"
+	local jieba_dir="${WORKDIR}/tantivy-jieba-${JIEBA_COMMIT}"
+	local jieba_source="git = \"${jieba_uri}.git\", rev = \"${JIEBA_COMMIT}\""
+	local jieba_path="path = \"${jieba_dir}\""
+	local stemmers_uri="https://github.com/silver-ymz/rust-stemmers"
+	local stemmers_dir="${WORKDIR}/rust-stemmers-${STEMMERS_COMMIT}"
+	local stemmers_source="git = \"${stemmers_uri}.git\", rev = \"${STEMMERS_COMMIT}\""
+	local stemmers_path="path = \"${stemmers_dir}\""
+	local tokenizer_source="${tantivy_source}, package = \"tantivy-tokenizer-api\""
+	local tokenizer_path="path = \"${tantivy_dir}/tokenizer-api\", package = \"tantivy-tokenizer-api\""
+
 	default
 	gzip -dc "${FILESDIR}/${P}-Cargo.lock.gz" > Cargo.lock || die
-	# Translate pinned Git sources to the local paths supplied by cargo.eclass.
-	# Registry versions stay locked; only the declared crates are available.
+
+	# cargo.eclass fetches these immutable Git trees as archives.  Use their
+	# unpacked paths directly so Cargo can update the Git entries in Cargo.lock
+	# without trying to access the repositories.
+	sed -i \
+		-e "s|${tantivy_source}|${tantivy_path}|" \
+		-e "s|${jieba_source}|${jieba_path}|" \
+		Cargo.toml || die
+	sed -i -e "s|${stemmers_source}|${stemmers_path}|" \
+		"${WORKDIR}/tantivy-${TANTIVY_COMMIT}/Cargo.toml" || die
+	sed -i \
+		-e "s|${tokenizer_source}|${tokenizer_path}|" \
+		-e "s|${tantivy_source}|${tantivy_path}|" \
+		"${WORKDIR}/tantivy-jieba-${JIEBA_COMMIT}/Cargo.toml" || die
 	cargo_update_crates
 }
 

@@ -52,7 +52,7 @@ An offline package must preserve the applicable semantics without importing
 undeclared host files or invoking networked setup targets.
 
 `check-tantivy-version` downloads native libraries. The new
-`dev-libs/tantivy-go-1.0.6` ebuild provides a source-built static library and C
+`dev-libs/tantivy-go-1.0.6-r1` ebuild provides a source-built static library and C
 headers instead; Heart still needs to declare and integrate this dependency.
 Its `rust/Cargo.toml` pins:
 
@@ -66,6 +66,9 @@ The default Go binding links `-ltantivy_go` from the library search path;
 `cargo.eclass`, a packaged deterministic gzip of Cargo.lock, 198 registry
 archives, and three pinned Git archives (11 workspace crates). Together with
 the upstream library source, all 202 fetch inputs have Manifest entries.
+The prepare phase maps the exact Git dependencies to those unpacked source
+trees before updating the lockfile offline, so the frozen build does not need a
+Git checkout or a pre-existing Cargo cache.
 The library's C ABI is static-only upstream; installing `libtantivy_go.a` is
 intentional. The ebuild requires source-built Rust >=1.88.0.
 
@@ -75,8 +78,10 @@ public headers. This C check is also part of the ebuild's test phase.
 All 198 registry archives were checked against both the
 Cargo.lock SHA256 and fetched Manifest SHA512. `pkgcheck` reports no findings.
 `scripts/test_ebuilds.sh` passed its Gentoo fetch test for all 202 inputs in a
-separate empty distfile directory. These checks do not yet establish a
-successful Gentoo merge.
+separate empty distfile directory. A clean Portage merge then completed with
+filesystem and network sandboxing enabled, including all nine Rust tests and
+the C ABI smoke test. The installed package contains the static archive, both
+public headers, and upstream documentation.
 
 To update the native dependency closure, use a fresh upstream source tree,
 generate Cargo.lock with Cargo, derive CRATES and GIT_CRATES from that lock and
@@ -259,11 +264,13 @@ launcher, icons, desktop/protocol handling; dependency license audit; regenerate
 metadata/Manifests; lint and clean sandboxed Gentoo builds; installed runtime
 sanity checks proving the packaged runtime and helper are used.
 
-The Debian host lacks `ebuild`; a separate Gentoo stage3 test root now runs
-Portage. Its source merge of Tantivy is in progress, including source Rust
-1.88.0 built with the standard older 1.87.0 compiler bootstrap. Kernel
+The Debian host uses a separate Gentoo stage3 test root for Portage. Source Rust
+1.88.0 was built there with the standard older 1.87.0 compiler bootstrap, and
+the complete Tantivy package subsequently merged from source. Kernel
 restrictions permit only one mapped UID and reject nested proc mounts, so this
 local root uses root-only execution and disables userpriv/userfetch/pid-sandbox.
+Its crate extraction also needs `TAR_OPTIONS=--no-same-owner` because the one-UID
+map cannot restore arbitrary archive owner IDs; this is a local harness setting.
 Filesystem `sandbox` and `network-sandbox` remain enabled. A diagnostic through
 Portage's process spawning confirmed a loopback-only build network and
 `ENETUNREACH` for an external connection. Full CI with default privilege/PID
@@ -280,7 +287,7 @@ Manifest verification exposed a parser bug: the script passed literal
 It now handles the literal prerelease substitutions used by both packages and
 returns failure without rewriting a Manifest when any fetch fails. Both
 upstream source archives were fetched and their Manifest entries regenerated;
-this does not cover the still-undeclared dependency inputs. The 14 verifier
+this does not cover the still-undeclared dependency inputs. The 19 repository
 tests pass, including both package Manifests and failure-preservation checks.
 
 `g2` v0.0.102's legacy lint command spends considerable time traversing Git
