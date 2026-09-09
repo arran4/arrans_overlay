@@ -51,17 +51,48 @@ custom build configurations copy `ANY_SYNC_NETWORK` and add `envnetworkcustom`.
 An offline package must preserve the applicable semantics without importing
 undeclared host files or invoking networked setup targets.
 
-`check-tantivy-version` downloads native libraries. Replace that operation with
-a real source build of `anyproto/tantivy-go` v1.0.6. Its `rust/Cargo.toml` pins:
+`check-tantivy-version` downloads native libraries. The new
+`dev-libs/tantivy-go-1.0.6` ebuild provides a source-built static library and C
+headers instead; Heart still needs to declare and integrate this dependency.
+Its `rust/Cargo.toml` pins:
 
 * `anyproto/tantivy`: `693274a5d4be6da9d069dff4d540162165a99b0e`.
 * `anyproto/tantivy-jieba`: `ca11d3153b8844cbc43cd243667e03f56f6d1e18`.
+* Tantivy's `silver-ymz/rust-stemmers` dependency:
+  `51696378e352688b7ffd4fface615370ff5e8768`.
 
 The default Go binding links `-ltantivy_go` from the library search path;
-`tantivylocal` instead uses bundled `libs/` directories. Source-package the
-library and its locked Cargo closure. Audit embedded runtime artifacts too:
-the recovered Go graph contains `go-graphviz/internal/wasm/graphviz.wasm`.
-Separate runtime requirements from unused dependency test fixtures.
+`tantivylocal` instead uses bundled `libs/` directories. The native ebuild uses
+`cargo.eclass`, a packaged deterministic gzip of Cargo.lock, 198 registry
+archives, and three pinned Git archives (11 workspace crates). Together with
+the upstream library source, all 202 fetch inputs have Manifest entries.
+The library's C ABI is static-only upstream; installing `libtantivy_go.a` is
+intentional. The ebuild requires source-built Rust >=1.88.0.
+
+The library built offline with Rust 1.88.0, all nine upstream Rust tests passed,
+and a C program linked the resulting archive and created a schema through its
+public headers. This C check is also part of the ebuild's test phase.
+All 198 registry archives were checked against both the
+Cargo.lock SHA256 and fetched Manifest SHA512. `pkgcheck` reports no findings.
+`scripts/test_ebuilds.sh` passed its Gentoo fetch test for all 202 inputs in a
+separate empty distfile directory. These checks do not yet establish a
+successful Gentoo merge.
+
+To update the native dependency closure, use a fresh upstream source tree,
+generate Cargo.lock with Cargo, derive CRATES and GIT_CRATES from that lock and
+`cargo metadata`, and save the lock with `gzip -n -9`. `cargo_update_crates`
+converts only the declared Git source crates to local paths during preparation;
+compilation and tests use `--frozen --lib`. Regenerate the complete Manifest
+from the expanded Portage SRC_URI and metadata with `egencache`.
+
+Heart's fresh Go-cache generation is underway separately from the preserved
+recovery cache, with `GOTOOLCHAIN=local`. It must be verified and packaged before
+replacing the ineffective module list. Audit embedded runtime artifacts too:
+`go-graphviz` v0.2.10 embeds `internal/wasm/graphviz.wasm`, used by Heart's DOT
+converter and debugging code. This must be rebuilt, not treated as an unused
+fixture. Its upstream build uses Graphviz 12.1.2, Expat 2.6.3, WASI SDK 24, and
+Binaryen 119. The WASM build Makefile is present in the upstream Git tag but
+absent from the Go module zip, so the Git source archive is also needed.
 
 ## Frontend generation and dependencies
 
@@ -119,7 +150,16 @@ launcher, icons, desktop/protocol handling; dependency license audit; regenerate
 metadata/Manifests; lint and clean sandboxed Gentoo builds; installed runtime
 sanity checks proving the packaged runtime and helper are used.
 
-The local Gentoo merge tests cannot run because `ebuild` is absent.
+The Debian host lacks `ebuild`; a separate Gentoo stage3 test root now runs
+Portage. Its source merge of Tantivy is in progress, including source Rust
+1.88.0 built with the standard older 1.87.0 compiler bootstrap. Kernel
+restrictions permit only one mapped UID and reject nested proc mounts, so this
+local root uses root-only execution and disables userpriv/userfetch/pid-sandbox.
+Filesystem `sandbox` and `network-sandbox` remain enabled. A diagnostic through
+Portage's process spawning confirmed a loopback-only build network and
+`ENETUNREACH` for an external connection. Full CI with default privilege/PID
+settings and installed application tests are still required.
+
 Bash 5.2 makes pkgcore disable EAPI 9, hiding current Go ebuilds; Bash 5.3 was
 built from source locally to run metadata checks against the current tree.
 A focused offline check of upstream `util/vcs` using r1's actual linker arguments
@@ -133,3 +173,11 @@ returns failure without rewriting a Manifest when any fetch fails. Both
 upstream source archives were fetched and their Manifest entries regenerated;
 this does not cover the still-undeclared dependency inputs. The 14 verifier
 tests pass, including both package Manifests and failure-preservation checks.
+
+`g2` v0.0.102's legacy lint command spends considerable time traversing Git
+history before package checks. Running it from a source snapshot avoids that
+overhead. It currently reports false unused-distfile errors for Cargo eclass
+inputs, and looks for the unrevised Heart cache filename even though r1's
+metadata is present. Do not remove declared crates or forge old cache entries
+to silence these errors. The original Desktop/Heart formatting and incomplete
+packaging findings also remain to be resolved.
