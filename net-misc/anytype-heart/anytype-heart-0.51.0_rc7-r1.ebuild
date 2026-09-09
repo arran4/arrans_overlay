@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Gentoo Authors
+# Copyright 2024-2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -8,17 +8,15 @@ inherit go-module
 DESCRIPTION="Core engine for Anytype"
 HOMEPAGE="https://github.com/anyproto/anytype-heart"
 SRC_URI="https://github.com/anyproto/anytype-heart/archive/refs/tags/v${PV/_rc/-rc}.tar.gz -> ${P}.tar.gz"
+S="${WORKDIR}/${PN}-${PV/_rc/-rc}"
 
 LICENSE="ASAL"
 SLOT="0"
 KEYWORDS="~amd64"
 
-DEPEND="
-	dev-lang/go
-"
-RDEPEND="${DEPEND}"
-
-S="${WORKDIR}/${PN}-${PV/_rc/-rc}"
+# The release's go.mod requires Go 1.26.5. The compiler is a build tool,
+# not a runtime dependency of the installed helper.
+BDEPEND+=" >=dev-lang/go-1.26.5"
 
 go-module_set_globals "\
 	cel.dev/expr v0.25.1 \
@@ -718,7 +716,18 @@ src_prepare() {
 }
 
 src_compile() {
-	ego build -tags "nosigar nowatchdog" -ldflags "-X github.com/anyproto/anytype-heart/util/vcs.version=0.51.0-rc7" -o dist/server github.com/anyproto/anytype-heart/cmd/grpcserver
+	# Match govvv's symbols in util/vcs/vcs.go. Release archives have no Git
+	# metadata; pin the tag's commit and timestamp instead of using build time
+	# or accidentally recording the overlay's Git checkout.
+	local vcs=github.com/anyproto/anytype-heart/util/vcs
+	local -a ldflags=(
+		-X "${vcs}.GitSummary=v${PV/_rc/-rc}"
+		-X "${vcs}.GitCommit=81345d8b3a059cfb67e5593bee68924f1f7aa6b3"
+		-X "${vcs}.BuildDate=2026-09-05T22:12:33Z"
+	)
+	ego build -buildvcs=false -tags "nosigar nowatchdog" \
+		-ldflags "${ldflags[*]}" -o dist/server \
+		github.com/anyproto/anytype-heart/cmd/grpcserver
 }
 
 src_install() {
