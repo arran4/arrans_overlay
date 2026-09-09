@@ -5,18 +5,19 @@ EAPI=8
 
 DESCRIPTION="The Flutter Engine: C++ core of Flutter"
 HOMEPAGE="https://github.com/flutter/engine"
-
 # Flutter 3.47.2 requires engine commit a804b261645ef8c13eb3d5c44a5c2fb0340c5539
 # Note: Building Flutter Engine natively requires depot_tools/gclient resolution
 # to be performed offline, and blocking on Dart being built from source.
 
 SRC_URI=""
 
+S="${WORKDIR}/engine-3.47.2"
+
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE=""
-RESTRICT="network-sandbox"
+
+RESTRICT="network-sandbox fetch"
 
 # Dependency order and blockers:
 # 1. dev-lang/dart (#907) must be packaged from source. Flutter Engine needs to
@@ -28,18 +29,15 @@ RESTRICT="network-sandbox"
 #    Chromium does). This includes Skia, Impeller, and Chromium-base dependencies.
 # 3. Missing packaging for GN build rules that are usually fetched via gclient.
 
-DEPEND=""
-RDEPEND="${DEPEND}"
+RDEPEND=""
 BDEPEND="
 	dev-vcs/git
 	dev-build/ninja
 	dev-build/gn
 "
 
-S="${WORKDIR}/engine-${PV}"
-
 src_unpack() {
-	default
+	mkdir -p "${S}" || die
 }
 
 src_prepare() {
