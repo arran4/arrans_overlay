@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package smoke;
+
+message Request {
+	string message = 1;
+}
+
+message Reply {
+	string message = 1;
+}
+
+service Smoke {
+	rpc Call(Request) returns (Reply);
+}

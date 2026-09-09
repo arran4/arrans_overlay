@@ -205,8 +205,24 @@ Desktop's `bun.lock` pins `ts-proto` 2.11.5. Its source generation requires:
 
 Do not invoke upstream `generate-protos.sh` unchanged: even its source mode runs
 Heart's networked `make install-dev-js`. Do not use `--from-dist` or symlinks.
-Heart's legacy JS/grpc-web generation and `system*.json`/`internal*.json` bundle
-installation also remain to be packaged.
+
+Heart pins the npm wrapper `protoc-gen-js` 3.21.4-4. That wrapper's post-install
+script downloads the official protobuf-javascript 3.21.4 executable, so it is
+unsuitable inside Portage. `dev-util/protoc-gen-js-3.21.4` instead compiles the
+official generator tag. The generator uses protobuf's internal SCC API and its
+upstream workspace pins protobuf 27.1, so the ebuild builds and statically links
+that declared source rather than relying on a mismatched installed internal
+header. It uses Gentoo's Abseil library and builds no downloaded executable.
+
+`dev-util/protoc-gen-grpc-web-1.5.0` compiles the pinned grpc-web generator from
+its single C++ source file against Gentoo's protobuf libraries. Source-built
+copies of both plugins generated Heart's complete legacy JS/grpc-web set with
+the exact upstream arguments: eight JavaScript files and eight declarations
+covering commands, events, changes, snapshots, the service API, models, and
+local store. Both packages also pass isolated smoke generation and clean
+empty-distfile Gentoo fetch tests. Heart still needs to invoke them in its
+ebuild and install those outputs together with its four committed
+`system*.json`/`internal*.json` bundles.
 
 The exact JavaScript dependency closure still needs immutable fetch inputs and
 offline assembly. In addition to runtime keytar, account for native build tools

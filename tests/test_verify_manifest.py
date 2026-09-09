@@ -203,6 +203,8 @@ SRC_URI="
             "net-misc/anytype-heart",
             "dev-libs/wasi-sysroot",
             "dev-util/binaryen",
+            "dev-util/protoc-gen-js",
+            "dev-util/protoc-gen-grpc-web",
             "dev-go/go-graphviz-wasm",
             "dev-python/materialyoucolor",
             "gui-apps/quickshell",
