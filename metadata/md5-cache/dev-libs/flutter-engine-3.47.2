@@ -1,13 +1,9 @@
-DESCRIPTION=The Flutter Engine: C++ core of Flutter
-EAPI=8
+RESTRICT=test
 HOMEPAGE=https://github.com/flutter/engine
+EAPI=8
+BDEPEND=dev-vcs/git  dev-build/ninja  dev-build/gn
+DESCRIPTION=The Flutter Engine: C++ core of Flutter
 LICENSE=BSD
-KEYWORDS=~amd64
 SLOT=0
-RESTRICT=network-sandbox fetch
-BDEPEND=
-	dev-vcs/git
-	dev-build/ninja
-	dev-build/gn
-
-_md5_=22061f294b8afa52bd01d7d7c9d7c51f
+KEYWORDS=~amd64
+_md5_=5d5acb3e501936a3609700e0600e4d04

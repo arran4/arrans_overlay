@@ -9,7 +9,6 @@ HOMEPAGE="https://github.com/flutter/engine"
 # Note: Building Flutter Engine natively requires depot_tools/gclient resolution
 # to be performed offline, and blocking on Dart being built from source.
 
-SRC_URI=""
 
 S="${WORKDIR}/engine-3.47.2"
 
@@ -17,7 +16,7 @@ LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64"
 
-RESTRICT="network-sandbox fetch"
+RESTRICT="test"
 
 # Dependency order and blockers:
 # 1. dev-lang/dart (#907) must be packaged from source. Flutter Engine needs to
@@ -29,12 +28,9 @@ RESTRICT="network-sandbox fetch"
 #    Chromium does). This includes Skia, Impeller, and Chromium-base dependencies.
 # 3. Missing packaging for GN build rules that are usually fetched via gclient.
 
-RDEPEND=""
-BDEPEND="
-	dev-vcs/git
-	dev-build/ninja
-	dev-build/gn
-"
+BDEPEND="dev-vcs/git"
+BDEPEND+=" dev-build/ninja"
+BDEPEND+=" dev-build/gn"
 
 src_unpack() {
 	mkdir -p "${S}" || die
