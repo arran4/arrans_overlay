@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.43 Github Binary Release current.config 2026-09-05 22:43:02.713774268 +0000 UTC m=+0.006937948
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-09-09 06:32:31.565693325 +0000 UTC m=+0.009088735
 
 name: net-misc/abc-justin-rss-bin update
 
@@ -87,7 +87,7 @@ jobs:
 
               # shellcheck disable=SC2016
               {
-                echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
+                echo '# Generated via: ${{ github.server_url }}/${{ github.repository }}/blob/${{ github.sha }}/.github/workflows/${{ env.workflow_filename }}'
                 echo 'EAPI=8'
                 echo "DESCRIPTION=\"${{ env.description }}\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""

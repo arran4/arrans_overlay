@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-09-09 05:48:38.856930042 +0000 UTC m=+0.007105660
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-09-09 06:32:31.565693325 +0000 UTC m=+0.009088735
 
 name: app-misc/jolt-bin update
 
@@ -58,11 +58,7 @@ jobs:
           tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
           for tag in $tags; do
-            version="${tag#v}"
-            if [ "${version}" = "${tag}" ]; then
-                echo "$version == $tag so there is no v removed skipping"
-                continue
-            fi
+            version="${tag}"
             # shellcheck disable=SC2034
             originalVersion="${version}"
             if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
