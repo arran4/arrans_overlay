@@ -85,9 +85,13 @@ converts only the declared Git source crates to local paths during preparation;
 compilation and tests use `--frozen --lib`. Regenerate the complete Manifest
 from the expanded Portage SRC_URI and metadata with `egencache`.
 
-Heart's fresh Go-cache generation is underway separately from the preserved
-recovery cache, with `GOTOOLCHAIN=local`. It must be verified and packaged before
-replacing the ineffective module list. Audit embedded runtime artifacts too:
+Heart's fresh Go cache was generated separately from the preserved recovery
+cache with `GOTOOLCHAIN=local`: all 686 downloaded module records succeeded,
+`go mod verify` passed, and `go list -mod=readonly -m -json all` resolved the
+complete graph with `GOPROXY=off` and `GOSUMDB=off`. No toolchain module was
+downloaded. The download expanded upstream's go.sum; preserve and review those
+additional checksums when packaging the immutable archive. Archive generation
+and ebuild integration remain unfinished. Audit embedded runtime artifacts too:
 `go-graphviz` v0.2.10 embeds `internal/wasm/graphviz.wasm`, used by Heart's DOT
 converter and debugging code. This must be rebuilt, not treated as an unused
 fixture. Its upstream build uses Graphviz 12.1.2, Expat 2.6.3, WASI SDK 24, and
