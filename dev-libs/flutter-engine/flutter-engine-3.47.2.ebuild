@@ -9,17 +9,13 @@ HOMEPAGE="https://github.com/flutter/engine"
 # Note: Building Flutter Engine natively requires depot_tools/gclient resolution
 # to be performed offline, and blocking on Dart being built from source.
 
-
-
 S="${WORKDIR}/engine-3.47.2"
 
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64"
 
-RESTRICT="fetch"
-
-
+RESTRICT="test"
 
 # Dependency order and blockers:
 # 1. dev-lang/dart (#907) must be packaged from source. Flutter Engine needs to
@@ -27,8 +23,8 @@ RESTRICT="fetch"
 #    pinned Dart revision concurrently.
 # 2. depot_tools/gclient is required to fetch dependencies natively, but Portage
 #    builds must be offline. We must translate the Engine's DEPS file into a
-#    massive SRC_URI list or provide a pre-rolled tarball of dependencies (like
-#    Chromium does). This includes Skia, Impeller, and Chromium-base dependencies.
+#    massive SRC_URI list or provide a pre-rolled tarball of dependencies
+#    (like Chromium does). This includes Skia, Impeller, and Chromium deps.
 # 3. Missing packaging for GN build rules that are usually fetched via gclient.
 
 BDEPEND="dev-vcs/git"
