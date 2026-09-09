@@ -1,19 +1,17 @@
+EAPI=8
+INHERITED=xdg desktop
 HOMEPAGE=https://github.com/anyproto/anytype-ts
+KEYWORDS=~amd64
+DESCRIPTION=Anytype Desktop application
 LICENSE=ASAL
 SLOT=0
-SRC_URI=https://github.com/anyproto/anytype-ts/archive/refs/tags/v0.56.9-alpha.tar.gz -> anytype-0.56.9-alpha.tar.gz
-KEYWORDS=~amd64
-INHERITED=xdg desktop
-DESCRIPTION=Anytype Desktop application
 DEPEND=
 	~net-misc/anytype-heart-0.51.0_rc7
 	dev-vcs/git
-	dev-util/electron
 
-EAPI=8
+SRC_URI=https://github.com/anyproto/anytype-ts/archive/refs/tags/v0.56.9-alpha.tar.gz -> anytype-0.56.9-alpha.tar.gz
 RDEPEND=
 	~net-misc/anytype-heart-0.51.0_rc7
 	dev-vcs/git
-	dev-util/electron
 
-_md5_=bced3eb3d72398987082d93cae35a0e9
+_md5_=6a2eb3b6892850b2cc1bce1c97d33dd0

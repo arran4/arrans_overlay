@@ -13,13 +13,11 @@ LICENSE="ASAL"
 SLOT="0"
 KEYWORDS="~amd64"
 
-# This package requires dev-util/electron but it must be built from source (v41.x).
 # It also requires a fully offline JS node_modules closure.
 # Do not bypass these rules to turn CI green.
 DEPEND="
 	~net-misc/anytype-heart-0.51.0_rc7
 	dev-vcs/git
-	dev-util/electron
 "
 RDEPEND="${DEPEND}"
 
