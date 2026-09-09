@@ -10,13 +10,16 @@ HOMEPAGE="https://github.com/flutter/engine"
 # to be performed offline, and blocking on Dart being built from source.
 
 
+
 S="${WORKDIR}/engine-3.47.2"
 
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64"
 
-RESTRICT="test"
+RESTRICT="fetch"
+
+
 
 # Dependency order and blockers:
 # 1. dev-lang/dart (#907) must be packaged from source. Flutter Engine needs to
