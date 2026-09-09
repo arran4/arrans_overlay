@@ -86,11 +86,17 @@ jobs:
                 echo ''
                 echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
                 echo 'EAPI=8'
-                echo "DESCRIPTION=\"${{ env.description }}\""
+                echo "DESCRIPTION=\"Fast, and easy to use CLI tool to quickly access your remote repositories\""
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
-                echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-amd64.tar.gz -> \${P}-jolt-\${PV}-linux-amd64.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-arm64.tar.gz -> \${P}-jolt-\${PV}-linux-arm64.tar.gz  )  "
+                echo '	amd64? ('
+                echo '		https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-amd64.tar.gz'
+                echo '		-> \${P}-jolt-\${PV}-linux-amd64.tar.gz'
+                echo '	)'
+                echo '	arm64? ('
+                echo '		https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-arm64.tar.gz'
+                echo '		-> \${P}-jolt-\${PV}-linux-arm64.tar.gz'
+                echo '	)'
                 echo '"'
                 echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
@@ -136,8 +142,8 @@ jobs:
                   continue
               fi
               failed=0
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-amd64.tar.gz" "${{ env.epn }}-${version}-jolt-${version}-linux-amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-arm64.tar.gz" "${{ env.epn }}-${version}-jolt-${version}-linux-arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-amd64.tar.gz" "jolt-bin-${version}-jolt-${version}-linux-amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-arm64.tar.gz" "jolt-bin-${version}-jolt-${version}-linux-arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
               if [ "$failed" -eq 1 ]; then
                   echo "Failed to generate manifest for $tag. Skipping..."
                   rm -f "$ebuild_file"
