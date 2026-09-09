@@ -1,15 +1,16 @@
 SRC_URI=https://github.com/anyproto/anytype-heart/archive/refs/tags/v0.51.0-rc7.tar.gz -> anytype-heart-0.51.0_rc7.tar.gz
-LICENSE=ASAL
+	# https://github.com/anyproto/anytype-heart/releases/download/v0.51.0-rc7/anytype-heart-0.51.0_rc7-deps.tar.xz
 SLOT=0
-KEYWORDS=~amd64
+DESCRIPTION=Core engine for Anytype
 DEPEND=
 	dev-lang/go
 
+EAPI=8
+HOMEPAGE=https://github.com/anyproto/anytype-heart
+LICENSE=ASAL
 RDEPEND=
 	dev-lang/go
 
-EAPI=8
 INHERITED=go-module
-HOMEPAGE=https://github.com/anyproto/anytype-heart
-DESCRIPTION=Core engine for Anytype
-_md5_=aa6ff017954116c6ac1eec9811f24ffd
+KEYWORDS=~amd64
+_md5_=383f8ff6fecb5d82ac260a61d2904d4e
