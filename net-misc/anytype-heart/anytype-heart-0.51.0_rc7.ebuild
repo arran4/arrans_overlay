@@ -29,19 +29,11 @@ src_prepare() {
 }
 
 src_compile() {
-	# TODO: Must make Go dependency graph fully offline via proper go-module source/vendor inputs.
-	# emake build-server
+	# We will assume EGO_SUM or vendor logic is provided out of band for offline build,
+	# but for the draft we just block as requested if offline is truly missing.
 	einfo "Source build blocked pending offline Go dependencies."
 }
 
 src_install() {
-	# dobin dist/server
-
-	# insinto /usr/share/${PN}/pb
-	# doins -r pb/*
-
-	# insinto /usr/share/${PN}/pkg
-	# doins -r pkg/*
-
 	einfo "Source install blocked pending build step."
 }

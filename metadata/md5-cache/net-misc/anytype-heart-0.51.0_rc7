@@ -1,15 +1,15 @@
-DESCRIPTION=Core engine for Anytype
 HOMEPAGE=https://github.com/anyproto/anytype-heart
-EAPI=8
-INHERITED=go-module
-LICENSE=ASAL
 SRC_URI=https://github.com/anyproto/anytype-heart/archive/refs/tags/v0.51.0-rc7.tar.gz -> anytype-heart-0.51.0_rc7.tar.gz
-SLOT=0
+LICENSE=ASAL
 KEYWORDS=~amd64
-DEPEND=
-	dev-lang/go
-
 RDEPEND=
 	dev-lang/go
 
-_md5_=bfc07a2dce2272b9081ca435d191a420
+EAPI=8
+SLOT=0
+DEPEND=
+	dev-lang/go
+
+INHERITED=go-module
+DESCRIPTION=Core engine for Anytype
+_md5_=c5d0a11f10ed38127fadd0cb8742f0ee

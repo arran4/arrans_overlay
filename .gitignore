@@ -15,3 +15,5 @@ __pycache__/
 *.py[cod]
 
 
+/build-heart/
+anytype-heart-0.51.0-rc7/

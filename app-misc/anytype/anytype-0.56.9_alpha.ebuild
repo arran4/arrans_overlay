@@ -25,8 +25,6 @@ RDEPEND="${DEPEND}"
 
 S="${WORKDIR}/anytype-ts-${PV/_alpha/-alpha}"
 
-# RESTRICT="network-sandbox" is removed. The ebuild must fetch all deps via SRC_URI.
-
 src_unpack() {
 	default
 }
@@ -36,39 +34,10 @@ src_prepare() {
 }
 
 src_compile() {
-	# TODO: The npm dependency graph must be resolved and fetched offline via SRC_URI.
-	# npm i --ignore-scripts || die "npm install failed"
-
-	# TODO: Protobufs must be generated properly from the provided anytype-heart source.
-	# Do not use the symlink hack.
-	# mkdir -p dist/lib/pb
-	# mkdir -p dist/lib/pkg
-	# cp -r /usr/share/anytype-heart/pb/* dist/lib/pb/
-	# cp -r /usr/share/anytype-heart/pkg/* dist/lib/pkg/
-	# ln -s dist/lib middleware
-
-	# TODO: Build electron locally.
-	# node scripts/build-electron.js || die "Failed to build electron"
-
-	# export NODE_OPTIONS=--max_old_space_size=8192
-	# npm run build:deps || die "Failed to run build:deps"
-	# npx vite build --config vite.config.ts || die "Failed to build vite"
-
 	einfo "Source build blocked pending offline JS dependencies and Electron prerequisite."
 }
 
 src_install() {
-	# insinto /opt/anytype
-	# doins -r dist/*
-
-	# cat << 'EOF2' > "${T}/anytype"
-#!/bin/sh
-# exec electron /opt/anytype "$@"
-# EOF2
-	# dobin "${T}/anytype"
-
-	# make_desktop_entry "anytype" "Anytype" "anytype" "Office;Utility;"
-
 	einfo "Source install blocked pending build step."
 }
 
