@@ -202,6 +202,8 @@ SRC_URI="
             "app-misc/anytype",
             "net-misc/anytype-heart",
             "dev-libs/wasi-sysroot",
+            "dev-util/binaryen",
+            "dev-go/go-graphviz-wasm",
             "dev-python/materialyoucolor",
             "gui-apps/quickshell",
             "gui-apps/caelestia-cli",

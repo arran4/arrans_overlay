@@ -117,8 +117,8 @@ omits mutable cache bookkeeping, normalizes tar metadata, and compresses with
 `xz -T2 -9`. It refuses to overwrite an existing archive and publishes the local
 file only after successful compression. Module source archives can contain
 embedded artifacts, so this helper does not replace the runtime artifact audit.
-The archive must still be hosted immutably, fetched through SRC_URI/Manifest,
-and integrated with Heart's source-derived runtime assets before Heart can use it.
+The archive must still be hosted immutably and fetched through SRC_URI/Manifest
+before Heart can use it in Portage.
 
 The first archive is 667115380 bytes. Extracting it into an empty directory and
 running `go mod verify` and `go list -mod=readonly -m all` with `GOPROXY=off`,
@@ -129,6 +129,16 @@ entries. The archive's SHA512 is:
 ```text
 8418b40c9cf92fbca398397e118ff2fb3d127616b2e92ca70864ff939f1284d36dc40cf7ee5d3d93b44c3b96c547a7ba93e6f1d4a18cd9e4a76ad2ec486e4b61
 ```
+
+A clean host build then extracted that archive, verified the original source
+`go.sum`, replaced go-graphviz's embedded module with the source-built optimized
+WASM described below, and compiled `cmd/grpcserver` entirely offline. The result
+is a Go 1.26.5 `anytypeHelper`; its build metadata records the exact release
+version, commit, timestamp, `nosigar nowatchdog` tags, and `GOPROXY=off`. The
+source-built Tantivy static archive is linked into the helper, so it has no
+runtime dependency on a downloaded native library. This is host-build evidence;
+the Heart ebuild still needs the hosted dependency input and a clean Gentoo
+merge.
 
 ## Graphviz WASM prerequisites
 
@@ -155,16 +165,27 @@ Gentoo source merge, including Clang and this package's smoke tests, is running
 in the test root described below. This is not a completed Gentoo merge.
 
 Graphviz 12.1.2 and Expat 2.6.3 configured with this sysroot and Clang 18 using
-upstream's cross-build options. The go-graphviz v0.2.10 Makefile compiled a new
-2462485-byte `graphviz.wasm`; the only recipe adaptations were removing ccache
-and supplying the local sysroot/resource/source paths. The upstream exclusion
-of `lib/rbtree/test_red_black_tree.c` was retained. Replacing the embedded WASM
-in the extracted Go source and testing with Heart's exact Go module graph
-passed all seven top-level tests (87 tests and subtests) offline, including
-image compatibility and graph operations. This is the unoptimized module.
-Binaryen 119 is separately compiling from source with its `ENABLE_WERROR=OFF`
-option after a host GCC warning stopped its first build. Optimization, Graphviz
-WASM packaging, and integration with Heart remain unfinished.
+upstream's cross-build options. `dev-go/go-graphviz-wasm-0.2.10` reproduces the
+upstream build from those sources, retaining upstream's exclusion of
+`lib/rbtree/test_red_black_tree.c` and replacing ccache and fixed SDK paths with
+packaged tools. The initial module is 2462485 bytes. Source-built Binaryen 119
+then applies upstream's exact `-g --strip --strip-producers -c -Os` optimization
+and produces a 1581323-byte installed module with SHA256
+`3830582488e13bef14e48f5e02660fcd1553bc04c3287f1ebf602a1c1edfabe3`.
+
+`dev-util/binaryen-119` builds and installs Binaryen's shared library and 13
+command-line tools from the tagged source. Its installed `wasm-as`, `wasm-opt`,
+and `wasm-dis` pass a WAT assembly/optimization/disassembly check; the tools use
+an `$ORIGIN/../lib` runpath to the installed library. The package disables
+upstream warning-as-error handling because a host GCC warning otherwise aborts
+the release build; it does not suppress the warning or skip compilation.
+
+Replacing go-graphviz's embedded module with the optimized output and testing
+with Heart's exact Go module graph passed all seven top-level tests (87 tests
+and subtests) offline, including image compatibility and graph operations. Both
+new ebuilds also pass clean empty-distfile fetch checks, Manifest verification,
+pkgcheck, and source host builds. Their full Gentoo merges wait for the running
+source LLVM/WASI prerequisite merge.
 
 ## Frontend generation and dependencies
 

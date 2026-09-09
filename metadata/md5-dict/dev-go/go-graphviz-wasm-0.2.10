@@ -1,0 +1,14 @@
+BDEPEND=~dev-libs/wasi-sysroot-24.0 ~dev-util/binaryen-119 llvm_slot_18? ( llvm-core/clang:18 llvm-core/lld:18 )
+DEFINED_PHASES=compile configure install prepare setup test
+DESCRIPTION=Source-built Graphviz WebAssembly runtime for go-graphviz
+EAPI=8
+HOMEPAGE=https://github.com/goccy/go-graphviz
+INHERIT=llvm-r2
+IUSE=+llvm_slot_18
+KEYWORDS=~amd64
+LICENSE=MIT CPL-1.0 Apache-2.0-with-LLVM-exceptions BSD-2 CC0-1.0
+REQUIRED_USE=^^ ( llvm_slot_18 )
+SLOT=0
+SRC_URI=https://github.com/goccy/go-graphviz/archive/refs/tags/v0.2.10.tar.gz -> go-graphviz-wasm-0.2.10.tar.gz https://gitlab.com/api/v4/projects/4207231/packages/generic/graphviz-releases/12.1.2/graphviz-12.1.2.tar.gz https://github.com/libexpat/libexpat/releases/download/R_2_6_3/expat-2.6.3.tar.gz
+_eclasses_=llvm-r2	56f5637f85225a4b5312d9055a7727d8	llvm-utils	e7edb4086e31c8537574b263d899f826	multilib	fc812e8eb2170022c28272d80a1f9e77	toolchain-funcs	58a918e3a42d0156f010dcfd43725be5
+_md5_=e2c3d9d22f824007ae405e64db8ced64
