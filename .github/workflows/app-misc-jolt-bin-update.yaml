@@ -90,11 +90,11 @@ jobs:
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
                 echo '	amd64? ('
-                echo '		https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-amd64.tar.gz'
+                echo "		https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-amd64.tar.gz"
                 echo '		-> \${P}-jolt-\${PV}-linux-amd64.tar.gz'
                 echo '	)'
                 echo '	arm64? ('
-                echo '		https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-arm64.tar.gz'
+                echo "		https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-arm64.tar.gz"
                 echo '		-> \${P}-jolt-\${PV}-linux-arm64.tar.gz'
                 echo '	)'
                 echo '"'
