@@ -142,8 +142,8 @@ jobs:
                   continue
               fi
               failed=0
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-amd64.tar.gz" "${{ env.epn }}-${version}-jolt-${version}-linux-amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-arm64.tar.gz" "${{ env.epn }}-${version}-jolt-${version}-linux-arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-amd64.tar.gz" "jolt-bin-${version}-jolt-${version}-linux-amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/jolt-${tag}-linux-arm64.tar.gz" "jolt-bin-${version}-jolt-${version}-linux-arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
               if [ "$failed" -eq 1 ]; then
                   echo "Failed to generate manifest for $tag. Skipping..."
                   rm -f "$ebuild_file"
