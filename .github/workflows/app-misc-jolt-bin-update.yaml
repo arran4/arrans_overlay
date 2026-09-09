@@ -81,6 +81,9 @@ jobs:
 
               # shellcheck disable=SC2016
               {
+                echo '# Copyright 2024-2026 Arran Ubels'
+                echo '# Distributed under the terms of the GNU General Public License v2'
+                echo ''
                 echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}'
                 echo 'EAPI=8'
                 echo "DESCRIPTION=\"${{ env.description }}\""
