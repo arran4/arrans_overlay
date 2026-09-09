@@ -1,12 +1,53 @@
 import os
 import sys
 import unittest
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
 
 # Ensure scripts directory is in sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
-from verify_manifest import parse_ebuild_variables, resolve_variables, extract_uris
+from verify_manifest import parse_ebuild_variables, resolve_variables, extract_uris, main
 
 class TestVerifyManifest(unittest.TestCase):
+
+    def test_anytype_prerelease_sources(self):
+        cases = [
+            ('anytype-heart-0.51.0_rc7-r1.ebuild',
+             'https://github.com/anyproto/anytype-heart/archive/refs/tags/v${PV/_rc/-rc}.tar.gz -> ${P}.tar.gz',
+             'https://github.com/anyproto/anytype-heart/archive/refs/tags/v0.51.0-rc7.tar.gz',
+             'anytype-heart-0.51.0_rc7.tar.gz'),
+            ('anytype-0.56.9_alpha.ebuild',
+             'https://github.com/anyproto/anytype-ts/archive/refs/tags/v${PV/_alpha/-alpha}.tar.gz -> ${P/_alpha/-alpha}.tar.gz',
+             'https://github.com/anyproto/anytype-ts/archive/refs/tags/v0.56.9-alpha.tar.gz',
+             'anytype-0.56.9-alpha.tar.gz'),
+        ]
+        for ebuild, src_uri, url, distfile in cases:
+            with self.subTest(ebuild=ebuild):
+                content = f'SRC_URI="{src_uri}"'
+                variables = parse_ebuild_variables(ebuild, content)
+                self.assertEqual(extract_uris(content, variables), [(url, distfile)])
+
+    def test_fetch_failure_preserves_manifest_and_fails_command(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'foo-1.ebuild').write_text('SRC_URI="https://example.org/foo-1.tar.gz"')
+            manifest = root / 'Manifest'
+            original = 'DIST foo-1.tar.gz 1 BLAKE2B old-checksum\n'
+            manifest.write_text(original)
+            with patch('verify_manifest.upsert_worker', return_value=[]), \
+                    patch.object(sys, 'argv', ['verify_manifest.py', directory]):
+                self.assertEqual(main(), 1)
+            self.assertEqual(manifest.read_text(), original)
+
+    def test_unsupported_expansion_does_not_fetch(self):
+        with tempfile.TemporaryDirectory() as directory:
+            (Path(directory) / 'foo-1.ebuild').write_text(
+                'SRC_URI="https://example.org/${PV/*/unsafe}.tar.gz"')
+            with patch('verify_manifest.upsert_worker') as worker, \
+                    patch.object(sys, 'argv', ['verify_manifest.py', directory]):
+                self.assertEqual(main(), 1)
+                worker.assert_not_called()
 
     def test_parse_variables_unrevised(self):
         vars_dict = parse_ebuild_variables("foo-1.2.3.ebuild")
@@ -158,6 +199,8 @@ SRC_URI="
     def test_actual_overlay_manifests(self):
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         pkgs = [
+            "app-misc/anytype",
+            "net-misc/anytype-heart",
             "dev-python/materialyoucolor",
             "gui-apps/quickshell",
             "gui-apps/caelestia-cli",
