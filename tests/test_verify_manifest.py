@@ -201,6 +201,7 @@ SRC_URI="
         pkgs = [
             "app-misc/anytype",
             "net-misc/anytype-heart",
+            "dev-libs/wasi-sysroot",
             "dev-python/materialyoucolor",
             "gui-apps/quickshell",
             "gui-apps/caelestia-cli",

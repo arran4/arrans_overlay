@@ -90,13 +90,81 @@ cache with `GOTOOLCHAIN=local`: all 686 downloaded module records succeeded,
 `go mod verify` passed, and `go list -mod=readonly -m -json all` resolved the
 complete graph with `GOPROXY=off` and `GOSUMDB=off`. No toolchain module was
 downloaded. The download expanded upstream's go.sum; preserve and review those
-additional checksums when packaging the immutable archive. Archive generation
-and ebuild integration remain unfinished. Audit embedded runtime artifacts too:
+additional checksums when packaging the immutable archive. The new archive is
+generated and verified after extraction; immutable hosting and ebuild integration
+remain unfinished. Audit embedded runtime artifacts too:
 `go-graphviz` v0.2.10 embeds `internal/wasm/graphviz.wasm`, used by Heart's DOT
 converter and debugging code. This must be rebuilt, not treated as an unused
 fixture. Its upstream build uses Graphviz 12.1.2, Expat 2.6.3, WASI SDK 24, and
 Binaryen 119. The WASM build Makefile is present in the upstream Git tag but
 absent from the Go module zip, so the Git source archive is also needed.
+
+`scripts/package_go_dependencies.py` prepares the supported dependency archive
+outside Portage phases. Run it with an installed Go compiler satisfying the
+upstream go.mod:
+
+```sh
+python3 scripts/package_go_dependencies.py /path/to/anytype-heart \
+  /path/to/anytype-heart-0.51.0_rc7-deps.tar.xz --go /path/to/go
+```
+
+It copies only go.mod/go.sum into a temporary project, downloads the complete
+module graph into a fresh cache, verifies it, and resolves the graph offline.
+The input source tree is unchanged. The output has the eclass's `go-mod/`
+directory plus `go-deps/go.mod`, expanded `go-deps/go.sum`, and a module inventory
+with checksums and compiler version. It rejects toolchain modules and links,
+omits mutable cache bookkeeping, normalizes tar metadata, and compresses with
+`xz -T2 -9`. It refuses to overwrite an existing archive and publishes the local
+file only after successful compression. Module source archives can contain
+embedded artifacts, so this helper does not replace the runtime artifact audit.
+The archive must still be hosted immutably, fetched through SRC_URI/Manifest,
+and integrated with Heart's source-derived runtime assets before Heart can use it.
+
+The first archive is 667115380 bytes. Extracting it into an empty directory and
+running `go mod verify` and `go list -mod=readonly -m all` with `GOPROXY=off`,
+`GOSUMDB=off`, and `GOTOOLCHAIN=local` passed. Its 686-module inventory contains
+no toolchain module. All upstream go.sum entries are preserved, with 510 added
+entries. The archive's SHA512 is:
+
+```text
+8418b40c9cf92fbca398397e118ff2fb3d127616b2e92ca70864ff939f1284d36dc40cf7ee5d3d93b44c3b96c547a7ba93e6f1d4a18cd9e4a76ad2ec486e4b61
+```
+
+## Graphviz WASM prerequisites
+
+`dev-libs/wasi-sysroot-24.0` builds compiler-rt, wasi-libc, libc++, and libc++abi
+for wasm32-wasi from SDK 24's pinned sources, using the source Clang 18 package.
+The LLVM source revision is `26a1d6601d727a96f4301d0d8647b5a42760ae0c`, and
+wasi-libc is `b9ef79d7dbd47c6c5bafdae760823467c2f60b70`. The package installs
+an isolated tree under `/usr/share/wasi-sdk/24`; it does not install a compiler
+or download a binary SDK. A small CMake patch supplies release metadata without
+a Git checkout and respects the build job limit.
+
+The host source build and installation passed with Clang 18.1.8. C and C++
+programs linked using the installed sysroot and ran successfully under Heart's
+Wazero 1.10.1, built offline from Go sources: C printed `42`, and C++ returned
+success. C++ uses the SDK's upstream no-exceptions configuration. The same
+runtime build with Clang 19 failed linking shared libc support libraries;
+LLVM_COMPAT therefore permits only the verified LLVM 18 baseline.
+
+All three tested source archives match the g2-generated Manifest. The clean
+Gentoo fetch test passed for all three inputs, the repository Manifest verifier
+passed, and pkgcheck is clean. `g2 lint -severity error` passes; unfiltered g2
+still exits 1 for its notice that the package has only unstable keywords. A full
+Gentoo source merge, including Clang and this package's smoke tests, is running
+in the test root described below. This is not a completed Gentoo merge.
+
+Graphviz 12.1.2 and Expat 2.6.3 configured with this sysroot and Clang 18 using
+upstream's cross-build options. The go-graphviz v0.2.10 Makefile compiled a new
+2462485-byte `graphviz.wasm`; the only recipe adaptations were removing ccache
+and supplying the local sysroot/resource/source paths. The upstream exclusion
+of `lib/rbtree/test_red_black_tree.c` was retained. Replacing the embedded WASM
+in the extracted Go source and testing with Heart's exact Go module graph
+passed all seven top-level tests (87 tests and subtests) offline, including
+image compatibility and graph operations. This is the unoptimized module.
+Binaryen 119 is separately compiling from source with its `ENABLE_WERROR=OFF`
+option after a host GCC warning stopped its first build. Optimization, Graphviz
+WASM packaging, and integration with Heart remain unfinished.
 
 ## Frontend generation and dependencies
 
