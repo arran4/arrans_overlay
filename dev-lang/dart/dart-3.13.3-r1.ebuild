@@ -317,7 +317,7 @@ src_prepare() {
 		> build/config/gclient_args.gni || die
 	ln -s "/opt/dart-bootstrap-3.13.0-103.1.beta" \
 		tools/sdks/dart-sdk || die
-	tools/sdks/dart-sdk/bin/dart \
+	_PUB_TEST_SDK_VERSION=${PV} tools/sdks/dart-sdk/bin/dart \
 		pub get --offline || die
 	"${EPYTHON}" tools/generate_sdk_version_file.py || die
 
