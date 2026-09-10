@@ -82,6 +82,15 @@ jobs:
               "=dev-lang/dart-bootstrap-bin-3.13.0_beta103_p1-r0 ~amd64" \
               > /etc/portage/package.accept_keywords/dart-source-ci
 
+            # The slim Docker stage3 records GCC with USE=cxx but omits its
+            # cc1plus payload.  Explicitly remerge the package from Gentoo's
+            # binhost, then prove the frontend works before going offline.
+            emerge -v --oneshot --usepkgonly --getbinpkg sys-devel/gcc
+            CXX_PROBE="$(portageq envvar CHOST)-g++"
+            printf "%s\n" "int main() { return 0; }" | \
+              "${CXX_PROBE}" -x c++ - -o /tmp/dart-cxx-probe
+            /tmp/dart-cxx-probe
+
             emerge_target_dependencies() {
               emerge -v \
                 --onlydeps \

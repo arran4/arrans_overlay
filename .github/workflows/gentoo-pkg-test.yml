@@ -203,6 +203,17 @@ jobs:
           PKG="$1"
           SOURCE_TARGET="$2"
 
+          if [[ ${PKG} == "=dev-lang/dart-"* ]]; then
+            # The slim Docker stage3 records GCC with USE=cxx but omits its
+            # cc1plus payload.  Dart is a C++ source build, so restore the
+            # complete compiler from Gentoo's binhost before testing it.
+            emerge -v --oneshot --usepkgonly --getbinpkg sys-devel/gcc
+            CXX_PROBE="$(portageq envvar CHOST)-g++"
+            printf "%s\n" "int main() { return 0; }" | \
+              "${CXX_PROBE}" -x c++ - -o /tmp/dart-cxx-probe
+            /tmp/dart-cxx-probe
+          fi
+
           mkdir -p /etc/portage/package.accept_keywords
           printf "%s ~amd64\n" "$PKG" > /etc/portage/package.accept_keywords/ci
           if [[ "$PKG" == *"kmagmux-9999"* ]]; then
