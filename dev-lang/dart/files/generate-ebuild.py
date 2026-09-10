@@ -40,7 +40,9 @@ REVIEWED_CIPD = {
     "sdk/third_party/d8/macos/x64": "JavaScript-engine tests only",
     "sdk/third_party/d8/macos/arm64": "JavaScript-engine tests only",
     "sdk/third_party/d8/windows/x64": "JavaScript-engine tests only",
-    "sdk/third_party/devtools": "prebuilt DevTools is omitted from the SDK",
+    "sdk/third_party/devtools": (
+        "replaced by the pinned devtools_shared source package"
+    ),
     "sdk/tests/co19/src": "language conformance tests only",
     "sdk/third_party/gsutil": "release-bot upload helper only",
     "sdk/buildtools/sysroot/linux": "system root selected by --no-clang",
@@ -71,6 +73,7 @@ GITHUB_ORGS = {
     "https://github.com/WebAssembly": "WEBASSEMBLY_GITHUB",
     "https://github.com/dart-lang": "DART_GITHUB",
     "https://github.com/emscripten-core": "EMSCRIPTEN_GITHUB",
+    "https://github.com/flutter": "FLUTTER_GITHUB",
     "https://github.com/google": "GOOGLE_GITHUB",
     "https://github.com/gsource-mirror": "GSOURCE_GITHUB",
     "https://github.com/librepo": "LIBREPO_GITHUB",
@@ -85,8 +88,11 @@ SHORT_NAMES = {
     "chromium-icu": "ICU",
     "cpu_features": "CPU_FEATURES",
     "dart_style": "DART_STYLE",
+    "devtools": "DEVTOOLS_SHARED",
     "leak_tracker": "LEAK_TRACKER",
+    "protobuf.dart": "PROTOBUF",
     "sync_http": "SYNC_HTTP",
+    "sync_http.dart": "SYNC_HTTP",
     "vector_math.dart": "VECTOR_MATH",
     "webdriver.dart": "WEBDRIVER",
     "webkit_inspection_protocol.dart": "WEBKIT_PROTOCOL",
@@ -154,7 +160,10 @@ def active_dependencies(namespace: dict[str, object]) -> list[tuple[str, object]
     return sorted(active)
 
 
-def git_source(destination: str, dependency: object) -> tuple[str, str, str, str]:
+def git_source(
+    destination: str,
+    dependency: object,
+) -> tuple[str, str, str, str, str, int]:
     url = dependency.get("url") if isinstance(dependency, dict) else dependency
     if not isinstance(url, str) or "@" not in url:
         raise ValueError(f"unsupported Git DEPS entry at {destination}: {dependency!r}")
@@ -166,7 +175,7 @@ def git_source(destination: str, dependency: object) -> tuple[str, str, str, str
     if name is None:
         name = re.sub(r"[^A-Za-z0-9]+", "_", repository_name).strip("_").upper()
     filename = f"dart-dep-{name.lower().replace('_', '-')}-{revision[:8]}.tar.gz"
-    return repository, revision, filename, relative
+    return repository, revision, filename, relative, ".", 1
 
 
 def stable_github_repository(repository: str) -> str:
@@ -179,12 +188,6 @@ def stable_github_repository(repository: str) -> str:
         if repository.startswith(prefix):
             return "https://github.com/" + repository.removeprefix(prefix)
 
-    dart_prefix = "https://dart.googlesource.com/"
-    if repository.startswith(dart_prefix):
-        return "https://github.com/dart-lang/" + repository.removeprefix(
-            dart_prefix
-        )
-
     mirrors = {
         "https://boringssl.googlesource.com/boringssl": (
             "https://github.com/google/boringssl"
@@ -195,11 +198,26 @@ def stable_github_repository(repository: str) -> str:
         "https://chromium.googlesource.com/chromium/src/third_party/zlib": (
             "https://github.com/gsource-mirror/chromium-src-third_party-zlib"
         ),
+        "https://dart.googlesource.com/protobuf": (
+            "https://github.com/google/protobuf.dart"
+        ),
+        "https://dart.googlesource.com/sync_http": (
+            "https://github.com/google/sync_http.dart"
+        ),
+        "https://dart.googlesource.com/webcore": (
+            "https://github.com/dart-archive/webcore"
+        ),
     }
-    try:
+    if repository in mirrors:
         return mirrors[repository]
-    except KeyError as error:
-        raise ValueError(f"no stable archive mirror for {repository}") from error
+
+    dart_prefix = "https://dart.googlesource.com/"
+    if repository.startswith(dart_prefix):
+        return "https://github.com/dart-lang/" + repository.removeprefix(
+            dart_prefix
+        )
+
+    raise ValueError(f"no stable archive mirror for {repository}")
 
 
 def render(deps_path: Path) -> str:
@@ -211,7 +229,7 @@ def render(deps_path: Path) -> str:
             "Dart bootstrap changed: "
             f"expected {BOOTSTRAP_SDK_TAG!r}, got {variables.get('sdk_tag')!r}"
         )
-    git_sources: list[tuple[str, str, str, str]] = []
+    git_sources: list[tuple[str, str, str, str, str, int]] = []
     active_cipd: dict[str, str] = {}
     excluded_git: dict[str, str] = {}
 
@@ -219,6 +237,18 @@ def render(deps_path: Path) -> str:
         dep_type = dependency.get("dep_type", "git") if isinstance(dependency, dict) else "git"
         if dep_type == "cipd":
             active_cipd[destination] = REVIEWED_CIPD.get(destination, "")
+            if destination == "sdk/third_party/devtools":
+                revision = str(variables["devtools_rev"])
+                git_sources.append(
+                    (
+                        "https://github.com/flutter/devtools",
+                        revision,
+                        f"dart-dep-devtools-shared-{revision[:8]}.tar.gz",
+                        "third_party/devtools/devtools_shared",
+                        "packages/devtools_shared",
+                        3,
+                    )
+                )
         elif dep_type == "git":
             if destination in REVIEWED_GIT:
                 excluded_git[destination] = REVIEWED_GIT[destination]
@@ -241,9 +271,9 @@ def render(deps_path: Path) -> str:
             f"no-longer-active={stale_git_review}"
         )
 
-    identifiers: dict[str, tuple[str, str, str, str]] = {}
+    identifiers: dict[str, tuple[str, str, str, str, str, int]] = {}
     for source in git_sources:
-        repository, _, _, _ = source
+        repository, _, _, _, _, _ = source
         repository_name = repository.rstrip("/").rsplit("/", 1)[-1]
         identifier = SHORT_NAMES.get(repository_name)
         if identifier is None:
@@ -259,7 +289,8 @@ def render(deps_path: Path) -> str:
         suffix = base.removeprefix("https://github.com")
         lines.append(f'{identifier}="${{GITHUB}}{suffix}"')
     lines.extend(['SDK_GIT="${DART_GITHUB}/sdk"', ""])
-    for identifier, (repository, revision, _, _) in sorted(identifiers.items()):
+    for identifier, source in sorted(identifiers.items()):
+        repository, revision, _, _, _, _ = source
         rendered_repository = repository
         substitutions = {
             base: f"${{{name}}}" for base, name in GITHUB_ORGS.items()
@@ -272,13 +303,17 @@ def render(deps_path: Path) -> str:
         lines.append(f'{identifier}_REV="{revision}"')
 
     lines.extend(["", "DART_DEPENDENCY_ARCHIVES=("])
-    for identifier, (_, _, filename, destination) in sorted(identifiers.items()):
+    for identifier, source in sorted(identifiers.items()):
+        _, _, filename, destination, member, strip = source
         lines.append(f'\t"{destination}"')
         lines.append(f'\t"{filename}"')
+        lines.append(f'\t"{member}"')
+        lines.append(f'\t"{strip}"')
     lines.extend([")", "", 'SRC_URI="'])
     lines.append("\t${SDK_GIT}/archive/refs/tags/${PV}.tar.gz")
     lines.append("\t\t-> ${P}.tar.gz")
-    for identifier, (_, _, filename, _) in sorted(identifiers.items()):
+    for identifier, source in sorted(identifiers.items()):
+        _, _, filename, _, _, _ = source
         lines.append(
             f"\t${{{identifier}_GIT}}/archive/${{{identifier}_REV}}.tar.gz"
         )

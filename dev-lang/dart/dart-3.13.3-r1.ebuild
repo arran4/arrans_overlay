@@ -7,7 +7,7 @@
 EAPI=8
 
 PYTHON_COMPAT=( python3_{12..15} )
-inherit python-any-r1
+inherit multiprocessing python-any-r1
 
 DESCRIPTION="The Dart SDK, including the VM, compilers, and core libraries"
 HOMEPAGE="https://dart.dev/ https://github.com/dart-lang/sdk"
@@ -17,6 +17,7 @@ GITHUB="https://github.com"
 WEBASSEMBLY_GITHUB="${GITHUB}/WebAssembly"
 DART_GITHUB="${GITHUB}/dart-lang"
 EMSCRIPTEN_GITHUB="${GITHUB}/emscripten-core"
+FLUTTER_GITHUB="${GITHUB}/flutter"
 GOOGLE_GITHUB="${GITHUB}/google"
 GSOURCE_GITHUB="${GITHUB}/gsource-mirror"
 LIBREPO_GITHUB="${GITHUB}/librepo"
@@ -38,6 +39,8 @@ DARTDOC_GIT="${DART_GITHUB}/dartdoc"
 DARTDOC_REV="1d56f263955f329b6701d8f84f069eb0aef353a4"
 DART_STYLE_GIT="${DART_GITHUB}/dart_style"
 DART_STYLE_REV="39edc2d946a5d7bd1caf6f1695f366b00f7b873c"
+DEVTOOLS_SHARED_GIT="${FLUTTER_GITHUB}/devtools"
+DEVTOOLS_SHARED_REV="12d595649f189f1896722623f72599077f476848"
 ECOSYSTEM_GIT="${DART_GITHUB}/ecosystem"
 ECOSYSTEM_REV="848b3bf3b757d2e9ae4d60030eeed5756c87783f"
 EMSDK_GIT="${EMSCRIPTEN_GITHUB}/emsdk"
@@ -54,13 +57,13 @@ NATIVE_GIT="${DART_GITHUB}/native"
 NATIVE_REV="d51c53334486af69435b0b45c4bdfe303a830170"
 PERFETTO_GIT="${GOOGLE_GITHUB}/perfetto"
 PERFETTO_REV="13ce0c9e13b0940d2476cd0cff2301708a9a2e2b"
-PROTOBUF_GIT="${DART_GITHUB}/protobuf"
+PROTOBUF_GIT="${GOOGLE_GITHUB}/protobuf.dart"
 PROTOBUF_REV="84079e8b8531309e06ba7276b1c28bdca9210ad6"
 PUB_GIT="${DART_GITHUB}/pub"
 PUB_REV="ec276d10a7fa0f6c6ec005340fb9ad29f3b012d0"
 SHELF_GIT="${DART_GITHUB}/shelf"
 SHELF_REV="71248e727317930f244c4b4535e9733bcfc66677"
-SYNC_HTTP_GIT="${DART_GITHUB}/sync_http"
+SYNC_HTTP_GIT="${GOOGLE_GITHUB}/sync_http.dart"
 SYNC_HTTP_REV="6666fff944221891182e1f80bf56569338164d72"
 TAR_GIT="${SIMOLUS_GITHUB}/tar"
 TAR_REV="13479f7c2a18f499e840ad470cfcca8c579f6909"
@@ -72,7 +75,7 @@ VECTOR_MATH_GIT="${GOOGLE_GITHUB}/vector_math.dart"
 VECTOR_MATH_REV="cf3b5db7340d317dd3489e5a35434b408020a852"
 WEB_GIT="${DART_GITHUB}/web"
 WEB_REV="eb8c3fc61a1e35f48f865836c7c7342897d91bcc"
-WEBCORE_GIT="${DART_GITHUB}/webcore"
+WEBCORE_GIT="https://github.com/dart-archive/webcore"
 WEBCORE_REV="bcb10901266c884e7b3740abc597ab95373ab55c"
 WEBDRIVER_GIT="${GOOGLE_GITHUB}/webdriver.dart"
 WEBDRIVER_REV="3a711ebb36871eac997c5d5d2429f7414873dc63"
@@ -84,60 +87,120 @@ ZLIB_REV="3008c4b3a06bd65392c31db8846000a21e3d03c5"
 DART_DEPENDENCY_ARCHIVES=(
 	"third_party/binaryen/src"
 	"dart-dep-binaryen-9926156a.tar.gz"
+	"."
+	"1"
 	"third_party/boringssl/src"
 	"dart-dep-boringssl-2e508c97.tar.gz"
+	"."
+	"1"
 	"third_party/mdn/browser-compat-data/src"
 	"dart-dep-browser-data-ac8cae69.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/core"
 	"dart-dep-core-be0b1531.tar.gz"
+	"."
+	"1"
 	"third_party/cpu_features/src"
 	"dart-dep-cpu-features-936b9ab5.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/dartdoc"
 	"dart-dep-dartdoc-1d56f263.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/dart_style"
 	"dart-dep-dart-style-39edc2d9.tar.gz"
+	"."
+	"1"
+	"third_party/devtools/devtools_shared"
+	"dart-dep-devtools-shared-12d59564.tar.gz"
+	"packages/devtools_shared"
+	"3"
 	"third_party/pkg/ecosystem"
 	"dart-dep-ecosystem-848b3bf3.tar.gz"
+	"."
+	"1"
 	"third_party/emsdk"
 	"dart-dep-emsdk-e41b8c68.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/http"
 	"dart-dep-http-5d94ef52.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/i18n"
 	"dart-dep-i18n-d0683bde.tar.gz"
+	"."
+	"1"
 	"third_party/icu"
 	"dart-dep-icu-a86a32e6.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/leak_tracker"
 	"dart-dep-leak-tracker-f5620600.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/native"
 	"dart-dep-native-d51c5333.tar.gz"
+	"."
+	"1"
 	"third_party/perfetto/src"
 	"dart-dep-perfetto-13ce0c9e.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/protobuf"
 	"dart-dep-protobuf-84079e8b.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/pub"
 	"dart-dep-pub-ec276d10.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/shelf"
 	"dart-dep-shelf-71248e72.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/sync_http"
 	"dart-dep-sync-http-6666fff9.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/tar"
 	"dart-dep-tar-13479f7c.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/test"
 	"dart-dep-test-bd92e633.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/tools"
 	"dart-dep-tools-7fec8be9.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/vector_math"
 	"dart-dep-vector-math-cf3b5db7.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/web"
 	"dart-dep-web-eb8c3fc6.tar.gz"
+	"."
+	"1"
 	"third_party/WebCore"
 	"dart-dep-webcore-bcb10901.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/webdriver"
 	"dart-dep-webdriver-3a711ebb.tar.gz"
+	"."
+	"1"
 	"third_party/pkg/webkit_inspection_protocol"
 	"dart-dep-webkit-protocol-762115a9.tar.gz"
+	"."
+	"1"
 	"third_party/zlib"
 	"dart-dep-zlib-3008c4b3.tar.gz"
+	"."
+	"1"
 )
 
 SRC_URI="
@@ -157,6 +220,8 @@ SRC_URI="
 		-> dart-dep-dartdoc-1d56f263.tar.gz
 	${DART_STYLE_GIT}/archive/${DART_STYLE_REV}.tar.gz
 		-> dart-dep-dart-style-39edc2d9.tar.gz
+	${DEVTOOLS_SHARED_GIT}/archive/${DEVTOOLS_SHARED_REV}.tar.gz
+		-> dart-dep-devtools-shared-12d59564.tar.gz
 	${ECOSYSTEM_GIT}/archive/${ECOSYSTEM_REV}.tar.gz
 		-> dart-dep-ecosystem-848b3bf3.tar.gz
 	${EMSDK_GIT}/archive/${EMSDK_REV}.tar.gz
@@ -219,13 +284,22 @@ src_unpack() {
 	unpack "dart-${PV}.tar.gz"
 	mv "sdk-${PV}" "${S}" || die
 
-	local archive destination index
-	for (( index = 0; index < ${#DART_DEPENDENCY_ARCHIVES[@]}; index += 2 )); do
+	local archive destination index member strip
+	for (( index = 0; index < ${#DART_DEPENDENCY_ARCHIVES[@]}; index += 4 )); do
 		destination=${DART_DEPENDENCY_ARCHIVES[index]}
 		archive=${DART_DEPENDENCY_ARCHIVES[index + 1]}
+		member=${DART_DEPENDENCY_ARCHIVES[index + 2]}
+		strip=${DART_DEPENDENCY_ARCHIVES[index + 3]}
 		mkdir -p "${S}/${destination}" || die
 		cd "${S}/${destination}" || die
-		tar -xf "${DISTDIR}/${archive}" --strip-components=1 || die
+		if [[ ${member} == . ]]; then
+			tar -xf "${DISTDIR}/${archive}" \
+				--strip-components="${strip}" || die
+		else
+			tar -xf "${DISTDIR}/${archive}" \
+				--strip-components="${strip}" \
+				--wildcards "*/${member}/*" || die
+		fi
 	done
 }
 

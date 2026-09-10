@@ -1,6 +1,6 @@
+HOMEPAGE=https://dart.dev/ https://github.com/dart-lang/sdk
+EAPI=8
 LICENSE=BSD
-SLOT=0
-RDEPEND=!dev-lang/dart-bin
 SRC_URI=
 	https://github.com/dart-lang/sdk/archive/refs/tags/3.13.3.tar.gz
 		-> dart-3.13.3.tar.gz
@@ -18,6 +18,8 @@ SRC_URI=
 		-> dart-dep-dartdoc-1d56f263.tar.gz
 	https://github.com/dart-lang/dart_style/archive/39edc2d946a5d7bd1caf6f1695f366b00f7b873c.tar.gz
 		-> dart-dep-dart-style-39edc2d9.tar.gz
+	https://github.com/flutter/devtools/archive/12d595649f189f1896722623f72599077f476848.tar.gz
+		-> dart-dep-devtools-shared-12d59564.tar.gz
 	https://github.com/dart-lang/ecosystem/archive/848b3bf3b757d2e9ae4d60030eeed5756c87783f.tar.gz
 		-> dart-dep-ecosystem-848b3bf3.tar.gz
 	https://github.com/emscripten-core/emsdk/archive/e41b8c68a248da5f18ebd03bd0420953945d52ff.tar.gz
@@ -34,13 +36,13 @@ SRC_URI=
 		-> dart-dep-native-d51c5333.tar.gz
 	https://github.com/google/perfetto/archive/13ce0c9e13b0940d2476cd0cff2301708a9a2e2b.tar.gz
 		-> dart-dep-perfetto-13ce0c9e.tar.gz
-	https://github.com/dart-lang/protobuf/archive/84079e8b8531309e06ba7276b1c28bdca9210ad6.tar.gz
+	https://github.com/google/protobuf.dart/archive/84079e8b8531309e06ba7276b1c28bdca9210ad6.tar.gz
 		-> dart-dep-protobuf-84079e8b.tar.gz
 	https://github.com/dart-lang/pub/archive/ec276d10a7fa0f6c6ec005340fb9ad29f3b012d0.tar.gz
 		-> dart-dep-pub-ec276d10.tar.gz
 	https://github.com/dart-lang/shelf/archive/71248e727317930f244c4b4535e9733bcfc66677.tar.gz
 		-> dart-dep-shelf-71248e72.tar.gz
-	https://github.com/dart-lang/sync_http/archive/6666fff944221891182e1f80bf56569338164d72.tar.gz
+	https://github.com/google/sync_http.dart/archive/6666fff944221891182e1f80bf56569338164d72.tar.gz
 		-> dart-dep-sync-http-6666fff9.tar.gz
 	https://github.com/simolus3/tar/archive/13479f7c2a18f499e840ad470cfcca8c579f6909.tar.gz
 		-> dart-dep-tar-13479f7c.tar.gz
@@ -52,7 +54,7 @@ SRC_URI=
 		-> dart-dep-vector-math-cf3b5db7.tar.gz
 	https://github.com/dart-lang/web/archive/eb8c3fc61a1e35f48f865836c7c7342897d91bcc.tar.gz
 		-> dart-dep-web-eb8c3fc6.tar.gz
-	https://github.com/dart-lang/webcore/archive/bcb10901266c884e7b3740abc597ab95373ab55c.tar.gz
+	https://github.com/dart-archive/webcore/archive/bcb10901266c884e7b3740abc597ab95373ab55c.tar.gz
 		-> dart-dep-webcore-bcb10901.tar.gz
 	https://github.com/google/webdriver.dart/archive/3a711ebb36871eac997c5d5d2429f7414873dc63.tar.gz
 		-> dart-dep-webdriver-3a711ebb.tar.gz
@@ -61,14 +63,14 @@ SRC_URI=
 	https://github.com/gsource-mirror/chromium-src-third_party-zlib/archive/3008c4b3a06bd65392c31db8846000a21e3d03c5.tar.gz
 		-> dart-dep-zlib-3008c4b3.tar.gz
 
-KEYWORDS=~amd64
+RDEPEND=!dev-lang/dart-bin
+DESCRIPTION=The Dart SDK, including the VM, compilers, and core libraries
+INHERITED=multiprocessing python-any-r1
+SLOT=0
 BDEPEND=
 	dev-build/gn
 	dev-build/ninja
 	=dev-lang/dart-bootstrap-bin-3.13.0_beta103_p1-r0:3.13
 
-HOMEPAGE=https://dart.dev/ https://github.com/dart-lang/sdk
-EAPI=8
-INHERITED=python-any-r1
-DESCRIPTION=The Dart SDK, including the VM, compilers, and core libraries
-_md5_=9fc0641625d5aa4dc0342d6b6c50be03
+KEYWORDS=~amd64
+_md5_=7e4925b3c67650a8de7923a353d26ff8
