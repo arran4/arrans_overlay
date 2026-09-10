@@ -1,0 +1,51 @@
+# Generated with Python difflib from wasi-sdk-24.
+# Supply release metadata without Git and respect the build job limit.
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -24,10 +24,12 @@
+ 
+ # Set some variables based on the `version.py` script
+ set(version_script ${CMAKE_CURRENT_SOURCE_DIR}/version.py)
++if(NOT DEFINED wasi_sdk_version)
+ execute_process(
+   COMMAND ${PYTHON} ${version_script}
+   OUTPUT_VARIABLE wasi_sdk_version
+   OUTPUT_STRIP_TRAILING_WHITESPACE)
++endif()
+ 
+ message(STATUS "wasi-sdk version is ${wasi_sdk_version}")
+ 
+--- a/cmake/wasi-sdk-sysroot.cmake
++++ b/cmake/wasi-sdk-sysroot.cmake
+@@ -23,6 +23,7 @@
+ option(WASI_SDK_DEBUG_PREFIX_MAP "Pass `-fdebug-prefix-map` for built artifacts" ON)
+ option(WASI_SDK_INCLUDE_TESTS "Whether or not to build tests by default" OFF)
+ option(WASI_SDK_INSTALL_TO_CLANG_RESOURCE_DIR "Whether or not to modify the compiler's resource directory" OFF)
++set(WASI_SDK_JOBS 8 CACHE STRING "Parallel Make jobs")
+ option(WASI_SDK_LTO "Whether or not to build LTO assets" ON)
+ 
+ set(wasi_tmp_install ${CMAKE_CURRENT_BINARY_DIR}/install)
+@@ -150,7 +151,7 @@
+     SOURCE_DIR "${build_dir}"
+     CONFIGURE_COMMAND ""
+     BUILD_COMMAND
+-      ${MAKE} -j8 -C ${build_dir}
++      ${MAKE} -j${WASI_SDK_JOBS} -C ${build_dir}
+         CC=${CMAKE_C_COMPILER}
+         AR=${CMAKE_AR}
+         NM=${CMAKE_NM}
+@@ -325,10 +326,14 @@
+ 
+ # Install a `VERSION` file in the output prefix with a dump of version
+ # information.
++if(DEFINED WASI_SDK_VERSION_FILE)
++file(READ "${WASI_SDK_VERSION_FILE}" version_dump)
++else()
+ execute_process(
+   COMMAND ${PYTHON} ${version_script} dump
+   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+   OUTPUT_VARIABLE version_dump)
++endif()
+ set(version_file_tmp ${CMAKE_CURRENT_BINARY_DIR}/VERSION)
+ file(GENERATE OUTPUT ${version_file_tmp} CONTENT ${version_dump})
+ add_custom_target(version-file DEPENDS ${version_file_tmp})

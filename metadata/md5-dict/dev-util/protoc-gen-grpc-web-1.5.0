@@ -1,0 +1,14 @@
+BDEPEND=dev-libs/protobuf[protoc(+)]
+DEFINED_PHASES=compile install test
+DEPEND=dev-libs/protobuf[libprotoc(+)]
+DESCRIPTION=gRPC-Web code generator for Protocol Buffers
+EAPI=8
+HOMEPAGE=https://github.com/grpc/grpc-web
+INHERIT=toolchain-funcs
+KEYWORDS=~amd64
+LICENSE=Apache-2.0
+RDEPEND=dev-libs/protobuf[libprotoc(+)]
+SLOT=0
+SRC_URI=https://github.com/grpc/grpc-web/archive/refs/tags/1.5.0.tar.gz -> protoc-gen-grpc-web-1.5.0.tar.gz
+_eclasses_=toolchain-funcs	58a918e3a42d0156f010dcfd43725be5
+_md5_=cff3ea1dace606015309bbb5d4b11954

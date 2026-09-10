@@ -1,0 +1,23 @@
+--- a/internal/wasm/build/Makefile
++++ b/internal/wasm/build/Makefile
+@@ -1,13 +1,15 @@
+-CC := clang
++CC ?= clang
+ 
+-GRAPHVIZ_ROOT := /graphviz
+-EXPAT_ROOT := /expat
++GRAPHVIZ_ROOT ?= /graphviz
++EXPAT_ROOT ?= /expat
++WASI_SDK_ROOT ?= /opt/wasi-sdk
+ 
+ TARGET := graphviz.wasm
+ 
+ build:
+-	ccache $(CC) \
++	$(CC) \
+ 		-g0 -Os \
+-		--sysroot=/opt/wasi-sdk/share/wasi-sysroot \
++		--sysroot=$(WASI_SDK_ROOT)/share/wasi-sysroot \
++		-resource-dir=$(WASI_SDK_ROOT)/clang-resource-dir \
+ 		--target=wasm32-wasi \
+ 		-Wextra \

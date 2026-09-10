@@ -54,6 +54,19 @@ def parse_ebuild_variables(filename, content=""):
     return variables
 
 def resolve_variables(text, variables):
+    # Support literal prerelease mappings such as ${PV/_rc/-rc} without
+    # evaluating the ebuild as shell code. Leave unsupported shell patterns
+    # untouched so they cannot silently become a different download URL.
+    def replace_literal(match):
+        key, old, new = match.groups()
+        if key not in variables:
+            return match.group(0)
+        return variables[key].replace(old, new, 1)
+
+    text = re.sub(
+        r'\$\{([A-Za-z_][A-Za-z0-9_]*)/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]*)\}',
+        replace_literal, text,
+    )
     # Replace ${VAR} and $VAR, sorted by key length descending to prevent prefix collisions
     for key in sorted(variables.keys(), key=len, reverse=True):
         value = variables[key]
@@ -130,7 +143,7 @@ def process_directory(directory):
 
     if not ebuilds:
         print("No ebuilds found.")
-        return
+        return True
 
     tasks = []
 
@@ -143,18 +156,23 @@ def process_directory(directory):
 
         variables = parse_ebuild_variables(ebuild, content)
         if not variables:
-            print(f"  Skipping {ebuild}: Could not parse version/name.")
-            continue
+            print(f"  Could not parse version/name: {ebuild}")
+            return False
 
         uris = extract_uris(content, variables)
         tasks.extend(uris)
 
     if not tasks:
-        return
+        return True
+
+    if any('$' in url or '$' in filename for url, filename in tasks):
+        print("  Unresolved variables in SRC_URI; leaving Manifest unchanged.")
+        return False
 
     print(f"  Upserting {len(tasks)} URIs in parallel...")
 
     new_entries = []
+    failed = False
     # Deduplicate tasks based on (url, filename) just in case
     tasks = list(set(tasks))
 
@@ -170,8 +188,14 @@ def process_directory(directory):
                     print(f"    Upserted: {url} -> {filename}")
                 else:
                     print(f"    Failed to upsert: {url}")
+                    failed = True
             except Exception as e:
                 print(f"    Exception processing {url}: {e}")
+                failed = True
+
+    if failed:
+        print("  Fetch verification failed; leaving Manifest unchanged.")
+        return False
 
     # Now update Manifest
     header_lines = []
@@ -199,17 +223,22 @@ def process_directory(directory):
 
         for filename in sorted(dist_lines_map.keys()):
             f.write(dist_lines_map[filename])
+    return True
 
 def main():
     if len(sys.argv) < 2:
         print("Usage: verify_manifest.py <directory1> [directory2 ...]")
         sys.exit(1)
 
+    success = True
     for directory in sys.argv[1:]:
         if os.path.isdir(directory):
-            process_directory(directory)
+            if not process_directory(directory):
+                success = False
         else:
             print(f"Directory not found: {directory}")
+            success = False
+    return 0 if success else 1
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

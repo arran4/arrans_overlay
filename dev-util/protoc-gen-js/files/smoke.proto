@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package smoke;
+
+message Node {
+	string label = 1;
+	repeated Node children = 2;
+}
