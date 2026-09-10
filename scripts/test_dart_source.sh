@@ -144,6 +144,14 @@ if grep -Fq 'dev-lang/dart-bootstrap-bin-' <<<"${binary_plan}"; then
 	echo 'The private bootstrap unexpectedly satisfies virtual/dart' >&2
 	exit 1
 fi
+
+printf '%s\n' 'dev-lang/dart' 'dev-lang/dart-bin' \
+	> /etc/portage/package.mask/dart-provider-test
+if unexpected_plan=$(emerge --pretend --verbose "${virtual_atom}" 2>&1); then
+	printf '%s\n' "${unexpected_plan}"
+	echo 'virtual/dart resolved without either normal Dart provider' >&2
+	exit 1
+fi
 rm /etc/portage/package.mask/dart-provider-test
 
 # The slim Docker stage3 records GCC with USE=cxx but omits cc1plus. Restore
