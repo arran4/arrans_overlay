@@ -1,0 +1,169 @@
+name: dev-lang/dart Source Integration
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'dev-lang/dart/**'
+      - 'dev-lang/dart-bootstrap-bin/**'
+      - '.github/workflows/dev-lang-dart-source-test.yaml'
+
+concurrency:
+  group: dart-source-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-smoke-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare distfile cache
+        run: |
+          sudo mkdir -p /var/cache/distfiles
+          sudo chown -R "$(id -u):$(id -g)" /var/cache/distfiles
+
+      - name: Cache distfiles
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/distfiles
+          key: dart-source-distfiles-v1-${{ hashFiles('dev-lang/dart/Manifest', 'dev-lang/dart-bootstrap-bin/Manifest') }}
+          restore-keys: |
+            dart-source-distfiles-v1-
+
+      - name: Start Gentoo stage3
+        run: |
+          docker pull gentoo/stage3:latest
+          docker pull gentoo/portage:latest
+          docker create --name dart-portage gentoo/portage:latest
+          docker run --detach \
+            --name dart-gentoo \
+            --volumes-from dart-portage \
+            --volume "${GITHUB_WORKSPACE}:/var/db/repos/arrans-overlay:ro" \
+            --volume "/var/cache/distfiles:/var/cache/distfiles:rw" \
+            gentoo/stage3:latest \
+            sleep infinity
+
+      - name: Install build dependencies and fetch sources
+        timeout-minutes: 60
+        run: |
+          docker exec dart-gentoo bash -euxo pipefail -c '
+            TARGET="=dev-lang/dart-3.13.3-r1"
+
+            chmod 777 /var/cache/distfiles
+            mkdir -p /etc/portage/repos.conf
+            printf "%s\n" \
+              "[gentoo]" \
+              "location = /var/db/repos/gentoo" \
+              "auto-sync = no" \
+              > /etc/portage/repos.conf/gentoo.conf
+            printf "%s\n" \
+              "[arrans-overlay]" \
+              "location = /var/db/repos/arrans-overlay" \
+              "masters = gentoo" \
+              "auto-sync = no" \
+              > /etc/portage/repos.conf/arrans-overlay.conf
+
+            printf "%s\n" \
+              "ACCEPT_LICENSE=\"*\"" \
+              "FEATURES=\"\${FEATURES} buildpkg\"" \
+              "CONFIG_PROTECT_MASK=\"\${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask\"" \
+              >> /etc/portage/make.conf
+
+            mkdir -p /etc/portage/package.accept_keywords
+            printf "%s\n" \
+              "=dev-lang/dart-3.13.3-r1 ~amd64" \
+              "=dev-lang/dart-bootstrap-bin-3.13.0_beta103_p1-r0 ~amd64" \
+              > /etc/portage/package.accept_keywords/dart-source-ci
+
+            emerge_target_dependencies() {
+              emerge -v \
+                --onlydeps \
+                --usepkg --getbinpkg --binpkg-changed-deps=y \
+                --autounmask=y --autounmask-keep-masks=y \
+                --autounmask-write=y --autounmask-continue=y \
+                --backtrack=50 \
+                "${TARGET}"
+            }
+            if ! emerge_target_dependencies; then
+              emerge_target_dependencies
+            fi
+
+            emerge --fetchonly --nodeps "${TARGET}"
+
+            if compgen -G "/var/db/pkg/dev-lang/dart-[0-9]*" > /dev/null; then
+              echo "Dart target was installed before the offline build"
+              exit 1
+            fi
+          '
+
+      - name: Disconnect network
+        run: |
+          docker network disconnect bridge dart-gentoo
+          test "$(docker inspect --format='{{json .NetworkSettings.Networks}}' dart-gentoo)" = "{}"
+
+      - name: Build and smoke test Dart offline
+        timeout-minutes: 170
+        run: |
+          docker exec dart-gentoo bash -euxo pipefail -c '
+            TARGET="=dev-lang/dart-3.13.3-r1"
+
+            if ! emerge -v --oneshot \
+              --usepkg --usepkg-exclude dev-lang/dart \
+              "${TARGET}"; then
+              build_log=$(find /var/tmp/portage/dev-lang/dart-3.13.3-r1 \
+                -path "*/temp/build.log" -print -quit 2>/dev/null || true)
+              if [ -n "${build_log}" ]; then
+                echo "===== Dart Portage build.log ====="
+                tail -n 2000 "${build_log}"
+                echo "===== end Dart Portage build.log ====="
+              fi
+              exit 1
+            fi
+
+            test -d /var/db/pkg/dev-lang/dart-3.13.3-r1
+            test -d /var/db/pkg/dev-lang/dart-bootstrap-bin-3.13.0_beta103_p1
+            if compgen -G "/var/db/pkg/dev-lang/dart-bin-*" > /dev/null; then
+              echo "dev-lang/dart-bin must not be installed"
+              exit 1
+            fi
+
+            test "$(readlink -f /opt/bin/dart)" = "/opt/dart-sdk/bin/dart"
+            test ! -e /opt/dart-sdk/bin/resources/devtools
+            if find /opt/dart-sdk -type l -lname "*dart-bootstrap*" \
+              -print -quit | grep -q .; then
+              echo "Installed SDK contains a bootstrap symlink"
+              exit 1
+            fi
+            if cmp -s /opt/dart-sdk/bin/dart \
+              /opt/dart-bootstrap-3.13.0-103.1.beta/bin/dart; then
+              echo "Installed Dart binary unexpectedly matches the bootstrap"
+              exit 1
+            fi
+
+            version=$(/opt/bin/dart --version 2>&1)
+            [[ ${version} == "Dart SDK version: 3.13.3 (stable)"*"on \"linux_x64\"" ]]
+
+            printf "%s\n" \
+              "void main() {" \
+              "  print(\"dart-source-build-ok\");" \
+              "}" \
+              > /tmp/dart-source-smoke.dart
+            test "$(/opt/bin/dart run /tmp/dart-source-smoke.dart)" = \
+              "dart-source-build-ok"
+            /opt/bin/dart compile exe /tmp/dart-source-smoke.dart \
+              -o /tmp/dart-source-smoke
+            test "$(/tmp/dart-source-smoke)" = "dart-source-build-ok"
+          '
+
+      - name: Clean up containers
+        if: always()
+        run: |
+          docker rm --force dart-gentoo || true
+          docker rm --force dart-portage || true
