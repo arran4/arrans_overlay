@@ -335,6 +335,7 @@ src_compile() {
 		--no-clang \
 		--no-git-version \
 		--no-verify-sdk-hash \
+		--toolchain-prefix "x64=${CHOST}-" \
 		-j "$(makeopts_jobs)" \
 		create_sdk || die
 }
