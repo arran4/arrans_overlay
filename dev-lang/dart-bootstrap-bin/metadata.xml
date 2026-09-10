@@ -6,10 +6,9 @@
         <name>Arran Ubels</name>
     </maintainer>
     <longdescription>
-        Builds the Dart SDK from its pinned upstream source graph. Dart is
-        self-hosting, so an upstream Dart SDK seed is required at build time;
-        dev-lang/dart-bootstrap-bin provides that private seed and is not a
-        runtime dependency or installed SDK fallback.
+        This package is an explicitly declared, build-only seed for the
+        self-hosting Dart compiler. It is installed privately, exports no
+        user command, and is not a runtime dependency of dev-lang/dart.
     </longdescription>
     <upstream>
         <remote-id type="github">dart-lang/sdk</remote-id>

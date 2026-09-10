@@ -11,7 +11,12 @@ import shutil
 # Example: ollama-bin-0.10.1.ebuild -> PN=ollama-bin, PV=0.10.1
 # Example: g2-bin-0.0.2.ebuild -> PN=g2-bin, PV=0.0.2
 # This regex is a simplification but covers most cases in this overlay
-EBUILD_FILENAME_PATTERN = re.compile(r'^(?P<pn>.+)-(?P<pv>\d+(\.\d+)*([a-z]|_p\d+|_rc\d*|_beta\d*|_alpha\d*|_pre\d*)?)(?:-r(?P<pr>\d+))?\.ebuild$')
+EBUILD_FILENAME_PATTERN = re.compile(
+    r'^(?P<pn>.+)-'
+    r'(?P<pv>\d+(?:\.\d+)*(?:[a-z])?'
+    r'(?:(?:_p|_rc|_beta|_alpha|_pre)\d*)*)'
+    r'(?:-r(?P<pr>\d+))?\.ebuild$'
+)
 
 def parse_ebuild_variables(filename, content=""):
     # Basic parsing for PV, P, PN from filename and assignments from ebuild

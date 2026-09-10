@@ -1,0 +1,8 @@
+--- a/sdk/BUILD.gn
++++ b/sdk/BUILD.gn
+@@ -801,5 +800,0 @@ group("create_most_sdk") {
+-  if (defined(build_devtools_from_sources) && build_devtools_from_sources) {
+-    public_deps += [ ":build_devtools" ]
+-  } else {
+-    public_deps += [ ":copy_prebuilt_devtools" ]
+-  }
