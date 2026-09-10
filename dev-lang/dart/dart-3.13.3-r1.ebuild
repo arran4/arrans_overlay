@@ -275,6 +275,7 @@ RDEPEND="!dev-lang/dart-bin"
 BDEPEND="${PYTHON_DEPS}
 	dev-build/gn
 	dev-build/ninja
+	dev-vcs/git
 	=dev-lang/dart-bootstrap-bin-3.13.0_beta103_p1-r0:3.13
 "
 
