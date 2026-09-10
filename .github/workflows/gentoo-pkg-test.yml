@@ -207,7 +207,7 @@ jobs:
             # The slim Docker stage3 records GCC with USE=cxx but omits its
             # cc1plus payload.  Dart is a C++ source build, so restore the
             # complete compiler from Gentoo's binhost before testing it.
-            emerge -v --oneshot --usepkgonly --getbinpkg sys-devel/gcc
+            emerge -v --oneshot --usepkg --getbinpkg sys-devel/gcc
             CXX_PROBE="$(portageq envvar CHOST)-g++"
             printf "%s\n" "int main() { return 0; }" | \
               "${CXX_PROBE}" -x c++ - -o /tmp/dart-cxx-probe
