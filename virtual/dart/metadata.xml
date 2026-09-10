@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+    <maintainer type="person">
+        <email>gentoo@arran4.com</email>
+        <name>Arran Ubels</name>
+    </maintainer>
+    <longdescription>
+        Allows downstream packages to use either the source-built Dart SDK or
+        the normal upstream binary Dart SDK. The private compiler bootstrap is
+        intentionally not a provider.
+    </longdescription>
+</pkgmetadata>

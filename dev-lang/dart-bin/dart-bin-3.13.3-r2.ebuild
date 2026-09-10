@@ -20,7 +20,8 @@ LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~arm ~arm64 ~riscv"
 
-RDEPEND="app-arch/unzip"
+RDEPEND="!dev-lang/dart
+	app-arch/unzip"
 
 S="${WORKDIR}/dart-sdk"
 

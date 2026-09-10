@@ -95,7 +95,8 @@ jobs:
                   echo 'KEYWORDS="~amd64 ~arm ~arm64 ~riscv"'
                 fi
                 echo ""
-                echo 'RDEPEND="app-arch/unzip"'
+                echo 'RDEPEND="!dev-lang/dart'
+                echo '	app-arch/unzip"'
                 echo ""
                 echo 'S="${WORKDIR}/dart-sdk"'
                 echo ""
