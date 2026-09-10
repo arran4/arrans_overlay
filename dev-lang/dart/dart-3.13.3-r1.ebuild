@@ -280,7 +280,10 @@ BDEPEND="${PYTHON_DEPS}
 	=dev-lang/dart-bootstrap-bin-3.13.0_beta103_p1-r0:3.13
 "
 
-PATCHES=( "${FILESDIR}/${P}-no-prebuilt-devtools.patch" )
+PATCHES=(
+	"${FILESDIR}/${P}-gentoo-gcc-prefixes.patch"
+	"${FILESDIR}/${P}-no-prebuilt-devtools.patch"
+)
 
 src_unpack() {
 	unpack "dart-${PV}.tar.gz"

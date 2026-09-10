@@ -1,0 +1,26 @@
+--- a/build/config/gcc/BUILD.gn
++++ b/build/config/gcc/BUILD.gn
+@@ -51,16 +51,9 @@
+ config("relative_paths") {
+-  cflags = [
+-    # This makes sure that include directories in the toolchain are
+-    # represented as relative to the build directory (because that's how
+-    # we invoke the compiler), rather than absolute.  This can affect
+-    # __FILE__ expansions (e.g. assertions in system headers).  We
+-    # normally run a compiler that's someplace within the source tree
+-    # (//buildtools/...), so its absolute installation path will have a
+-    # prefix matching absolute_path and hence be mapped to relative_path
+-    # in the debugging information, so this should actually be
+-    # superfluous for purposes of the debugging information.
+-    "-no-canonical-prefixes",
+-  ]
+-  ldflags = [ "-no-canonical-prefixes" ]
+-
++  # Dart normally uses a compiler within //buildtools.  Gentoo uses the
++  # native GCC selected by gcc-config, whose driver is reached through a
++  # symlink.  -no-canonical-prefixes prevents that driver from finding
++  # helpers such as cc1plus, so rely on GCC's normal prefix resolution.
++  cflags = []
++  ldflags = []
++
+   # Remove absolute paths from the debug information.
