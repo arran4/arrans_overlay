@@ -1,0 +1,9 @@
+DESCRIPTION=Virtual for the Dart SDK
+SLOT=0
+KEYWORDS=~amd64 ~arm ~arm64 ~riscv
+RDEPEND=|| (
+	~dev-lang/dart-3.13.3
+	~dev-lang/dart-bin-3.13.3
+)
+EAPI=8
+_md5_=801d3ca15e14bca8c3d77afad363ab98

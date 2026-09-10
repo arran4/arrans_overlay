@@ -9,6 +9,6 @@ SLOT="0"
 KEYWORDS="~amd64 ~arm ~arm64 ~riscv"
 
 RDEPEND="|| (
-	~dev-lang/dart-${PV}
-	~dev-lang/dart-bin-${PV}
+	~dev-lang/dart-3.13.3
+	~dev-lang/dart-bin-3.13.3
 )"
