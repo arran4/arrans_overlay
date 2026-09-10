@@ -1,14 +1,16 @@
-DESCRIPTION=The Dart SDK, including the VM, compilers, and core libraries
-LICENSE=BSD
+INHERITED=multiprocessing python-any-r1
 EAPI=8
+HOMEPAGE=https://dart.dev/ https://github.com/dart-lang/sdk
+SLOT=0
 RDEPEND=!dev-lang/dart-bin
 BDEPEND=
 	dev-build/gn
 	dev-build/ninja
 	dev-vcs/git
+	sys-devel/gcc[cxx]
 	=dev-lang/dart-bootstrap-bin-3.13.0_beta103_p1-r0:3.13
 
-INHERITED=multiprocessing python-any-r1
+DESCRIPTION=The Dart SDK, including the VM, compilers, and core libraries
 SRC_URI=
 	https://github.com/dart-lang/sdk/archive/refs/tags/3.13.3.tar.gz
 		-> dart-3.13.3.tar.gz
@@ -71,7 +73,6 @@ SRC_URI=
 	https://github.com/gsource-mirror/chromium-src-third_party-zlib/archive/3008c4b3a06bd65392c31db8846000a21e3d03c5.tar.gz
 		-> dart-dep-zlib-3008c4b3.tar.gz
 
-HOMEPAGE=https://dart.dev/ https://github.com/dart-lang/sdk
-SLOT=0
+LICENSE=BSD
 KEYWORDS=~amd64
-_md5_=f116c1cc510c4d506f2d389e297b050f
+_md5_=d9bde3d5df40e5f992a7857ecb3507a3
