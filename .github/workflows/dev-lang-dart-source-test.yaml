@@ -145,6 +145,19 @@ jobs:
 
             test "$(readlink -f /opt/bin/dart)" = "/opt/dart-sdk/bin/dart"
             test ! -e /opt/dart-sdk/bin/resources/devtools
+            test -x /opt/dart-sdk/bin/dartaotruntime
+            test -x /opt/dart-sdk/bin/utils/gen_snapshot
+            for sdk_payload in \
+              bin/snapshots/analysis_server_aot.dart.snapshot \
+              bin/snapshots/dart2js_aot.dart.snapshot \
+              bin/snapshots/dartdevc_aot.dart.snapshot \
+              bin/snapshots/frontend_server_aot.dart.snapshot \
+              bin/snapshots/gen_kernel_aot.dart.snapshot \
+              lib/_internal/vm_platform_strong.dill \
+              lib/core/core.dart \
+              lib/libraries.json; do
+              test -s "/opt/dart-sdk/${sdk_payload}"
+            done
             if find /opt/dart-sdk -type l -lname "*dart-bootstrap*" \
               -print -quit | grep -q .; then
               echo "Installed SDK contains a bootstrap symlink"
