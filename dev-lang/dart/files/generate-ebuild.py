@@ -3,7 +3,7 @@
 
 The input is the DEPS file from the upstream Dart SDK tag named by
 SDK_VERSION.  Conditions are evaluated for the only supported build:
-Linux/amd64, using the system compiler, GN, Ninja, and sysroot.
+Linux/amd64, using the system compiler, GN, Ninja, and C library.
 """
 
 from __future__ import annotations
@@ -55,16 +55,34 @@ REVIEWED_CIPD = {
     "sdk/pkg/front_end/test/types/benchmark_data": "test fixture only",
 }
 
-GIT_BASES = {
-    "https://boringssl.googlesource.com": "BORINGSSL_GOOGLE",
-    "https://chromium.googlesource.com": "CHROMIUM_GOOGLE",
-    "https://dart.googlesource.com": "DART_GOOGLE",
-    "https://llvm.googlesource.com": "LLVM_GOOGLE",
+# Active DEPS entries that are unrelated to an amd64 create_sdk build.  Like
+# REVIEWED_CIPD, this is intentionally exact so upstream changes fail closed.
+REVIEWED_GIT = {
+    "sdk/buildtools/clang_format/script": "source-formatting helper only",
+    "sdk/third_party/jinja2": "DOM generator and VM wiki tooling only",
+    "sdk/third_party/libc": "unused with the system GCC/libstdc++ toolchain",
+    "sdk/third_party/libcxx": "unused with the system GCC/libstdc++ toolchain",
+    "sdk/third_party/libcxxabi": "unused with the system GCC/libstdc++ toolchain",
+    "sdk/third_party/markupsafe": "Jinja dependency only",
+    "sdk/third_party/ply": "legacy DOM generator only",
+}
+
+GITHUB_ORGS = {
+    "https://github.com/WebAssembly": "WEBASSEMBLY_GITHUB",
+    "https://github.com/dart-lang": "DART_GITHUB",
+    "https://github.com/emscripten-core": "EMSCRIPTEN_GITHUB",
+    "https://github.com/google": "GOOGLE_GITHUB",
+    "https://github.com/gsource-mirror": "GSOURCE_GITHUB",
+    "https://github.com/librepo": "LIBREPO_GITHUB",
+    "https://github.com/mdn": "MDN_GITHUB",
+    "https://github.com/simolus3": "SIMOLUS_GITHUB",
 }
 
 SHORT_NAMES = {
     "browser-compat-data": "BROWSER_DATA",
     "clang-format": "CLANG_FORMAT",
+    "chromium-src-third_party-zlib": "ZLIB",
+    "chromium-icu": "ICU",
     "cpu_features": "CPU_FEATURES",
     "dart_style": "DART_STYLE",
     "leak_tracker": "LEAK_TRACKER",
@@ -141,7 +159,7 @@ def git_source(destination: str, dependency: object) -> tuple[str, str, str, str
     if not isinstance(url, str) or "@" not in url:
         raise ValueError(f"unsupported Git DEPS entry at {destination}: {dependency!r}")
     repository, revision = url.rsplit("@", 1)
-    repository = repository.removesuffix(".git")
+    repository = stable_github_repository(repository.removesuffix(".git"))
     relative = destination.removeprefix("sdk/")
     repository_name = repository.rstrip("/").rsplit("/", 1)[-1]
     name = SHORT_NAMES.get(repository_name)
@@ -149,6 +167,39 @@ def git_source(destination: str, dependency: object) -> tuple[str, str, str, str
         name = re.sub(r"[^A-Za-z0-9]+", "_", repository_name).strip("_").upper()
     filename = f"dart-dep-{name.lower().replace('_', '-')}-{revision[:8]}.tar.gz"
     return repository, revision, filename, relative
+
+
+def stable_github_repository(repository: str) -> str:
+    """Return a content-addressed GitHub mirror with stable archive bytes."""
+    external_prefixes = (
+        "https://chromium.googlesource.com/external/github.com/",
+        "https://dart.googlesource.com/external/github.com/",
+    )
+    for prefix in external_prefixes:
+        if repository.startswith(prefix):
+            return "https://github.com/" + repository.removeprefix(prefix)
+
+    dart_prefix = "https://dart.googlesource.com/"
+    if repository.startswith(dart_prefix):
+        return "https://github.com/dart-lang/" + repository.removeprefix(
+            dart_prefix
+        )
+
+    mirrors = {
+        "https://boringssl.googlesource.com/boringssl": (
+            "https://github.com/google/boringssl"
+        ),
+        "https://chromium.googlesource.com/chromium/deps/icu": (
+            "https://github.com/librepo/chromium-icu"
+        ),
+        "https://chromium.googlesource.com/chromium/src/third_party/zlib": (
+            "https://github.com/gsource-mirror/chromium-src-third_party-zlib"
+        ),
+    }
+    try:
+        return mirrors[repository]
+    except KeyError as error:
+        raise ValueError(f"no stable archive mirror for {repository}") from error
 
 
 def render(deps_path: Path) -> str:
@@ -162,13 +213,17 @@ def render(deps_path: Path) -> str:
         )
     git_sources: list[tuple[str, str, str, str]] = []
     active_cipd: dict[str, str] = {}
+    excluded_git: dict[str, str] = {}
 
     for destination, dependency in active_dependencies(namespace):
         dep_type = dependency.get("dep_type", "git") if isinstance(dependency, dict) else "git"
         if dep_type == "cipd":
             active_cipd[destination] = REVIEWED_CIPD.get(destination, "")
         elif dep_type == "git":
-            git_sources.append(git_source(destination, dependency))
+            if destination in REVIEWED_GIT:
+                excluded_git[destination] = REVIEWED_GIT[destination]
+            else:
+                git_sources.append(git_source(destination, dependency))
         else:
             raise ValueError(f"unsupported DEPS type {dep_type!r} at {destination}")
 
@@ -178,6 +233,12 @@ def render(deps_path: Path) -> str:
         raise ValueError(
             "CIPD audit is out of date; "
             f"unreviewed={missing_review}, no-longer-active={stale_review}"
+        )
+    stale_git_review = sorted(set(REVIEWED_GIT) - set(excluded_git))
+    if stale_git_review:
+        raise ValueError(
+            "Git exclusion audit is out of date; "
+            f"no-longer-active={stale_git_review}"
         )
 
     identifiers: dict[str, tuple[str, str, str, str]] = {}
@@ -193,27 +254,15 @@ def render(deps_path: Path) -> str:
             raise ValueError(f"duplicate source identifier {identifier}")
         identifiers[identifier] = source
 
-    lines = [BEGIN]
-    for base, identifier in GIT_BASES.items():
-        lines.append(f'{identifier}="{base}"')
-    lines.extend(
-        [
-            'CHROMIUM_EXTERNAL="${CHROMIUM_GOOGLE}/external/github.com"',
-            'CHROMIUM_LLVM="${CHROMIUM_GOOGLE}/chromium/llvm-project"',
-            'CHROMIUM_SRC="${CHROMIUM_GOOGLE}/chromium/src"',
-            'DART_GOOGLE_GITHUB="${DART_GOOGLE}/external/github.com/google"',
-            'SDK_GIT="https://github.com/dart-lang/sdk"',
-            "",
-        ]
-    )
+    lines = [BEGIN, 'GITHUB="https://github.com"']
+    for base, identifier in GITHUB_ORGS.items():
+        suffix = base.removeprefix("https://github.com")
+        lines.append(f'{identifier}="${{GITHUB}}{suffix}"')
+    lines.extend(['SDK_GIT="${DART_GITHUB}/sdk"', ""])
     for identifier, (repository, revision, _, _) in sorted(identifiers.items()):
         rendered_repository = repository
         substitutions = {
-            "https://chromium.googlesource.com/external/github.com": "${CHROMIUM_EXTERNAL}",
-            "https://chromium.googlesource.com/chromium/llvm-project": "${CHROMIUM_LLVM}",
-            "https://chromium.googlesource.com/chromium/src": "${CHROMIUM_SRC}",
-            "https://dart.googlesource.com/external/github.com/google": "${DART_GOOGLE_GITHUB}",
-            **{base: f"${{{name}}}" for base, name in GIT_BASES.items()},
+            base: f"${{{name}}}" for base, name in GITHUB_ORGS.items()
         }
         for base in sorted(substitutions, key=len, reverse=True):
             if rendered_repository.startswith(base):
@@ -231,7 +280,7 @@ def render(deps_path: Path) -> str:
     lines.append("\t\t-> ${P}.tar.gz")
     for identifier, (_, _, filename, _) in sorted(identifiers.items()):
         lines.append(
-            f"\t${{{identifier}_GIT}}/+archive/${{{identifier}_REV}}.tar.gz"
+            f"\t${{{identifier}_GIT}}/archive/${{{identifier}_REV}}.tar.gz"
         )
         lines.append(f"\t\t-> {filename}")
     lines.extend(['"', END])

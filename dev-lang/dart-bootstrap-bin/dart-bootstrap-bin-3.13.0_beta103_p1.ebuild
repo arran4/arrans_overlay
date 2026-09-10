@@ -11,6 +11,7 @@ SDK_URI="${DART_ARCHIVE}/channels/beta/release/${BOOTSTRAP_VERSION}"
 DESCRIPTION="Private bootstrap compiler for building the Dart SDK from source"
 HOMEPAGE="https://dart.dev/ https://github.com/dart-lang/sdk"
 SRC_URI="${SDK_URI}/sdk/dartsdk-linux-x64-release.zip -> ${P}.zip"
+S="${WORKDIR}/dart-sdk"
 
 LICENSE="BSD"
 SLOT="3.13"
@@ -18,8 +19,6 @@ KEYWORDS="~amd64"
 RESTRICT="strip"
 
 BDEPEND="app-arch/unzip"
-
-S="${WORKDIR}/dart-sdk"
 
 QA_PREBUILT="
 	opt/${BOOTSTRAP_ROOT}/bin/dart
