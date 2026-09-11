@@ -179,6 +179,7 @@ fi
 emerge --fetchonly --nodeps "${source_atom}"
 
 source_pf=${source_atom#=dev-lang/}
+source_pf=${source_pf%-r0}
 if [[ -d /var/db/pkg/dev-lang/${source_pf} ]]; then
 	echo 'Dart target was installed before the offline build' >&2
 	exit 1
@@ -201,6 +202,9 @@ source_atom=$1
 bootstrap_atom=$2
 source_pf=${source_atom#=dev-lang/}
 bootstrap_pf=${bootstrap_atom#=dev-lang/}
+# Portage omits the explicit revision-zero suffix from VDB directory names.
+source_pf=${source_pf%-r0}
+bootstrap_pf=${bootstrap_pf%-r0}
 bootstrap_root=/opt/dart-bootstrap-3.13.0-103.1.beta
 
 if ! emerge -v --oneshot \
