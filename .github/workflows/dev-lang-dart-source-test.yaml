@@ -11,7 +11,9 @@ on:
       - 'dev-lang/dart-bin/**'
       - 'dev-lang/dart-bootstrap-bin/**'
       - 'virtual/dart/**'
+      - 'scripts/generate_dart_ebuild.py'
       - 'scripts/test_dart_source.sh'
+      - 'scripts/test_generate_dart_ebuild.py'
       - '.github/workflows/dev-lang-dart-source-test.yaml'
 
 concurrency:

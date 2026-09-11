@@ -13,7 +13,9 @@ HOMEPAGE="https://dart.dev/ https://github.com/dart-lang/sdk"
 SRC_URI="${SDK_URI}/sdk/dartsdk-linux-x64-release.zip -> ${P}.zip"
 S="${WORKDIR}/dart-sdk"
 
-LICENSE="BSD"
+# The SDK bundles Binaryen/LLVM/FP16, BoringSSL, ICU, Perfetto, RequireJS,
+# double-conversion, and zlib in addition to Dart itself.
+LICENSE="Apache-2.0 Apache-2.0-with-LLVM-exceptions BSD MIT Unicode-3.0 ZLIB"
 SLOT="3.13"
 KEYWORDS="~amd64"
 RESTRICT="strip"

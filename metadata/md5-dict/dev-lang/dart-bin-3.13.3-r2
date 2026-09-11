@@ -1,15 +1,15 @@
-HOMEPAGE=https://dart.dev/
-KEYWORDS=~amd64 ~arm ~arm64 ~riscv
-EAPI=8
 SRC_URI=
 	amd64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/3.13.3/sdk/dartsdk-linux-x64-release.zip -> dart-bin-3.13.3.amd64.zip )
 	arm? ( https://storage.googleapis.com/dart-archive/channels/stable/release/3.13.3/sdk/dartsdk-linux-arm-release.zip -> dart-bin-3.13.3.arm.zip )
 	arm64? ( https://storage.googleapis.com/dart-archive/channels/stable/release/3.13.3/sdk/dartsdk-linux-arm64-release.zip -> dart-bin-3.13.3.arm64.zip )
 	riscv? ( https://storage.googleapis.com/dart-archive/channels/stable/release/3.13.3/sdk/dartsdk-linux-riscv64-release.zip -> dart-bin-3.13.3.riscv.zip )
 
-LICENSE=BSD
+KEYWORDS=~amd64 ~arm ~arm64 ~riscv
+HOMEPAGE=https://dart.dev/
+LICENSE=Apache-2.0 Apache-2.0-with-LLVM-exceptions BSD MIT Unicode-3.0 ZLIB
+EAPI=8
+DESCRIPTION=The Dart SDK, including the VM, dart2js, core libraries, and more
 SLOT=0
 RDEPEND=!dev-lang/dart
-	app-arch/unzip
-DESCRIPTION=The Dart SDK, including the VM, dart2js, core libraries, and more
-_md5_=78be091de0c6250874e6e7df3c4a1e4c
+BDEPEND=app-arch/unzip
+_md5_=5f2c1274e0915de6f3becf237b0d1c0a

@@ -87,7 +87,9 @@ jobs:
                 echo '	riscv? ( https://${U}/dartsdk-linux-riscv64-release.zip -> ${P}.riscv.zip )'
                 echo '"'
                 echo ""
-                echo 'LICENSE="BSD"'
+                echo '# The SDK bundles Binaryen/LLVM/FP16, BoringSSL, ICU, Perfetto, RequireJS,'
+                echo '# double-conversion, and zlib in addition to Dart itself.'
+                echo 'LICENSE="Apache-2.0 Apache-2.0-with-LLVM-exceptions BSD MIT Unicode-3.0 ZLIB"'
                 echo 'SLOT="0"'
                 if [ "${has_x86}" = "1" ]; then
                   echo 'KEYWORDS="~amd64 ~x86 ~arm ~arm64 ~riscv"'
@@ -95,8 +97,8 @@ jobs:
                   echo 'KEYWORDS="~amd64 ~arm ~arm64 ~riscv"'
                 fi
                 echo ""
-                echo 'RDEPEND="!dev-lang/dart'
-                echo '	app-arch/unzip"'
+                echo 'RDEPEND="!dev-lang/dart"'
+                echo 'BDEPEND="app-arch/unzip"'
                 echo ""
                 echo 'S="${WORKDIR}/dart-sdk"'
                 echo ""
