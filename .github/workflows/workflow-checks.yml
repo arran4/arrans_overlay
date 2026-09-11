@@ -6,13 +6,13 @@ on:
       - '.github/workflows/**'
       - '.github/scripts/determine_packages.py'
       - '.github/scripts/test_determine_packages.py'
-      - 'tests/workflow_m3shapes_pin_test.sh'
+      - 'scripts/workflow_m3shapes_pin_test.sh'
   pull_request:
     paths:
       - '.github/workflows/**'
       - '.github/scripts/determine_packages.py'
       - '.github/scripts/test_determine_packages.py'
-      - 'tests/workflow_m3shapes_pin_test.sh'
+      - 'scripts/workflow_m3shapes_pin_test.sh'
 
 jobs:
   actionlint:
@@ -32,4 +32,4 @@ jobs:
       - name: Test package matrix helper
         run: python3 .github/scripts/test_determine_packages.py
       - name: Test workflow M3Shapes pin extractor
-        run: ./tests/workflow_m3shapes_pin_test.sh
+        run: ./scripts/workflow_m3shapes_pin_test.sh

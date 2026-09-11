@@ -75,7 +75,7 @@ jobs:
         with:
           python-version: '3.x'
       - name: Run unit tests
-        run: python3 -m unittest discover -s tests
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
 
   g2-lint:
     runs-on: ubuntu-latest

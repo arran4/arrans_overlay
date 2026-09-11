@@ -4,13 +4,7 @@ import sys
 import unittest
 
 
-GENERATOR = (
-    Path(__file__).parents[1]
-    / "dev-lang"
-    / "dart"
-    / "files"
-    / "generate-ebuild.py"
-)
+GENERATOR = Path(__file__).with_name("generate-ebuild.py")
 SPEC = importlib.util.spec_from_file_location("dart_ebuild_generator", GENERATOR)
 assert SPEC is not None and SPEC.loader is not None
 generator = importlib.util.module_from_spec(SPEC)
