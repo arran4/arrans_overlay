@@ -1,0 +1,44 @@
+name: Cache Consistency Verification
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    - cron: '15 4 * * *'
+  workflow_dispatch:
+    inputs:
+      g2_version:
+        description: 'Version of g2 to use'
+        required: false
+        default: 'latest'
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+        with:
+          version: ${{ inputs.g2_version || 'latest' }}
+
+      - name: Verify cache consistency
+        run: g2 cache verify --repo .
+
+      - name: Ensure repository state is unmodified
+        run: |
+          if ! git diff --quiet; then
+            echo "Error: cache verify modified repository state." >&2
+            git status --short >&2
+            exit 1
+          fi

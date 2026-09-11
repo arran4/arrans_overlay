@@ -100,10 +100,8 @@ jobs:
             # Re-generate manifest for new M3Shapes tarball using the PVR for distinct distfile naming
             g2 manifest upsert-from-url "https://github.com/soramanew/m3shapes/archive/${M3SHAPES_PIN}.tar.gz" "m3shapes-${M3SHAPES_NEW_PVR}.tar.gz" dev-qt/m3shapes/Manifest
 
-            # Regenerate and stage canonical md5-cache and md5-dict
+            # Regenerate canonical md5-cache
             g2 cache generate dev-qt/m3shapes
-            mkdir -p metadata/md5-cache/dev-qt
-            cp metadata/md5-dict/dev-qt/m3shapes* metadata/md5-cache/dev-qt/
           fi
 
           if [ -n "$SHELL_VER" ] && [ "$SHELL_VER" != "null" ] && [ "$SHELL_VER" != "$CURRENT_SHELL" ]; then
@@ -112,8 +110,6 @@ jobs:
             g2 manifest upsert-from-url "https://github.com/caelestia-dots/shell/archive/refs/tags/v${SHELL_VER}.tar.gz" "caelestia-shell-${SHELL_VER}.tar.gz" gui-apps/caelestia-shell/Manifest
 
             g2 cache generate gui-apps/caelestia-shell
-            mkdir -p metadata/md5-cache/gui-apps
-            cp metadata/md5-dict/gui-apps/caelestia-shell* metadata/md5-cache/gui-apps/
           fi
 
           if [ -n "$CLI_VER" ] && [ "$CLI_VER" != "null" ] && [ "$CLI_VER" != "$CURRENT_CLI" ]; then
