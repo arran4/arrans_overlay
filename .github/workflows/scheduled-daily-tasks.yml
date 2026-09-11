@@ -16,11 +16,6 @@ on:
         required: false
         default: 'latest'
         type: string
-      run_egencache:
-        description: 'Run egencache update'
-        required: false
-        default: false
-        type: boolean
       run_dedupe:
         description: 'Run dedupe step'
         required: false
@@ -65,61 +60,11 @@ jobs:
           location = $(pwd)
           INNER_EOF
 
-      # Temporary safety guard while https://github.com/arran4/g2/issues/483
-      # / https://github.com/arran4/g2/pull/540 is unresolved. DeduplicateEbuilds
-      # can currently invoke an unsafe Manifest cleanup internally. Preserve the
-      # exact pre-dedup Manifest bytes so dedupe may remove redundant ebuilds
-      # without publishing any Manifest mutation.
-      - name: Snapshot manifests before dedupe
-        if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf /tmp/manifest-snapshot
-          mkdir -p /tmp/manifest-snapshot
-          while IFS= read -r -d '' manifest; do
-            relative=${manifest#./}
-            mkdir -p "/tmp/manifest-snapshot/$(dirname "$relative")"
-            cp -p -- "$manifest" "/tmp/manifest-snapshot/$relative"
-          done < <(find . -type f -name Manifest -print0)
-
       - name: Remove duplicate ebuilds
         id: dedupe
         if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
         continue-on-error: true
         run: g2 ebuild deduplicate .
-
-      - name: Restore manifests after dedupe
-        if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          while IFS= read -r -d '' manifest; do
-            relative=${manifest#/tmp/manifest-snapshot/}
-            mkdir -p "$(dirname "$relative")"
-            cp -p -- "$manifest" "$relative"
-          done < <(find /tmp/manifest-snapshot -type f -name Manifest -print0)
-
-          if ! git diff --quiet -- '**/Manifest'; then
-            echo "Refusing to continue: dedupe left Manifest changes after restoration." >&2
-            git diff -- '**/Manifest' >&2
-            exit 1
-          fi
-
-      # Repository-wide `g2 manifest clean .` is intentionally disabled while
-      # g2#483 / PR #540 is pending. Use the package-scoped manual
-      # `Repair package Manifest` workflow for repairs in the meantime.
-
-      - name: Run egencache update
-        id: egencache
-        if: ${{ inputs.run_egencache == true }}
-        continue-on-error: true
-        run: |
-          OUTPUT=$(egencache --repo=arrans-overlay --update 2>&1 || true)
-          echo "EGENCACHE_OUTPUT<<INNER_EOF" >> $GITHUB_ENV
-          echo "$OUTPUT" >> $GITHUB_ENV
-          echo "INNER_EOF" >> $GITHUB_ENV
-          echo "$OUTPUT"
 
       - name: Check for unstaged changes
         id: check_changes
