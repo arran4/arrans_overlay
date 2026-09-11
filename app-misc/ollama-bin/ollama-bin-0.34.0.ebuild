@@ -90,3 +90,4 @@ pkg_postinst() {
 	einfo ""
 	einfo "See available models at https://ollama.com/library"
 }
+
