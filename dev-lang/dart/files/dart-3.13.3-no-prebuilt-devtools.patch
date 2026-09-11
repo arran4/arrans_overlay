@@ -1,0 +1,24 @@
+--- a/utils/dartdev/BUILD.gn
++++ b/utils/dartdev/BUILD.gn
+@@ -9,6 +9,5 @@
+ group("dartdev_aot") {
+   public_deps = [
+-    ":copy_prebuilt_devtools",
+     ":dartdev_aot_snapshot",
+   ]
+ }
+@@ -34,6 +33,5 @@
+ group("dartdev") {
+   public_deps = [
+     ":copy_dartdev_snapshot",
+-    ":copy_prebuilt_devtools",
+   ]
+ }
+--- a/sdk/BUILD.gn
++++ b/sdk/BUILD.gn
+@@ -801,5 +800,0 @@
+-  if (defined(build_devtools_from_sources) && build_devtools_from_sources) {
+-    public_deps += [ ":build_devtools" ]
+-  } else {
+-    public_deps += [ ":copy_prebuilt_devtools" ]
+-  }

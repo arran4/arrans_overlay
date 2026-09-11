@@ -16,11 +16,14 @@ SRC_URI="
 	riscv? ( https://${U}/dartsdk-linux-riscv64-release.zip -> ${P}.riscv.zip )
 "
 
-LICENSE="BSD"
+# The SDK bundles Binaryen/LLVM/FP16, BoringSSL, ICU, Perfetto, RequireJS,
+# double-conversion, and zlib in addition to Dart itself.
+LICENSE="Apache-2.0 Apache-2.0-with-LLVM-exceptions BSD MIT Unicode-3.0 ZLIB"
 SLOT="0"
 KEYWORDS="~amd64 ~arm ~arm64 ~riscv"
 
-RDEPEND="app-arch/unzip"
+RDEPEND="!dev-lang/dart"
+BDEPEND="app-arch/unzip"
 
 S="${WORKDIR}/dart-sdk"
 

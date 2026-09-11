@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+    <maintainer type="person">
+        <email>gentoo@arran4.com</email>
+        <name>Arran Ubels</name>
+    </maintainer>
+    <longdescription>
+        Builds the Dart SDK from its pinned upstream source graph. Dart is
+        self-hosting, so an upstream Dart SDK seed is required at build time;
+        dev-lang/dart-bootstrap-bin provides that private seed and is not a
+        runtime dependency or installed SDK fallback.
+    </longdescription>
+    <upstream>
+        <remote-id type="github">dart-lang/sdk</remote-id>
+    </upstream>
+</pkgmetadata>

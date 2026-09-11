@@ -63,6 +63,13 @@ class TestVerifyManifest(unittest.TestCase):
         self.assertEqual(vars_rc['PVR'], '1.0_rc2')
         self.assertEqual(vars_rc['PF'], 'foo-1.0_rc2')
 
+        vars_beta_patch = parse_ebuild_variables(
+            "dart-bootstrap-bin-3.13.0_beta103_p1.ebuild"
+        )
+        self.assertEqual(vars_beta_patch['PN'], 'dart-bootstrap-bin')
+        self.assertEqual(vars_beta_patch['PV'], '3.13.0_beta103_p1')
+        self.assertEqual(vars_beta_patch['P'], 'dart-bootstrap-bin-3.13.0_beta103_p1')
+
     def test_parse_variables_with_content_assignments(self):
         content = """
 COMMIT="e337a5f69a9bea30e58d05bd40184d79cc099628"

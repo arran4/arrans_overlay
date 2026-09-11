@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+    <maintainer type="person">
+        <email>gentoo@arran4.com</email>
+        <name>Arran Ubels</name>
+    </maintainer>
+    <longdescription>
+        This package is an explicitly declared, build-only seed for the
+        self-hosting Dart compiler. It is installed privately, exports no
+        user command, and is not a runtime dependency of dev-lang/dart. Its
+        exact upstream-compatible version and isolated installation path keep
+        it from replacing or disturbing the user's normal Dart SDK. It is
+        deliberately not a provider for virtual/dart.
+    </longdescription>
+    <upstream>
+        <remote-id type="github">dart-lang/sdk</remote-id>
+    </upstream>
+</pkgmetadata>

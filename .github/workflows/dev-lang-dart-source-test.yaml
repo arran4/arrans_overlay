@@ -1,0 +1,48 @@
+name: dev-lang/dart Source Integration
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'dev-lang/dart/**'
+      - 'dev-lang/dart-bin/**'
+      - 'dev-lang/dart-bootstrap-bin/**'
+      - 'virtual/dart/**'
+      - 'scripts/generate_dart_ebuild.py'
+      - 'scripts/test_dart_source.sh'
+      - 'scripts/test_generate_dart_ebuild.py'
+      - '.github/workflows/dev-lang-dart-source-test.yaml'
+
+concurrency:
+  group: dart-source-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-smoke-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare distfile cache
+        run: |
+          sudo mkdir -p /var/cache/distfiles
+          sudo chown -R "$(id -u):$(id -g)" /var/cache/distfiles
+
+      - name: Cache distfiles
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/distfiles
+          key: dart-source-distfiles-v1-${{ hashFiles('dev-lang/dart/Manifest', 'dev-lang/dart-bootstrap-bin/Manifest') }}
+          restore-keys: |
+            dart-source-distfiles-v1-
+
+      - name: Build and smoke-test Dart offline
+        env:
+          DART_SOURCE_DISTDIR: /var/cache/distfiles
+        run: scripts/test_dart_source.sh

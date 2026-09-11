@@ -1,0 +1,10 @@
+HOMEPAGE=https://dart.dev/ https://github.com/dart-lang/sdk
+SRC_URI=https://storage.googleapis.com/dart-archive/channels/beta/release/3.13.0-103.1.beta/sdk/dartsdk-linux-x64-release.zip -> dart-bootstrap-bin-3.13.0_beta103_p1.zip
+EAPI=8
+DESCRIPTION=Private bootstrap compiler for building the Dart SDK from source
+RESTRICT=strip
+SLOT=3.13
+BDEPEND=app-arch/unzip
+LICENSE=Apache-2.0 Apache-2.0-with-LLVM-exceptions BSD MIT Unicode-3.0 ZLIB
+KEYWORDS=~amd64
+_md5_=ca60a864253caad0759a80ac25e4cde9
