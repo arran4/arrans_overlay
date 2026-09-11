@@ -214,9 +214,73 @@ class GeneratedRepresentationTest(unittest.TestCase):
     def test_devtools_subtree_maps_to_dart_destination(self):
         rendered = self.render_fixture()
         self.assertIn(
-            '"devtools-${DEVTOOLS_SHARED_REV}/packages/devtools_shared|'
-            'third_party/devtools/devtools_shared"',
+            'DEVTOOLS_SHARED_SRC="devtools-${DEVTOOLS_SHARED_REV}/packages/devtools_shared"',
             rendered,
+        )
+        self.assertIn(
+            '"${DEVTOOLS_SHARED_SRC}|third_party/devtools/devtools_shared"',
+            rendered,
+        )
+
+    def test_rendered_lines_do_not_exceed_80_columns(self):
+        rendered = self.render_fixture()
+        for index, line in enumerate(rendered.splitlines(), 1):
+            with self.subTest(line_index=index, line=line):
+                self.assertLessEqual(
+                    len(line.expandtabs(4)),
+                    80,
+                    f"line {index} exceeds 80 columns: {line}",
+                )
+
+    def test_ebuild_generated_block_does_not_exceed_80_columns(self):
+        ebuild = EBUILD.read_text()
+        block = ebuild.split(f"{generator.BEGIN}\n", 1)[1].split(
+            f"\n{generator.END}", 1
+        )[0]
+        for index, line in enumerate(block.splitlines(), 1):
+            with self.subTest(line_index=index, line=line):
+                self.assertLessEqual(
+                    len(line.expandtabs(4)),
+                    80,
+                    f"generated block line {index} exceeds 80 columns: {line}",
+                )
+
+    def test_long_repositories_use_named_git_variables(self):
+        ebuild = EBUILD.read_text()
+        self.assertIn(
+            'WEBKIT_GIT="https://github.com/google/webkit_inspection_protocol.dart"',
+            ebuild,
+        )
+        self.assertIn(
+            'ZLIB_GIT="https://github.com/gsource-mirror/chromium-src-third_party-zlib"',
+            ebuild,
+        )
+        self.assertIn(
+            "\t${WEBKIT_GIT}/archive/${WEBKIT_PROTOCOL_REV}.tar.gz\n",
+            ebuild,
+        )
+        self.assertIn(
+            "\t${ZLIB_GIT}/archive/${ZLIB_REV}.tar.gz\n",
+            ebuild,
+        )
+
+    def test_long_mappings_use_named_src_variables(self):
+        ebuild = EBUILD.read_text()
+        self.assertIn(
+            'DEVTOOLS_SHARED_SRC="devtools-${DEVTOOLS_SHARED_REV}/packages/devtools_shared"',
+            ebuild,
+        )
+        self.assertIn(
+            'WEBKIT_SRC="webkit_inspection_protocol.dart-${WEBKIT_PROTOCOL_REV}"',
+            ebuild,
+        )
+        self.assertIn(
+            '\t"${DEVTOOLS_SHARED_SRC}|third_party/devtools/devtools_shared"',
+            ebuild,
+        )
+        self.assertIn(
+            '\t"${WEBKIT_SRC}|third_party/pkg/webkit_inspection_protocol"',
+            ebuild,
         )
 
     def test_rendering_and_rewriting_are_byte_stable(self):

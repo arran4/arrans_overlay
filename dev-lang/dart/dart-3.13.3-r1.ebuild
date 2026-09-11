@@ -39,13 +39,19 @@ WEBDRIVER_REV="3a711ebb36871eac997c5d5d2429f7414873dc63"
 WEBKIT_PROTOCOL_REV="762115a971d1968bc940454ad1e88d506d8c5640"
 ZLIB_REV="3008c4b3a06bd65392c31db8846000a21e3d03c5"
 
+WEBKIT_GIT="https://github.com/google/webkit_inspection_protocol.dart"
+ZLIB_GIT="https://github.com/gsource-mirror/chromium-src-third_party-zlib"
+
+DEVTOOLS_SHARED_SRC="devtools-${DEVTOOLS_SHARED_REV}/packages/devtools_shared"
+WEBKIT_SRC="webkit_inspection_protocol.dart-${WEBKIT_PROTOCOL_REV}"
+
 DART_DEPENDENCY_TREES=(
 	"binaryen-${BINARYEN_REV}|third_party/binaryen/src"
 	"boringssl-${BORINGSSL_REV}|third_party/boringssl/src"
 	"core-${CORE_REV}|third_party/pkg/core"
 	"dartdoc-${DARTDOC_REV}|third_party/pkg/dartdoc"
 	"dart_style-${DART_STYLE_REV}|third_party/pkg/dart_style"
-	"devtools-${DEVTOOLS_SHARED_REV}/packages/devtools_shared|third_party/devtools/devtools_shared"
+	"${DEVTOOLS_SHARED_SRC}|third_party/devtools/devtools_shared"
 	"ecosystem-${ECOSYSTEM_REV}|third_party/pkg/ecosystem"
 	"http-${HTTP_REV}|third_party/pkg/http"
 	"i18n-${I18N_REV}|third_party/pkg/i18n"
@@ -63,7 +69,7 @@ DART_DEPENDENCY_TREES=(
 	"vector_math.dart-${VECTOR_MATH_REV}|third_party/pkg/vector_math"
 	"web-${WEB_REV}|third_party/pkg/web"
 	"webdriver.dart-${WEBDRIVER_REV}|third_party/pkg/webdriver"
-	"webkit_inspection_protocol.dart-${WEBKIT_PROTOCOL_REV}|third_party/pkg/webkit_inspection_protocol"
+	"${WEBKIT_SRC}|third_party/pkg/webkit_inspection_protocol"
 	"chromium-src-third_party-zlib-${ZLIB_REV}|third_party/zlib"
 )
 
@@ -116,9 +122,9 @@ SRC_URI="
 		-> dart-dep-web-eb8c3fc6.tar.gz
 	https://github.com/google/webdriver.dart/archive/${WEBDRIVER_REV}.tar.gz
 		-> dart-dep-webdriver-3a711ebb.tar.gz
-	https://github.com/google/webkit_inspection_protocol.dart/archive/${WEBKIT_PROTOCOL_REV}.tar.gz
+	${WEBKIT_GIT}/archive/${WEBKIT_PROTOCOL_REV}.tar.gz
 		-> dart-dep-webkit-protocol-762115a9.tar.gz
-	https://github.com/gsource-mirror/chromium-src-third_party-zlib/archive/${ZLIB_REV}.tar.gz
+	${ZLIB_GIT}/archive/${ZLIB_REV}.tar.gz
 		-> dart-dep-zlib-3008c4b3.tar.gz
 "
 # END GENERATED DART DEPS

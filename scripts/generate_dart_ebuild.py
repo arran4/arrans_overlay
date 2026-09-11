@@ -319,6 +319,20 @@ SHORT_NAMES = {
     "webkit_inspection_protocol.dart": "WEBKIT_PROTOCOL",
 }
 
+# Named repository variables for exceptionally long upstream repository URLs
+# to ensure SRC_URI entries remain readable and within Gentoo's 80-column limit.
+REPOSITORY_VARIABLES = {
+    "https://github.com/google/webkit_inspection_protocol.dart": "WEBKIT_GIT",
+    "https://github.com/gsource-mirror/chromium-src-third_party-zlib": "ZLIB_GIT",
+}
+
+# Named unpack source variables for dependencies with long unpack paths to keep
+# DART_DEPENDENCY_TREES mappings readable and within Gentoo's 80-column limit.
+UNPACK_SOURCE_VARIABLES = {
+    "DEVTOOLS_SHARED": "DEVTOOLS_SHARED_SRC",
+    "WEBKIT_PROTOCOL": "WEBKIT_SRC",
+}
+
 
 def load_deps(path: Path) -> dict[str, object]:
     """Evaluate the data-only DEPS DSL without exposing Python builtins."""
@@ -572,23 +586,56 @@ def render(deps_path: Path) -> str:
     for identifier, source in sorted(identifiers.items()):
         lines.append(f'{identifier}_REV="{source.revision}"')
 
+    repo_var_lines = []
+    used_repo_vars: set[str] = set()
+    for identifier, source in sorted(identifiers.items()):
+        if source.repository in REPOSITORY_VARIABLES:
+            var_name = REPOSITORY_VARIABLES[source.repository]
+            if var_name not in used_repo_vars:
+                used_repo_vars.add(var_name)
+                repo_var_lines.append(f'{var_name}="{source.repository}"')
+
+    unpack_var_lines = []
+    for identifier, source in sorted(identifiers.items()):
+        if identifier in UNPACK_SOURCE_VARIABLES:
+            var_name = UNPACK_SOURCE_VARIABLES[identifier]
+            unpack_var_lines.append(f'{var_name}="{source.unpacked_source()}"')
+
+    if repo_var_lines:
+        lines.append("")
+        lines.extend(sorted(repo_var_lines))
+
+    if unpack_var_lines:
+        lines.append("")
+        lines.extend(sorted(unpack_var_lines))
+
     lines.extend(["", "DART_DEPENDENCY_TREES=("])
     for source in sorted(identifiers.values(), key=lambda item: item.identifier):
-        lines.append(f'\t"{source.unpacked_source()}|{source.destination}"')
+        unpack_src = (
+            f"${{{UNPACK_SOURCE_VARIABLES[source.identifier]}}}"
+            if source.identifier in UNPACK_SOURCE_VARIABLES
+            else source.unpacked_source()
+        )
+        lines.append(f'\t"{unpack_src}|{source.destination}"')
     lines.extend([")", "", 'SRC_URI="'])
     lines.append("\thttps://github.com/dart-lang/sdk/archive/refs/tags/${PV}.tar.gz")
     lines.append("\t\t-> ${P}.tar.gz")
     for identifier, source in sorted(identifiers.items()):
-        lines.append(f"\t{source.repository}/archive/${{{identifier}_REV}}.tar.gz")
+        repo_expr = (
+            f"${{{REPOSITORY_VARIABLES[source.repository]}}}"
+            if source.repository in REPOSITORY_VARIABLES
+            else source.repository
+        )
+        lines.append(f"\t{repo_expr}/archive/${{{identifier}_REV}}.tar.gz")
         lines.append(f"\t\t-> {source.filename}")
     lines.extend(['"', END])
     too_long = [
         (index, line)
         for index, line in enumerate(lines, 1)
-        if len(line.expandtabs(8)) > 120
+        if len(line.expandtabs(4)) > 80
     ]
     if too_long:
-        raise ValueError(f"generated lines exceed 120 columns: {too_long}")
+        raise ValueError(f"generated lines exceed 80 columns: {too_long}")
     return "\n".join(lines)
 
 
