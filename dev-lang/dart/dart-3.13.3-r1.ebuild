@@ -15,14 +15,11 @@ HOMEPAGE="https://dart.dev/ https://github.com/dart-lang/sdk"
 # BEGIN GENERATED DART DEPS
 BINARYEN_REV="9926156a583cec3d22d521232b31c70fa9a87dc1"
 BORINGSSL_REV="2e508c973d634b3aa51b71db5062bc6b096e5031"
-BROWSER_DATA_REV="ac8cae697014da1ff7124fba33b0b4245cc6cd1b"
 CORE_REV="be0b1531c445a185d3e93887b8d0355fc766c314"
-CPU_FEATURES_REV="936b9ab5515dead115606559502e3864958f7f6e"
 DARTDOC_REV="1d56f263955f329b6701d8f84f069eb0aef353a4"
 DART_STYLE_REV="39edc2d946a5d7bd1caf6f1695f366b00f7b873c"
 DEVTOOLS_SHARED_REV="12d595649f189f1896722623f72599077f476848"
 ECOSYSTEM_REV="848b3bf3b757d2e9ae4d60030eeed5756c87783f"
-EMSDK_REV="e41b8c68a248da5f18ebd03bd0420953945d52ff"
 HTTP_REV="5d94ef52582867e077bf41c3fa20fb8b1d1d834e"
 I18N_REV="d0683bdea253d19a4350f5bc2be9017aba61837f"
 ICU_REV="a86a32e67b8d1384b33f8fa48c83a6079b86f8cd"
@@ -38,7 +35,6 @@ TEST_REV="bd92e633e7f05edc3301865bdc00d1ae181cb1f1"
 TOOLS_REV="7fec8be9af0cd0367d03dbec29b66b3f46565720"
 VECTOR_MATH_REV="cf3b5db7340d317dd3489e5a35434b408020a852"
 WEB_REV="eb8c3fc61a1e35f48f865836c7c7342897d91bcc"
-WEBCORE_REV="bcb10901266c884e7b3740abc597ab95373ab55c"
 WEBDRIVER_REV="3a711ebb36871eac997c5d5d2429f7414873dc63"
 WEBKIT_PROTOCOL_REV="762115a971d1968bc940454ad1e88d506d8c5640"
 ZLIB_REV="3008c4b3a06bd65392c31db8846000a21e3d03c5"
@@ -46,14 +42,11 @@ ZLIB_REV="3008c4b3a06bd65392c31db8846000a21e3d03c5"
 DART_DEPENDENCY_TREES=(
 	"binaryen-${BINARYEN_REV}|third_party/binaryen/src"
 	"boringssl-${BORINGSSL_REV}|third_party/boringssl/src"
-	"browser-compat-data-${BROWSER_DATA_REV}|third_party/mdn/browser-compat-data/src"
 	"core-${CORE_REV}|third_party/pkg/core"
-	"cpu_features-${CPU_FEATURES_REV}|third_party/cpu_features/src"
 	"dartdoc-${DARTDOC_REV}|third_party/pkg/dartdoc"
 	"dart_style-${DART_STYLE_REV}|third_party/pkg/dart_style"
 	"devtools-${DEVTOOLS_SHARED_REV}/packages/devtools_shared|third_party/devtools/devtools_shared"
 	"ecosystem-${ECOSYSTEM_REV}|third_party/pkg/ecosystem"
-	"emsdk-${EMSDK_REV}|third_party/emsdk"
 	"http-${HTTP_REV}|third_party/pkg/http"
 	"i18n-${I18N_REV}|third_party/pkg/i18n"
 	"chromium-icu-${ICU_REV}|third_party/icu"
@@ -69,7 +62,6 @@ DART_DEPENDENCY_TREES=(
 	"tools-${TOOLS_REV}|third_party/pkg/tools"
 	"vector_math.dart-${VECTOR_MATH_REV}|third_party/pkg/vector_math"
 	"web-${WEB_REV}|third_party/pkg/web"
-	"webcore-${WEBCORE_REV}|third_party/WebCore"
 	"webdriver.dart-${WEBDRIVER_REV}|third_party/pkg/webdriver"
 	"webkit_inspection_protocol.dart-${WEBKIT_PROTOCOL_REV}|third_party/pkg/webkit_inspection_protocol"
 	"chromium-src-third_party-zlib-${ZLIB_REV}|third_party/zlib"
@@ -82,12 +74,8 @@ SRC_URI="
 		-> dart-dep-binaryen-9926156a.tar.gz
 	https://github.com/google/boringssl/archive/${BORINGSSL_REV}.tar.gz
 		-> dart-dep-boringssl-2e508c97.tar.gz
-	https://github.com/mdn/browser-compat-data/archive/${BROWSER_DATA_REV}.tar.gz
-		-> dart-dep-browser-data-ac8cae69.tar.gz
 	https://github.com/dart-lang/core/archive/${CORE_REV}.tar.gz
 		-> dart-dep-core-be0b1531.tar.gz
-	https://github.com/google/cpu_features/archive/${CPU_FEATURES_REV}.tar.gz
-		-> dart-dep-cpu-features-936b9ab5.tar.gz
 	https://github.com/dart-lang/dartdoc/archive/${DARTDOC_REV}.tar.gz
 		-> dart-dep-dartdoc-1d56f263.tar.gz
 	https://github.com/dart-lang/dart_style/archive/${DART_STYLE_REV}.tar.gz
@@ -96,8 +84,6 @@ SRC_URI="
 		-> dart-dep-devtools-shared-12d59564.tar.gz
 	https://github.com/dart-lang/ecosystem/archive/${ECOSYSTEM_REV}.tar.gz
 		-> dart-dep-ecosystem-848b3bf3.tar.gz
-	https://github.com/emscripten-core/emsdk/archive/${EMSDK_REV}.tar.gz
-		-> dart-dep-emsdk-e41b8c68.tar.gz
 	https://github.com/dart-lang/http/archive/${HTTP_REV}.tar.gz
 		-> dart-dep-http-5d94ef52.tar.gz
 	https://github.com/dart-lang/i18n/archive/${I18N_REV}.tar.gz
@@ -128,8 +114,6 @@ SRC_URI="
 		-> dart-dep-vector-math-cf3b5db7.tar.gz
 	https://github.com/dart-lang/web/archive/${WEB_REV}.tar.gz
 		-> dart-dep-web-eb8c3fc6.tar.gz
-	https://github.com/dart-archive/webcore/archive/${WEBCORE_REV}.tar.gz
-		-> dart-dep-webcore-bcb10901.tar.gz
 	https://github.com/google/webdriver.dart/archive/${WEBDRIVER_REV}.tar.gz
 		-> dart-dep-webdriver-3a711ebb.tar.gz
 	https://github.com/google/webkit_inspection_protocol.dart/archive/${WEBKIT_PROTOCOL_REV}.tar.gz

@@ -227,6 +227,29 @@ REVIEWED_EXCLUSIONS: dict[str, tuple[DependencyIdentity, str]] = {
         ),
         "source-formatting helper only",
     ),
+    "sdk/third_party/WebCore": (
+        git_identity(
+            "https://dart.googlesource.com/webcore.git",
+            "bcb10901266c884e7b3740abc597ab95373ab55c",
+        ),
+        "legacy DOM generator only",
+    ),
+    "sdk/third_party/cpu_features/src": (
+        git_identity(
+            "https://chromium.googlesource.com/external/github.com/google/"
+            "cpu_features.git",
+            "936b9ab5515dead115606559502e3864958f7f6e",
+        ),
+        "Android NDK stubs only; amd64 VM uses inline CPUID",
+    ),
+    "sdk/third_party/emsdk": (
+        git_identity(
+            "https://dart.googlesource.com/external/github.com/emscripten-core/"
+            "emsdk.git",
+            "e41b8c68a248da5f18ebd03bd0420953945d52ff",
+        ),
+        "dart2wasm tests only; download_emscripten=False",
+    ),
     "sdk/third_party/jinja2": (
         git_identity(
             "https://chromium.googlesource.com/chromium/src/third_party/"
@@ -264,6 +287,14 @@ REVIEWED_EXCLUSIONS: dict[str, tuple[DependencyIdentity, str]] = {
         ),
         "Jinja dependency only",
     ),
+    "sdk/third_party/mdn/browser-compat-data/src": (
+        git_identity(
+            "https://chromium.googlesource.com/external/github.com/mdn/"
+            "browser-compat-data",
+            "ac8cae697014da1ff7124fba33b0b4245cc6cd1b",
+        ),
+        "DOM generator tooling only; upstream CC0-1.0",
+    ),
     "sdk/third_party/ply": (
         git_identity(
             "https://chromium.googlesource.com/chromium/src/third_party/ply.git",
@@ -274,11 +305,9 @@ REVIEWED_EXCLUSIONS: dict[str, tuple[DependencyIdentity, str]] = {
 }
 
 SHORT_NAMES = {
-    "browser-compat-data": "BROWSER_DATA",
     "clang-format": "CLANG_FORMAT",
     "chromium-src-third_party-zlib": "ZLIB",
     "chromium-icu": "ICU",
-    "cpu_features": "CPU_FEATURES",
     "dart_style": "DART_STYLE",
     "devtools": "DEVTOOLS_SHARED",
     "leak_tracker": "LEAK_TRACKER",

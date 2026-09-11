@@ -38,6 +38,49 @@ class ReviewedExclusionTest(unittest.TestCase):
 
         self.assertEqual(reason, "provided by dev-lang/dart-bootstrap-bin")
 
+    def test_reduced_source_closure_exclusions_succeed(self):
+        cases = [
+            (
+                "sdk/third_party/mdn/browser-compat-data/src",
+                (
+                    "https://chromium.googlesource.com/external/github.com/"
+                    "mdn/browser-compat-data"
+                    "@ac8cae697014da1ff7124fba33b0b4245cc6cd1b"
+                ),
+                "DOM generator tooling only; upstream CC0-1.0",
+            ),
+            (
+                "sdk/third_party/emsdk",
+                (
+                    "https://dart.googlesource.com/external/github.com/"
+                    "emscripten-core/emsdk.git"
+                    "@e41b8c68a248da5f18ebd03bd0420953945d52ff"
+                ),
+                "dart2wasm tests only; download_emscripten=False",
+            ),
+            (
+                "sdk/third_party/WebCore",
+                (
+                    "https://dart.googlesource.com/webcore.git"
+                    "@bcb10901266c884e7b3740abc597ab95373ab55c"
+                ),
+                "legacy DOM generator only",
+            ),
+            (
+                "sdk/third_party/cpu_features/src",
+                (
+                    "https://chromium.googlesource.com/external/github.com/"
+                    "google/cpu_features.git"
+                    "@936b9ab5515dead115606559502e3864958f7f6e"
+                ),
+                "Android NDK stubs only; amd64 VM uses inline CPUID",
+            ),
+        ]
+        for destination, url, expected_reason in cases:
+            with self.subTest(destination=destination):
+                reason = generator.validate_reviewed_exclusion(destination, url)
+                self.assertEqual(reason, expected_reason)
+
     def test_changed_cipd_version_fails(self):
         dependency = {
             "packages": [
@@ -197,6 +240,20 @@ class GeneratedRepresentationTest(unittest.TestCase):
         self.assertIn("DART_DEPENDENCY_TREES=(\n", ebuild)
         self.assertIn("src_unpack() {\n\tdefault\n", ebuild)
         self.assertNotIn("tar -", ebuild)
+
+    def test_excluded_dependencies_not_materialized(self):
+        ebuild = EBUILD.read_text()
+        for excluded in (
+            "browser-compat-data",
+            "BROWSER_DATA",
+            "emsdk",
+            "EMSDK",
+            "cpu_features",
+            "CPU_FEATURES",
+            "webcore",
+            "WEBCORE",
+        ):
+            self.assertNotIn(excluded, ebuild)
 
 
 if __name__ == "__main__":
