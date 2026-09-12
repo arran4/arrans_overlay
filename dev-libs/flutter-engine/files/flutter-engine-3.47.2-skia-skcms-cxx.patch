@@ -1,5 +1,5 @@
---- a/flutter/third_party/skia/modules/skcms/BUILD.gn
-+++ b/flutter/third_party/skia/modules/skcms/BUILD.gn
+--- a/flutter/skia/modules/skcms/BUILD.gn
++++ b/flutter/skia/modules/skcms/BUILD.gn
 @@ -47,7 +47,6 @@ arch("skcms_TransformHsw") {
      cflags = [
        "-mavx2",
