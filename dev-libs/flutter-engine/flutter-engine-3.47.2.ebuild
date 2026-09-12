@@ -278,6 +278,9 @@ PATCHES=(
 	"${FILESDIR}/flutter-engine-${PV}-system-libraries.patch"
 )
 
+FLUTTER_ENGINE_DIR="/usr/lib/flutter-engine/${PV}"
+FLUTTER_ENGINE_ARCH_DIR="${FLUTTER_ENGINE_DIR}/linux-x64"
+
 S="${WORKDIR}/flutter-${FLUTTER_ENGINE_REV}/engine/src"
 
 src_unpack() {
@@ -354,9 +357,6 @@ src_compile() {
 }
 
 src_install() {
-	local engine_dir="/usr/lib/flutter-engine/${PV}"
-	local linux_x64="${engine_dir}/linux-x64"
-
 	doexe out/host_release/gen_snapshot
 	doexe out/host_release/flutter_tester
 	doexe out/host_release/impellerc
@@ -364,35 +364,35 @@ src_install() {
 	dolib.so out/host_release/libtessellator.so
 
 	# Install standard flutter-engine directory layout
-	insinto "${linux_x64}"
+	insinto "${FLUTTER_ENGINE_ARCH_DIR}"
 	doins out/host_release/libflutter_linux_gtk.so
 	doins out/host_release/libtessellator.so
-	fperms 0755 "${linux_x64}/libflutter_linux_gtk.so"
-	fperms 0755 "${linux_x64}/libtessellator.so"
+	fperms 0755 "${FLUTTER_ENGINE_ARCH_DIR}/libflutter_linux_gtk.so"
+	fperms 0755 "${FLUTTER_ENGINE_ARCH_DIR}/libtessellator.so"
 
-	exeinto "${linux_x64}"
+	exeinto "${FLUTTER_ENGINE_ARCH_DIR}"
 	doexe out/host_release/gen_snapshot
 	doexe out/host_release/flutter_tester
 	doexe out/host_release/impellerc
 
-	insinto "${linux_x64}"
+	insinto "${FLUTTER_ENGINE_ARCH_DIR}"
 	if [[ -f out/host_release/icudtl.dat ]]; then
 		doins out/host_release/icudtl.dat
 	elif [[ -f flutter/third_party/icu/flutter/icudtl.dat ]]; then
 		doins flutter/third_party/icu/flutter/icudtl.dat
 	fi
 
-	insinto "${linux_x64}/flutter_linux"
+	insinto "/usr/lib/flutter-engine/${PV}/linux-x64/flutter_linux"
 	doins out/host_release/flutter_linux/*.h
 
 	insinto /usr/include/flutter-engine/flutter_linux
 	doins out/host_release/flutter_linux/*.h
 
-	insinto "${engine_dir}/common/flutter_patched_sdk"
+	insinto "/usr/lib/flutter-engine/${PV}/common/flutter_patched_sdk"
 	doins out/host_release/flutter_patched_sdk/platform_strong.dill
 	doins out/host_release/flutter_patched_sdk/vm_outline_strong.dill
 
-	insinto "${engine_dir}/pkg"
+	insinto "/usr/lib/flutter-engine/${PV}/pkg"
 	if [[ -d out/host_release/gen/dart-pkg/sky_engine ]]; then
 		doins -r out/host_release/gen/dart-pkg/sky_engine
 	elif [[ -d flutter/sky/packages/sky_engine ]]; then
