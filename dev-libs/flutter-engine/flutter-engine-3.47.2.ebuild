@@ -277,6 +277,7 @@ BDEPEND="
 PATCHES=(
 	"${FILESDIR}/flutter-engine-${PV}-gn-version-fallback.patch"
 	"${FILESDIR}/flutter-engine-${PV}-compiler-version-python3.patch"
+	"${FILESDIR}/flutter-engine-${PV}-system-gcc-prefix.patch"
 	"${FILESDIR}/flutter-engine-${PV}-system-libraries.patch"
 )
 
@@ -348,6 +349,7 @@ src_configure() {
 		--no-default-linux-sysroot
 		--no-enable-unittests
 		--no-clang
+		--gn-args="toolchain_prefix=\"${CHOST}-\""
 	)
 
 	python3 flutter/tools/gn "${gn_common_args[@]}" \
