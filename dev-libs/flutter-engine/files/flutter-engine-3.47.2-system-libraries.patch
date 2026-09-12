@@ -55,6 +55,17 @@
 -      "//flutter/third_party/angle/include/GLES3/gl3.h",
 +      
      ]
+--- a/flutter/impeller/tessellator/tessellator_libtess.cc
++++ b/flutter/impeller/tessellator/tessellator_libtess.cc
+@@ -5,7 +5,7 @@
+ #include "impeller/tessellator/tessellator_libtess.h"
+ 
+ #include "impeller/tessellator/path_tessellator.h"
+-#include "third_party/libtess2/Include/tesselator.h"
++#include <tesselator.h>
+ 
+ namespace impeller {
+ 
 --- a/flutter/shell/testing/BUILD.gn
 +++ b/flutter/shell/testing/BUILD.gn
 @@ -11,9 +11,7 @@

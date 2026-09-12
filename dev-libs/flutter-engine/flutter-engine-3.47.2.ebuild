@@ -303,6 +303,11 @@ src_prepare() {
 	mkdir -p flutter/third_party/gn || die
 	ln -sf "${BROOT}/usr/bin/gn" flutter/third_party/gn/gn || die
 
+	# Compatibility symlink for unbundled libtess2 header.
+	mkdir -p third_party/libtess2/Include || die
+	ln -sf "${ESYSROOT}/usr/include/tesselator.h" \
+		third_party/libtess2/Include/tesselator.h || die
+
 	# Dart inside Flutter engine requires devtools_from_sources disabled
 	# and the host Dart SDK linked for offline pub package resolution.
 	mkdir -p flutter/third_party/dart/build/config || die
