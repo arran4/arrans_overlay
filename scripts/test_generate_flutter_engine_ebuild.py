@@ -182,6 +182,55 @@ class RenderTest(unittest.TestCase):
         for key in excluded_keys:
             self.assertNotIn(key, rendered)
 
+    def test_parent_dependency_trees_precede_subdirectories(self):
+        if not self.scratch_deps.exists():
+            self.skipTest("scratch/DEPS not available")
+        rendered = generator.render(self.scratch_deps)
+        tree_lines = []
+        in_trees = False
+        for line in rendered.splitlines():
+            if line.strip() == "FLUTTER_ENGINE_DEPENDENCY_TREES=(":
+                in_trees = True
+                continue
+            if in_trees:
+                if line.strip() == ")":
+                    break
+                content = line.strip().strip('"')
+                if "|" in content:
+                    dest = content.split("|", 1)[1]
+                    tree_lines.append(dest)
+
+        self.assertTrue(
+            tree_lines, "No dependency trees found in rendered output"
+        )
+
+        resolved = []
+        for dest in tree_lines:
+            res = (
+                dest.replace(
+                    "${DART_PKG_DIR}",
+                    "flutter/third_party/dart/third_party/pkg",
+                )
+                .replace(
+                    "${DART_TP_DIR}",
+                    "flutter/third_party/dart/third_party",
+                )
+                .replace(
+                    "${VK_DEPS_DIR}",
+                    "flutter/third_party/vulkan-deps",
+                )
+            )
+            resolved.append(res)
+
+        for i, dest_i in enumerate(resolved):
+            for j in range(i + 1, len(resolved)):
+                dest_j = resolved[j]
+                self.assertFalse(
+                    dest_i.startswith(dest_j.rstrip("/") + "/"),
+                    f"Parent directory {dest_j} appears after "
+                    f"child directory {dest_i}",
+                )
+
     def test_all_lines_under_80_columns(self):
         if not self.scratch_deps.exists():
             self.skipTest("scratch/DEPS not available")
