@@ -312,3 +312,54 @@
 +source_set("libpng") {
 +  public_configs = [ ":libpng_config" ]
 +}
+--- /dev/null
++++ b/flutter/build/secondary/flutter/third_party/rapidjson/BUILD.gn
+@@ -0,0 +1,15 @@
++# Unbundled system rapidjson
++config("rapidjson_config") {
++  include_dirs = [ "/usr/include" ]
++  defines = [
++    "RAPIDJSON_HAS_STDSTRING",
++    "RAPIDJSON_HAS_CXX11_RANGE_FOR",
++    "RAPIDJSON_HAS_CXX11_RVALUE_REFS",
++    "RAPIDJSON_HAS_CXX11_TYPETRAITS",
++    "RAPIDJSON_HAS_CXX11_NOEXCEPT",
++  ]
++}
++
++source_set("rapidjson") {
++  public_configs = [ ":rapidjson_config" ]
++}
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -485,13 +485,16 @@
+ config("cxx_disable_modules") {
+   disable_modules_flags = [
+     "-fno-modules",
+-
++  ]
++  if (is_clang) {
+     # Some Clang versions do not disable ObjC modules (as tested by
+     # __has_feature(objc_modules)) when just -fno-modules is present.
+-    "-Xclang",
+-    "-fno-cxx-modules",
+-  ]
+-  cflags_c = disable_modules_flags
++    disable_modules_flags += [
++      "-Xclang",
++      "-fno-cxx-modules",
++    ]
++    cflags_c = disable_modules_flags
++  }
+   cflags_cc = disable_modules_flags
+   cflags_objc = disable_modules_flags
+   cflags_objcc = disable_modules_flags
+@@ -667,7 +670,7 @@
+   # We compile our own libc++ on all Linux targets except i386 (for
+   # gen_snapshot) where this is not supported.
+   if (is_linux) {
+-    if (!use_flutter_cxx) {
++    if (!use_flutter_cxx && is_clang) {
+       cflags_cc += [ "-stdlib=libstdc++" ]
+       ldflags += [ "-stdlib=libstdc++" ]
+       libs += [ "gcc" ]

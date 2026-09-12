@@ -41,7 +41,23 @@ jobs:
           restore-keys: |
             flutter-engine-v1-
 
+      - name: Prepare binpkgs cache
+        run: |
+          sudo mkdir -p /var/cache/binpkgs
+          sudo chown -R "$(id -u):$(id -g)" /var/cache/binpkgs
+
+      - name: Cache binpkgs
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/binpkgs
+          key: >-
+            flutter-engine-binpkgs-v1-${{
+            hashFiles('virtual/dart/**', 'dev-lang/dart/**') }}
+          restore-keys: |
+            flutter-engine-binpkgs-v1-
+
       - name: Build and smoke-test Flutter Engine offline
         env:
           FLUTTER_ENGINE_DISTDIR: /var/cache/distfiles
+          FLUTTER_ENGINE_BINPKGS: /var/cache/binpkgs
         run: scripts/test_flutter_engine_source.sh

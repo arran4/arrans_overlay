@@ -413,7 +413,7 @@ REVIEWED_EXCLUSIONS: dict[str, tuple[DependencyIdentity, str]] = {
             "https://flutter.googlesource.com/third_party/rapidjson",
             "47253cab97e9cfe99dbd6b90836fc11589d7d802",
         ),
-        "embedder examples only",
+        "provided by dev-libs/rapidjson",
     ),
     "engine/src/flutter/third_party/re2": (
         git_identity(
