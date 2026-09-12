@@ -1,0 +1,55 @@
+--- a/flutter/tools/gn
++++ b/flutter/tools/gn
+@@ -347,17 +347,41 @@
+ 
+ 
+ def setup_git_versions():
+-  revision_args = {}
+-
+-  engine_path = os.path.join(SRC_ROOT, 'flutter')
+-  revision_args['engine_version'] = get_repository_version(engine_path)
+-  revision_args['content_hash'] = get_content_hash()
+-  skia_path = os.path.join(SRC_ROOT, 'flutter', 'third_party', 'skia')
+-  revision_args['skia_version'] = get_repository_version(skia_path)
+-
+-  revision_args['dart_version'] = get_repository_version(get_dart_path())
+-
+-  return revision_args
++  engine_ver = os.environ.get("FLUTTER_ENGINE_VERSION")
++  if not engine_ver:
++    try:
++      engine_ver = get_repository_version(os.path.join(SRC_ROOT, 'flutter'))
++    except Exception:
++      engine_ver = "a804b261645ef8c13eb3d5c44a5c2fb0340c5539"
++
++  content_hash = os.environ.get("FLUTTER_CONTENT_HASH")
++  if not content_hash:
++    try:
++      content_hash = get_content_hash()
++    except Exception:
++      content_hash = engine_ver
++
++  skia_ver = os.environ.get("SKIA_VERSION")
++  if not skia_ver:
++    try:
++      skia_path = os.path.join(SRC_ROOT, 'flutter', 'third_party', 'skia')
++      skia_ver = get_repository_version(skia_path)
++    except Exception:
++      skia_ver = "8df24be66531469e576a806749a0202ae26b8d08"
++
++  dart_ver = os.environ.get("DART_VERSION")
++  if not dart_ver:
++    try:
++      dart_ver = get_repository_version(get_dart_path())
++    except Exception:
++      dart_ver = "60a57cd42d64dc03e9f07aa60a2e250755c1ef28"
++
++  return {
++    'engine_version': engine_ver,
++    'content_hash': content_hash,
++    'skia_version': skia_ver,
++    'dart_version': dart_ver,
++  }
+ 
+ 
+ # pylint: disable=line-too-long
