@@ -1,0 +1,18 @@
+--- a/flutter/fml/cpu_affinity.cc
++++ b/flutter/fml/cpu_affinity.cc
+@@ -4,6 +4,7 @@
+ 
+ #include "flutter/fml/cpu_affinity.h"
+ #include "flutter/fml/build_config.h"
++#include "flutter/fml/logging.h"
+ 
+ #include <cstdint>
+ #include <fstream>
+@@ -83,6 +84,7 @@ const std::vector<size_t>& CPUSpeedTracke
+     case CpuAffinity::kNotEfficiency:
+       return not_efficiency_;
+   }
++  FML_UNREACHABLE();
+ }
+ 
+ // Get the size of the cpuinfo file by reading it until the end. This is
