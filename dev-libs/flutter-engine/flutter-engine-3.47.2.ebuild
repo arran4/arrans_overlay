@@ -301,6 +301,12 @@ src_unpack() {
 src_prepare() {
 	default
 
+	# Flutter's secondary Skia GN tree, rather than third_party/skia's own
+	# BUILD files, defines the targets used by the Engine build.
+	if grep -q -- '-std=c11' flutter/skia/modules/skcms/BUILD.gn; then
+		die "SkCMS C++ targets still request the C11 language mode"
+	fi
+
 	sed -i 's/"vpython3"/"python3"/' .gn || die
 
 	# Build and toolchain helpers expect buildtools to exist.
