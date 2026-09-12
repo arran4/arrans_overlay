@@ -14,11 +14,12 @@ Usage: scripts/test_flutter_engine_source.sh [options]
 
 Options:
   --distfiles DIR    Persistent host directory for downloaded distfiles
+  --binpkgs DIR      Persistent host directory for binary packages
   --keep-containers  Leave the test containers behind for inspection
   -h, --help         Show this help
 
 Environment overrides:
-  FLUTTER_ENGINE_SOURCE_ATOM, DART_VIRTUAL_ATOM
+  FLUTTER_ENGINE_SOURCE_ATOM, DART_VIRTUAL_ATOM, FLUTTER_ENGINE_BINPKGS
 HELP
 }
 
@@ -26,6 +27,8 @@ repo_root=$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)
 cache_root=${XDG_CACHE_HOME:-${HOME}/.cache}
 default_dist="${cache_root}/arrans-overlay/flutter-distfiles"
 distfiles=${FLUTTER_ENGINE_DISTDIR:-${default_dist}}
+default_binpkgs="${cache_root}/arrans-overlay/binpkgs"
+binpkgs=${FLUTTER_ENGINE_BINPKGS:-${PKGDIR:-${default_binpkgs}}}
 keep_containers=false
 
 while [[ $# -gt 0 ]]; do
@@ -36,6 +39,14 @@ while [[ $# -gt 0 ]]; do
 				exit 2
 			}
 			distfiles=$2
+			shift 2
+			;;
+		--binpkgs)
+			[[ $# -ge 2 ]] || {
+				echo "--binpkgs requires a directory" >&2
+				exit 2
+			}
+			binpkgs=$2
 			shift 2
 			;;
 		--keep-containers)
@@ -59,8 +70,9 @@ command -v docker >/dev/null || {
 	exit 1
 }
 
-mkdir -p "${distfiles}"
+mkdir -p "${distfiles}" "${binpkgs}"
 distfiles=$(cd "${distfiles}" && pwd -P)
+binpkgs=$(cd "${binpkgs}" && pwd -P)
 
 source_atom=${FLUTTER_ENGINE_SOURCE_ATOM:-=dev-libs/flutter-engine-3.47.2}
 virtual_atom=${DART_VIRTUAL_ATOM:-=virtual/dart-3.13.3-r1}
@@ -100,6 +112,7 @@ docker run --detach \
 	--volume "${repo_root}:/var/db/repos/arrans-overlay:ro" \
 	--volume "${guru_tmp}:/var/db/repos/guru:ro" \
 	--volume "${distfiles}:/var/cache/distfiles:rw" \
+	--volume "${binpkgs}:/var/cache/binpkgs:rw" \
 	gentoo/stage3:latest \
 	sleep infinity >/dev/null
 
@@ -109,7 +122,7 @@ docker exec -i "${gentoo_container}" bash -euxo pipefail -s -- \
 source_atom=$1
 virtual_atom=$2
 
-chmod 777 /var/cache/distfiles
+chmod 777 /var/cache/distfiles /var/cache/binpkgs
 mkdir -p /etc/portage/repos.conf
 printf '%s\n' \
 	'[gentoo]' \
@@ -198,25 +211,53 @@ fi
 
 engine_root="/usr/lib/flutter-engine/3.47.2"
 linux_x64="${engine_root}/linux-x64"
+linux_profile="${engine_root}/linux-x64-profile"
+linux_release="${engine_root}/linux-x64-release"
+common_sdk="${engine_root}/common/flutter_patched_sdk"
+common_sdk_prod="${engine_root}/common/flutter_patched_sdk_product"
 
 test -x "${linux_x64}/gen_snapshot"
 test -x "${linux_x64}/flutter_tester"
 test -x "${linux_x64}/impellerc"
+test -x "${linux_x64}/font-subset"
 test -f "${linux_x64}/libflutter_linux_gtk.so"
 test -f "${linux_x64}/libtessellator.so"
 test -f "${linux_x64}/icudtl.dat"
+test -f "${linux_x64}/const_finder.dart.snapshot"
 test -f "${linux_x64}/flutter_linux/flutter_linux.h"
-test -f "${engine_root}/common/flutter_patched_sdk/platform_strong.dill"
-test -f "${engine_root}/common/flutter_patched_sdk/vm_outline_strong.dill"
+
+test -x "${linux_profile}/gen_snapshot"
+test -f "${linux_profile}/libflutter_linux_gtk.so"
+test -f "${linux_profile}/flutter_linux/flutter_linux.h"
+
+test -x "${linux_release}/gen_snapshot"
+test -f "${linux_release}/libflutter_linux_gtk.so"
+test -f "${linux_release}/flutter_linux/flutter_linux.h"
+
+test -f "${common_sdk}/platform_strong.dill"
+test -f "${common_sdk}/vm_outline_strong.dill"
+test -f "${common_sdk_prod}/platform_strong.dill"
+test -f "${common_sdk_prod}/vm_outline_strong.dill"
 test -d "${engine_root}/pkg/sky_engine"
 
 test -x /usr/bin/impellerc
+test -x /usr/bin/flutter_tester
+test -x /usr/bin/gen_snapshot
+test -x /usr/bin/font-subset
 test -f /usr/lib64/libflutter_linux_gtk.so
 test -f /usr/lib64/libtessellator.so
 test -f /usr/include/flutter-engine/flutter_linux/flutter_linux.h
 
-"${linux_x64}/impellerc" --help >/dev/null 2>&1 || true
-"${linux_x64}/flutter_tester" --help >/dev/null 2>&1 || true
+"${linux_x64}/impellerc" --help | \
+	grep -q "ImpellerC is an offline shader processor"
+"${linux_x64}/flutter_tester" --help 2>&1 | \
+	grep -q "flutter_tester"
+"${linux_release}/gen_snapshot" --version 2>&1 | \
+	grep -q "Dart SDK version"
+"${linux_x64}/font-subset" 2>&1 | \
+	grep -q "Usage:"
+readelf -d "${linux_release}/libflutter_linux_gtk.so" | \
+	grep -q "SONAME"
 OFFLINE
 
 echo "Flutter Engine source build and verification passed successfully"

@@ -62,12 +62,15 @@ class ReviewedExclusionTest(unittest.TestCase):
             "engine/src/flutter/third_party/libjpeg-turbo/src",
             "engine/src/flutter/third_party/libpng",
             "engine/src/flutter/third_party/libtess2",
+            "engine/src/flutter/third_party/rapidjson",
         ]
         for dest in unbundled:
             self.assertIn(dest, generator.REVIEWED_EXCLUSIONS)
             _, reason = generator.REVIEWED_EXCLUSIONS[dest]
             self.assertTrue(
-                "unbundled" in reason or "system GLES" in reason,
+                "unbundled" in reason
+                or "system GLES" in reason
+                or "provided by dev-libs/rapidjson" in reason,
                 f"unexpected reason for {dest}: {reason}",
             )
 
