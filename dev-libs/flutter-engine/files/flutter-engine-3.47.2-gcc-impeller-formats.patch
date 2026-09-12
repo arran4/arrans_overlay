@@ -1,42 +1,16 @@
 --- a/flutter/impeller/core/formats.cc
 +++ b/flutter/impeller/core/formats.cc
-@@ -15,10 +15,11 @@ constexpr bool StoreActionNeedsResolveTexture(StoreAction action) {
- constexpr bool StoreActionNeedsResolveTexture(StoreAction action) {
-   switch (action) {
-     case StoreAction::kDontCare:
-     case StoreAction::kStore:
-       return false;
-     case StoreAction::kMultisampleResolve:
-     case StoreAction::kStoreAndMultisampleResolve:
-       return true;
+@@ -23,2 +23,3 @@
    }
 +  FML_UNREACHABLE();
  }
 --- a/flutter/impeller/core/formats.h
 +++ b/flutter/impeller/core/formats.h
-@@ -403,10 +403,11 @@ constexpr const char* LoadActionToString(LoadAction action) {
- constexpr const char* LoadActionToString(LoadAction action) {
-   switch (action) {
-     case LoadAction::kDontCare:
-       return "DontCare";
-     case LoadAction::kLoad:
-       return "Load";
-     case LoadAction::kClear:
-       return "Clear";
+@@ -411,2 +411,3 @@
    }
 +  FML_UNREACHABLE();
  }
-@@ -414,12 +415,13 @@ constexpr const char* StoreActionToString(StoreAction action) {
- constexpr const char* StoreActionToString(StoreAction action) {
-   switch (action) {
-     case StoreAction::kDontCare:
-       return "DontCare";
-     case StoreAction::kStore:
-       return "Store";
-     case StoreAction::kMultisampleResolve:
-       return "MultisampleResolve";
-     case StoreAction::kStoreAndMultisampleResolve:
-       return "StoreAndMultisampleResolve";
+@@ -424,2 +425,3 @@
    }
 +  FML_UNREACHABLE();
  }
