@@ -55,7 +55,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 command -v docker >/dev/null || {
-	echo "Docker is required to run the Flutter Engine integration test" >&2
+	echo "Docker is required for Flutter Engine integration test" >&2
 	exit 1
 }
 
@@ -76,8 +76,9 @@ cleanup() {
 		echo "Keeping containers:" \
 			"${gentoo_container} and ${portage_container}"
 	else
-		docker rm --force "${gentoo_container}" >/dev/null 2>&1 || true
-		docker rm --force "${portage_container}" >/dev/null 2>&1 || true
+		docker rm --force \
+			"${gentoo_container}" "${portage_container}" \
+			>/dev/null 2>&1 || true
 	fi
 	rm -rf "${guru_tmp}"
 	exit "${status}"
@@ -86,6 +87,7 @@ trap cleanup EXIT
 
 echo "Fetching GURU overlay for games-util/libtess2"
 git clone --depth=1 https://github.com/gentoo-mirror/guru.git "${guru_tmp}"
+chmod -R a+rX "${guru_tmp}"
 
 echo "Pulling Gentoo stage3 and Portage images"
 docker pull gentoo/stage3:latest
