@@ -1,0 +1,28 @@
+--- a/build/compiler_version.py
++++ b/build/compiler_version.py
+@@ -57,7 +57,7 @@
+     if tool == "compiler":
+       compiler = compiler + " -dumpversion"
+       # 4.6
+-      version_re = re.compile(r"(\d+)\.(\d+)")
++      version_re = re.compile(r"(\d+)(?:\.(\d+))?")
+     elif tool == "assembler":
+       compiler = compiler + " -Xassembler --version -x assembler -c /dev/null"
+       # Unmodified: GNU assembler (GNU Binutils) 2.24
+@@ -88,8 +88,14 @@
+     if pipe.returncode:
+       raise subprocess.CalledProcessError(pipe.returncode, compiler)
+ 
+-    parsed_output = version_re.match(tool_output)
+-    result = parsed_output.group(1) + parsed_output.group(2)
++    tool_output = tool_output.decode("utf-8", errors="ignore")
++    parsed_output = version_re.search(tool_output)
++    if parsed_output:
++      minor = parsed_output.group(2) if (parsed_output.lastindex and
++                                         parsed_output.lastindex >= 2) else "0"
++      result = parsed_output.group(1) + minor
++    else:
++      result = "0"
+     compiler_version_cache[cache_key] = result
+     return result
+   except Exception as e:

@@ -1,0 +1,47 @@
+name: dev-libs/flutter-engine Source Integration
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'dev-libs/flutter-engine/**'
+      - 'scripts/generate_flutter_engine_ebuild.py'
+      - 'scripts/test_flutter_engine_source.sh'
+      - 'scripts/test_generate_flutter_engine_ebuild.py'
+      - '.github/workflows/dev-libs-flutter-engine-source-test.yaml'
+
+concurrency:
+  group: flutter-engine-source-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-smoke-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare distfile cache
+        run: |
+          sudo mkdir -p /var/cache/distfiles
+          sudo chown -R "$(id -u):$(id -g)" /var/cache/distfiles
+
+      - name: Cache distfiles
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/distfiles
+          key: >-
+            flutter-engine-v1-${{
+            hashFiles('dev-libs/flutter-engine/Manifest') }}
+          restore-keys: |
+            flutter-engine-v1-
+
+      - name: Build and smoke-test Flutter Engine offline
+        env:
+          FLUTTER_ENGINE_DISTDIR: /var/cache/distfiles
+        run: scripts/test_flutter_engine_source.sh
