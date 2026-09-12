@@ -215,6 +215,40 @@ linux_profile="${engine_root}/linux-x64-profile"
 linux_release="${engine_root}/linux-x64-release"
 common_sdk="${engine_root}/common/flutter_patched_sdk"
 common_sdk_prod="${engine_root}/common/flutter_patched_sdk_product"
+sky_engine="${engine_root}/pkg/sky_engine"
+flutter_gpu="${engine_root}/pkg/flutter_gpu"
+
+assert_elf_loadable() {
+	local artifact=$1
+	local dependencies
+	local elf_header
+	elf_header=$(readelf -h "${artifact}")
+	grep -q 'Class:.*ELF64' <<< "${elf_header}"
+	dependencies=$(ldd "${artifact}" 2>&1)
+	if grep -q 'not found' <<< "${dependencies}"; then
+		printf '%s\n' "${dependencies}" >&2
+		echo "Unresolved dependency in ${artifact}" >&2
+		return 1
+	fi
+}
+
+assert_success_signature() {
+	local signature=$1
+	shift
+	local output
+	output=$("$@" 2>&1)
+	grep -Fq "${signature}" <<< "${output}"
+}
+
+assert_distinct() {
+	local first=$1
+	local second=$2
+	if cmp -s "${first}" "${second}"; then
+		echo "Mode-specific artifacts are unexpectedly identical" >&2
+		printf '%s\n' "${first}" "${second}" >&2
+		return 1
+	fi
+}
 
 test -x "${linux_x64}/gen_snapshot"
 test -x "${linux_x64}/flutter_tester"
@@ -224,21 +258,34 @@ test -f "${linux_x64}/libflutter_linux_gtk.so"
 test -f "${linux_x64}/libtessellator.so"
 test -f "${linux_x64}/icudtl.dat"
 test -f "${linux_x64}/const_finder.dart.snapshot"
+test -f "${linux_x64}/isolate_snapshot.bin"
+test -f "${linux_x64}/vm_isolate_snapshot.bin"
 test -f "${linux_x64}/flutter_linux/flutter_linux.h"
+test -f "${linux_x64}/shader_lib/flutter/runtime_effect.glsl"
+test -f "${linux_x64}/shader_lib/impeller/types.glsl"
 
 test -x "${linux_profile}/gen_snapshot"
 test -f "${linux_profile}/libflutter_linux_gtk.so"
 test -f "${linux_profile}/flutter_linux/flutter_linux.h"
+test -L "${linux_profile}/flutter_linux"
+test "$(readlink "${linux_profile}/flutter_linux")" = \
+	'../linux-x64/flutter_linux'
 
 test -x "${linux_release}/gen_snapshot"
 test -f "${linux_release}/libflutter_linux_gtk.so"
 test -f "${linux_release}/flutter_linux/flutter_linux.h"
+test -L "${linux_release}/flutter_linux"
+test "$(readlink "${linux_release}/flutter_linux")" = \
+	'../linux-x64/flutter_linux'
 
 test -f "${common_sdk}/platform_strong.dill"
 test -f "${common_sdk}/vm_outline_strong.dill"
 test -f "${common_sdk_prod}/platform_strong.dill"
 test -f "${common_sdk_prod}/vm_outline_strong.dill"
-test -d "${engine_root}/pkg/sky_engine"
+test -f "${sky_engine}/pubspec.yaml"
+test -f "${sky_engine}/lib/ui/ui.dart"
+test -f "${flutter_gpu}/pubspec.yaml"
+test -f "${flutter_gpu}/lib/gpu.dart"
 
 test -x /usr/bin/impellerc
 test -x /usr/bin/flutter_tester
@@ -247,17 +294,89 @@ test -x /usr/bin/font-subset
 test -f /usr/lib64/libflutter_linux_gtk.so
 test -f /usr/lib64/libtessellator.so
 test -f /usr/include/flutter-engine/flutter_linux/flutter_linux.h
+test -L /usr/bin/impellerc
+test -L /usr/bin/flutter_tester
+test -L /usr/bin/gen_snapshot
+test -L /usr/bin/font-subset
+test -L /usr/lib64/libflutter_linux_gtk.so
+test -L /usr/lib64/libtessellator.so
+test -L /usr/include/flutter-engine/flutter_linux
 
-"${linux_x64}/impellerc" --help | \
-	grep -q "ImpellerC is an offline shader processor"
-"${linux_x64}/flutter_tester" --help 2>&1 | \
-	grep -q "flutter_tester"
-"${linux_release}/gen_snapshot" --version 2>&1 | \
-	grep -q "Dart SDK version"
-"${linux_x64}/font-subset" 2>&1 | \
-	grep -q "Usage:"
-readelf -d "${linux_release}/libflutter_linux_gtk.so" | \
-	grep -q "SONAME"
+for artifact in \
+	"${linux_x64}/gen_snapshot" \
+	"${linux_x64}/flutter_tester" \
+	"${linux_x64}/impellerc" \
+	"${linux_x64}/font-subset" \
+	"${linux_x64}/libflutter_linux_gtk.so" \
+	"${linux_x64}/libtessellator.so" \
+	"${linux_profile}/gen_snapshot" \
+	"${linux_profile}/libflutter_linux_gtk.so" \
+	"${linux_release}/gen_snapshot" \
+	"${linux_release}/libflutter_linux_gtk.so"; do
+	assert_elf_loadable "${artifact}"
+done
+
+assert_success_signature \
+	"ImpellerC is an offline shader processor" \
+	"${linux_x64}/impellerc" --help
+assert_success_signature \
+	"flutter_tester" \
+	"${linux_x64}/flutter_tester" --help
+for snapshotter in \
+	"${linux_x64}/gen_snapshot" \
+	"${linux_profile}/gen_snapshot" \
+	"${linux_release}/gen_snapshot"; do
+	assert_success_signature "Dart SDK version" "${snapshotter}" --version
+done
+
+if font_output=$("${linux_x64}/font-subset" 2>&1); then
+	echo "font-subset unexpectedly accepted missing arguments" >&2
+	exit 1
+fi
+grep -Fq "Usage:" <<< "${font_output}"
+
+for engine_library in \
+	"${linux_x64}/libflutter_linux_gtk.so" \
+	"${linux_profile}/libflutter_linux_gtk.so" \
+	"${linux_release}/libflutter_linux_gtk.so"; do
+	dynamic_section=$(readelf -d "${engine_library}")
+	grep -q "SONAME" <<< "${dynamic_section}"
+done
+
+assert_distinct \
+	"${linux_x64}/libflutter_linux_gtk.so" \
+	"${linux_profile}/libflutter_linux_gtk.so"
+assert_distinct \
+	"${linux_profile}/libflutter_linux_gtk.so" \
+	"${linux_release}/libflutter_linux_gtk.so"
+assert_distinct \
+	"${linux_x64}/gen_snapshot" \
+	"${linux_profile}/gen_snapshot"
+assert_distinct \
+	"${linux_profile}/gen_snapshot" \
+	"${linux_release}/gen_snapshot"
+assert_distinct \
+	"${common_sdk}/platform_strong.dill" \
+	"${common_sdk_prod}/platform_strong.dill"
+
+for engine_mode in "${linux_x64}" "${linux_profile}" "${linux_release}"; do
+	cc -x c -o /tmp/flutter-engine-link-probe - \
+		-I"${engine_mode}" \
+		$(pkg-config --cflags gtk+-3.0) \
+		-L"${engine_mode}" \
+		-Wl,-rpath,"${engine_mode}" \
+		-lflutter_linux_gtk \
+		$(pkg-config --libs gtk+-3.0) <<'PROBE'
+#include <flutter_linux/flutter_linux.h>
+
+int main(void) {
+	FlValue *value = fl_value_new_null();
+	fl_value_unref(value);
+	return 0;
+}
+PROBE
+	/tmp/flutter-engine-link-probe
+done
 OFFLINE
 
 echo "Flutter Engine source build and verification passed successfully"
