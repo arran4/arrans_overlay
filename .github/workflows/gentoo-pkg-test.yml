@@ -210,10 +210,12 @@ jobs:
             # so restore the complete compiler from Gentoo's binhost before
             # testing them.
             emerge -v --oneshot --usepkg --getbinpkg sys-devel/gcc
-            CXX_PROBE="$(portageq envvar CHOST)-g++"
+            gcc-config latest
+            hash -r
+            CXX_PROBE=g++
             printf "%s\n" "int main() { return 0; }" | \
-              "${CXX_PROBE}" -x c++ - -o /tmp/dart-cxx-probe
-            /tmp/dart-cxx-probe
+              "${CXX_PROBE}" -x c++ - -o /tmp/source-cxx-probe
+            /tmp/source-cxx-probe
           fi
 
           mkdir -p /etc/portage/package.accept_keywords

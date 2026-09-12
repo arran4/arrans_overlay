@@ -159,7 +159,9 @@ printf '%s ~amd64\n' \
 
 # GCC with C++ support from binhost
 emerge -v --oneshot --usepkg --getbinpkg sys-devel/gcc
-cxx_probe="$(portageq envvar CHOST)-g++"
+gcc-config latest
+hash -r
+cxx_probe=g++
 printf '%s\n' 'int main() { return 0; }' | \
 	"${cxx_probe}" -x c++ - -o /tmp/cxx-probe
 /tmp/cxx-probe
