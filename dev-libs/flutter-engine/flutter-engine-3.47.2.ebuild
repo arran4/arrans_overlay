@@ -261,6 +261,7 @@ RDEPEND="
 "
 DEPEND="
 	${RDEPEND}
+	dev-libs/rapidjson
 	dev-util/vulkan-headers
 	media-libs/vulkan-loader
 "
@@ -308,6 +309,11 @@ src_prepare() {
 	ln -sf "${ESYSROOT}/usr/include/tesselator.h" \
 		third_party/libtess2/Include/tesselator.h || die
 
+	# Compatibility symlink for unbundled rapidjson headers.
+	mkdir -p third_party/rapidjson/include || die
+	ln -sf "${ESYSROOT}/usr/include/rapidjson" \
+		third_party/rapidjson/include/rapidjson || die
+
 	# Dart inside Flutter engine requires devtools_from_sources disabled
 	# and the host Dart SDK linked for offline pub package resolution.
 	mkdir -p flutter/third_party/dart/build/config || die
@@ -333,10 +339,9 @@ src_prepare() {
 src_configure() {
 	tc-export AR CC CXX NM RANLIB
 
-	local gn_args=(
+	local gn_common_args=(
 		--no-goma
 		--no-rbe
-		--runtime-mode=release
 		--no-prebuilt-dart
 		--no-build-embedder-examples
 		--no-default-linux-sysroot
@@ -344,60 +349,103 @@ src_configure() {
 		--no-clang
 	)
 
-	python3 flutter/tools/gn "${gn_args[@]}" || die "GN configure failed"
+	python3 flutter/tools/gn "${gn_common_args[@]}" \
+		--runtime-mode=release || die "GN configure release failed"
+
+	python3 flutter/tools/gn "${gn_common_args[@]}" \
+		--runtime-mode=debug || die "GN configure debug failed"
 }
 
 src_compile() {
-	local ninja_targets=(
+	local release_targets=(
 		flutter/shell/platform/linux:flutter_gtk
 		flutter/third_party/dart/runtime/bin:gen_snapshot
 		flutter/shell/testing:flutter_tester
 		flutter/impeller/compiler:impellerc
 		flutter/impeller/tessellator:tessellator_shared
+		flutter/tools/font_subset:font_subset
 		flutter/build/archives:flutter_patched_sdk
 		flutter/sky/packages/sky_engine:sky_engine
 	)
 
-	eninja -C out/host_release "${ninja_targets[@]}"
+	eninja -C out/host_release "${release_targets[@]}"
+	eninja -C out/host_debug flutter/build/archives:flutter_patched_sdk
 }
 
 src_install() {
 	doexe out/host_release/gen_snapshot
 	doexe out/host_release/flutter_tester
 	doexe out/host_release/impellerc
+	doexe out/host_release/font-subset
 	dolib.so out/host_release/libflutter_linux_gtk.so
 	dolib.so out/host_release/libtessellator.so
 
-	# Install standard flutter-engine directory layout
-	insinto "${FLUTTER_ENGINE_ARCH_DIR}"
+	insinto /usr/include/flutter-engine/flutter_linux
+	doins out/host_release/flutter_linux/*.h
+
+	local engine_root="${FLUTTER_ENGINE_DIR}"
+	local linux_x64="${FLUTTER_ENGINE_ARCH_DIR}"
+	local linux_profile="${engine_root}/linux-x64-profile"
+	local linux_release="${engine_root}/linux-x64-release"
+
+	# Install linux-x64 (host tools and debug runtime layout)
+	insinto "${linux_x64}"
 	doins out/host_release/libflutter_linux_gtk.so
 	doins out/host_release/libtessellator.so
-	fperms 0755 "${FLUTTER_ENGINE_ARCH_DIR}/libflutter_linux_gtk.so"
-	fperms 0755 "${FLUTTER_ENGINE_ARCH_DIR}/libtessellator.so"
+	fperms 0755 "${linux_x64}/libflutter_linux_gtk.so"
+	fperms 0755 "${linux_x64}/libtessellator.so"
 
-	exeinto "${FLUTTER_ENGINE_ARCH_DIR}"
+	exeinto "${linux_x64}"
 	doexe out/host_release/gen_snapshot
 	doexe out/host_release/flutter_tester
 	doexe out/host_release/impellerc
+	doexe out/host_release/font-subset
 
-	insinto "${FLUTTER_ENGINE_ARCH_DIR}"
+	insinto "${linux_x64}"
 	if [[ -f out/host_release/icudtl.dat ]]; then
 		doins out/host_release/icudtl.dat
 	elif [[ -f flutter/third_party/icu/flutter/icudtl.dat ]]; then
 		doins flutter/third_party/icu/flutter/icudtl.dat
 	fi
+	if [[ -f out/host_release/gen/const_finder.dart.snapshot ]]; then
+		doins out/host_release/gen/const_finder.dart.snapshot
+	fi
 
-	insinto "/usr/lib/flutter-engine/${PV}/linux-x64/flutter_linux"
+	insinto "${linux_x64}/flutter_linux"
 	doins out/host_release/flutter_linux/*.h
 
-	insinto /usr/include/flutter-engine/flutter_linux
+	# Install linux-x64-profile layout
+	insinto "${linux_profile}"
+	doins out/host_release/libflutter_linux_gtk.so
+	fperms 0755 "${linux_profile}/libflutter_linux_gtk.so"
+
+	exeinto "${linux_profile}"
+	doexe out/host_release/gen_snapshot
+
+	insinto "${linux_profile}/flutter_linux"
 	doins out/host_release/flutter_linux/*.h
 
-	insinto "/usr/lib/flutter-engine/${PV}/common/flutter_patched_sdk"
+	# Install linux-x64-release layout
+	insinto "${linux_release}"
+	doins out/host_release/libflutter_linux_gtk.so
+	fperms 0755 "${linux_release}/libflutter_linux_gtk.so"
+
+	exeinto "${linux_release}"
+	doexe out/host_release/gen_snapshot
+
+	insinto "${linux_release}/flutter_linux"
+	doins out/host_release/flutter_linux/*.h
+
+	# Install debug/profile and release patched SDKs
+	insinto "${engine_root}/common/flutter_patched_sdk"
+	doins out/host_debug/flutter_patched_sdk/platform_strong.dill
+	doins out/host_debug/flutter_patched_sdk/vm_outline_strong.dill
+
+	insinto "${engine_root}/common/flutter_patched_sdk_product"
 	doins out/host_release/flutter_patched_sdk/platform_strong.dill
 	doins out/host_release/flutter_patched_sdk/vm_outline_strong.dill
 
-	insinto "/usr/lib/flutter-engine/${PV}/pkg"
+	insinto "${engine_root}/pkg"
 	if [[ -d out/host_release/gen/dart-pkg/sky_engine ]]; then
 		doins -r out/host_release/gen/dart-pkg/sky_engine
 	elif [[ -d flutter/sky/packages/sky_engine ]]; then
