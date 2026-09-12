@@ -998,10 +998,12 @@ def render(deps_path: Path) -> str:
         lines.append("")
         lines.extend(sorted(unpack_var_lines))
 
+    def tree_sort_key(item: GitSource) -> tuple[int, str]:
+        dest = item.destination.strip("/")
+        return (dest.count("/"), dest)
+
     lines.extend(["", "FLUTTER_ENGINE_DEPENDENCY_TREES=("])
-    for source in sorted(
-        identifiers.values(), key=lambda item: item.identifier
-    ):
+    for source in sorted(identifiers.values(), key=tree_sort_key):
         unpack_src = (
             f"${{{UNPACK_SOURCE_VARIABLES[source.identifier]}}}"
             if source.identifier in UNPACK_SOURCE_VARIABLES
