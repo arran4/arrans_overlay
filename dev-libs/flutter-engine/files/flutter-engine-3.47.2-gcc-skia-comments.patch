@@ -1,0 +1,10 @@
+--- a/flutter/third_party/skia/src/gpu/ganesh/vk/GrVkUtil.h
++++ b/flutter/third_party/skia/src/gpu/ganesh/vk/GrVkUtil.h
+@@ -33 +33 @@
+-// #define GR_VK_DEBUG_LOG(X) \
++// #define GR_VK_DEBUG_LOG(X)
+--- a/flutter/third_party/skia/src/gpu/graphite/vk/VulkanGraphiteUtils.h
++++ b/flutter/third_party/skia/src/gpu/graphite/vk/VulkanGraphiteUtils.h
+@@ -31 +31 @@
+-// #define VULKAN_DEBUG_LOG(X) \
++// #define VULKAN_DEBUG_LOG(X)

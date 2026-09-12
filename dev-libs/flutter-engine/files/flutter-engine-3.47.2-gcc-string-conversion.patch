@@ -1,0 +1,15 @@
+--- a/flutter/fml/BUILD.gn
++++ b/flutter/fml/BUILD.gn
+@@ -291,6 +291,12 @@ source_set("string_conversion") {
+   # conversion APIs.
+   defines = [ "_LIBCPP_DISABLE_DEPRECATION_WARNINGS" ]
+ 
++  # libstdc++ diagnoses the same codecvt APIs via a compiler attribute rather
++  # than a compatibility macro.
++  if (!is_clang && !is_win) {
++    cflags_cc = [ "-Wno-deprecated-declarations" ]
++  }
++
+   if (is_win) {
+     sources += [
+       "platform/win/wstring_conversion.cc",

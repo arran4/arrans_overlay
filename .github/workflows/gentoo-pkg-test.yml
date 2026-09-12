@@ -203,15 +203,22 @@ jobs:
           PKG="$1"
           SOURCE_TARGET="$2"
 
-          if [[ ${PKG} == "=dev-lang/dart-"* ]]; then
+          if [[ ${PKG} == "=dev-lang/dart-"* || \
+                ${PKG} == "=dev-libs/flutter-engine-"* ]]; then
             # The slim Docker stage3 records GCC with USE=cxx but omits its
-            # cc1plus payload.  Dart is a C++ source build, so restore the
-            # complete compiler from Gentoo's binhost before testing it.
+            # cc1plus payload. Dart and Flutter Engine are C++ source builds,
+            # so restore the complete compiler from Gentoo's binhost before
+            # testing them.
             emerge -v --oneshot --usepkg --getbinpkg sys-devel/gcc
-            CXX_PROBE="$(portageq envvar CHOST)-g++"
+            gcc-config latest
+            eval "$(gcc-config -E)"
+            hash -r
+            CXX_PROBE=g++
+            test "$(dirname "$(type -P "${CXX_PROBE}")")" = \
+              "$(gcc-config -B)"
             printf "%s\n" "int main() { return 0; }" | \
-              "${CXX_PROBE}" -x c++ - -o /tmp/dart-cxx-probe
-            /tmp/dart-cxx-probe
+              "${CXX_PROBE}" -x c++ - -o /tmp/source-cxx-probe
+            /tmp/source-cxx-probe
           fi
 
           mkdir -p /etc/portage/package.accept_keywords

@@ -1,0 +1,6 @@
+--- a/flutter/third_party/skia/include/core/SkFlattenable.h
++++ b/flutter/third_party/skia/include/core/SkFlattenable.h
+@@ -100 +100,2 @@
+-        static sk_sp<SkFlattenable> CreateProc(SkReadBuffer&);           \
++        [[maybe_unused]] static sk_sp<SkFlattenable>                    \
++        CreateProc(SkReadBuffer&);                                      \

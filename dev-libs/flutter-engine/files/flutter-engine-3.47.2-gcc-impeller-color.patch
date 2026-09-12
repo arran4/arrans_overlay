@@ -1,0 +1,6 @@
+--- a/flutter/impeller/geometry/color.cc
++++ b/flutter/impeller/geometry/color.cc
+@@ -11,0 +12 @@
++#include "flutter/fml/logging.h"
+@@ -296,0 +298 @@
++  FML_UNREACHABLE();
