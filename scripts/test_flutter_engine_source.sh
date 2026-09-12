@@ -160,8 +160,10 @@ printf '%s ~amd64\n' \
 # GCC with C++ support from binhost
 emerge -v --oneshot --usepkg --getbinpkg sys-devel/gcc
 gcc-config latest
+eval "$(gcc-config -E)"
 hash -r
 cxx_probe=g++
+test "$(dirname "$(type -P "${cxx_probe}")")" = "$(gcc-config -B)"
 printf '%s\n' 'int main() { return 0; }' | \
 	"${cxx_probe}" -x c++ - -o /tmp/cxx-probe
 /tmp/cxx-probe

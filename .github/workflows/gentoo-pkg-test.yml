@@ -211,8 +211,11 @@ jobs:
             # testing them.
             emerge -v --oneshot --usepkg --getbinpkg sys-devel/gcc
             gcc-config latest
+            eval "$(gcc-config -E)"
             hash -r
             CXX_PROBE=g++
+            test "$(dirname "$(type -P "${CXX_PROBE}")")" = \
+              "$(gcc-config -B)"
             printf "%s\n" "int main() { return 0; }" | \
               "${CXX_PROBE}" -x c++ - -o /tmp/source-cxx-probe
             /tmp/source-cxx-probe
