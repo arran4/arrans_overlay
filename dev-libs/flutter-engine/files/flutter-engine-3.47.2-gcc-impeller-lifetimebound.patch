@@ -1,0 +1,15 @@
+--- a/flutter/impeller/geometry/path_source.h
++++ b/flutter/impeller/geometry/path_source.h
+@@ -115,4 +115,3 @@
+  public:
+-  PathTransformer(PathReceiver& receiver [[clang::lifetimebound]],
+-                  const impeller::Matrix& matrix [[clang::lifetimebound]])
++  PathTransformer(PathReceiver& receiver, const impeller::Matrix& matrix)
+       : receiver_(receiver), matrix_(matrix) {}
+--- a/flutter/impeller/display_list/canvas.cc
++++ b/flutter/impeller/display_list/canvas.cc
+@@ -295,3 +295,3 @@
+   /// also being stack allocated.
+-  PathBlurShape(const PathSource& source [[clang::lifetimebound]],
++  PathBlurShape(const PathSource& source,
+                 std::shared_ptr<ShadowVertices> shadow_vertices,
