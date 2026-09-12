@@ -1,0 +1,27 @@
+--- a/flutter/third_party/skia/modules/skcms/BUILD.gn
++++ b/flutter/third_party/skia/modules/skcms/BUILD.gn
+@@ -47,7 +47,6 @@ arch("skcms_TransformHsw") {
+     cflags = [
+       "-mavx2",
+       "-mf16c",
+-      "-std=c11",
+     ]
+   }
+ }
+@@ -75,16 +74,11 @@ arch("skcms_TransformSkx") {
+       "-mavx512cd",
+       "-mavx512bw",
+       "-mavx512vl",
+-      "-std=c11",
+     ]
+   }
+ }
+ 
+ static_library("skcms") {
+-  cflags = []
+-  if (!is_win || is_clang) {
+-    cflags += [ "-std=c11" ]
+-  }
+   if (target_cpu != "x64" || target_os == "android") {
+     defines = [
+       "SKCMS_DISABLE_HSW",
