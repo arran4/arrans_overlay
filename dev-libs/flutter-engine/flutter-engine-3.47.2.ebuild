@@ -341,6 +341,9 @@ src_prepare() {
 src_configure() {
 	tc-export AR CC CXX NM RANLIB
 
+	local gcc_bin
+	gcc_bin=$(gcc-config -B) || die "failed to locate active GCC toolchain"
+
 	local gn_common_args=(
 		--no-goma
 		--no-rbe
@@ -349,7 +352,7 @@ src_configure() {
 		--no-default-linux-sysroot
 		--no-enable-unittests
 		--no-clang
-		--gn-args="toolchain_prefix=\"${CHOST}-\""
+		--gn-args="toolchain_prefix=\"${gcc_bin}/\""
 	)
 
 	python3 flutter/tools/gn "${gn_common_args[@]}" \
