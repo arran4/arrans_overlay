@@ -1,0 +1,6 @@
+--- a/flutter/third_party/skia/src/effects/imagefilters/SkCropImageFilter.cpp
++++ b/flutter/third_party/skia/src/effects/imagefilters/SkCropImageFilter.cpp
+@@ -139 +139,2 @@
+-sk_sp<SkFlattenable> SkCropImageFilter::CreateProc(SkReadBuffer& buffer) {
++[[maybe_unused]] sk_sp<SkFlattenable>
++SkCropImageFilter::CreateProc(SkReadBuffer& buffer) {
