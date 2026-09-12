@@ -281,6 +281,7 @@ PATCHES=(
 	"${FILESDIR}/flutter-engine-${PV}-gcc-impeller-color.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-impeller-formats.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-impeller-lifetimebound.patch"
+	"${FILESDIR}/flutter-engine-${PV}-gcc-skia-comments.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-skia-reinitializes.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-string-conversion.patch"
 	"${FILESDIR}/flutter-engine-${PV}-skia-skcms-cxx.patch"
