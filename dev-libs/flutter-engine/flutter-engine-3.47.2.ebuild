@@ -277,6 +277,7 @@ BDEPEND="
 PATCHES=(
 	"${FILESDIR}/flutter-engine-${PV}-gn-version-fallback.patch"
 	"${FILESDIR}/flutter-engine-${PV}-compiler-version-python3.patch"
+	"${FILESDIR}/flutter-engine-${PV}-gcc-cpu-affinity.patch"
 	"${FILESDIR}/flutter-engine-${PV}-skia-skcms-cxx.patch"
 	"${FILESDIR}/flutter-engine-${PV}-system-gcc-prefix.patch"
 	"${FILESDIR}/flutter-engine-${PV}-system-libraries.patch"
