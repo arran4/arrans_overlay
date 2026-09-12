@@ -9,8 +9,8 @@
 		Builds the Flutter Engine from its pinned upstream source graph.
 		Provides host tools (gen_snapshot, impellerc, flutter_tester),
 		libraries (libflutter_linux_gtk.so, libtessellator.so), embedder
-		headers, and patched SDK artifacts required to run and build
-		Flutter applications.
+		headers, patched SDK artifacts, and Engine Dart packages. These
+		artifacts are required to run and build Flutter applications.
 	</longdescription>
 	<upstream>
 		<remote-id type="github">flutter/flutter</remote-id>
