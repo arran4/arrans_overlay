@@ -70,9 +70,8 @@ jobs:
             if [ "$ebuild_exists" = false ]; then
               # Create ebuild script
               {
-                echo "EAPI=8"
-                echo ""
                 echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/net-misc-kmagmux-update.yaml"
+                echo "EAPI=8"
                 echo ""
                 echo "inherit ecm"
                 echo ""
