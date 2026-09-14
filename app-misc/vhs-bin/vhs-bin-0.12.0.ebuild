@@ -13,7 +13,7 @@ SRC_URI="
 	arm64? (  https://github.com/charmbracelet/vhs/releases/download/v0.12.0/vhs_0.12.0_Linux_arm64.tar.gz -> ${P}-vhs_${PV}_Linux_arm64.tar.gz  )
 	x86? (  https://github.com/charmbracelet/vhs/releases/download/v0.12.0/vhs_0.12.0_Linux_i386.tar.gz -> ${P}-vhs_${PV}_Linux_i386.tar.gz  )
 "
-LICENSE="MIT License"
+LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~arm ~arm64 ~x86"
 IUSE=" doc man"
