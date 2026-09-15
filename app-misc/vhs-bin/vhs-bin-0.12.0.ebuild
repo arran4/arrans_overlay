@@ -8,7 +8,7 @@ EAPI=8
 DESCRIPTION="Your CLI home video recorder 📼"
 HOMEPAGE="https://github.com/charmbracelet/vhs/"
 SRC_URI="
-	amd64? (  https://github.com/charmbracelet/vhs/releases/download/v0.12.0/vhs_0.12.0_Linux_x86_64.tar.gz -> vhs-bin-0.12.0-vhs_0.12.0_Linux_x86_64.tar.gz  )
+	amd64? (  https://github.com/charmbracelet/vhs/releases/download/v0.12.0/${PV} -> vhs-bin-0.12.0-vhs_0.12.0_Linux_x86_64.tar.gz  )
 "
 LICENSE="MIT"
 SLOT="0"
@@ -29,7 +29,6 @@ src_unpack() {
 
 src_install() {
   exeinto /opt/bin
-  dosym ../opt/bin/vhs /usr/bin/vhs
   if use amd64; then
     newexe "vhs_${PV}_Linux_x86_64/vhs" "vhs" || die "Failed to install Binary"
   fi
@@ -39,4 +38,5 @@ src_install() {
       newdoc "vhs_${PV}_Linux_x86_64/README.md" "README.md" || die "Failed to install document README.md"
     fi
   fi
+  dosym /opt/bin/vhs /usr/bin/vhs
 }
