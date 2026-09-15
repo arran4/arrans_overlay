@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-09-15 02:57:45.341605107 +0000 UTC m=+0.009093061
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-09-15 03:34:32.454026275 +0000 UTC m=+0.006805400
 
 name: app-misc/vhs-bin update
 
@@ -101,7 +101,7 @@ jobs:
                 echo '"'
                 echo ''
                 echo -n 'RDEPEND="'
-                echo -n '( ) media-video/ffmpeg www-apps/ttyd www-client/chromium www-client/google-chrome www-client/google-chrome-beta www-client/google-chrome-unstable || '
+                echo -n 'media-video/ffmpeg www-apps/ttyd '
                 echo '"'
                 echo ''
                 echo 'S="${WORKDIR}"'
@@ -114,6 +114,7 @@ jobs:
                 echo ''
                 echo 'src_install() {'
                 echo '  exeinto /opt/bin'
+                echo "  dosym /opt/bin/vhs /usr/bin/vhs"
                 echo '  if use amd64; then'
                 echo '    newexe "${{ env.vhs_binary_archived_name_amd64 }}" "${{ env.vhs_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'

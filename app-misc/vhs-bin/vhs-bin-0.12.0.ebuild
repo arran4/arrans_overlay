@@ -13,11 +13,11 @@ SRC_URI="
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE=""
+IUSE=" doc"
 
 REQUIRED_USE=""
 
-RDEPEND="media-video/ffmpeg www-apps/ttyd"
+RDEPEND="media-video/ffmpeg www-apps/ttyd "
 
 S="${WORKDIR}"
 
@@ -32,4 +32,11 @@ src_install() {
   if use amd64; then
     newexe "vhs_${PV}_Linux_x86_64/vhs" "vhs" || die "Failed to install Binary"
   fi
+  if use doc; then
+    if use amd64; then
+      newdoc "vhs_${PV}_Linux_x86_64/LICENSE" "LICENSE" || die "Failed to install document LICENSE"
+      newdoc "vhs_${PV}_Linux_x86_64/README.md" "README.md" || die "Failed to install document README.md"
+    fi
+  fi
+  dosym /opt/bin/vhs /usr/bin/vhs
 }
