@@ -1,12 +1,11 @@
+DEFINED_PHASES=install unpack
 DESCRIPTION=Your CLI home video recorder 📼
 EAPI=8
 HOMEPAGE=https://github.com/charmbracelet/vhs/
-IUSE= doc
+IUSE=doc
 KEYWORDS=~amd64
 LICENSE=MIT
 RDEPEND=media-video/ffmpeg www-apps/ttyd
 SLOT=0
-SRC_URI=
-	amd64? (  https://github.com/charmbracelet/vhs/releases/download/v0.12.0/vhs_0.12.0_Linux_x86_64.tar.gz -> vhs-bin-0.12.0-vhs_0.12.0_Linux_x86_64.tar.gz  )
-
-_md5_=a5640cbe7fdd7bc4cbef4b9dd99ecf5c
+SRC_URI=amd64? ( https://github.com/charmbracelet/vhs/releases/download/v0.12.0/0.12.0 -> vhs-bin-0.12.0-vhs_0.12.0_Linux_x86_64.tar.gz )
+_md5_=b0e50ed72fae7a051515efda941eb711

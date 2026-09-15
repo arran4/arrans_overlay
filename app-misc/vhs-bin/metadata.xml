@@ -1,14 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<maintainer type="person">
-		<email>gentoo@arran4.com</email>
-		<name>Arran Ubels</name>
-	</maintainer>
-	<use>
-		<flag name="doc">Install documentation</flag>
-	</use>
-	<upstream>
-		<remote-id type="github">charmbracelet/vhs</remote-id>
-	</upstream>
 </pkgmetadata>
