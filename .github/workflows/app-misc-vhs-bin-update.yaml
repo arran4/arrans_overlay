@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-09-14 02:27:07.168507192 +0000 UTC m=+0.007392238
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-09-15 02:57:45.341605107 +0000 UTC m=+0.009093061
 
 name: app-misc/vhs-bin update
 
@@ -20,17 +20,11 @@ env:
   homepage: "https://github.com/charmbracelet/vhs/"
   github_owner: charmbracelet
   github_repo: vhs
-  keywords: ~amd64 ~arm ~arm64 ~x86
+  keywords: ~amd64
   workflow_filename: app-misc-vhs-bin-update.yaml
-  vhs_binary_installed_name: '/usr/bin/vhs'
+  vhs_binary_installed_name: 'vhs'
   vhs_binary_archived_name_amd64: 'vhs_${PV}_Linux_x86_64/vhs'
   vhs_release_name_amd64: 'vhs_${version}_Linux_x86_64.tar.gz'
-  vhs_binary_archived_name_arm: 'vhs_${PV}_Linux_arm/vhs'
-  vhs_release_name_arm: 'vhs_${version}_Linux_arm.tar.gz'
-  vhs_binary_archived_name_arm64: 'vhs_${PV}_Linux_arm64/vhs'
-  vhs_release_name_arm64: 'vhs_${version}_Linux_arm64.tar.gz'
-  vhs_binary_archived_name_x86: 'vhs_${PV}_Linux_i386/vhs'
-  vhs_release_name_x86: 'vhs_${version}_Linux_i386.tar.gz'
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -57,7 +51,7 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           metadata_file="${ebuild_dir}/metadata.xml"
-          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:charmbracelet/vhs" --use-add "doc:Install documentation" --use-add "man:Install manual pages" "$metadata_file"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:charmbracelet/vhs" --use-add "doc:Install documentation" "$metadata_file"
           declare -A releaseTypes=()
           tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
@@ -95,15 +89,12 @@ jobs:
                 echo "HOMEPAGE=\"${{ env.homepage }}\""
                 echo 'SRC_URI="'
                 echo "	amd64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-vhs_\${PV}_Linux_x86_64.tar.gz  )  "
-                echo "	arm? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-vhs_\${PV}_Linux_arm.tar.gz  )  "
-                echo "	arm64? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-vhs_\${PV}_Linux_arm64.tar.gz  )  "
-                echo "	x86? (  https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/\${PV} -> \${P}-vhs_\${PV}_Linux_i386.tar.gz  )  "
                 echo '"'
-                echo 'LICENSE="MIT License"'
+                echo 'LICENSE="MIT"'
                 echo 'SLOT="0"'
                 echo 'KEYWORDS="${{ env.keywords }}"'
                 echo -n 'IUSE="'
-                echo -n ' doc man'
+                echo -n ' doc'
                 echo '"'
                 echo ''
                 echo -n 'REQUIRED_USE="'
@@ -119,29 +110,6 @@ jobs:
                 echo '  if use amd64; then'
                 echo "    unpack \"\${DISTDIR}/\${P}-vhs_\${PV}_Linux_x86_64.tar.gz\" || die \"Can't unpack archive file\""
                 echo '  fi'
-                echo '  if use arm; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-vhs_\${PV}_Linux_arm.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use arm64; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-vhs_\${PV}_Linux_arm64.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use x86; then'
-                echo "    unpack \"\${DISTDIR}/\${P}-vhs_\${PV}_Linux_i386.tar.gz\" || die \"Can't unpack archive file\""
-                echo '  fi'
-                echo '  if use man; then'
-                echo '    if use amd64; then'
-                echo '      gzip -d "vhs_${PV}_Linux_x86_64/manpages/vhs.1.gz" || die "Failed to decompress manual page vhs.1"'
-                echo '    fi'
-                echo '    if use arm; then'
-                echo '      gzip -d "vhs_${PV}_Linux_arm/manpages/vhs.1.gz" || die "Failed to decompress manual page vhs.1"'
-                echo '    fi'
-                echo '    if use arm64; then'
-                echo '      gzip -d "vhs_${PV}_Linux_arm64/manpages/vhs.1.gz" || die "Failed to decompress manual page vhs.1"'
-                echo '    fi'
-                echo '    if use x86; then'
-                echo '      gzip -d "vhs_${PV}_Linux_i386/manpages/vhs.1.gz" || die "Failed to decompress manual page vhs.1"'
-                echo '    fi'
-                echo '  fi'
                 echo '}'
                 echo ''
                 echo 'src_install() {'
@@ -149,46 +117,9 @@ jobs:
                 echo '  if use amd64; then'
                 echo '    newexe "${{ env.vhs_binary_archived_name_amd64 }}" "${{ env.vhs_binary_installed_name }}" || die "Failed to install Binary"'
                 echo '  fi'
-                echo '  if use arm; then'
-                echo '    newexe "${{ env.vhs_binary_archived_name_arm }}" "${{ env.vhs_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use arm64; then'
-                echo '    newexe "${{ env.vhs_binary_archived_name_arm64 }}" "${{ env.vhs_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use x86; then'
-                echo '    newexe "${{ env.vhs_binary_archived_name_x86 }}" "${{ env.vhs_binary_installed_name }}" || die "Failed to install Binary"'
-                echo '  fi'
-                echo '  if use man; then'
-                echo '    if use amd64; then'
-                echo '      newman "vhs_${PV}_Linux_x86_64/manpages/vhs.1" "vhs.1" || die "Failed to install manual page vhs.1"'
-                echo '    fi'
-                echo '    if use arm; then'
-                echo '      newman "vhs_${PV}_Linux_arm/manpages/vhs.1" "vhs.1" || die "Failed to install manual page vhs.1"'
-                echo '    fi'
-                echo '    if use arm64; then'
-                echo '      newman "vhs_${PV}_Linux_arm64/manpages/vhs.1" "vhs.1" || die "Failed to install manual page vhs.1"'
-                echo '    fi'
-                echo '    if use x86; then'
-                echo '      newman "vhs_${PV}_Linux_i386/manpages/vhs.1" "vhs.1" || die "Failed to install manual page vhs.1"'
-                echo '    fi'
-                echo '  fi'
                 echo '  if use doc; then'
-                echo '    if use amd64; then'
-                echo '      newdoc "vhs_${PV}_Linux_x86_64/LICENSE" "LICENSE" || die "Failed to install document LICENSE"'
-                echo '      newdoc "vhs_${PV}_Linux_x86_64/README.md" "README.md" || die "Failed to install document README.md"'
-                echo '    fi'
-                echo '    if use arm; then'
-                echo '      newdoc "vhs_${PV}_Linux_arm/LICENSE" "LICENSE" || die "Failed to install document LICENSE"'
-                echo '      newdoc "vhs_${PV}_Linux_arm/README.md" "README.md" || die "Failed to install document README.md"'
-                echo '    fi'
-                echo '    if use arm64; then'
-                echo '      newdoc "vhs_${PV}_Linux_arm64/LICENSE" "LICENSE" || die "Failed to install document LICENSE"'
-                echo '      newdoc "vhs_${PV}_Linux_arm64/README.md" "README.md" || die "Failed to install document README.md"'
-                echo '    fi'
-                echo '    if use x86; then'
-                echo '      newdoc "vhs_${PV}_Linux_i386/LICENSE" "LICENSE" || die "Failed to install document LICENSE"'
-                echo '      newdoc "vhs_${PV}_Linux_i386/README.md" "README.md" || die "Failed to install document README.md"'
-                echo '    fi'
+                echo '    newdoc "vhs_${PV}_Linux_x86_64/LICENSE" "LICENSE" || die "Failed to install document LICENSE"'
+                echo '    newdoc "vhs_${PV}_Linux_x86_64/README.md" "README.md" || die "Failed to install document README.md"'
                 echo '  fi'
                 echo '}'
               } > "$tmp_ebuild_file"
@@ -204,9 +135,6 @@ jobs:
               fi
               failed=0
               if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-vhs_${version}_Linux_x86_64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-vhs_${version}_Linux_arm.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-vhs_${version}_Linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/${version}" "${{ env.epn }}-${version}-vhs_${version}_Linux_i386.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
               if [ "$failed" -eq 1 ]; then
                   echo "Failed to generate manifest for $tag. Skipping..."
                   rm -f "$ebuild_file"

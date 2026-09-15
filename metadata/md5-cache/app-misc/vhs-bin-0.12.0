@@ -1,0 +1,11 @@
+DESCRIPTION=Your CLI home video recorder 📼
+EAPI=8
+HOMEPAGE=https://github.com/charmbracelet/vhs/
+KEYWORDS=~amd64
+LICENSE=MIT
+RDEPEND=media-video/ffmpeg www-apps/ttyd
+SLOT=0
+SRC_URI=
+	amd64? (  https://github.com/charmbracelet/vhs/releases/download/v0.12.0/vhs_0.12.0_Linux_x86_64.tar.gz -> vhs-bin-0.12.0-vhs_0.12.0_Linux_x86_64.tar.gz  )
+
+_md5_=b9ccc211934cd9e1de39e6196901c65a

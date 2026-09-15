@@ -8,19 +8,16 @@ EAPI=8
 DESCRIPTION="Your CLI home video recorder 📼"
 HOMEPAGE="https://github.com/charmbracelet/vhs/"
 SRC_URI="
-	amd64? (  https://github.com/charmbracelet/vhs/releases/download/v0.12.0/vhs_0.12.0_Linux_x86_64.tar.gz -> ${P}-vhs_${PV}_Linux_x86_64.tar.gz  )
-	arm? (  https://github.com/charmbracelet/vhs/releases/download/v0.12.0/vhs_0.12.0_Linux_arm.tar.gz -> ${P}-vhs_${PV}_Linux_arm.tar.gz  )
-	arm64? (  https://github.com/charmbracelet/vhs/releases/download/v0.12.0/vhs_0.12.0_Linux_arm64.tar.gz -> ${P}-vhs_${PV}_Linux_arm64.tar.gz  )
-	x86? (  https://github.com/charmbracelet/vhs/releases/download/v0.12.0/vhs_0.12.0_Linux_i386.tar.gz -> ${P}-vhs_${PV}_Linux_i386.tar.gz  )
+	amd64? (  https://github.com/charmbracelet/vhs/releases/download/v0.12.0/vhs_0.12.0_Linux_x86_64.tar.gz -> vhs-bin-0.12.0-vhs_0.12.0_Linux_x86_64.tar.gz  )
 "
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~arm64 ~x86"
-IUSE=" doc man"
+KEYWORDS="~amd64"
+IUSE=""
 
 REQUIRED_USE=""
 
-RDEPEND="media-video/ffmpeg www-apps/ttyd www-client/chromium "
+RDEPEND="media-video/ffmpeg www-apps/ttyd"
 
 S="${WORKDIR}"
 
@@ -28,75 +25,11 @@ src_unpack() {
   if use amd64; then
     unpack "${DISTDIR}/${P}-vhs_${PV}_Linux_x86_64.tar.gz" || die "Can't unpack archive file"
   fi
-  if use arm; then
-    unpack "${DISTDIR}/${P}-vhs_${PV}_Linux_arm.tar.gz" || die "Can't unpack archive file"
-  fi
-  if use arm64; then
-    unpack "${DISTDIR}/${P}-vhs_${PV}_Linux_arm64.tar.gz" || die "Can't unpack archive file"
-  fi
-  if use x86; then
-    unpack "${DISTDIR}/${P}-vhs_${PV}_Linux_i386.tar.gz" || die "Can't unpack archive file"
-  fi
-  if use man; then
-    if use amd64; then
-      gzip -d "vhs_${PV}_Linux_x86_64/manpages/vhs.1.gz" || die "Failed to decompress manual page vhs.1"
-    fi
-    if use arm; then
-      gzip -d "vhs_${PV}_Linux_arm/manpages/vhs.1.gz" || die "Failed to decompress manual page vhs.1"
-    fi
-    if use arm64; then
-      gzip -d "vhs_${PV}_Linux_arm64/manpages/vhs.1.gz" || die "Failed to decompress manual page vhs.1"
-    fi
-    if use x86; then
-      gzip -d "vhs_${PV}_Linux_i386/manpages/vhs.1.gz" || die "Failed to decompress manual page vhs.1"
-    fi
-  fi
 }
 
 src_install() {
   exeinto /opt/bin
   if use amd64; then
     newexe "vhs_${PV}_Linux_x86_64/vhs" "vhs" || die "Failed to install Binary"
-  fi
-  if use arm; then
-    newexe "vhs_${PV}_Linux_arm/vhs" "vhs" || die "Failed to install Binary"
-  fi
-  if use arm64; then
-    newexe "vhs_${PV}_Linux_arm64/vhs" "vhs" || die "Failed to install Binary"
-  fi
-  if use x86; then
-    newexe "vhs_${PV}_Linux_i386/vhs" "vhs" || die "Failed to install Binary"
-  fi
-  if use man; then
-    if use amd64; then
-      newman "vhs_${PV}_Linux_x86_64/manpages/vhs.1" "vhs.1" || die "Failed to install manual page vhs.1"
-    fi
-    if use arm; then
-      newman "vhs_${PV}_Linux_arm/manpages/vhs.1" "vhs.1" || die "Failed to install manual page vhs.1"
-    fi
-    if use arm64; then
-      newman "vhs_${PV}_Linux_arm64/manpages/vhs.1" "vhs.1" || die "Failed to install manual page vhs.1"
-    fi
-    if use x86; then
-      newman "vhs_${PV}_Linux_i386/manpages/vhs.1" "vhs.1" || die "Failed to install manual page vhs.1"
-    fi
-  fi
-  if use doc; then
-    if use amd64; then
-      newdoc "vhs_${PV}_Linux_x86_64/LICENSE" "LICENSE" || die "Failed to install document LICENSE"
-      newdoc "vhs_${PV}_Linux_x86_64/README.md" "README.md" || die "Failed to install document README.md"
-    fi
-    if use arm; then
-      newdoc "vhs_${PV}_Linux_arm/LICENSE" "LICENSE" || die "Failed to install document LICENSE"
-      newdoc "vhs_${PV}_Linux_arm/README.md" "README.md" || die "Failed to install document README.md"
-    fi
-    if use arm64; then
-      newdoc "vhs_${PV}_Linux_arm64/LICENSE" "LICENSE" || die "Failed to install document LICENSE"
-      newdoc "vhs_${PV}_Linux_arm64/README.md" "README.md" || die "Failed to install document README.md"
-    fi
-    if use x86; then
-      newdoc "vhs_${PV}_Linux_i386/LICENSE" "LICENSE" || die "Failed to install document LICENSE"
-      newdoc "vhs_${PV}_Linux_i386/README.md" "README.md" || die "Failed to install document README.md"
-    fi
   fi
 }
