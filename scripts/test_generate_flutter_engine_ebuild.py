@@ -326,6 +326,28 @@ class ToolchainConfigurationTest(unittest.TestCase):
         self.assertIn("build/config/gcc/BUILD.gn", self.patch_text)
         self.assertIn("build/toolchain/linux/BUILD.gn", self.patch_text)
 
+    def test_impeller_compiler_deps_materialized(self):
+        self.assertNotIn(
+            "engine/src/flutter/third_party/inja",
+            generator.REVIEWED_EXCLUSIONS,
+            "inja is required by impeller/compiler and must not be excluded",
+        )
+        self.assertNotIn(
+            "engine/src/flutter/third_party/json",
+            generator.REVIEWED_EXCLUSIONS,
+            "json is required by inja/impeller and must not be excluded",
+        )
+        self.assertIn("flutter-dep-inja-", self.ebuild_text)
+        self.assertIn("flutter-dep-json-", self.ebuild_text)
+        self.assertIn(
+            "inja-${INJA_REV}|flutter/third_party/inja",
+            self.ebuild_text,
+        )
+        self.assertIn(
+            "json-${JSON_REV}|flutter/third_party/json",
+            self.ebuild_text,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

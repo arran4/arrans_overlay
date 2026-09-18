@@ -44,6 +44,8 @@ EXPAT_REV="8e49998f003d693213b538ef765814c7d21abada"
 FLATBUFFERS_REV="067bfdbde9b10c1beb5d6b02d67ae9db8b96f736"
 HARFBUZZ_REV="49844c32a7a3f6be371355a1213c952a3f4a44e7"
 ICU_REV="a86a32e67b8d1384b33f8fa48c83a6079b86f8cd"
+INJA_REV="88bd6112575a80d004e551c98cf956f88ff4d445"
+JSON_REV="17d9eacd248f58b73f4d1be518ef649fe2295642"
 LIBWEBP_REV="ca332209cb5567c9b249c86788cb2dbf8847e760"
 SDK_REV="60a57cd42d64dc03e9f07aa60a2e250755c1ef28"
 SHADERC_REV="d15277d6bc180f6a0b8b601f0cab2bbcaac9b4d5"
@@ -102,6 +104,8 @@ FLUTTER_ENGINE_DEPENDENCY_TREES=(
 	"flatbuffers-${FLATBUFFERS_REV}|flutter/third_party/flatbuffers"
 	"harfbuzz-${HARFBUZZ_REV}|flutter/third_party/harfbuzz"
 	"chromium-icu-${ICU_REV}|flutter/third_party/icu"
+	"inja-${INJA_REV}|flutter/third_party/inja"
+	"json-${JSON_REV}|flutter/third_party/json"
 	"libwebp-${LIBWEBP_REV}|flutter/third_party/libwebp"
 	"shaderc-${SHADERC_REV}|flutter/third_party/shaderc"
 	"skia-${SKIA_REV}|flutter/third_party/skia"
@@ -204,6 +208,10 @@ SRC_URI="
 		-> flutter-dep-harfbuzz-49844c32.tar.gz
 	https://github.com/librepo/chromium-icu/archive/${ICU_REV}.tar.gz
 		-> dart-dep-icu-a86a32e6.tar.gz
+	https://github.com/pantor/inja/archive/${INJA_REV}.tar.gz
+		-> flutter-dep-inja-88bd6112.tar.gz
+	https://github.com/nlohmann/json/archive/${JSON_REV}.tar.gz
+		-> flutter-dep-json-17d9eacd.tar.gz
 	https://github.com/webmproject/libwebp/archive/${LIBWEBP_REV}.tar.gz
 		-> flutter-dep-libwebp-ca332209.tar.gz
 	https://github.com/dart-lang/sdk/archive/${SDK_REV}.tar.gz

@@ -265,20 +265,6 @@ REVIEWED_EXCLUSIONS: dict[str, tuple[DependencyIdentity, str]] = {
         ),
         "embedder examples only",
     ),
-    "engine/src/flutter/third_party/inja": (
-        git_identity(
-            "https://flutter.googlesource.com/third_party/inja",
-            "88bd6112575a80d004e551c98cf956f88ff4d445",
-        ),
-        "unused template engine",
-    ),
-    "engine/src/flutter/third_party/json": (
-        git_identity(
-            "https://flutter.googlesource.com/third_party/json.git",
-            "17d9eacd248f58b73f4d1be518ef649fe2295642",
-        ),
-        "unused nlohmann/json",
-    ),
     "engine/src/flutter/third_party/libjpeg-turbo/src": (
         git_identity(
             "https://flutter.googlesource.com/third_party/libjpeg-turbo",
@@ -538,6 +524,8 @@ SHORT_NAMES = {
     "harfbuzz": "HARFBUZZ",
     "http": "DART_HTTP",
     "i18n": "DART_I18N",
+    "inja": "INJA",
+    "json": "JSON",
     "leak_tracker": "DART_LEAK_TRACKER",
     "libexpat": "EXPAT",
     "libjpeg-turbo": "LIBJPEG_TURBO",
@@ -846,6 +834,12 @@ def stable_github_repository(repository: str) -> str:
         ),
         "https://flutter.googlesource.com/third_party/harfbuzz": (
             "https://github.com/harfbuzz/harfbuzz"
+        ),
+        "https://flutter.googlesource.com/third_party/inja": (
+            "https://github.com/pantor/inja"
+        ),
+        "https://flutter.googlesource.com/third_party/json": (
+            "https://github.com/nlohmann/json"
         ),
         "https://flutter.googlesource.com/third_party/libjpeg-turbo": (
             "https://github.com/libjpeg-turbo/libjpeg-turbo"
