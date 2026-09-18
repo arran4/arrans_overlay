@@ -1,6 +1,41 @@
+--- a/build/config/gcc/BUILD.gn
++++ b/build/config/gcc/BUILD.gn
+@@ -78,16 +78,6 @@ config("relative_paths") {
+   } else {
+     cflags += [ "-fdebug-prefix-map=$absolute_path=$relative_path" ]
+   }
+-  cflags += [
+-    # This makes sure that include directories in the toolchain are
+-    # represented as relative to the build directory (because that's how
+-    # we invoke the compiler), rather than absolute.  This can affect
+-    # __FILE__ expansions (e.g. assertions in system headers).  We
+-    # normally run a compiler that's someplace within the source tree
+-    # (//buildtools/...), so its absolute installation path will have a
+-    # prefix matching absolute_path and hence be mapped to relative_path
+-    # in the debugging information, so this should actually be
+-    # superfluous for purposes of the debugging information.
+-    "-no-canonical-prefixes",
+-  ]
++  # Gentoo uses native GCC reached through symlinks;
++  # omit -no-canonical-prefixes so driver resolves cc1/cc1plus.
+ }
 --- a/build/toolchain/linux/BUILD.gn
 +++ b/build/toolchain/linux/BUILD.gn
-@@ -153,6 +153,9 @@ gcc_toolchain("clang_x64") {
+@@ -10,6 +10,13 @@
+ 
+ declare_args() {
+   toolchain_prefix = ""
++  target_cc = ""
++  target_cxx = ""
++  target_ar = ""
++  target_nm = ""
++  target_readelf = ""
++  target_strip = ""
++  target_ld = ""
+ }
+ 
+ if (use_rbe) {
+@@ -153,6 +160,9 @@ gcc_toolchain("clang_x64") {
  
  gcc_toolchain("x64") {
    prefix = ""
@@ -10,3 +45,33 @@
    asm = "${prefix}gcc"
    cc = "${compiler_prefix}${prefix}gcc"
    cxx = "${compiler_prefix}${prefix}g++"
+@@ -163,6 +173,29 @@ gcc_toolchain("x64") {
+   ld = "${link_prefix}${prefix}g++"
+   strip = "${prefix}strip"
+ 
++  if (target_cc != "") {
++    asm = target_cc
++    cc = "${compiler_prefix}${target_cc}"
++  }
++  if (target_cxx != "") {
++    cxx = "${compiler_prefix}${target_cxx}"
++  }
++  if (target_ar != "") {
++    ar = target_ar
++  }
++  if (target_nm != "") {
++    nm = target_nm
++  }
++  if (target_readelf != "") {
++    readelf = target_readelf
++  }
++  if (target_ld != "") {
++    ld = "${link_prefix}${target_ld}"
++  }
++  if (target_strip != "") {
++    strip = target_strip
++  }
++
+   toolchain_cpu = "x64"
+   toolchain_os = "linux"
+   is_clang = false
