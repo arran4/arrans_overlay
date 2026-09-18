@@ -348,6 +348,47 @@ class ToolchainConfigurationTest(unittest.TestCase):
             self.ebuild_text,
         )
 
+    def test_impeller_compiler_and_no_werror_patches_configured(self):
+        compiler_patch = (
+            EBUILD.parent
+            / "files"
+            / "flutter-engine-3.47.2-gcc-impeller-compiler.patch"
+        )
+        werror_patch = (
+            EBUILD.parent
+            / "files"
+            / "flutter-engine-3.47.2-gcc-no-werror.patch"
+        )
+        self.assertTrue(
+            compiler_patch.exists(),
+            "gcc-impeller-compiler patch must exist",
+        )
+        self.assertTrue(
+            werror_patch.exists(),
+            "gcc-no-werror patch must exist",
+        )
+        compiler_text = compiler_patch.read_text()
+        werror_text = werror_patch.read_text()
+
+        self.assertIn("reflector.cc", compiler_text)
+        self.assertIn("location >= resources.size()", compiler_text)
+        self.assertIn("runtime_stage_data.cc", compiler_text)
+        self.assertIn("kTargetPlatformKey", compiler_text)
+        self.assertIn("types.cc", compiler_text)
+        self.assertIn("FML_UNREACHABLE()", compiler_text)
+
+        self.assertIn("-Werror", werror_text)
+        self.assertIn("build/config/compiler/BUILD.gn", werror_text)
+
+        self.assertIn(
+            "flutter-engine-${PV}-gcc-impeller-compiler.patch",
+            self.ebuild_text,
+        )
+        self.assertIn(
+            "flutter-engine-${PV}-gcc-no-werror.patch",
+            self.ebuild_text,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
