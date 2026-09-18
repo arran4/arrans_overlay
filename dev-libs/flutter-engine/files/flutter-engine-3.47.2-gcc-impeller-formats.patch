@@ -1,0 +1,16 @@
+--- a/flutter/impeller/core/formats.cc
++++ b/flutter/impeller/core/formats.cc
+@@ -23,2 +23,3 @@
+   }
++  FML_UNREACHABLE();
+ }
+--- a/flutter/impeller/core/formats.h
++++ b/flutter/impeller/core/formats.h
+@@ -411,2 +411,3 @@
+   }
++  FML_UNREACHABLE();
+ }
+@@ -424,2 +425,3 @@
+   }
++  FML_UNREACHABLE();
+ }
