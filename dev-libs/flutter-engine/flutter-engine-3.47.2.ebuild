@@ -61,6 +61,7 @@ VK_SPIRV_TOOLS_REV="19042c8921f35f7bec56b9e5c96c5f5691588ca8"
 VK_TOOLS_REV="d643b80d6ba8c191bc289fdda52867c3bb3c190b"
 VK_UTILITY_LIBRARIES_REV="4322db5906e67b57ec9c327e6afe3d98ed893df7"
 VK_VALIDATION_LAYERS_REV="951aec1ecf22dc84a99a5c8bec9223c5810cc3e1"
+VULKAN_MEMORY_ALLOCATOR_REV="c788c52156f3ef7bc7ab769cb03c110a53ac8fcb"
 WUFFS_REV="600cd96cf47788ee3a74b40a6028b035c9fd6a61"
 ZLIB_REV="7eda07b1e067ef3fd7eea0419c88b5af45c9a776"
 
@@ -81,6 +82,7 @@ LUNARG_VK_TOOLS_GIT="https://github.com/LunarG/VulkanTools"
 PROTOBUF_GIT="https://github.com/google/protobuf.dart"
 SYNC_HTTP_GIT="https://github.com/google/sync_http.dart"
 VECTOR_MATH_GIT="https://github.com/google/vector_math.dart"
+VK_VMA_GIT="https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator"
 WEBDRIVER_GIT="https://github.com/google/webdriver.dart"
 WEBKIT_GIT="https://github.com/google/webkit_inspection_protocol.dart"
 WUFFS_GIT="https://github.com/google/wuffs-mirror-release-c"
@@ -95,6 +97,7 @@ DEVTOOLS_SHARED_SRC="devtools-${DEVTOOLS_SHARED_REV}/packages/devtools_shared"
 VK_LUNARG_SRC="VulkanTools-${VK_LUNARG_VULKANTOOLS_REV}"
 VK_UTIL_SRC="Vulkan-Utility-Libraries-${VK_UTILITY_LIBRARIES_REV}"
 VK_VALIDATION_SRC="Vulkan-ValidationLayers-${VK_VALIDATION_LAYERS_REV}"
+VK_VMA_SRC="VulkanMemoryAllocator-${VULKAN_MEMORY_ALLOCATOR_REV}"
 
 FLUTTER_ENGINE_DEPENDENCY_TREES=(
 	"abseil-cpp-${ABSEIL_CPP_REV}|third_party/abseil-cpp"
@@ -110,6 +113,7 @@ FLUTTER_ENGINE_DEPENDENCY_TREES=(
 	"shaderc-${SHADERC_REV}|flutter/third_party/shaderc"
 	"skia-${SKIA_REV}|flutter/third_party/skia"
 	"swiftshader-${SWIFTSHADER_REV}|flutter/third_party/swiftshader"
+	"${VK_VMA_SRC}|flutter/third_party/vulkan_memory_allocator"
 	"wuffs-mirror-release-c-${WUFFS_REV}|flutter/third_party/wuffs"
 	"chromium-src-third_party-zlib-${ZLIB_REV}|flutter/third_party/zlib"
 	"boringssl-${BORINGSSL_REV}|flutter/third_party/boringssl/src"
@@ -242,6 +246,8 @@ SRC_URI="
 		-> flutter-dep-vk-utility-libraries-4322db59.tar.gz
 	${KH_VK_LAYERS_GIT}/archive/${VK_VALIDATION_LAYERS_REV}.tar.gz
 		-> flutter-dep-vk-validation-layers-951aec1e.tar.gz
+	${VK_VMA_GIT}/archive/${VULKAN_MEMORY_ALLOCATOR_REV}.tar.gz
+		-> flutter-dep-vulkan-memory-allocator-c788c521.tar.gz
 	${WUFFS_GIT}/archive/${WUFFS_REV}.tar.gz
 		-> flutter-dep-wuffs-600cd96c.tar.gz
 	${ZLIB_GIT}/archive/${ZLIB_REV}.tar.gz
