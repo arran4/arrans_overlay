@@ -1,0 +1,50 @@
+--- a/flutter/impeller/compiler/reflector.cc
++++ b/flutter/impeller/compiler/reflector.cc
+@@ -701,7 +701,7 @@
+     auto location = compiler_->get_decoration(
+         resource.id, spv::Decoration::DecorationLocation);
+     // Malformed shader, will be caught later on.
+-    if (location >= resources.size() || location < 0) {
++    if (location >= resources.size()) {
+       location = 0;
+     }
+     offsets[location] = (type.width * type.vecsize) / 8;
+--- a/flutter/impeller/compiler/runtime_stage_data.cc
++++ b/flutter/impeller/compiler/runtime_stage_data.cc
+@@ -183,7 +183,7 @@
+ 
+ static const char* kFormatVersionKey = "format_version";
+ static const char* kStageKey = "stage";
+-static const char* kTargetPlatformKey = "target_platform";
++[[maybe_unused]] static const char* kTargetPlatformKey = "target_platform";
+ static const char* kEntrypointKey = "entrypoint";
+ static const char* kUniformsKey = "uniforms";
+ static const char* kShaderKey = "shader";
+@@ -194,7 +194,8 @@
+ static const char* kUniformColumnsKey = "columns";
+ static const char* kUniformBitWidthKey = "bit_width";
+ static const char* kUniformArrayElementsKey = "array_elements";
+-static const char* kUniformStructElementsKey = "struct_elements";
++[[maybe_unused]] static const char* kUniformStructElementsKey =
++    "struct_elements";
+ 
+ static std::string RuntimeStageBackendToString(RuntimeStageBackend backend) {
+   switch (backend) {
+@@ -209,6 +210,7 @@
+     case RuntimeStageBackend::kOpenGLES3:
+       return "opengles3";
+   }
++  FML_UNREACHABLE();
+ }
+ 
+ std::shared_ptr<fml::Mapping> RuntimeStageData::CreateJsonMapping() const {
+--- a/flutter/impeller/compiler/types.cc
++++ b/flutter/impeller/compiler/types.cc
+@@ -96,6 +96,7 @@
+     case SourceLanguage::kHLSL:
+       return "HLSL";
+   }
++  FML_UNREACHABLE();
+ }
+ 
+ std::string EntryPointFunctionNameFromSourceName(
