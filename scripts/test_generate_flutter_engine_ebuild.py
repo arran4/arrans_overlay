@@ -277,5 +277,55 @@ class RenderTest(unittest.TestCase):
         self.assertEqual(exit_code, 0)
 
 
+class ToolchainConfigurationTest(unittest.TestCase):
+    def setUp(self):
+        self.ebuild_text = EBUILD.read_text()
+        self.patch = (
+            EBUILD.parent
+            / "files"
+            / "flutter-engine-3.47.2-system-gcc-prefix.patch"
+        )
+        self.patch_text = self.patch.read_text()
+
+    def test_ebuild_omits_gcc_config_and_exports_portage_tools(self):
+        self.assertNotIn(
+            "gcc-config -B",
+            self.ebuild_text,
+            "ebuild must not derive tool paths from gcc-config -B",
+        )
+        self.assertIn(
+            "tc-export AR CC CXX NM RANLIB READELF STRIP",
+            self.ebuild_text,
+            "ebuild must export Portage toolchain variables",
+        )
+
+    def test_ebuild_configures_individual_portage_tools(self):
+        expected_gn_args = [
+            '--gn-args="toolchain_prefix=\\"${CHOST}-\\""',
+            '--gn-args="target_cc=\\"$(tc-getCC)\\""',
+            '--gn-args="target_cxx=\\"$(tc-getCXX)\\""',
+            '--gn-args="target_ar=\\"$(tc-getAR)\\""',
+            '--gn-args="target_nm=\\"$(tc-getNM)\\""',
+            '--gn-args="target_readelf=\\"$(tc-getREADELF)\\""',
+            '--gn-args="target_ld=\\"$(tc-getCXX)\\""',
+            '--gn-args="target_strip=\\"$(tc-getSTRIP)\\""',
+        ]
+        for arg in expected_gn_args:
+            self.assertIn(arg, self.ebuild_text)
+
+    def test_ebuild_validates_toolchain_in_src_configure(self):
+        self.assertIn("gcc-bin.*/(ar|nm|readelf|strip)", self.ebuild_text)
+        self.assertIn("missing generated ${ninja_file}", self.ebuild_text)
+        self.assertIn("type -P", self.ebuild_text)
+
+    def test_patch_declares_target_tools_and_fixes_prefixes(self):
+        self.assertIn("target_ar = \"\"", self.patch_text)
+        self.assertIn("target_cc = \"\"", self.patch_text)
+        self.assertIn("target_cxx = \"\"", self.patch_text)
+        self.assertIn("-no-canonical-prefixes", self.patch_text)
+        self.assertIn("build/config/gcc/BUILD.gn", self.patch_text)
+        self.assertIn("build/toolchain/linux/BUILD.gn", self.patch_text)
+
+
 if __name__ == "__main__":
     unittest.main()

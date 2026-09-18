@@ -354,10 +354,7 @@ src_prepare() {
 }
 
 src_configure() {
-	tc-export AR CC CXX NM RANLIB
-
-	local gcc_bin
-	gcc_bin=$(gcc-config -B) || die "failed to locate active GCC toolchain"
+	tc-export AR CC CXX NM RANLIB READELF STRIP
 
 	local gn_common_args=(
 		--no-goma
@@ -367,7 +364,14 @@ src_configure() {
 		--no-default-linux-sysroot
 		--no-enable-unittests
 		--no-clang
-		--gn-args="toolchain_prefix=\"${gcc_bin}/\""
+		--gn-args="toolchain_prefix=\"${CHOST}-\""
+		--gn-args="target_cc=\"$(tc-getCC)\""
+		--gn-args="target_cxx=\"$(tc-getCXX)\""
+		--gn-args="target_ar=\"$(tc-getAR)\""
+		--gn-args="target_nm=\"$(tc-getNM)\""
+		--gn-args="target_readelf=\"$(tc-getREADELF)\""
+		--gn-args="target_ld=\"$(tc-getCXX)\""
+		--gn-args="target_strip=\"$(tc-getSTRIP)\""
 	)
 
 	python3 flutter/tools/gn "${gn_common_args[@]}" \
@@ -378,6 +382,28 @@ src_configure() {
 
 	python3 flutter/tools/gn "${gn_common_args[@]}" \
 		--runtime-mode=release || die "GN configure release failed"
+
+	# Verify generated toolchain rules invoke real Portage tools and
+	# never derive invalid sibling paths such as gcc-bin/.../ar.
+	local mode ninja_file tool tool_cmd
+	for mode in host_debug host_profile host_release; do
+		ninja_file="out/${mode}/toolchain.ninja"
+		[[ -f "${ninja_file}" ]] || \
+			die "missing generated ${ninja_file}"
+
+		if grep -E 'gcc-bin.*/(ar|nm|readelf|strip)' \
+			"${ninja_file}"; then
+			die "invalid sibling binutils path in ${ninja_file}"
+		fi
+
+		for tool in "$(tc-getCC)" "$(tc-getCXX)" "$(tc-getAR)" \
+			"$(tc-getNM)" "$(tc-getREADELF)" "$(tc-getSTRIP)"; do
+			tool_cmd=$(type -P "${tool%% *}") || \
+				die "cannot resolve toolchain binary: ${tool}"
+			[[ -x "${tool_cmd}" ]] || \
+				die "tool binary not executable: ${tool_cmd}"
+		done
+	done
 }
 
 src_compile() {
@@ -393,11 +419,15 @@ src_compile() {
 	)
 
 	eninja -C out/host_debug "${debug_targets[@]}"
-	eninja -C out/host_profile flutter/shell/platform/linux:flutter_gtk
+	eninja -C out/host_profile \
+		flutter/shell/platform/linux:flutter_gtk \
+		flutter/third_party/dart/runtime/bin:gen_snapshot
 	eninja -C out/host_release \
 		flutter/shell/platform/linux:flutter_gtk \
-		flutter/build/archives:flutter_patched_sdk
+		flutter/build/archives:flutter_patched_sdk \
+		flutter/third_party/dart/runtime/bin:gen_snapshot
 }
+
 
 src_install() {
 	local engine_root="${FLUTTER_ENGINE_DIR}"
