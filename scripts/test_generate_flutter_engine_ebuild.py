@@ -348,6 +348,21 @@ class ToolchainConfigurationTest(unittest.TestCase):
             self.ebuild_text,
         )
 
+    def test_vulkan_memory_allocator_materialized(self):
+        self.assertNotIn(
+            "engine/src/flutter/third_party/vulkan_memory_allocator",
+            generator.REVIEWED_EXCLUSIONS,
+            "vulkan_memory_allocator is required by flutter_vma",
+        )
+        self.assertIn(
+            "flutter-dep-vulkan-memory-allocator-",
+            self.ebuild_text,
+        )
+        self.assertIn(
+            "${VK_VMA_SRC}|flutter/third_party/vulkan_memory_allocator",
+            self.ebuild_text,
+        )
+
     def test_impeller_compiler_and_no_werror_patches_configured(self):
         compiler_patch = (
             EBUILD.parent

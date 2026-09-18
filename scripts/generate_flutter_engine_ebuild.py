@@ -422,14 +422,6 @@ REVIEWED_EXCLUSIONS: dict[str, tuple[DependencyIdentity, str]] = {
         ),
         "expanded into Khronos Vulkan sub-packages",
     ),
-    "engine/src/flutter/third_party/vulkan_memory_allocator": (
-        git_identity(
-            "https://chromium.googlesource.com/external/github.com/"
-            "GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator",
-            "c788c52156f3ef7bc7ab769cb03c110a53ac8fcb",
-        ),
-        "unused in host_release (flutter_vma uses vulkan-deps)",
-    ),
     "engine/src/flutter/third_party/yapf": (
         git_identity(
             "https://flutter.googlesource.com/third_party/yapf",
@@ -545,6 +537,7 @@ SHORT_NAMES = {
     "test": "DART_TEST",
     "tools": "DART_TOOLS",
     "vector_math.dart": "DART_VECTOR_MATH",
+    "VulkanMemoryAllocator": "VULKAN_MEMORY_ALLOCATOR",
     "web": "DART_WEB",
     "webdriver.dart": "DART_WEBDRIVER",
     "webkit_inspection_protocol.dart": "DART_WEBKIT_PROTOCOL",
@@ -554,6 +547,9 @@ SHORT_NAMES = {
 # Named repository variables for upstream repository URLs to ensure SRC_URI
 # entries remain readable and within Gentoo's 80-column limit.
 REPOSITORY_VARIABLES = {
+    (
+        "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator"
+    ): "VK_VMA_GIT",
     "https://github.com/KhronosGroup/SPIRV-Cross": "KH_SPIRV_CROSS_GIT",
     "https://github.com/KhronosGroup/SPIRV-Headers": "KH_SPIRV_HEADERS_GIT",
     "https://github.com/KhronosGroup/SPIRV-Tools": "KH_SPIRV_TOOLS_GIT",
@@ -591,6 +587,7 @@ UNPACK_SOURCE_VARIABLES = {
     "VK_LUNARG_VULKANTOOLS": "VK_LUNARG_SRC",
     "VK_UTILITY_LIBRARIES": "VK_UTIL_SRC",
     "VK_VALIDATION_LAYERS": "VK_VALIDATION_SRC",
+    "VULKAN_MEMORY_ALLOCATOR": "VK_VMA_SRC",
 }
 
 DESTINATION_PREFIXES: list[tuple[str, str]] = [
