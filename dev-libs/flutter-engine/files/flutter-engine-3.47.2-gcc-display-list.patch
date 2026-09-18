@@ -1,0 +1,26 @@
+--- a/flutter/display_list/dl_storage.h
++++ b/flutter/display_list/dl_storage.h
+@@ -8,2 +8,3 @@
+ #include <cstdint>
++#include <cstring>
+ #include <memory>
+--- a/flutter/display_list/dl_storage.cc
++++ b/flutter/display_list/dl_storage.cc
+@@ -5,2 +5,4 @@
+ #include "flutter/display_list/dl_storage.h"
++
++#include <cstring>
+ 
+--- a/flutter/display_list/dl_vertices.h
++++ b/flutter/display_list/dl_vertices.h
+@@ -8,2 +8,3 @@
++#include <cstring>
+ #include <memory>
+ 
+--- a/flutter/display_list/dl_vertices.cc
++++ b/flutter/display_list/dl_vertices.cc
+@@ -5,2 +5,4 @@
+ #include "flutter/display_list/dl_vertices.h"
++
++#include <cstring>
+ 

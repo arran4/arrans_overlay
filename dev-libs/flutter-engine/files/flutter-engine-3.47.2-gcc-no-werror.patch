@@ -1,6 +1,17 @@
 --- a/build/config/compiler/BUILD.gn
 +++ b/build/config/compiler/BUILD.gn
-@@ -740,11 +740,7 @@
+@@ -112,4 +112,10 @@
+     cflags_cc += common_flags
+     cflags_objcc += common_flags
++    if (!is_clang) {
++      cflags_cc += [
++        "-include",
++        "cstring",
++      ]
++    }
+ 
+     # Stack protection.
+@@ -740,11 +746,7 @@
      "-Wno-unused-parameter",  # Unused function parameters.
    ]
  

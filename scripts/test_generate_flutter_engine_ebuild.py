@@ -359,6 +359,11 @@ class ToolchainConfigurationTest(unittest.TestCase):
             / "files"
             / "flutter-engine-3.47.2-gcc-no-werror.patch"
         )
+        dl_patch = (
+            EBUILD.parent
+            / "files"
+            / "flutter-engine-3.47.2-gcc-display-list.patch"
+        )
         self.assertTrue(
             compiler_patch.exists(),
             "gcc-impeller-compiler patch must exist",
@@ -367,8 +372,13 @@ class ToolchainConfigurationTest(unittest.TestCase):
             werror_patch.exists(),
             "gcc-no-werror patch must exist",
         )
+        self.assertTrue(
+            dl_patch.exists(),
+            "gcc-display-list patch must exist",
+        )
         compiler_text = compiler_patch.read_text()
         werror_text = werror_patch.read_text()
+        dl_text = dl_patch.read_text()
 
         self.assertIn("reflector.cc", compiler_text)
         self.assertIn("location >= resources.size()", compiler_text)
@@ -378,7 +388,14 @@ class ToolchainConfigurationTest(unittest.TestCase):
         self.assertIn("FML_UNREACHABLE()", compiler_text)
 
         self.assertIn("-Werror", werror_text)
+        self.assertIn("cstring", werror_text)
         self.assertIn("build/config/compiler/BUILD.gn", werror_text)
+
+        self.assertIn("dl_storage.h", dl_text)
+        self.assertIn("dl_storage.cc", dl_text)
+        self.assertIn("dl_vertices.h", dl_text)
+        self.assertIn("dl_vertices.cc", dl_text)
+        self.assertIn("#include <cstring>", dl_text)
 
         self.assertIn(
             "flutter-engine-${PV}-gcc-impeller-compiler.patch",
@@ -386,6 +403,10 @@ class ToolchainConfigurationTest(unittest.TestCase):
         )
         self.assertIn(
             "flutter-engine-${PV}-gcc-no-werror.patch",
+            self.ebuild_text,
+        )
+        self.assertIn(
+            "flutter-engine-${PV}-gcc-display-list.patch",
             self.ebuild_text,
         )
 
