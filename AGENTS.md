@@ -2,6 +2,16 @@
 
 This repository uses [arrans_overlay_workflow_builder](https://github.com/arran4/arrans_overlay_workflow_builder) to manage many of its ebuilds and workflows. Please follow these guidelines to maintain consistency and stability.
 
+## Upstream repositories and dependency selection
+
+`metadata/layout.conf` is authoritative for overlay masters and currently declares `gentoo`, `guru`, and `hyproverlay`. Treat **Gentoo and GURU as upstream package sources for arrans_overlay**.
+
+* Before adding a new dependency package, vendored source tree, mirror, or overlay-local copy, check Gentoo and GURU for an existing package that can satisfy the requirement.
+* Prefer normal Portage dependencies on Gentoo/GURU packages when their ABI, feature set, and source semantics are suitable. Do not duplicate a package in this overlay merely because upstream software vendors a copy of it.
+* A pinned or vendored source dependency is appropriate when the upstream project genuinely requires that exact source snapshot, carries required patches, or otherwise cannot safely use the system package. Document that reason rather than assuming vendoring is necessary.
+* When an arrans_overlay package becomes suitably available in Gentoo or GURU, prefer migrating users to the upstream package and removing the duplicate according to the repository's migration/news rules.
+* For large upstream dependency graphs, classify dependencies individually: use system packages where technically substitutable and retain exact pinned sources only where the build contract requires them.
+
 ## 1. The Workflow Builder & `current.config`
 
 The `current.config` file is the **source of truth** for all packages managed by the builder.
