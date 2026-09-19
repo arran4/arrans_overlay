@@ -197,6 +197,12 @@ jobs:
           emerge --sync guru
           emerge --sync hyproverlay
 
+          # Hyproverlay's generated md5-cache can briefly lag an ebuild update.
+          # Force Portage to parse Hyprland's current ebuild metadata directly;
+          # otherwise stale cache metadata can retain an obsolete Glaze upper
+          # bound for the same CPV and make the dependency graph impossible.
+          rm -f /var/db/repos/hyproverlay/metadata/md5-cache/gui-wm/hyprland-*
+
           # Install pkgcheck
           emerge -v dev-util/pkgcheck
 
@@ -226,21 +232,16 @@ jobs:
               "dev-qt/qt5compat icu" \
               >> /etc/portage/package.use/ci-kmagmux
           fi
-          if [[ "$PKG" == *"caelestia-shell"* ]]; then
-            mkdir -p /etc/portage/package.unmask
-            echo ">=dev-util/wayland-scanner-1.26.0" >> /etc/portage/package.unmask/ci
-            echo ">=dev-util/wayland-scanner-1.26.0 ~amd64" >> /etc/portage/package.accept_keywords/ci
-          fi
           # wayland-scanner-1.25 requires the matching unstable Wayland floor.
           # Keep both below 1.26, whose transition is newer than this stage3.
           printf "%s\n" "=dev-libs/wayland-1.25.0 ~amd64" \
             >> /etc/portage/package.accept_keywords/ci
 
-          # stage3 and Portage are independently published. Keep core
-          # subslot-coupled packages on the versions represented by stage3,
-          # rather than mixing unstable Perl or wayland-scanner binaries into
-          # its installed graph. Target dependencies remain free to use
-          # package-scoped autounmasking below.
+          # stage3 and Portage are independently published. Keep ABI-sensitive
+          # transitions aligned with the versions represented by stage3.
+          # For an older Perl, hold the interpreter subslot and compile Perl
+          # consumers from source below so they bind to that installed subslot.
+          # For Wayland 1.25, keep wayland-scanner below the 1.26 transition.
           mkdir -p /etc/portage/package.mask
           python3 -c '
           import portage
@@ -268,17 +269,27 @@ jobs:
           # GURU's gpu-screen-recorder builds FFmpeg's Vulkan encoder but does
           # not currently pull in the headers that hwcontext_vulkan.h needs.
           CI_GRAPH_PREREQUISITES=(dev-util/vulkan-headers)
-          if [[ "$PKG" == *"caelestia-shell"* ]]; then
-            # Hyproverlay's gui-wm/hyprland requires wayland-scanner pkgdatadir
-            # to locate wayland.xml during protocol binding generation.
-            CI_GRAPH_PREREQUISITES+=(dev-util/wayland-scanner)
-          fi
           TARGET_BINARY_OPTIONS=()
           if [ "$SOURCE_TARGET" = "true" ]; then
             # A cached binary for this CP may predate the checked-out ebuild.
             # Portage accepts package/slot atoms (not exact-version atoms) for
             # --usepkg-exclude, while the emerge target remains the exact CPV.
             TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$CP")
+          fi
+          if [[ "$PKG" == *"caelestia-shell"* ]]; then
+            # Hyproverlay can update dependency metadata without changing the
+            # Hyprland CPV. Build Hyprland from the synced overlay so the test
+            # uses the current source dependency contract.
+            TARGET_BINARY_OPTIONS+=(--usepkg-exclude gui-wm/hyprland)
+          fi
+          if grep -qx ">=dev-lang/perl-5.44" /etc/portage/package.mask/ci-stage3-compat; then
+            # Gentoo's binhost Perl modules are tied to the current Perl
+            # subslot. When stage3 still has Perl 5.42, source-build only the
+            # Perl ecosystem dependencies so they bind to 5.42 rather than
+            # forcing a partial, conflicting Perl 5.44 transition.
+            TARGET_BINARY_OPTIONS+=(--usepkg-exclude 'dev-perl/*')
+            TARGET_BINARY_OPTIONS+=(--usepkg-exclude 'virtual/perl-*')
+            TARGET_BINARY_OPTIONS+=(--usepkg-exclude 'perl-core/*')
           fi
           # Resolve and install in one operation so autounmask-continue can
           # apply all proposed changes to this graph without an expensive

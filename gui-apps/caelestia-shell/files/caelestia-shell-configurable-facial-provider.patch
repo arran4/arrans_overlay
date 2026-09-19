@@ -185,34 +185,33 @@ index f6c97470..a3224725 100644
 
          target: GlobalConfig.lock
 diff --git a/modules/lock/center/InputField.qml b/modules/lock/center/InputField.qml
-index e25166b6..7d32f7cd 100644
 --- a/modules/lock/center/InputField.qml
 +++ b/modules/lock/center/InputField.qml
-@@ -48,7 +48,7 @@ Item {
+@@ -51,7 +51,7 @@
          text: {
              if (root.pam.passwd.active)
-                 return qsTr("Loading...");
+                 return Tr.tr("Loading...");
 -            if (root.pam.howdy.active)
 +            if (root.pam.facial.active)
-                 return qsTr("Scanning face...");
+                 return Tr.tr("Scanning face...");
              if (root.pam.state === Pam.MaxTries)
-                 return qsTr("Max tries reached");
+                 return Tr.tr("Max tries reached");
+
 diff --git a/modules/lock/center/PasswordInput.qml b/modules/lock/center/PasswordInput.qml
-index 7608a8b8..6b9cd627 100644
 --- a/modules/lock/center/PasswordInput.qml
 +++ b/modules/lock/center/PasswordInput.qml
-@@ -66,7 +66,7 @@ StyledRect {
+@@ -66,7 +66,7 @@
              AnimLoader {
                  anchors.centerIn: parent
                  anchors.verticalCenterOffset: sourceComponent === iconComp ? 1 : 0
 -                sourceComp: root.lock.pam.passwd.active || root.lock.pam.howdy.active ? loadingComp : iconComp
 +                sourceComp: root.lock.pam.passwd.active || root.lock.pam.facial.active ? loadingComp : iconComp
              }
-
+ 
              Component {
-@@ -76,17 +76,17 @@ StyledRect {
-                     animate: true
-                     text: {
+@@ -78,17 +78,17 @@
+                         if (inputField.showPassword)
+                             return "visibility";
                          if (root.lock.pam.fprint.tries >= GlobalConfig.lock.maxFprintTries) {
 -                            if (root.lock.pam.howdy.canAttempt)
 +                            if (root.lock.pam.facial.canAttempt)
@@ -229,70 +228,75 @@ index 7608a8b8..6b9cd627 100644
 -                    color: !root.lock.pam.howdy.canAttempt && root.lock.pam.fprint.tries >= GlobalConfig.lock.maxFprintTries ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
 +                    color: !root.lock.pam.facial.canAttempt && root.lock.pam.fprint.tries >= GlobalConfig.lock.maxFprintTries ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
                      fontStyle: Tokens.font.icon.builders.medium.scale(root.centerScale).build()
-                     fill: text === "face"
-                 }
+                     fill: text === "face" || text === "visibility"
+ 
+
 diff --git a/modules/lock/center/StateMessage.qml b/modules/lock/center/StateMessage.qml
-index b89c9a46..71c34bf5 100644
 --- a/modules/lock/center/StateMessage.qml
 +++ b/modules/lock/center/StateMessage.qml
-@@ -15,22 +15,22 @@ Item {
+@@ -16,26 +16,26 @@
          // Errors
          if (pam.fprint.state === Pam.Error)
-             return qsTr("FP ERROR: %1").arg(pam.fprint.message);
+             return Tr.tr("FP ERROR: %1").arg(pam.fprint.message);
 -        if (pam.howdy.state === Pam.Error)
--            return qsTr("FACE ERROR: %1").arg(pam.howdy.message);
 +        if (pam.facial.state === Pam.Error)
-+            return qsTr("FACE ERROR: %1").arg(pam.facial.message);
+-            return Tr.tr("FACE ERROR: %1").arg(pam.howdy.message);
++            return Tr.tr("FACE ERROR: %1").arg(pam.facial.message);
          if (pam.state === Pam.Error)
-             return qsTr("PW ERROR: %1").arg(pam.passwd.message);
-
+             return Tr.tr("PW ERROR: %1").arg(pam.passwd.message);
+ 
 -        // Fprint/howdy fail
 +        // Fingerprint/facial fail
          if (pam.state !== Pam.MaxTries) {
              if (pam.fprint.state === Pam.Failed)
-                 return qsTr("Fingerprint not recognized (%1/%2). Please try again or use password.").arg(pam.fprint.tries).arg(GlobalConfig.lock.maxFprintTries);
+                 // TRANSLATORS: %1 = attempts used so far, %2 = maximum attempts allowed
+                 return Tr.tr("Fingerprint not recognised (%1/%2). Please try again or use password.").arg(pam.fprint.tries).arg(GlobalConfig.lock.maxFprintTries);
 -            if (pam.howdy.state === Pam.Failed)
--                return qsTr("Face not recognized (%1/%2). Please try again or use password.").arg(pam.howdy.tries).arg(GlobalConfig.lock.maxHowdyTries);
 +            if (pam.facial.state === Pam.Failed)
-+                return qsTr("Face not recognized (%1/%2). Please try again or use password.").arg(pam.facial.tries).arg(GlobalConfig.lock.maxFacialTries);
+                 // TRANSLATORS: %1 = attempts used so far, %2 = maximum attempts allowed
+-                return Tr.tr("Face not recognised (%1/%2). Please try again or use password.").arg(pam.howdy.tries).arg(GlobalConfig.lock.maxHowdyTries);
++                return Tr.tr("Face not recognised (%1/%2). Please try again or use password.").arg(pam.facial.tries).arg(GlobalConfig.lock.maxFacialTries);
          } else {
              if (pam.fprint.state === Pam.Failed)
-                 return qsTr("Fingerprint not recognized (%1/%2). Please try again.").arg(pam.fprint.tries).arg(GlobalConfig.lock.maxFprintTries);
+                 // TRANSLATORS: %1 = attempts used so far, %2 = maximum attempts allowed
+                 return Tr.tr("Fingerprint not recognised (%1/%2). Please try again.").arg(pam.fprint.tries).arg(GlobalConfig.lock.maxFprintTries);
 -            if (pam.howdy.state === Pam.Failed)
--                return qsTr("Face not recognized (%1/%2). Please try again.").arg(pam.howdy.tries).arg(GlobalConfig.lock.maxHowdyTries);
 +            if (pam.facial.state === Pam.Failed)
-+                return qsTr("Face not recognized (%1/%2). Please try again.").arg(pam.facial.tries).arg(GlobalConfig.lock.maxFacialTries);
+                 // TRANSLATORS: %1 = attempts used so far, %2 = maximum attempts allowed
+-                return Tr.tr("Face not recognised (%1/%2). Please try again.").arg(pam.howdy.tries).arg(GlobalConfig.lock.maxHowdyTries);
++                return Tr.tr("Face not recognised (%1/%2). Please try again.").arg(pam.facial.tries).arg(GlobalConfig.lock.maxFacialTries);
          }
-
+ 
          if (pam.lockMessage) // Password max tries message
-@@ -40,7 +40,7 @@ Item {
+@@ -45,7 +45,7 @@
          if (pam.state === Pam.Failed) {
              if (pam.fprint.available && pam.fprint.state !== Pam.MaxTries)
-                 return qsTr("Incorrect password. Please try again or use fingerprint.");
+                 return Tr.tr("Incorrect password. Please try again or use fingerprint.");
 -            if (pam.howdy.available && pam.howdy.state !== Pam.MaxTries)
 +            if (pam.facial.available && pam.facial.state !== Pam.MaxTries)
-                 return qsTr("Incorrect password. Please try again or use face.");
-             return qsTr("Incorrect password. Please try again.");
+                 return Tr.tr("Incorrect password. Please try again or use face.");
+             return Tr.tr("Incorrect password. Please try again.");
          }
-@@ -49,15 +49,15 @@ Item {
+@@ -54,15 +54,15 @@
          if (pam.state === Pam.MaxTries) {
              if (pam.fprint.available && pam.fprint.state !== Pam.MaxTries)
-                 return qsTr("Maximum password attempts reached. Please use fingerprint.");
+                 return Tr.tr("Maximum password attempts reached. Please use fingerprint.");
 -            if (pam.howdy.available && pam.howdy.state !== Pam.MaxTries)
 +            if (pam.facial.available && pam.facial.state !== Pam.MaxTries)
-                 return qsTr("Maximum password attempts reached. Please use face.");
+                 return Tr.tr("Maximum password attempts reached. Please use face.");
 -            if (pam.fprint.available || pam.howdy.available)
 +            if (pam.fprint.available || pam.facial.available)
-                 return qsTr("Maximum attempts for all authentication methods reached.");
-             return qsTr("Maximum password attempts reached.");
+                 return Tr.tr("Maximum attempts for all authentication methods reached.");
+             return Tr.tr("Maximum password attempts reached.");
          }
          if (pam.fprint.state === Pam.MaxTries)
-             return qsTr("Maximum fingerprint attempts reached. Please use password.");
+             return Tr.tr("Maximum fingerprint attempts reached. Please use password.");
 -        if (pam.howdy.state === Pam.MaxTries)
 +        if (pam.facial.state === Pam.MaxTries)
-             return qsTr("Maximum face attempts reached. Please use password.");
-
+             return Tr.tr("Maximum face attempts reached. Please use password.");
+ 
          return "";
+
 diff --git a/plugin/src/Caelestia/Config/lockconfig.hpp b/plugin/src/Caelestia/Config/lockconfig.hpp
 index 85653975..8ab8ec5d 100644
 --- a/plugin/src/Caelestia/Config/lockconfig.hpp
