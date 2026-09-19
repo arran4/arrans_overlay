@@ -190,18 +190,24 @@ assert '"media-sound/pulseaudio-daemon -webrtc-aec"' in workflow
 assert "dev-qt/qtbase opengl vulkan" not in workflow
 assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$CP\")" in workflow
 assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude gui-wm/hyprland)" in workflow
+assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude 'dev-perl/*')" in workflow
+assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude 'virtual/perl-*')" in workflow
+assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude 'perl-core/*')" in workflow
 assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$PKG\")" not in workflow
 assert '"$PACKAGE" "$SOURCE_TARGET"' in workflow
 assert "binary_excludes" not in workflow
 assert 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' in workflow
 assert 'printf "%s ~amd64\\n" "$PKG"' in workflow
-assert '("dev-lang/perl", "5.44")' not in workflow
+assert '("dev-lang/perl", "5.44")' in workflow
 assert '("dev-libs/wayland", "1.26")' in workflow
 assert '=dev-libs/wayland-1.25.0 ~amd64' in workflow
 assert '<dev-libs/wayland-1.25.0' in workflow
 assert "> /etc/portage/package.mask/ci-stage3-compat" in workflow
 assert "--autounmask-keep-masks=y" in package_emerge_options
 assert "CI_GRAPH_PREREQUISITES=(dev-util/vulkan-headers)" in workflow
+assert "CI_GRAPH_PREREQUISITES+=(dev-util/wayland-scanner)" not in workflow
+assert ">=dev-util/wayland-scanner-1.26.0" not in workflow
+assert "rm -f /var/db/repos/hyproverlay/metadata/md5-cache/gui-wm/hyprland-*" in workflow
 assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow
 assert "*/* ~amd64" not in workflow
 assert "=net-misc/kmagmux-9999" in workflow
