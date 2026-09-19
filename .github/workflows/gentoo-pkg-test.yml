@@ -236,24 +236,21 @@ jobs:
           printf "%s\n" "=dev-libs/wayland-1.25.0 ~amd64" \
             >> /etc/portage/package.accept_keywords/ci
 
-          # stage3 and Portage are independently published. Keep core
-          # subslot-coupled packages on the versions represented by stage3,
-          # rather than mixing unstable Perl or wayland-scanner binaries into
-          # its installed graph. Target dependencies remain free to use
-          # package-scoped autounmasking below.
+          # stage3 and Portage are independently published. Keep the
+          # Wayland/wayland-scanner transition aligned with the version
+          # represented by stage3. Do not pin Perl here: stable dev-perl
+          # packages can advance with the Gentoo tree, and holding stage3's
+          # Perl can make the current stable dependency graph unsatisfiable.
           mkdir -p /etc/portage/package.mask
           python3 -c '
           import portage
           from portage.versions import catpkgsplit, vercmp
           vardb = portage.db[portage.root]["vartree"].dbapi
-          for cp, boundary in (("dev-lang/perl", "5.44"), ("dev-libs/wayland", "1.26")):
+          for cp, boundary in (("dev-libs/wayland", "1.26"),):
               matches = vardb.match(cp)
               if not matches or vercmp(catpkgsplit(matches[-1])[2], boundary) < 0:
-                  if cp == "dev-lang/perl":
-                      print(f">={cp}-{boundary}")
-                  else:
-                      print("<dev-libs/wayland-1.25.0")
-                      print(">=dev-util/wayland-scanner-1.26")
+                  print("<dev-libs/wayland-1.25.0")
+                  print(">=dev-util/wayland-scanner-1.26")
           ' > /etc/portage/package.mask/ci-stage3-compat
 
           FAILED_PACKAGES=""
@@ -279,6 +276,14 @@ jobs:
             # Portage accepts package/slot atoms (not exact-version atoms) for
             # --usepkg-exclude, while the emerge target remains the exact CPV.
             TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$CP")
+          fi
+          if [[ "$PKG" == *"caelestia-shell"* ]]; then
+            # Hyproverlay can update dependency metadata without changing the
+            # Hyprland CPV. A cached Hyprland binary may therefore retain an
+            # older Glaze upper bound while the current ebuild has a newer
+            # dependency contract. Build Hyprland from the synced overlay so
+            # Portage resolves only the current dependency set.
+            TARGET_BINARY_OPTIONS+=(--usepkg-exclude gui-wm/hyprland)
           fi
           # Resolve and install in one operation so autounmask-continue can
           # apply all proposed changes to this graph without an expensive
