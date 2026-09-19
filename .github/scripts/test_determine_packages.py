@@ -121,8 +121,9 @@ assert [item["package"] for item in multi_font] == [
 ]
 assert len({item["cache_id"] for item in multi_font}) == 2
 
-# The workflow prefers binaries globally while forcing only directly changed
-# targets to source, retaining normal fallback and targeted autounmasking.
+# The workflow prefers binaries globally while forcing directly changed
+# targets and known stale external dependency CPVs to source, retaining normal
+# fallback and targeted autounmasking.
 with open(".github/workflows/gentoo-pkg-test.yml", encoding="utf-8") as workflow_file:
     workflow = workflow_file.read()
 assert 'CP=$(python3 -c "import portage; print(portage.dep.Atom(\\"$PKG\\").cp)")' in workflow
@@ -188,12 +189,13 @@ assert '"x11-libs/cairo X"' in workflow
 assert '"media-sound/pulseaudio-daemon -webrtc-aec"' in workflow
 assert "dev-qt/qtbase opengl vulkan" not in workflow
 assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$CP\")" in workflow
+assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude gui-wm/hyprland)" in workflow
 assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$PKG\")" not in workflow
 assert '"$PACKAGE" "$SOURCE_TARGET"' in workflow
 assert "binary_excludes" not in workflow
 assert 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' in workflow
 assert 'printf "%s ~amd64\\n" "$PKG"' in workflow
-assert '("dev-lang/perl", "5.44")' in workflow
+assert '("dev-lang/perl", "5.44")' not in workflow
 assert '("dev-libs/wayland", "1.26")' in workflow
 assert '=dev-libs/wayland-1.25.0 ~amd64' in workflow
 assert '<dev-libs/wayland-1.25.0' in workflow
