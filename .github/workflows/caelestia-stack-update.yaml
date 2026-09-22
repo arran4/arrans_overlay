@@ -5,6 +5,10 @@ on:
     - cron: '0 0 * * *' # Run daily
   workflow_dispatch:
 
+concurrency:
+  group: caelestia-stack-update
+  cancel-in-progress: false
+
 jobs:
   check-and-update:
     runs-on: ubuntu-latest
@@ -14,8 +18,38 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Reuse the persistent update branch as the source of truth. A scheduled
+      # update must never regenerate it from main and discard reviewed commits.
+      # A previously closed, unmerged PR may leave a stale branch; do not turn
+      # those changes into a new PR implicitly.
+      - name: Check out persistent update branch
+        id: branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BRANCH=update-caelestia-stack
+          if git ls-remote --exit-code --heads origin "refs/heads/$BRANCH" >/dev/null; then
+            git fetch origin "refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
+            git switch --create "$BRANCH" "origin/$BRANCH"
+            OPEN_PR=$(gh pr list --state open --head "$BRANCH" --base main --json number --jq '.[0].number // empty')
+            if [ -z "$OPEN_PR" ]; then
+              if git merge-base --is-ancestor HEAD origin/main; then
+                git merge --ff-only origin/main
+              else
+                echo '::warning::The update branch has unmerged commits but no open PR; refusing to reuse it implicitly.'
+                echo 'skip=true' >> "$GITHUB_OUTPUT"
+              fi
+            fi
+          else
+            git switch --create "$BRANCH"
+          fi
 
       - name: Get Latest Upstream Releases
+        if: steps.branch.outputs.skip != 'true'
         id: versions
         run: |
           LATEST_SHELL=$(curl -s https://api.github.com/repos/caelestia-dots/shell/releases/latest | jq -r '.tag_name' | sed 's/^v//')
@@ -31,15 +65,14 @@ jobs:
             exit 1
           fi
 
-          echo "shell=$LATEST_SHELL" >> $GITHUB_OUTPUT
-          echo "cli=$LATEST_CLI" >> $GITHUB_OUTPUT
-          echo "m3shapes_pin=$LATEST_M3SHAPES_PIN" >> $GITHUB_OUTPUT
+          echo "shell=$LATEST_SHELL" >> "$GITHUB_OUTPUT"
+          echo "cli=$LATEST_CLI" >> "$GITHUB_OUTPUT"
+          echo "m3shapes_pin=$LATEST_M3SHAPES_PIN" >> "$GITHUB_OUTPUT"
 
-          # Find current versions from our ebuilds
+          # Read versions from the existing update branch, not from main.
           CURRENT_SHELL=$(find gui-apps/caelestia-shell -maxdepth 1 -name "caelestia-shell-*.ebuild" | sed -E 's/.*caelestia-shell-([0-9.]+)(-r[0-9]+)?\.ebuild/\1/' | sort -V | tail -n 1)
           CURRENT_CLI=$(find gui-apps/caelestia-cli -maxdepth 1 -name "caelestia-cli-*.ebuild" | sed -E 's/.*caelestia-cli-([0-9.]+)(-r[0-9]+)?\.ebuild/\1/' | sort -V | tail -n 1)
 
-          # Find current M3Shapes pinned revision from our ebuild
           M3SHAPES_LATEST_EBUILD=$(find dev-qt/m3shapes -maxdepth 1 -name "m3shapes-*.ebuild" | sort -V | tail -n 1)
           if [ -f "$M3SHAPES_LATEST_EBUILD" ]; then
             CURRENT_M3SHAPES_PIN=$(grep -oP '^M3SHAPES_REV="\K[^"]+' "$M3SHAPES_LATEST_EBUILD" || true)
@@ -47,11 +80,12 @@ jobs:
             CURRENT_M3SHAPES_PIN=""
           fi
 
-          echo "current_shell=$CURRENT_SHELL" >> $GITHUB_OUTPUT
-          echo "current_cli=$CURRENT_CLI" >> $GITHUB_OUTPUT
-          echo "current_m3shapes_pin=$CURRENT_M3SHAPES_PIN" >> $GITHUB_OUTPUT
+          echo "current_shell=$CURRENT_SHELL" >> "$GITHUB_OUTPUT"
+          echo "current_cli=$CURRENT_CLI" >> "$GITHUB_OUTPUT"
+          echo "current_m3shapes_pin=$CURRENT_M3SHAPES_PIN" >> "$GITHUB_OUTPUT"
 
       - name: Check if Update Needed
+        if: steps.branch.outputs.skip != 'true'
         id: update_needed
         run: |
           SHELL_VER="${{ steps.versions.outputs.shell }}"
@@ -62,22 +96,23 @@ jobs:
           CURRENT_M3SHAPES_PIN="${{ steps.versions.outputs.current_m3shapes_pin }}"
 
           if [ -n "$SHELL_VER" ] && [ "$SHELL_VER" != "null" ] && [ "$SHELL_VER" != "$CURRENT_SHELL" ]; then
-            echo "needed=true" >> $GITHUB_OUTPUT
+            echo "needed=true" >> "$GITHUB_OUTPUT"
           elif [ -n "$CLI_VER" ] && [ "$CLI_VER" != "null" ] && [ "$CLI_VER" != "$CURRENT_CLI" ]; then
-            echo "needed=true" >> $GITHUB_OUTPUT
+            echo "needed=true" >> "$GITHUB_OUTPUT"
           elif [ -n "$M3SHAPES_PIN" ] && [ "$M3SHAPES_PIN" != "null" ] && [ "$M3SHAPES_PIN" != "$CURRENT_M3SHAPES_PIN" ]; then
-            echo "needed=true" >> $GITHUB_OUTPUT
+            echo "needed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "needed=false" >> $GITHUB_OUTPUT
+            echo "needed=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Install g2
-        if: steps.update_needed.outputs.needed == 'true'
+        if: steps.branch.outputs.skip != 'true' && steps.update_needed.outputs.needed == 'true'
         uses: arran4/g2-action@v1.2
 
       - name: Update Ebuilds
-        if: steps.update_needed.outputs.needed == 'true'
+        if: steps.branch.outputs.skip != 'true' && steps.update_needed.outputs.needed == 'true'
         run: |
+          set -euo pipefail
           SHELL_VER="${{ steps.versions.outputs.shell }}"
           CURRENT_SHELL="${{ steps.versions.outputs.current_shell }}"
           CLI_VER="${{ steps.versions.outputs.cli }}"
@@ -94,52 +129,81 @@ jobs:
             M3SHAPES_NEW_EBUILD="dev-qt/m3shapes/m3shapes-${M3SHAPES_BASE_VERSION}-r${M3SHAPES_NEXT_REV}.ebuild"
             M3SHAPES_NEW_PVR="${M3SHAPES_BASE_VERSION}-r${M3SHAPES_NEXT_REV}"
 
+            if [ -e "$M3SHAPES_NEW_EBUILD" ]; then
+              echo "::error::Refusing to overwrite existing ebuild $M3SHAPES_NEW_EBUILD"
+              exit 1
+            fi
             cp "$M3SHAPES_LATEST_EBUILD" "$M3SHAPES_NEW_EBUILD"
             sed -i "s/M3SHAPES_REV=\"$CURRENT_M3SHAPES_PIN\"/M3SHAPES_REV=\"$M3SHAPES_PIN\"/" "$M3SHAPES_NEW_EBUILD"
 
-            # Re-generate manifest for new M3Shapes tarball using the PVR for distinct distfile naming
             g2 manifest upsert-from-url "https://github.com/soramanew/m3shapes/archive/${M3SHAPES_PIN}.tar.gz" "m3shapes-${M3SHAPES_NEW_PVR}.tar.gz" dev-qt/m3shapes/Manifest
 
-            # Regenerate and stage canonical md5-cache and md5-dict
+            # g2's md5-dict representation is not an md5-cache file: copying it
+            # there can create invalid multiline dependency entries.
             g2 cache generate dev-qt/m3shapes
-            mkdir -p metadata/md5-cache/dev-qt
-            cp metadata/md5-dict/dev-qt/m3shapes* metadata/md5-cache/dev-qt/
           fi
 
           if [ -n "$SHELL_VER" ] && [ "$SHELL_VER" != "null" ] && [ "$SHELL_VER" != "$CURRENT_SHELL" ]; then
             CURRENT_SHELL_EBUILD=$(find gui-apps/caelestia-shell -maxdepth 1 -name "caelestia-shell-*.ebuild" | sort -V | tail -n 1)
-            cp "$CURRENT_SHELL_EBUILD" "gui-apps/caelestia-shell/caelestia-shell-${SHELL_VER}.ebuild"
+            NEW_SHELL_EBUILD="gui-apps/caelestia-shell/caelestia-shell-${SHELL_VER}.ebuild"
+            if [ -e "$NEW_SHELL_EBUILD" ]; then
+              echo "::error::Refusing to overwrite existing ebuild $NEW_SHELL_EBUILD"
+              exit 1
+            fi
+            cp "$CURRENT_SHELL_EBUILD" "$NEW_SHELL_EBUILD"
             g2 manifest upsert-from-url "https://github.com/caelestia-dots/shell/archive/refs/tags/v${SHELL_VER}.tar.gz" "caelestia-shell-${SHELL_VER}.tar.gz" gui-apps/caelestia-shell/Manifest
 
+            # Do not copy md5-dict to md5-cache: this previously introduced
+            # invalid multiline BDEPEND/DEPEND/RDEPEND and failed g2 lint.
+            # Portage generates its own canonical md5-cache when needed.
             g2 cache generate gui-apps/caelestia-shell
-            mkdir -p metadata/md5-cache/gui-apps
-            cp metadata/md5-dict/gui-apps/caelestia-shell* metadata/md5-cache/gui-apps/
           fi
 
           if [ -n "$CLI_VER" ] && [ "$CLI_VER" != "null" ] && [ "$CLI_VER" != "$CURRENT_CLI" ]; then
             CURRENT_CLI_EBUILD=$(find gui-apps/caelestia-cli -maxdepth 1 -name "caelestia-cli-*.ebuild" | sort -V | tail -n 1)
-            cp "$CURRENT_CLI_EBUILD" "gui-apps/caelestia-cli/caelestia-cli-${CLI_VER}.ebuild"
+            NEW_CLI_EBUILD="gui-apps/caelestia-cli/caelestia-cli-${CLI_VER}.ebuild"
+            if [ -e "$NEW_CLI_EBUILD" ]; then
+              echo "::error::Refusing to overwrite existing ebuild $NEW_CLI_EBUILD"
+              exit 1
+            fi
+            cp "$CURRENT_CLI_EBUILD" "$NEW_CLI_EBUILD"
             g2 manifest upsert-from-url "https://github.com/caelestia-dots/cli/archive/refs/tags/v${CLI_VER}.tar.gz" "caelestia-cli-${CLI_VER}.tar.gz" gui-apps/caelestia-cli/Manifest
           fi
 
-      - name: Create Pull Request
-        if: steps.update_needed.outputs.needed == 'true'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "Update Caelestia stack (Shell ${{ steps.versions.outputs.shell }}, CLI ${{ steps.versions.outputs.cli }})"
-          branch: "update-caelestia-stack"
-          title: "Update Caelestia stack"
-          body: |
-            Updates Caelestia stack:
-            - **Caelestia Shell:** ${{ steps.versions.outputs.current_shell }} -> ${{ steps.versions.outputs.shell }}
-            - **Caelestia CLI:** ${{ steps.versions.outputs.current_cli }} -> ${{ steps.versions.outputs.cli }}
-            - **M3Shapes Pin:** ${{ steps.versions.outputs.current_m3shapes_pin }} -> ${{ steps.versions.outputs.m3shapes_pin }}
+      # There is deliberately no force push or branch recreation: GitHub will
+      # reject a normal push if somebody changed the branch during this run.
+      - name: Commit and push update safely
+        if: steps.branch.outputs.skip != 'true' && steps.update_needed.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BRANCH=update-caelestia-stack
+          git add -A
+          if git diff --cached --quiet; then
+            echo '::notice::No generated changes to commit.'
+            exit 0
+          fi
 
-            This is an automated PR. Please review dependencies, patches, and QuickShell compatibility before merging.
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "Update Caelestia stack (Shell ${{ steps.versions.outputs.shell }}, CLI ${{ steps.versions.outputs.cli }})"
+          git push origin "HEAD:refs/heads/$BRANCH"
 
-            Steps to verify:
-            1. Check if new QuickShell minimum version is required.
-            2. Verify patches still apply.
-            3. Verify build manually.
-          labels: "automated pr"
+          OPEN_PR=$(gh pr list --state open --head "$BRANCH" --base main --json number --jq '.[0].number // empty')
+          if [ -n "$OPEN_PR" ]; then
+            echo "::notice::Updated existing Caelestia PR #$OPEN_PR without rewriting branch history."
+            exit 0
+          fi
+
+          cat > "$RUNNER_TEMP/caelestia-pr-body.md" <<'PR_BODY'
+          Updates Caelestia stack. See the generated ebuild and Manifest changes for the precise versions.
+
+          This is an automated PR. Please review dependencies, patches, and QuickShell compatibility before merging.
+
+          Steps to verify:
+          1. Check if new QuickShell minimum version is required.
+          2. Verify patches still apply.
+          3. Verify build manually.
+          PR_BODY
+          gh pr create --head "$BRANCH" --base main --title 'Update Caelestia stack' --body-file "$RUNNER_TEMP/caelestia-pr-body.md" --label 'automated pr'
