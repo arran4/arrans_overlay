@@ -67,15 +67,13 @@ PATCHES=(
 	# because its constructor moves the IPC object into a member.
 	"${FILESDIR}/${PN}-ignore-transient-keyboard-layout-gaps-2.5.patch"
 
-	# Add missing Qt includes (QObject, QVariant, QQmlEngine, QString, QTimer,
-	# QPointer, QStringList) that upstream relied on transitively; Qt 6.11
-	# dropped those transitive includes, so the plugin fails to build without
-	# them.
-	"${FILESDIR}/${PN}-qt6.11-includes.patch"
+	# Add Qt includes still needed directly in 2.5, without re-adding the
+	# includes upstream already added or patching files upstream removed.
+	"${FILESDIR}/${PN}-qt6.11-includes-2.5.patch"
 
 	# The Keep Awake idle inhibitor hangs off a PanelWindow built once inline
 	# in a Singleton. A monitor hotplug destroys it and nothing rebuilds it, so
-	# toggle silently stops inhibiting while still reporting itself active.
+	# the toggle silently stops inhibiting while still reporting itself active.
 	"${FILESDIR}/${PN}-rebuild-idle-inhibitor-window.patch"
 
 	# Raise the notification's sender when its default action is invoked.
