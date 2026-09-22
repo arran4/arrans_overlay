@@ -1,0 +1,46 @@
+From 33bcd19373b367f81407bd983f09ed645190b16f Mon Sep 17 00:00:00 2001
+From: Arran Ubels <arran4@gmail.com>
+Date: Tue, 22 Sep 2026 15:00:00 +1000
+Subject: [PATCH] build: retain only needed explicit Qt includes for Shell 2.5
+
+Shell 2.5 added the former compatibility includes to most files, changed
+include ordering, and removed usagefmt.hpp. Retain the remaining direct Qt
+type includes without trying to patch already-fixed or removed files.
+---
+diff --git a/plugin/src/Caelestia/Services/lyriccandidate.hpp b/plugin/src/Caelestia/Services/lyriccandidate.hpp
+--- a/plugin/src/Caelestia/Services/lyriccandidate.hpp
++++ b/plugin/src/Caelestia/Services/lyriccandidate.hpp
+@@ -1,7 +1,8 @@
+ #pragma once
+ 
+ #include <qobject.h>
+ #include <qqmlintegration.h>
++#include <qstring.h>
+ 
+ #include "config/enums.hpp"
+ 
+diff --git a/plugin/src/Caelestia/Services/lyrics.hpp b/plugin/src/Caelestia/Services/lyrics.hpp
+--- a/plugin/src/Caelestia/Services/lyrics.hpp
++++ b/plugin/src/Caelestia/Services/lyrics.hpp
+@@ -3,7 +3,8 @@
+ #include <qhash.h>
+ #include <qjsonobject.h>
+ #include <qnetworkaccessmanager.h>
+ #include <qnetworkreply.h>
++#include <qpointer.h>
+ #include <qtimer.h>
+ 
+ #include "lyriccandidate.hpp"
+diff --git a/plugin/src/Caelestia/Services/storage.hpp b/plugin/src/Caelestia/Services/storage.hpp
+--- a/plugin/src/Caelestia/Services/storage.hpp
++++ b/plugin/src/Caelestia/Services/storage.hpp
+@@ -7,6 +7,7 @@
+ #include <qpointer.h>
+ #include <qqmlintegration.h>
+ #include <qqmllist.h>
++#include <qstringlist.h>
+ #include <qvariant.h>
+ 
+ #include "diskinfo.hpp"
+--
+2.55.0
