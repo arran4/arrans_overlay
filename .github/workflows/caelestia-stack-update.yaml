@@ -5,6 +5,10 @@ on:
     - cron: '0 0 * * *' # Run daily
   workflow_dispatch:
 
+concurrency:
+  group: caelestia-stack-update
+  cancel-in-progress: false
+
 jobs:
   check-and-update:
     runs-on: ubuntu-latest
@@ -15,7 +19,21 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # The generated branch may contain reviewed fixes not yet on main.
+      # Regenerating it from main silently discards those fixes, even when
+      # upstream has not released another version. Never modify an open PR.
+      - name: Preserve active Caelestia update PR
+        id: existing_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(gh pr list --state open --head update-caelestia-stack --base main --json number --jq 'length')" -gt 0 ]; then
+            echo 'preserve=true' >> "$GITHUB_OUTPUT"
+            echo '::notice::An open Caelestia update PR already exists; preserving its reviewed branch.'
+          fi
+
       - name: Get Latest Upstream Releases
+        if: steps.existing_pr.outputs.preserve != 'true'
         id: versions
         run: |
           LATEST_SHELL=$(curl -s https://api.github.com/repos/caelestia-dots/shell/releases/latest | jq -r '.tag_name' | sed 's/^v//')
@@ -52,6 +70,7 @@ jobs:
           echo "current_m3shapes_pin=$CURRENT_M3SHAPES_PIN" >> $GITHUB_OUTPUT
 
       - name: Check if Update Needed
+        if: steps.existing_pr.outputs.preserve != 'true'
         id: update_needed
         run: |
           SHELL_VER="${{ steps.versions.outputs.shell }}"
@@ -72,11 +91,11 @@ jobs:
           fi
 
       - name: Install g2
-        if: steps.update_needed.outputs.needed == 'true'
+        if: steps.existing_pr.outputs.preserve != 'true' && steps.update_needed.outputs.needed == 'true'
         uses: arran4/g2-action@v1.2
 
       - name: Update Ebuilds
-        if: steps.update_needed.outputs.needed == 'true'
+        if: steps.existing_pr.outputs.preserve != 'true' && steps.update_needed.outputs.needed == 'true'
         run: |
           SHELL_VER="${{ steps.versions.outputs.shell }}"
           CURRENT_SHELL="${{ steps.versions.outputs.current_shell }}"
@@ -100,10 +119,9 @@ jobs:
             # Re-generate manifest for new M3Shapes tarball using the PVR for distinct distfile naming
             g2 manifest upsert-from-url "https://github.com/soramanew/m3shapes/archive/${M3SHAPES_PIN}.tar.gz" "m3shapes-${M3SHAPES_NEW_PVR}.tar.gz" dev-qt/m3shapes/Manifest
 
-            # Regenerate and stage canonical md5-cache and md5-dict
+            # g2's md5-dict representation is not an md5-cache file: copying it
+            # there can create invalid multiline dependency entries.
             g2 cache generate dev-qt/m3shapes
-            mkdir -p metadata/md5-cache/dev-qt
-            cp metadata/md5-dict/dev-qt/m3shapes* metadata/md5-cache/dev-qt/
           fi
 
           if [ -n "$SHELL_VER" ] && [ "$SHELL_VER" != "null" ] && [ "$SHELL_VER" != "$CURRENT_SHELL" ]; then
@@ -111,9 +129,10 @@ jobs:
             cp "$CURRENT_SHELL_EBUILD" "gui-apps/caelestia-shell/caelestia-shell-${SHELL_VER}.ebuild"
             g2 manifest upsert-from-url "https://github.com/caelestia-dots/shell/archive/refs/tags/v${SHELL_VER}.tar.gz" "caelestia-shell-${SHELL_VER}.tar.gz" gui-apps/caelestia-shell/Manifest
 
+            # Do not copy md5-dict to md5-cache: this previously introduced
+            # invalid multiline BDEPEND/DEPEND/RDEPEND and failed g2 lint.
+            # Portage generates its own canonical md5-cache when needed.
             g2 cache generate gui-apps/caelestia-shell
-            mkdir -p metadata/md5-cache/gui-apps
-            cp metadata/md5-dict/gui-apps/caelestia-shell* metadata/md5-cache/gui-apps/
           fi
 
           if [ -n "$CLI_VER" ] && [ "$CLI_VER" != "null" ] && [ "$CLI_VER" != "$CURRENT_CLI" ]; then
@@ -122,8 +141,21 @@ jobs:
             g2 manifest upsert-from-url "https://github.com/caelestia-dots/cli/archive/refs/tags/v${CLI_VER}.tar.gz" "caelestia-cli-${CLI_VER}.tar.gz" gui-apps/caelestia-cli/Manifest
           fi
 
+      # Close the race between the initial check and branch creation when
+      # another process opens a PR while the update is being generated.
+      - name: Recheck existing update PR
+        if: steps.existing_pr.outputs.preserve != 'true' && steps.update_needed.outputs.needed == 'true'
+        id: recheck_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(gh pr list --state open --head update-caelestia-stack --base main --json number --jq 'length')" -gt 0 ]; then
+            echo 'preserve=true' >> "$GITHUB_OUTPUT"
+            echo '::notice::Caelestia update PR opened during this run; keeping its existing branch unchanged.'
+          fi
+
       - name: Create Pull Request
-        if: steps.update_needed.outputs.needed == 'true'
+        if: steps.existing_pr.outputs.preserve != 'true' && steps.update_needed.outputs.needed == 'true' && steps.recheck_pr.outputs.preserve != 'true'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
