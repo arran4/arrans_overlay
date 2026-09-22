@@ -59,9 +59,9 @@ BDEPEND="
 "
 
 PATCHES=(
-	# Select one provider-neutral facial-authentication context and add Gaze
-	# alongside the existing Howdy PAM backend.
-	"${FILESDIR}/${PN}-configurable-facial-provider.patch"
+	# Use the 2.5-specific provider selection patch; retain the original
+	# patch for 2.4, whose lock UI and configuration have a different layout.
+	"${FILESDIR}/${PN}-configurable-facial-provider-2.5.patch"
 
 	# Ignore transient no-main-keyboard gaps when deciding whether a valid
 	# keyboard layout change should produce a notification.
@@ -92,7 +92,7 @@ src_configure() {
 		-DCMAKE_INSTALL_PREFIX="${EPREFIX}/"
 		# GOTCHA: Gentoo ships Qt6 QML under lib64; the upstream default
 		# usr/lib/qt6/qml makes Quickshell fail with
-		# \`module "Caelestia.Config" is not installed\`.
+		# `module "Caelestia.Config" is not installed`.
 		-DINSTALL_QMLDIR=usr/lib64/qt6/qml
 		# Release tarball has no .git, so upstream's git describe/rev-parse
 		# fatal-errors -- supply version metadata explicitly.

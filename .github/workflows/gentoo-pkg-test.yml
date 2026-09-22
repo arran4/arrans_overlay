@@ -227,9 +227,12 @@ jobs:
               >> /etc/portage/package.use/ci-kmagmux
           fi
           if [[ "$PKG" == *"caelestia-shell"* ]]; then
-            mkdir -p /etc/portage/package.unmask
-            echo ">=dev-util/wayland-scanner-1.26.0" >> /etc/portage/package.unmask/ci
-            echo ">=dev-util/wayland-scanner-1.26.0 ~amd64" >> /etc/portage/package.accept_keywords/ci
+            # The stage3-compatible Wayland 1.25 library needs its matching
+            # scanner version; scanner 1.26 blocks installation with Wayland 1.25.
+            echo "=dev-util/wayland-scanner-1.25.0 ~amd64" >> /etc/portage/package.accept_keywords/ci
+            # Hyprland 0.56.2 requires >=glaze-7 and <glaze-8. Only the
+            # hyproverlay 7.0.2 ebuild satisfies both constraints in CI.
+            echo "=dev-cpp/glaze-7.0.2::hyproverlay ~amd64" >> /etc/portage/package.accept_keywords/ci
           fi
           # wayland-scanner-1.25 requires the matching unstable Wayland floor.
           # Keep both below 1.26, whose transition is newer than this stage3.
@@ -239,14 +242,19 @@ jobs:
           # stage3 and Portage are independently published. Keep core
           # subslot-coupled packages on the versions represented by stage3,
           # rather than mixing unstable Perl or wayland-scanner binaries into
-          # its installed graph. Target dependencies remain free to use
-          # package-scoped autounmasking below.
+          # its installed graph. Shell's newer dependency graph explicitly
+          # requires Perl 5.44, so allow that transition in its disposable CI
+          # container instead of masking a version selected by dependencies.
           mkdir -p /etc/portage/package.mask
+          export PKG
           python3 -c '
+          import os
           import portage
           from portage.versions import catpkgsplit, vercmp
           vardb = portage.db[portage.root]["vartree"].dbapi
           for cp, boundary in (("dev-lang/perl", "5.44"), ("dev-libs/wayland", "1.26")):
+              if cp == "dev-lang/perl" and "caelestia-shell" in os.environ.get("PKG", ""):
+                  continue
               matches = vardb.match(cp)
               if not matches or vercmp(catpkgsplit(matches[-1])[2], boundary) < 0:
                   if cp == "dev-lang/perl":
@@ -271,7 +279,7 @@ jobs:
           if [[ "$PKG" == *"caelestia-shell"* ]]; then
             # Hyproverlay's gui-wm/hyprland requires wayland-scanner pkgdatadir
             # to locate wayland.xml during protocol binding generation.
-            CI_GRAPH_PREREQUISITES+=(dev-util/wayland-scanner)
+            CI_GRAPH_PREREQUISITES+=('=dev-util/wayland-scanner-1.25.0' '=dev-cpp/glaze-7.0.2::hyproverlay')
           fi
           TARGET_BINARY_OPTIONS=()
           if [ "$SOURCE_TARGET" = "true" ]; then

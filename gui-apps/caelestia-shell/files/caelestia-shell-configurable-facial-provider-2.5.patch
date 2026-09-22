@@ -1,0 +1,97 @@
+From 1b85b731f16351fb50facc0fcedc3a37f9d52da5 Mon Sep 17 00:00:00 2001
+From: Chua Zheng Leong <melynx@gmail.com>
+Date: Thu, 16 Jul 2026 13:36:41 +0800
+Subject: [PATCH] feat(lock): select Howdy or Gaze without renaming the lock UI
+
+Retain the existing howdy context identifier and configuration keys for the
+lock-screen UI and existing configurations. Only the PAM provider, availability
+check, and enablement depend on the new facialProvider setting.
+
+---
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -237 +237 @@
+-> - `lock`: `enableFprint`, `enableHowdy`, `maxFprintTries`, `maxHowdyTries`, `triggerHowdyOnWake`
++> - `lock`: `enableFprint`, `enableHowdy`, `facialProvider`, `maxFprintTries`, `maxHowdyTries`, `triggerHowdyOnWake`
+@@ -245,3 +245,11 @@
+ > </details>
+ 
++### Facial authentication
++
++Set `lock.facialProvider` to `"howdy"` (default), `"gaze"`, or `"none"`.
++The existing `enableHowdy`, `maxHowdyTries`, and `triggerHowdyOnWake` settings
++also control Gaze when it is selected, preserving existing lock configurations.
++Gaze requires `gaze`, `pam_gaze.so`, and a running `gazed` system service.
++Password and fingerprint authentication remain independently available.
++
+ ### Example configuration
+diff --git a/assets/pam.d/gaze b/assets/pam.d/gaze
+new file mode 100644
+--- /dev/null
++++ b/assets/pam.d/gaze
+@@ -0,0 +1,3 @@
++#%PAM-1.0
++
++auth    required    pam_gaze.so
+diff --git a/modules/lock/Pam.qml b/modules/lock/Pam.qml
+--- a/modules/lock/Pam.qml
++++ b/modules/lock/Pam.qml
+@@ -23,6 +23,9 @@ Scope {
+     readonly property alias passwd: passwd
+     readonly property alias fprint: fprint
+     readonly property alias howdy: howdy
++    // Keep the historical context name for the lock UI and existing settings.
++    readonly property string facialProvider: GlobalConfig.lock.facialProvider
++    readonly property bool facialProviderSupported: facialProvider === "howdy" || facialProvider === "gaze"
+ 
+     property string lockMessage
+     property int state
+@@ -135,8 +138,10 @@ Scope {
+     ManualPamContext {
+         id: howdy
+ 
+-        config: "howdy"
+-        availCommand: ["sh", "-c", "command -v howdy"]
+-        enabled: GlobalConfig.lock.enableHowdy
++        config: root.facialProviderSupported ? root.facialProvider : "howdy"
++        availCommand: root.facialProvider === "gaze"
++            ? ["sh", "-c", "command -v gaze >/dev/null && systemctl is-active --quiet gazed"]
++            : ["sh", "-c", "command -v howdy"]
++        enabled: GlobalConfig.lock.enableHowdy && root.facialProviderSupported
+         maxTries: GlobalConfig.lock.maxHowdyTries
+     }
+@@ -181,7 +186,13 @@ Scope {
+         function onEnableHowdyChanged(): void {
+             if (!GlobalConfig.lock.enableHowdy && howdy.active)
+                 howdy.abort();
+         }
++
++        function onFacialProviderChanged(): void {
++            howdy.abort();
++            howdy.reset();
++            howdy.checkAvailable();
++        }
+ 
+         target: GlobalConfig.lock
+     }
+diff --git a/plugin/src/Caelestia/Config/lockconfig.hpp b/plugin/src/Caelestia/Config/lockconfig.hpp
+--- a/plugin/src/Caelestia/Config/lockconfig.hpp
++++ b/plugin/src/Caelestia/Config/lockconfig.hpp
+@@ -1,6 +1,8 @@
+ #pragma once
+ 
+ #include "settings/objectnode.hpp"
+ #include "common.hpp"
++#include <QString>
++
+ 
+ namespace caelestia::config {
+@@ -12,6 +14,7 @@ class LockConfig : public settings::ObjectNode {
+     CONFIG_GLOBAL_PROPERTY(bool, enableFprint, true)
+     CONFIG_GLOBAL_PROPERTY(int, maxFprintTries, 3)
+     CONFIG_GLOBAL_PROPERTY(bool, enableHowdy, true)
++    CONFIG_GLOBAL_PROPERTY(QString, facialProvider, QStringLiteral("howdy"))
+     CONFIG_GLOBAL_PROPERTY(int, maxHowdyTries, 3)
+     CONFIG_GLOBAL_PROPERTY(bool, triggerHowdyOnWake, true)
+     CONFIG_PROPERTY(bool, hideNotifs, false)

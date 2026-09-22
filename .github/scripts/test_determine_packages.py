@@ -205,6 +205,8 @@ assert "*/* ~amd64" not in workflow
 assert "=net-misc/kmagmux-9999" in workflow
 assert "dev-qt/qtbase icu test" in workflow
 assert "dev-qt/qt5compat icu" in workflow
-assert ">=dev-util/wayland-scanner-1.26.0" in workflow
+assert 'echo "=dev-util/wayland-scanner-1.25.0 ~amd64" >> /etc/portage/package.accept_keywords/ci' in workflow
+assert "CI_GRAPH_PREREQUISITES+=('=dev-util/wayland-scanner-1.25.0' '=dev-cpp/glaze-7.0.2::hyproverlay')" in workflow
+assert 'echo ">=dev-util/wayland-scanner-1.26.0" >> /etc/portage/package.unmask/ci' not in workflow
 
 print("determine_packages tests passed")
