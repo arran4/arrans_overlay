@@ -1,0 +1,58 @@
+From 7d4f23a0f4e7d901d8cd9cc6a03ac624fcf592a1 Mon Sep 17 00:00:00 2001
+From: Arran Ubels <arran4@gmail.com>
+Date: Tue, 22 Sep 2026 15:00:00 +1000
+Subject: [PATCH] fix: ignore transient keyboard layout gaps in Shell 2.5
+
+Keep the last real keymap separately from transient IPC values, so an
+empty/Unknown refresh does not produce a blank notification or cause
+restoration of the same keymap to look like a layout change. Initialize
+from m_lastIpcObject after Shell 2.5 moves the constructor argument into it.
+
+The 2.4-specific patch remains unchanged for older ebuilds.
+---
+diff --git a/plugin/src/Caelestia/Services/hyprdevices.cpp b/plugin/src/Caelestia/Services/hyprdevices.cpp
+--- a/plugin/src/Caelestia/Services/hyprdevices.cpp
++++ b/plugin/src/Caelestia/Services/hyprdevices.cpp
+@@ -51,7 +51,8 @@ void toastKbLayout(const QString& layout) {
+ } // namespace
+ 
+ HyprKeyboard::HyprKeyboard(QJsonObject ipcObject, QObject* parent)
+     : QObject(parent)
+-    , m_lastIpcObject(std::move(ipcObject)) {}
++    , m_lastIpcObject(std::move(ipcObject))
++    , m_lastValidKeymap(m_lastIpcObject.value(u"active_keymap"_s).toString()) {}
+ 
+ QVariantHash HyprKeyboard::lastIpcObject() const {
+@@ -113,11 +114,16 @@ bool HyprKeyboard::updateLastIpcObject(const QJsonObject& object) {
+         dirty = true;
+         emit layoutChanged();
+     }
+-    if (last.value(u"active_keymap"_s) != object.value(u"active_keymap"_s)) {
++    const auto keymap = object.value(u"active_keymap"_s).toString();
++    if (last.value(u"active_keymap"_s).toString() != keymap) {
+         dirty = true;
+         emit activeKeymapChanged();
+-        if (isMain && !last.value(u"active_keymap"_s).toString().isEmpty())
+-            toastKbLayout(object.value(u"active_keymap"_s).toString());
++        if (isMain && !keymap.isEmpty() && keymap != u"Unknown"_s) {
++            if (!m_lastValidKeymap.isEmpty() && m_lastValidKeymap != u"Unknown"_s && keymap != m_lastValidKeymap)
++                toastKbLayout(keymap);
++
++            m_lastValidKeymap = keymap;
++        }
+     }
+     if (last.value(u"capsLock"_s) != object.value(u"capsLock"_s)) {
+         dirty = true;
+diff --git a/plugin/src/Caelestia/Services/hyprdevices.hpp b/plugin/src/Caelestia/Services/hyprdevices.hpp
+--- a/plugin/src/Caelestia/Services/hyprdevices.hpp
++++ b/plugin/src/Caelestia/Services/hyprdevices.hpp
+@@ -47,6 +47,7 @@ signals:
+ 
+ private:
+     QJsonObject m_lastIpcObject;
++    QString m_lastValidKeymap;
+ };
+ 
+ class HyprDevices : public QObject {
+--
+2.55.0
