@@ -63,9 +63,9 @@ PATCHES=(
 	# patch for 2.4, whose lock UI and configuration have a different layout.
 	"${FILESDIR}/${PN}-configurable-facial-provider-2.5.patch"
 
-	# Ignore transient no-main-keyboard gaps when deciding whether a valid
-	# keyboard layout change should produce a notification.
-	"${FILESDIR}/${PN}-ignore-transient-keyboard-layout-gaps.patch"
+	# Ignore transient keyboard layout gaps, using the 2.5-specific patch
+	# because its constructor moves the IPC object into a member.
+	"${FILESDIR}/${PN}-ignore-transient-keyboard-layout-gaps-2.5.patch"
 
 	# Add missing Qt includes (QObject, QVariant, QQmlEngine, QString, QTimer,
 	# QPointer, QStringList) that upstream relied on transitively; Qt 6.11
@@ -75,7 +75,7 @@ PATCHES=(
 
 	# The Keep Awake idle inhibitor hangs off a PanelWindow built once inline
 	# in a Singleton. A monitor hotplug destroys it and nothing rebuilds it, so
-	# the toggle silently stops inhibiting while still reporting itself active.
+	# toggle silently stops inhibiting while still reporting itself active.
 	"${FILESDIR}/${PN}-rebuild-idle-inhibitor-window.patch"
 
 	# Raise the notification's sender when its default action is invoked.
