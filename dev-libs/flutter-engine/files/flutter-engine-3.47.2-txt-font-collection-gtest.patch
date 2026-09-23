@@ -1,0 +1,12 @@
+diff --git a/flutter/txt/src/txt/font_collection.h b/flutter/txt/src/txt/font_collection.h
+index 6727723..03526ff 100644
+--- a/flutter/txt/src/txt/font_collection.h
++++ b/flutter/txt/src/txt/font_collection.h
+@@ -11,7 +11,6 @@
+ #include <unordered_map>
+ 
+ #include "flutter/fml/macros.h"
+-#include "third_party/googletest/googletest/include/gtest/gtest_prod.h"  // nogncheck
+ #include "third_party/skia/include/core/SkFontMgr.h"
+ #include "third_party/skia/include/core/SkRefCnt.h"
+ #include "third_party/skia/modules/skparagraph/include/FontCollection.h"  // nogncheck
