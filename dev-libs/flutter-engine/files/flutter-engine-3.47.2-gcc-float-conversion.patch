@@ -1,6 +1,10 @@
+diff --git a/flutter/lib/gpu/BUILD.gn b/flutter/lib/gpu/BUILD.gn
+index 50e6f07..446c19a 100644
 --- a/flutter/lib/gpu/BUILD.gn
 +++ b/flutter/lib/gpu/BUILD.gn
-@@ -9,11 +9,13 @@
+@@ -7,15 +7,18 @@ import("//flutter/impeller/tools/impeller.gni")
+ import("//flutter/testing/testing.gni")
+ 
  source_set("gpu") {
 -  cflags = [
 -    # Dart gives us doubles. Skia and Impeller work in floats.
@@ -23,9 +27,16 @@
 +      "-Wimplicit-float-conversion",
 +    ]
 +  }
+ 
+   if (is_win) {
+     # This causes build failures in third_party dependencies on Windows.
+diff --git a/flutter/lib/ui/BUILD.gn b/flutter/lib/ui/BUILD.gn
+index 6ed8db4..38f3440 100644
 --- a/flutter/lib/ui/BUILD.gn
 +++ b/flutter/lib/ui/BUILD.gn
-@@ -14,11 +14,13 @@
+@@ -12,15 +12,18 @@ if (is_fuchsia) {
+ }
+ 
  source_set("ui") {
 -  cflags = [
 -    # Dart gives us doubles. Skia and Impeller work in floats.
@@ -48,3 +59,6 @@
 +      "-Wimplicit-float-conversion",
 +    ]
 +  }
+ 
+   if (is_win) {
+     # This causes build failures in third_party dependencies on Windows.
