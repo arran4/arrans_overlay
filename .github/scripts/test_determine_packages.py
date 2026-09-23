@@ -155,8 +155,8 @@ for option in (
 ):
     assert option in package_emerge_options
 assert 'EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS} --usepkg --getbinpkg"' in workflow
-assert "timeout-minutes: 180" in workflow
-assert "timeout-minutes: 165" in workflow
+assert "timeout-minutes: 270" in workflow
+assert "timeout-minutes: 240" in workflow
 assert "\n  schedule:\n" not in workflow
 assert workflow.count("- '**/*.ebuild'") == 2
 assert "- '.github/workflows/gentoo-pkg-test.yml'" not in workflow

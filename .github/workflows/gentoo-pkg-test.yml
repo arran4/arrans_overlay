@@ -51,7 +51,7 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.matrix != '{"include":[]}'
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 270
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
@@ -118,7 +118,7 @@ jobs:
             sleep infinity
 
       - name: Install and test packages
-        timeout-minutes: 165
+        timeout-minutes: 240
         run: |
           PACKAGE="${{ matrix.package }}"
           SOURCE_TARGET="${{ matrix.source_target }}"
