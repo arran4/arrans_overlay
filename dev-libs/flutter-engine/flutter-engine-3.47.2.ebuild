@@ -295,6 +295,7 @@ PATCHES=(
 	"${FILESDIR}/flutter-engine-${PV}-gcc-display-list.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-impeller-color.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-impeller-compiler.patch"
+	"${FILESDIR}/flutter-engine-${PV}-gcc-impeller-display-list.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-impeller-formats.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-impeller-lifetimebound.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-no-werror.patch"
