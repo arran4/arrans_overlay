@@ -1,0 +1,50 @@
+--- a/flutter/lib/gpu/BUILD.gn
++++ b/flutter/lib/gpu/BUILD.gn
+@@ -9,11 +9,13 @@
+ source_set("gpu") {
+-  cflags = [
+-    # Dart gives us doubles. Skia and Impeller work in floats.
+-    # If Dart gives us a double > FLT_MAX or < -FLT_MAX, implicit conversion
+-    # will convert it to either inf/-inf or FLT_MAX/-FLT_MAX (undefined
+-    # behavior). This can result in surprising and difficult to debug behavior
+-    # for Flutter application developers, so it should be explicitly handled
+-    # via SafeNarrow.
+-    "-Wimplicit-float-conversion",
+-  ]
++  cflags = []
++  if (is_clang) {
++    cflags += [
++      # Dart gives us doubles. Skia and Impeller work in floats.
++      # If Dart gives us a double > FLT_MAX or < -FLT_MAX, implicit conversion
++      # will convert it to either inf/-inf or FLT_MAX/-FLT_MAX (undefined
++      # behavior). This can result in surprising and difficult to debug behavior
++      # for Flutter application developers, so it should be explicitly handled
++      # via SafeNarrow.
++      "-Wimplicit-float-conversion",
++    ]
++  }
+--- a/flutter/lib/ui/BUILD.gn
++++ b/flutter/lib/ui/BUILD.gn
+@@ -14,11 +14,13 @@
+ source_set("ui") {
+-  cflags = [
+-    # Dart gives us doubles. Skia and Impeller work in floats.
+-    # If Dart gives us a double > FLT_MAX or < -FLT_MAX, implicit conversion
+-    # will convert it to either inf/-inf or FLT_MAX/-FLT_MAX (undefined
+-    # behavior). This can result in surprising and difficult to debug behavior
+-    # for Flutter application developers, so it should be explicitly handled
+-    # via SafeNarrow.
+-    "-Wimplicit-float-conversion",
+-  ]
++  cflags = []
++  if (is_clang) {
++    cflags += [
++      # Dart gives us doubles. Skia and Impeller work in floats.
++      # If Dart gives us a double > FLT_MAX or < -FLT_MAX, implicit conversion
++      # will convert it to either inf/-inf or FLT_MAX/-FLT_MAX (undefined
++      # behavior). This can result in surprising and difficult to debug behavior
++      # for Flutter application developers, so it should be explicitly handled
++      # via SafeNarrow.
++      "-Wimplicit-float-conversion",
++    ]
++  }

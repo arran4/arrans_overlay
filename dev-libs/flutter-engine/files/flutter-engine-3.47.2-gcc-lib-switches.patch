@@ -1,0 +1,38 @@
+--- a/flutter/lib/gpu/shader_library.cc
++++ b/flutter/lib/gpu/shader_library.cc
+@@ -94,4 +94,5 @@
+     case impeller::fb::shaderbundle::InputDataType::kDouble:
+       return impeller::ShaderType::kDouble;
+   }
++  FML_UNREACHABLE();
+ }
+@@ -126,4 +127,5 @@
+     case impeller::fb::shaderbundle::UniformDataType::kSampledImage:
+       return impeller::ShaderType::kSampledImage;
+   }
++  FML_UNREACHABLE();
+ }
+@@ -154,4 +156,5 @@
+     case impeller::fb::shaderbundle::InputDataType::kDouble:
+       return 8;
+   }
++  FML_UNREACHABLE();
+ }
+@@ -171,4 +174,5 @@
+     case impeller::Context::BackendType::kVulkan:
+       return shader->vulkan();
+   }
++  FML_UNREACHABLE();
+ }
+--- a/flutter/lib/ui/painting/fragment_program.cc
++++ b/flutter/lib/ui/painting/fragment_program.cc
+@@ -12,2 +12,3 @@
+ #include "flutter/assets/asset_manager.h"
++#include "flutter/fml/logging.h"
+ #include "flutter/fml/trace_event.h"
+@@ -41,4 +42,5 @@
+     case impeller::RuntimeStageBackend::kOpenGLES3:
+       return "OpenGLES3";
+   }
++  FML_UNREACHABLE();
+ }
