@@ -5,7 +5,9 @@ EAPI=8
 
 DESCRIPTION="Independent Total Annihilation engine reimplementation"
 HOMEPAGE="https://nanolathe.gg/ https://github.com/nanolathe-gg/nanolathe"
-SRC_URI="amd64? ( https://github.com/arran4/fork-nanolathe/releases/download/v${PV}/fork-nanolathe_${PV}_linux_amd64.tar.gz -> ${P}.tar.gz )"
+MY_BASE_URL="https://github.com/arran4/fork-nanolathe/releases/download"
+MY_ARCHIVE="fork-nanolathe_${PV}_linux_amd64.tar.gz"
+SRC_URI="amd64? ( ${MY_BASE_URL}/v${PV}/${MY_ARCHIVE} -> ${P}.tar.gz )"
 
 LICENSE="MIT"
 SLOT="0"
@@ -34,5 +36,5 @@ src_install() {
 pkg_postinst() {
 	einfo "Nanolathe requires an existing Total Annihilation installation."
 	einfo "Retail game data is not included with this package."
-	einfo "Use nanolathe --root /path/to/TotalAnnihilation to select it explicitly."
+	einfo "Select it with: nanolathe --root /path/to/TotalAnnihilation"
 }
