@@ -1,8 +1,0 @@
-Initial binary source: https://github.com/arran4/fork-nanolathe/releases/tag/v0.0.1
-Project homepage/source: https://nanolathe.gg/ and https://github.com/nanolathe-gg/nanolathe
-
-The original game content is not distributed with this package. The user must supply a local Total Annihilation installation.
-
-Before merging this package, generate a complete Manifest using g2 manifest upsert-from-url or pkgdev manifest and run scripts/test_ebuilds.sh against the ebuild. The initial SHA256 and size in Manifest come from the GitHub release asset metadata; the mandatory BLAKE2B digest and fetch/merge verification remain outstanding.
-
-This is a manually maintained first version because the official upstream repository does not yet publish binary releases and the fork's initial archive has not undergone the overlay's generated-package compatibility checks. Do not add this package to current.config without first verifying the builder's archive extraction and update paths.
