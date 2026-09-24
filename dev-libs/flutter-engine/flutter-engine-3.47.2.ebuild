@@ -262,6 +262,7 @@ IUSE=""
 
 RDEPEND="
 	dev-libs/glib:2
+	dev-libs/wayland
 	games-util/libtess2
 	media-libs/fontconfig
 	media-libs/freetype
