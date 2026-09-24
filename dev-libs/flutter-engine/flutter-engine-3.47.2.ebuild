@@ -381,37 +381,38 @@ src_prepare() {
 	# package config by re-rooting the vendored Dart SDK packages and declaring
 	# the Engine workspace packages for offline resolution.
 	mkdir -p flutter/.dart_tool || die
-	"${EPYTHON:-python3}" -c '
-import json
+	"${EPYTHON:-python3}" - <<- 'EOF' || die
+		import json
 
-dart_cfg_path = "flutter/third_party/dart/.dart_tool/package_config.json"
-engine_cfg_path = "flutter/.dart_tool/package_config.json"
+		dart_cfg = "flutter/third_party/dart/.dart_tool/package_config.json"
+		engine_cfg = "flutter/.dart_tool/package_config.json"
+		with open(dart_cfg) as f:
+			cfg = json.load(f)
 
-with open(dart_cfg_path) as f:
-    dart_cfg = json.load(f)
+		packages = []
+		for pkg in cfg.get("packages", []):
+			p = dict(pkg)
+			if p.get("rootUri", "").startswith("../"):
+				p["rootUri"] = "../third_party/dart/" + p["rootUri"][3:]
+			packages.append(p)
 
-packages = []
-for pkg in dart_cfg.get("packages", []):
-    p = dict(pkg)
-    if p.get("rootUri", "").startswith("../"):
-        p["rootUri"] = "../third_party/dart/" + p["rootUri"][3:]
-    packages.append(p)
+		def entry(name, root):
+			return {
+				"name": name,
+				"rootUri": root,
+				"packageUri": "lib/",
+				"languageVersion": "3.5",
+			}
 
-packages.extend([
-    {"name": "const_finder", "rootUri": "../tools/const_finder", "packageUri": "lib/", "languageVersion": "3.5"},
-    {"name": "flutter_frontend_server", "rootUri": "../flutter_frontend_server", "packageUri": "lib/", "languageVersion": "3.5"},
-    {"name": "_engine_workspace", "rootUri": "../", "packageUri": "lib/", "languageVersion": "3.5"},
-])
+		packages.append(entry("const_finder", "../tools/const_finder"))
+		packages.append(
+			entry("flutter_frontend_server", "../flutter_frontend_server")
+		)
+		packages.append(entry("_engine_workspace", "../"))
 
-engine_cfg = {
-    "configVersion": 2,
-    "packages": packages,
-    "generator": "pub",
-}
-
-with open(engine_cfg_path, "w") as f:
-    json.dump(engine_cfg, f, indent=2)
-' || die "Failed to generate flutter/.dart_tool/package_config.json"
+		with open(engine_cfg, "w") as f:
+			json.dump({"configVersion": 2, "packages": packages}, f, indent=2)
+	EOF
 }
 
 src_configure() {
