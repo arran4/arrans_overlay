@@ -380,39 +380,8 @@ src_prepare() {
 	# //flutter/.dart_tool/package_config.json. Synthesize the root Engine
 	# package config by re-rooting the vendored Dart SDK packages and declaring
 	# the Engine workspace packages for offline resolution.
-	mkdir -p flutter/.dart_tool || die
-	"${EPYTHON:-python3}" - <<- 'EOF' || die
-		import json
-
-		dart_cfg = "flutter/third_party/dart/.dart_tool/package_config.json"
-		engine_cfg = "flutter/.dart_tool/package_config.json"
-		with open(dart_cfg) as f:
-			cfg = json.load(f)
-
-		packages = []
-		for pkg in cfg.get("packages", []):
-			p = dict(pkg)
-			if p.get("rootUri", "").startswith("../"):
-				p["rootUri"] = "../third_party/dart/" + p["rootUri"][3:]
-			packages.append(p)
-
-		def entry(name, root):
-			return {
-				"name": name,
-				"rootUri": root,
-				"packageUri": "lib/",
-				"languageVersion": "3.5",
-			}
-
-		packages.append(entry("const_finder", "../tools/const_finder"))
-		packages.append(
-			entry("flutter_frontend_server", "../flutter_frontend_server")
-		)
-		packages.append(entry("_engine_workspace", "../"))
-
-		with open(engine_cfg, "w") as f:
-			json.dump({"configVersion": 2, "packages": packages}, f, indent=2)
-	EOF
+	"${EPYTHON:-python3}" \
+		"${FILESDIR}/flutter-engine-${PV}-package-config.py" || die
 }
 
 src_configure() {
