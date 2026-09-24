@@ -306,6 +306,7 @@ PATCHES=(
 	"${FILESDIR}/flutter-engine-${PV}-gcc-skia-reinitializes.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-skia-unused-createproc.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-string-conversion.patch"
+	"${FILESDIR}/flutter-engine-${PV}-gtk-wayland.patch"
 	"${FILESDIR}/flutter-engine-${PV}-skia-skcms-cxx.patch"
 	"${FILESDIR}/flutter-engine-${PV}-system-gcc-prefix.patch"
 	"${FILESDIR}/flutter-engine-${PV}-system-libraries.patch"
