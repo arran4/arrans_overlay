@@ -293,6 +293,7 @@ PATCHES=(
 	"${FILESDIR}/flutter-engine-${PV}-compiler-version-python3.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-cpu-affinity.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-display-list.patch"
+	"${FILESDIR}/flutter-engine-${PV}-gcc-embedder-surface.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-float-conversion.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-impeller-color.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-impeller-compiler.patch"
@@ -351,21 +352,6 @@ src_prepare() {
 	mkdir -p third_party/rapidjson/include || die
 	ln -sf "${ESYSROOT}/usr/include/rapidjson" \
 		third_party/rapidjson/include/rapidjson || die
-
-	# Compatibility header for unbundled googletest production macros.
-	local gtest_prod_dir="third_party/googletest/googletest/include/gtest"
-	local gtest_prod="${gtest_prod_dir}/gtest_prod.h"
-	mkdir -p "${gtest_prod_dir}" || die
-	if [[ ! -f ${gtest_prod} ]]; then
-		cat <<- 'EOF' > "${gtest_prod}" || die
-		#ifndef GOOGLETEST_INCLUDE_GTEST_GTEST_PROD_H_
-		#define GOOGLETEST_INCLUDE_GTEST_GTEST_PROD_H_
-		#ifndef FRIEND_TEST
-		#define FRIEND_TEST(case_name, test_name)
-		#endif
-		#endif
-		EOF
-	fi
 
 	# Dart inside Flutter engine requires devtools_from_sources disabled
 	# and the host Dart SDK linked for offline pub package resolution.

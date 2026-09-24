@@ -1,0 +1,13 @@
+diff --git a/flutter/shell/platform/embedder/embedder_surface.cc b/flutter/shell/platform/embedder/embedder_surface.cc
+index 029833f..4451fa6 100644
+--- a/flutter/shell/platform/embedder/embedder_surface.cc
++++ b/flutter/shell/platform/embedder/embedder_surface.cc
+@@ -4,6 +4,8 @@
+ 
+ #include "flutter/shell/platform/embedder/embedder_surface.h"
+ 
++#include "third_party/skia/include/gpu/ganesh/GrDirectContext.h"
++
+ namespace flutter {
+ 
+ EmbedderSurface::EmbedderSurface() = default;
