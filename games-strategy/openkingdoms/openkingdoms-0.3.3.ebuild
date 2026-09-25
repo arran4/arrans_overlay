@@ -1,9 +1,12 @@
+# Copyright 2026 Arran Ubels
+# Distributed under the terms of the GNU General Public License v2
+
 EAPI=8
 
 inherit cmake git-r3
 
 DESCRIPTION="Open-source engine for Total Annihilation: Kingdoms"
-HOMEPAGE="https://openkingdoms.net/ https://github.com/OpenKingdoms/OpenKingdoms"
+HOMEPAGE="https://openkingdoms.net/"
 
 # Pin the v0.3.3 release to its commit, rather than following a mutable branch.
 # Fetch from Git until a release source distfile can be manifested.
@@ -30,7 +33,8 @@ src_configure() {
 }
 
 src_compile() {
-	# Upstream defines developer test executables unconditionally; build the game only.
+	# Upstream defines developer test executables unconditionally.
+	# Build only the game target; data-dependent tests need original assets.
 	cmake_build tak-re
 }
 
