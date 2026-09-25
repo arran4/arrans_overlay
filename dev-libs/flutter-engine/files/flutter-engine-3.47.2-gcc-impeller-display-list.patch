@@ -1,0 +1,16 @@
+--- a/flutter/impeller/display_list/dl_runtime_effect_impeller.cc
++++ b/flutter/impeller/display_list/dl_runtime_effect_impeller.cc
+@@ -6,2 +6,3 @@
+ #include "flutter/impeller/runtime_stage/runtime_stage.h"
++#include "third_party/skia/include/effects/SkRuntimeEffect.h"
+ 
+--- a/flutter/impeller/display_list/dl_vertices_geometry.cc
++++ b/flutter/impeller/display_list/dl_vertices_geometry.cc
+@@ -5,2 +5,3 @@
+ #include "impeller/display_list/dl_vertices_geometry.h"
++#include "flutter/fml/logging.h"
+ 
+@@ -80,2 +81,3 @@
+   }
++  FML_UNREACHABLE();
+ }

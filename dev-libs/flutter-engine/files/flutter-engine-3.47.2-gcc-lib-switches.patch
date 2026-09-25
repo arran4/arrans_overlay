@@ -1,0 +1,56 @@
+diff --git a/flutter/lib/gpu/shader_library.cc b/flutter/lib/gpu/shader_library.cc
+index 7960a5c..0e0804d 100644
+--- a/flutter/lib/gpu/shader_library.cc
++++ b/flutter/lib/gpu/shader_library.cc
+@@ -94,6 +94,7 @@ static impeller::ShaderType FromInputType(
+     case impeller::fb::shaderbundle::InputDataType::kDouble:
+       return impeller::ShaderType::kDouble;
+   }
++  FML_UNREACHABLE();
+ }
+ 
+ static impeller::ShaderType FromUniformType(
+@@ -126,6 +127,7 @@ static impeller::ShaderType FromUniformType(
+     case impeller::fb::shaderbundle::UniformDataType::kSampledImage:
+       return impeller::ShaderType::kSampledImage;
+   }
++  FML_UNREACHABLE();
+ }
+ 
+ static size_t SizeOfInputType(
+@@ -154,6 +156,7 @@ static size_t SizeOfInputType(
+     case impeller::fb::shaderbundle::InputDataType::kDouble:
+       return 8;
+   }
++  FML_UNREACHABLE();
+ }
+ 
+ static const impeller::fb::shaderbundle::BackendShader* GetShaderBackend(
+@@ -171,6 +174,7 @@ static const impeller::fb::shaderbundle::BackendShader* GetShaderBackend(
+     case impeller::Context::BackendType::kVulkan:
+       return shader->vulkan();
+   }
++  FML_UNREACHABLE();
+ }
+ 
+ static ShaderLibrary::ShaderMap ParseShaderBundle(
+diff --git a/flutter/lib/ui/painting/fragment_program.cc b/flutter/lib/ui/painting/fragment_program.cc
+index 74f4a33..dc75800 100644
+--- a/flutter/lib/ui/painting/fragment_program.cc
++++ b/flutter/lib/ui/painting/fragment_program.cc
+@@ -10,6 +10,7 @@
+ #include "flutter/lib/ui/painting/fragment_program.h"
+ 
+ #include "flutter/assets/asset_manager.h"
++#include "flutter/fml/logging.h"
+ #include "flutter/fml/trace_event.h"
+ #if IMPELLER_SUPPORTS_RENDERING
+ #include "flutter/impeller/display_list/dl_runtime_effect_impeller.h"  // nogncheck
+@@ -41,6 +42,7 @@ static std::string RuntimeStageBackendToString(
+     case impeller::RuntimeStageBackend::kOpenGLES3:
+       return "OpenGLES3";
+   }
++  FML_UNREACHABLE();
+ }
+ 
+ namespace {

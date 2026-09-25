@@ -1,0 +1,73 @@
+--- a/flutter/shell/platform/linux/fl_opengl_manager.cc
++++ b/flutter/shell/platform/linux/fl_opengl_manager.cc
+@@ -3,7 +3,10 @@
+ // found in the LICENSE file.
+ 
+ #include <epoxy/egl.h>
++#include <gdk/gdk.h>
++#ifdef GDK_WINDOWING_WAYLAND
+ #include <gdk/gdkwayland.h>
++#endif
+ #ifdef GDK_WINDOWING_X11
+ #include <gdk/gdkx.h>
+ #endif
+@@ -45,16 +48,20 @@
+ 
+ static void fl_opengl_manager_init(FlOpenGLManager* self) {
+   GdkDisplay* display = gdk_display_get_default();
++#ifdef GDK_WINDOWING_WAYLAND
+   if (GDK_IS_WAYLAND_DISPLAY(display)) {
+     self->display = eglGetPlatformDisplayEXT(
+         EGL_PLATFORM_WAYLAND_EXT, gdk_wayland_display_get_wl_display(display),
+         NULL);
++  } else
++#endif
+ #ifdef GDK_WINDOWING_X11
+-  } else if (GDK_IS_X11_DISPLAY(display)) {
++  if (GDK_IS_X11_DISPLAY(display)) {
+     self->display = eglGetPlatformDisplayEXT(
+         EGL_PLATFORM_X11_EXT, gdk_x11_display_get_xdisplay(display), NULL);
++  } else
+ #endif
+-  } else {
++  {
+     g_critical("Unsupported GDK backend, unable to get EGL display");
+   }
+ 
+--- a/flutter/shell/platform/linux/fl_view.cc
++++ b/flutter/shell/platform/linux/fl_view.cc
+@@ -5,7 +5,9 @@
+ #include "flutter/shell/platform/linux/public/flutter_linux/fl_view.h"
+ 
+ #include <atk/atk.h>
++#ifdef GDK_WINDOWING_WAYLAND
+ #include <gdk/gdkwayland.h>
++#endif
+ #include <gtk/gtk-a11y.h>
+ 
+ #include <cstring>
+--- a/flutter/shell/platform/linux/fl_view_renderer.cc
++++ b/flutter/shell/platform/linux/fl_view_renderer.cc
+@@ -4,7 +4,9 @@
+ 
+ #include "flutter/shell/platform/linux/fl_view_renderer.h"
+ 
++#ifdef GDK_WINDOWING_WAYLAND
+ #include <gdk/gdkwayland.h>
++#endif
+ 
+ #include "flutter/shell/platform/linux/fl_compositor.h"
+ #include "flutter/shell/platform/linux/fl_compositor_opengl.h"
+@@ -99,8 +101,11 @@
+   // If using Wayland, then EGL is in use and we can access the frame
+   // from the Flutter context using EGLImage. If not (i.e. X11 using GLX)
+   // then we have to copy the texture via the CPU.
+-  gboolean shareable =
++  gboolean shareable = FALSE;
++#ifdef GDK_WINDOWING_WAYLAND
++  shareable =
+       GDK_IS_WAYLAND_DISPLAY(gtk_widget_get_display(GTK_WIDGET(self)));
++#endif
+   self->compositor = FL_COMPOSITOR(fl_compositor_opengl_new(
+       fl_engine_get_task_runner(self->engine),
+       fl_engine_get_opengl_manager(self->engine), shareable));
