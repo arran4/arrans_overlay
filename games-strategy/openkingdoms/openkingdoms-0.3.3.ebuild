@@ -3,15 +3,12 @@
 
 EAPI=8
 
-inherit cmake git-r3
+inherit cmake
 
 DESCRIPTION="Open-source engine for Total Annihilation: Kingdoms"
 HOMEPAGE="https://openkingdoms.net/"
-
-# Pin the v0.3.3 release to its commit, rather than following a mutable branch.
-# Fetch from Git until a release source distfile can be manifested.
-EGIT_REPO_URI="https://github.com/OpenKingdoms/OpenKingdoms.git"
-EGIT_COMMIT="78843bf708ac4d5f1f2e12607fcef01929f70dfb"
+SRC_URI="https://github.com/OpenKingdoms/OpenKingdoms/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+S="${WORKDIR}/OpenKingdoms-${PV}"
 
 LICENSE="GPL-3"
 SLOT="0"
