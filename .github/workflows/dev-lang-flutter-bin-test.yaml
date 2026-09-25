@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Start Gentoo stage3
         run: |
@@ -47,8 +47,16 @@ jobs:
               "auto-sync = no" \
               > /etc/portage/repos.conf/arrans-overlay.conf
 
-            if ! ACCEPT_KEYWORDS="~amd64" emerge --oneshot =dev-lang/flutter-bin-3.47.0-r1; then
-              build_log=$(find /var/tmp/portage/dev-lang/flutter-bin-3.47.0-r1 -path "*/temp/build.log" -print -quit 2>/dev/null || true)
+            ebuild_file=$(find /var/db/repos/arrans_overlay/dev-lang/flutter-bin -maxdepth 1 -name "flutter-bin-*.ebuild" | sort -V | tail -n 1)
+            ebuild_base=$(basename "${ebuild_file}" .ebuild)
+            pvr="${ebuild_base#flutter-bin-}"
+            pv="${pvr%-r*}"
+            echo "Selected flutter-bin: ${ebuild_base} (pv: ${pv}, pvr: ${pvr})"
+            printf "TEST_PV=%s\nTEST_PVR=%s\n" "${pv}" "${pvr}" > /etc/flutter-test.env
+            chmod 644 /etc/flutter-test.env
+
+            if ! ACCEPT_KEYWORDS="~amd64" emerge --oneshot "=dev-lang/flutter-bin-${pvr}"; then
+              build_log=$(find "/var/tmp/portage/dev-lang/flutter-bin-${pvr}" -path "*/temp/build.log" -print -quit 2>/dev/null || true)
               if [ -n "${build_log}" ]; then
                 echo "===== flutter-bin Portage build.log ====="
                 cat "${build_log}"
@@ -80,39 +88,41 @@ jobs:
             --workdir /home/fluttertest \
             flutter-gentoo \
             bash -euxo pipefail -c '
+              source /etc/flutter-test.env
+
               # 1. Initial run seeds the cache
               flutter --version
 
               # 2. Verify cache structure and permissions
-              test -x "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/dart-sdk/bin/dart"
-              test -f "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/flutter_tools.snapshot"
-              test -w "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache"
+              test -x "${XDG_CACHE_HOME}/flutter/${TEST_PV}/bin-cache/dart-sdk/bin/dart"
+              test -f "${XDG_CACHE_HOME}/flutter/${TEST_PV}/bin-cache/flutter_tools.snapshot"
+              test -w "${XDG_CACHE_HOME}/flutter/${TEST_PV}/bin-cache"
               test ! -w /opt/flutter
 
               # 3. Verify seed stamps record the full package revision (PVR)
-              test "$(cat "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/.gentoo-flutter-seed-version")" = "3.47.0-r1"
-              test "$(cat "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version")" = "3.47.0-r1"
+              test "$(cat "${XDG_CACHE_HOME}/flutter/${TEST_PV}/bin-cache/.gentoo-flutter-seed-version")" = "${TEST_PVR}"
+              test "$(cat "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version")" = "${TEST_PVR}"
 
               # 4. Invalidation & refresh test:
-              # Simulate an existing cache seeded by an older revision or unrevisioned PV (e.g., 3.47.0).
+              # Simulate an existing cache seeded by an older revision or unrevisioned PV.
               # Corrupt a seeded file and change the stamp to a stale revision / PV.
-              echo "corrupted-snapshot" > "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/flutter_tools.snapshot"
-              echo "3.47.0" > "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/.gentoo-flutter-seed-version"
-              echo "3.47.0" > "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version"
+              echo "corrupted-snapshot" > "${XDG_CACHE_HOME}/flutter/${TEST_PV}/bin-cache/flutter_tools.snapshot"
+              echo "stale-seed-stamp" > "${XDG_CACHE_HOME}/flutter/${TEST_PV}/bin-cache/.gentoo-flutter-seed-version"
+              echo "stale-seed-stamp" > "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version"
 
               # Running flutter must detect the stale stamp and refresh the seed from /opt/flutter
               flutter --version
 
               # Verify the cache was refreshed with the correct revision stamp and restored files
-              test "$(cat "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/.gentoo-flutter-seed-version")" = "3.47.0-r1"
-              test "$(cat "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version")" = "3.47.0-r1"
-              cmp -s /opt/flutter/bin/cache/flutter_tools.snapshot "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache/flutter_tools.snapshot"
-              test -w "${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache"
+              test "$(cat "${XDG_CACHE_HOME}/flutter/${TEST_PV}/bin-cache/.gentoo-flutter-seed-version")" = "${TEST_PVR}"
+              test "$(cat "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version")" = "${TEST_PVR}"
+              cmp -s /opt/flutter/bin/cache/flutter_tools.snapshot "${XDG_CACHE_HOME}/flutter/${TEST_PV}/bin-cache/flutter_tools.snapshot"
+              test -w "${XDG_CACHE_HOME}/flutter/${TEST_PV}/bin-cache"
 
               # 5. Explicit cache paths must work even when neither HOME nor
               # XDG_CACHE_HOME is available to the launcher.
               env -u HOME -u XDG_CACHE_HOME \
-                FLUTTER_CACHE_DIR="${XDG_CACHE_HOME}/flutter/3.47.0/bin-cache" \
+                FLUTTER_CACHE_DIR="${XDG_CACHE_HOME}/flutter/${TEST_PV}/bin-cache" \
                 PUB_CACHE="${XDG_CACHE_HOME}/flutter/pub-cache" \
                 flutter --version
 
@@ -122,8 +132,8 @@ jobs:
                 FLUTTER_CACHE_DIR=/home/fluttertest/custom-cache/bin-cache \
                 PUB_CACHE=/home/fluttertest/custom-cache/pub-cache \
                 flutter --version
-              test "$(cat /home/fluttertest/custom-cache/bin-cache/.gentoo-flutter-seed-version)" = "3.47.0-r1"
-              test "$(cat /home/fluttertest/custom-cache/pub-cache/.gentoo-flutter-pub-seed-version)" = "3.47.0-r1"
+              test "$(cat /home/fluttertest/custom-cache/bin-cache/.gentoo-flutter-seed-version)" = "${TEST_PVR}"
+              test "$(cat /home/fluttertest/custom-cache/pub-cache/.gentoo-flutter-pub-seed-version)" = "${TEST_PVR}"
               test -w /home/fluttertest/custom-cache/bin-cache
 
               # 6. Offline sample app create and build

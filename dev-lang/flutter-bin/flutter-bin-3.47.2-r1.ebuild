@@ -1,7 +1,12 @@
-# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/dev-lang-flutter-bin-update.yaml
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+# Generated via:
+# .github/workflows/dev-lang-flutter-bin-update.yaml
+
 EAPI=8
 
-DESCRIPTION="Flutter makes it easy and fast to build beautiful apps for mobile and beyond"
+DESCRIPTION="Flutter makes it easy to build apps for mobile and beyond"
 HOMEPAGE="https://flutter.dev/"
 
 # g2 <= 0.0.97 treats the Gentoo -rN revision as part of PV/P when parsing an
@@ -9,9 +14,11 @@ HOMEPAGE="https://flutter.dev/"
 # Manifest lint resolves the same distfile name; the update workflow rewrites
 # this value when copying the packaging to a new upstream Flutter release.
 UPSTREAM_PV="3.47.2"
+U="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux"
 SRC_URI="
 	amd64? (
-		https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${UPSTREAM_PV}-stable.tar.xz -> ${PN}-${UPSTREAM_PV}.amd64.tar.xz
+		${U}/flutter_linux_${UPSTREAM_PV}-stable.tar.xz
+			-> ${PN}-${UPSTREAM_PV}.amd64.tar.xz
 	)
 "
 
@@ -40,7 +47,8 @@ src_prepare() {
 	# A distribution-managed SDK must never replace itself or rebuild its
 	# package-managed tool in /opt at runtime. The prebuilt cache is copied to a
 	# per-user writable cache by the launcher instead.
-	sed -i 's/^\(\s\+\)\(upgrade_flutter \)/\1# \2/' "${S}/bin/internal/shared.sh" || die
+	sed -i 's/^\(\s\+\)\(upgrade_flutter \)/\1# \2/' \
+		"${S}/bin/internal/shared.sh" || die
 }
 
 src_compile() {
@@ -61,13 +69,17 @@ src_compile() {
 
 	[[ -d "${preload_cache}" ]] ||
 		die "Flutter installation bundle has no pub preload cache"
-	preload_archive=$(find "${preload_cache}" -maxdepth 1 -type f -name '*.tar.gz' -print -quit) || die
+	preload_archive=$(
+		find "${preload_cache}" -maxdepth 1 -type f -name '*.tar.gz' \
+			-print -quit
+	) || die
 	[[ -n "${preload_archive}" ]] ||
 		die "Flutter installation bundle has no preloaded pub archives"
 	mkdir -p "${pub_cache}" "${build_home}" || die
 
 	HOME="${build_home}" PUB_CACHE="${pub_cache}" \
-		"${dart}" pub --suppress-analytics cache preload "${preload_cache}"/*.tar.gz ||
+		"${dart}" pub --suppress-analytics cache preload \
+		"${preload_cache}"/*.tar.gz ||
 		die "failed to preload bundled pub packages"
 
 	(
@@ -84,7 +96,8 @@ src_compile() {
 		--snapshot-kind=app-jit \
 		--packages="${package_config}" \
 		--no-enable-mirrors \
-		"${tools}/bin/flutter_tools.dart" || die "failed to rebuild flutter_tools.snapshot"
+		"${tools}/bin/flutter_tools.dart" ||
+		die "failed to rebuild flutter_tools.snapshot"
 	mv "${snapshot}.new" "${snapshot}" || die
 
 	# Pub records absolute paths for packages in an absolute PUB_CACHE. The SDK
@@ -92,11 +105,11 @@ src_compile() {
 	# time, so relocate the retained immutable tool package configuration only
 	# after the snapshot has been compiled against its build-time paths.
 	grep -Fq "${S}" "${package_config}" ||
-		die "flutter_tools package config contains no relocatable build-root paths"
+		die "flutter_tools package config has no relocatable paths"
 	sed -i "s#${S}#/opt/flutter#g" "${package_config}" ||
 		die "failed to relocate flutter_tools package config"
 	if grep -Fq "${S}" "${package_config}"; then
-		die "flutter_tools package config still references the Portage build root"
+		die "flutter_tools package config still has Portage build root"
 	fi
 
 	# The compressed preload cache has now served its purpose. Keeping only the

@@ -162,14 +162,17 @@ printf '%s\n' \
 	>> /etc/portage/make.conf
 
 mkdir -p /etc/portage/package.accept_keywords
-printf '%s ~amd64\n' \
-	"${flutter_source_atom}" \
-	"${flutter_virtual_atom}" \
-	"${flutter_bin_atom}" \
-	"${engine_source_atom}" \
-	"${dart_virtual_atom}" \
-	'dev-lang/dart' \
-	'games-util/libtess2' \
+printf '%s\n' \
+	'*/*::arrans-overlay ~amd64' \
+	'*/*::guru ~amd64' \
+	'dev-lang/dart-bootstrap-bin ~amd64' \
+	'dev-lang/dart ~amd64' \
+	'games-util/libtess2 ~amd64' \
+	"${flutter_source_atom} ~amd64" \
+	"${flutter_virtual_atom} ~amd64" \
+	"${flutter_bin_atom} ~amd64" \
+	"${engine_source_atom} ~amd64" \
+	"${dart_virtual_atom} ~amd64" \
 	> /etc/portage/package.accept_keywords/flutter-source-test
 
 # GCC with C++ support from binhost
