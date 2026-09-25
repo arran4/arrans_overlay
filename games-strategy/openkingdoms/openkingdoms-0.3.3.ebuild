@@ -44,8 +44,23 @@ src_install() {
 }
 
 pkg_postinst() {
-	einfo "OpenKingdoms provides the engine only, not the original game data."
-	einfo "Install your own Total Annihilation: Kingdoms files and run:"
-	einfo "  openkingdoms --game-dir /path/to/your/game"
-	einfo "Alternatively, set TAK_GAME_DIR to the game directory."
+	einfo "OpenKingdoms provides the engine only; original game data is required."
+	einfo "Use a directory containing your own TA: Kingdoms .hpi archives."
+	einfo "Maps, Music and Movies subdirectories may be kept there as well."
+	einfo
+	einfo "To select the directory explicitly, run:"
+	einfo "  openkingdoms --game-dir /path/to/Total\ Annihilation\ Kingdoms"
+	einfo "The selected directory is remembered for later runs."
+	einfo
+	einfo "You can also set TAK_GAME_DIR to the game directory."
+	einfo "Without an explicit setting, OpenKingdoms searches for game data in:"
+	einfo "  a previously remembered directory"
+	einfo "  a game directory beside the executable"
+	einfo "  ~/Games/Total Annihilation Kingdoms"
+	einfo "  ~/.wine/drive_c/GOG Games/Total Annihilation Kingdoms"
+	einfo "and standard GOG/Cavedog installation paths on Windows."
+	einfo
+	einfo "The directory must directly contain at least one .hpi archive."
+	einfo "TAK_DATA_DIR is for extracted development data, not the game archives."
+	einfo "See the installed ASSETS.md documentation for further details."
 }
