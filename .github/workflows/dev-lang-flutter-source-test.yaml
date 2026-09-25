@@ -1,0 +1,67 @@
+name: dev-lang/flutter Source Integration
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'dev-lang/flutter/**'
+      - 'virtual/flutter/**'
+      - 'dev-lang/flutter-bin/**'
+      - 'scripts/generate_flutter_ebuild.py'
+      - 'scripts/test_generate_flutter_ebuild.py'
+      - 'scripts/test_flutter_source.sh'
+      - '.github/workflows/dev-lang-flutter-source-test.yaml'
+
+concurrency:
+  group: flutter-source-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-smoke-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare distfile cache
+        run: |
+          sudo mkdir -p /var/cache/distfiles
+          sudo chown -R "$(id -u):$(id -g)" /var/cache/distfiles
+
+      - name: Cache distfiles
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/distfiles
+          key: >-
+            flutter-distfiles-v1-${{
+            hashFiles('dev-lang/flutter/Manifest', 'dev-libs/flutter-engine/Manifest') }}
+          restore-keys: |
+            flutter-distfiles-v1-
+            flutter-engine-v1-
+
+      - name: Prepare binpkgs cache
+        run: |
+          sudo mkdir -p /var/cache/binpkgs
+          sudo chown -R "$(id -u):$(id -g)" /var/cache/binpkgs
+
+      - name: Cache binpkgs
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/binpkgs
+          key: >-
+            flutter-binpkgs-v1-${{
+            hashFiles('virtual/dart/**', 'dev-lang/dart/**', 'dev-libs/flutter-engine/**') }}
+          restore-keys: |
+            flutter-binpkgs-v1-
+            flutter-engine-binpkgs-v1-
+
+      - name: Build and smoke-test Flutter source offline
+        env:
+          FLUTTER_DISTDIR: /var/cache/distfiles
+          FLUTTER_BINPKGS: /var/cache/binpkgs
+        run: scripts/test_flutter_source.sh

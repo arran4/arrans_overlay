@@ -20,6 +20,7 @@ SLOT="0"
 KEYWORDS="~amd64"
 
 RDEPEND="
+	!dev-lang/flutter
 	app-arch/tar
 	app-arch/xz-utils
 	dev-vcs/git
@@ -117,5 +118,5 @@ src_install() {
 
 	# Preserve the old overlay entry point while making /usr/bin/flutter the
 	# canonical launcher.
-	dosym "/usr/bin/flutter" "/opt/bin/flutter"
+	dosym -r "/usr/bin/flutter" "/opt/bin/flutter"
 }

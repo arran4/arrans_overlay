@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+    <maintainer type="person">
+        <email>gentoo@arran4.com</email>
+        <name>Arran Ubels</name>
+    </maintainer>
+    <longdescription>
+        Allows downstream packages to use either the source-built Flutter SDK
+        or the binary Flutter SDK (dev-lang/flutter-bin).
+    </longdescription>
+</pkgmetadata>

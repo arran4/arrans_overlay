@@ -1,0 +1,259 @@
+diff --git a/bin/internal/shared.sh b/bin/internal/shared.sh
+index 986964d160e..900c6703a1c 100644
+--- a/bin/internal/shared.sh
++++ b/bin/internal/shared.sh
+@@ -116,78 +116,7 @@ function _wait_for_lock () {
+ # is required to make sure any lock directory is cleaned up by the exit trap in
+ # _wait_for_lock.
+ function upgrade_flutter () (
+-  mkdir -p "$FLUTTER_ROOT/bin/cache"
+-
+-  # Ensure the engine.version is populated
+-  "$FLUTTER_ROOT/bin/internal/update_engine_version.sh"
+-
+-  local revision="$(git -C "$FLUTTER_ROOT" rev-parse HEAD)"
+-  local compilekey="$revision:$FLUTTER_TOOL_ARGS"
+-
+-  # Invalidate cache if:
+-  #  * SNAPSHOT_PATH is not a file, or
+-  #  * STAMP_PATH is not a file, or
+-  #  * STAMP_PATH is an empty file, or
+-  #  * Contents of STAMP_PATH is not what we are going to compile, or
+-  #  * pubspec.yaml last modified after pubspec.lock
+-  if [[ ! -f "$SNAPSHOT_PATH" || \
+-        ! -s "$STAMP_PATH" || \
+-        "$(< "$STAMP_PATH")" != "$compilekey" || \
+-        "$FLUTTER_TOOLS_DIR/pubspec.yaml" -nt "$FLUTTER_TOOLS_DIR/pubspec.lock" ]]; then
+-    # Waits for the update lock to be acquired. Placing this check inside the
+-    # conditional allows the majority of flutter/dart installations to bypass
+-    # the lock entirely, but as a result this required a second verification that
+-    # the SDK is up to date.
+-    _wait_for_lock
+-
+-    # A different shell process might have updated the tool/SDK.
+-    if [[ -f "$SNAPSHOT_PATH" && -s "$STAMP_PATH" && "$(< "$STAMP_PATH")" == "$compilekey" && "$FLUTTER_TOOLS_DIR/pubspec.yaml" -ot "$FLUTTER_TOOLS_DIR/pubspec.lock" ]]; then
+-      exit $?
+-    fi
+-
+-    # Fetch Dart...
+-    rm -f "$FLUTTER_ROOT/version"
+-    rm -f "$FLUTTER_ROOT/bin/cache/flutter.version.json"
+-    touch "$FLUTTER_ROOT/bin/cache/.dartignore"
+-    "$FLUTTER_ROOT/bin/internal/update_dart_sdk.sh"
+-
+-    if [[ "$BIN_NAME" == 'dart' || "$BIN_NAME" == 'flutter-dev' ]]; then
+-      # Don't try to build tool
+-      return
+-    fi
+-
+-    >&2 echo Building flutter tool...
+-
+-    # Prepare packages...
+-    if [[ "$CI" == "true" || "$BOT" == "true" || "$CONTINUOUS_INTEGRATION" == "true" || "$CHROME_HEADLESS" == "1" ]]; then
+-      PUB_ENVIRONMENT="$PUB_ENVIRONMENT:flutter_bot"
+-    else
+-      export PUB_SUMMARY_ONLY=1
+-    fi
+-    export PUB_ENVIRONMENT="$PUB_ENVIRONMENT:flutter_install"
+-    pub_upgrade_with_retry
+-
+-    # Move the old snapshot - we can't just overwrite it as the VM might currently have it
+-    # memory mapped (e.g. on flutter upgrade). For downloading a new dart sdk the folder is moved,
+-    # so we take the same approach of moving the file here.
+-    SNAPSHOT_PATH_OLD="$SNAPSHOT_PATH.old"
+-    if [ -f "$SNAPSHOT_PATH" ]; then
+-      mv "$SNAPSHOT_PATH" "$SNAPSHOT_PATH_OLD"
+-    fi
+-
+-    # Compile...
+-    "$DART" --verbosity=error $FLUTTER_TOOL_ARGS --snapshot="$SNAPSHOT_PATH" --snapshot-kind="app-jit" --packages="$FLUTTER_TOOLS_DIR/.dart_tool/package_config.json" --no-enable-mirrors "$SCRIPT_PATH" > /dev/null
+-    echo "$compilekey" > "$STAMP_PATH"
+-
+-    # Delete any temporary snapshot path.
+-    if [ -f "$SNAPSHOT_PATH_OLD" ]; then
+-      rm -f "$SNAPSHOT_PATH_OLD"
+-    fi
+-  fi
+-  # The exit here is extraneous since the function is run in a subshell, but
+-  # this serves as documentation that running the function in a subshell is
+-  # required to make sure any lock directory created by mkdir is cleaned up.
+-  exit $?
++  return 0
+ )
+ 
+ # This function is intended to be executed by entrypoints (e.g. `//bin/flutter`
+@@ -195,6 +124,7 @@ function upgrade_flutter () (
+ # entrypoints.
+ function shared::execute() {
+   export FLUTTER_ROOT="$(cd "${BIN_DIR}/.." ; pwd -P)"
++  export FLUTTER_CACHE_DIR="${FLUTTER_CACHE_DIR:-$FLUTTER_ROOT/bin/cache}"
+ 
+   # If present, run the bootstrap script first
+   BOOTSTRAP_PATH="$FLUTTER_ROOT/bin/internal/bootstrap.sh"
+@@ -203,10 +133,10 @@ function shared::execute() {
+   fi
+ 
+   FLUTTER_TOOLS_DIR="$FLUTTER_ROOT/packages/flutter_tools"
+-  SNAPSHOT_PATH="$FLUTTER_ROOT/bin/cache/flutter_tools.snapshot"
+-  STAMP_PATH="$FLUTTER_ROOT/bin/cache/flutter_tools.stamp"
++  SNAPSHOT_PATH="$FLUTTER_CACHE_DIR/flutter_tools.snapshot"
++  STAMP_PATH="$FLUTTER_CACHE_DIR/flutter_tools.stamp"
+   SCRIPT_PATH="$FLUTTER_TOOLS_DIR/bin/flutter_tools.dart"
+-  DART_SDK_PATH="$FLUTTER_ROOT/bin/cache/dart-sdk"
++  DART_SDK_PATH="$FLUTTER_CACHE_DIR/dart-sdk"
+ 
+   DART="$DART_SDK_PATH/bin/dart"
+ 
+@@ -233,7 +163,7 @@ function shared::execute() {
+   fi
+   # Test if the flutter directory is a git clone (otherwise git rev-parse HEAD
+   # would fail)
+-  if [[ ! -e "$FLUTTER_ROOT/.git" ]]; then
++  if [[ ! -e "$FLUTTER_ROOT/.git" && ! -f "$FLUTTER_ROOT/version" ]]; then
+     >&2 echo "Error: The Flutter directory is not a clone of the GitHub project."
+     >&2 echo "       The flutter tool requires Git in order to operate properly;"
+     >&2 echo "       to install Flutter, see the instructions at:"
+diff --git a/packages/flutter_tools/lib/src/cache.dart b/packages/flutter_tools/lib/src/cache.dart
+index ec17a559048..c21759fc8ba 100644
+--- a/packages/flutter_tools/lib/src/cache.dart
++++ b/packages/flutter_tools/lib/src/cache.dart
+@@ -42,6 +42,8 @@ import 'features.dart';
+ 
+ const kFlutterRootEnvironmentVariableName =
+     'FLUTTER_ROOT'; // should point to //flutter/ (root of flutter/flutter repo)
++const kFlutterCacheEnvironmentVariableName =
++    'FLUTTER_CACHE_DIR'; // writable cache, defaults to //flutter/bin/cache/
+ const kFlutterEngineEnvironmentVariableName =
+     'FLUTTER_ENGINE'; // should point to //engine/src/ (root of flutter/engine repo)
+ const kSnapshotFileName = 'flutter_tools.snapshot'; // in //flutter/bin/cache/
+@@ -370,9 +372,7 @@ class Cache {
+       return;
+     }
+     assert(_lock == null);
+-    final File lockFile = _fileSystem.file(
+-      _fileSystem.path.join(flutterRoot!, 'bin', 'cache', 'lockfile'),
+-    );
++    final File lockFile = getRoot().childFile('lockfile');
+     try {
+       _lock = lockFile.openSync(mode: FileMode.write);
+     } on FileSystemException catch (e) {
+@@ -615,9 +615,16 @@ class Cache {
+ 
+   /// Return the top-level directory in the cache; this is `bin/cache`.
+   Directory getRoot() {
+-    return _fileSystem.directory(
+-      _fileSystem.path.join(_rootOverride?.path ?? flutterRoot!, 'bin', 'cache'),
+-    );
++    if (_rootOverride != null) {
++      return _fileSystem.directory(
++        _fileSystem.path.join(_rootOverride.path, 'bin', 'cache'),
++      );
++    }
++    final String? cacheOverride = _platform.environment[kFlutterCacheEnvironmentVariableName];
++    if (cacheOverride != null && cacheOverride.isNotEmpty) {
++      return _fileSystem.directory(cacheOverride);
++    }
++    return _fileSystem.directory(_fileSystem.path.join(flutterRoot!, 'bin', 'cache'));
+   }
+ 
+   String getHostPlatformArchName() {
+@@ -695,14 +702,7 @@ class Cache {
+   // TODO(matanlurey): Remove the ability to do "generic" realms, and special case for engine.
+   // https://github.com/flutter/flutter/issues/164315
+   String? getRealmFor(String artifactName) {
+-    final File realmFile = _fileSystem.file(
+-      _fileSystem.path.join(
+-        _rootOverride?.path ?? flutterRoot!,
+-        'bin',
+-        'cache',
+-        '$artifactName.realm',
+-      ),
+-    );
++    final File realmFile = getRoot().childFile('$artifactName.realm');
+     return realmFile.existsSync() ? realmFile.readAsStringSync().trim() : '';
+   }
+ 
+@@ -795,6 +795,11 @@ class Cache {
+     if (artifactsToUpdate.isEmpty) {
+       return;
+     }
++    final String names = artifactsToUpdate.map((ArtifactSet a) => a.displayName).join(', ');
++    throwToolExit(
++      'Missing packaged Flutter artifact(s): $names.\n'
++      'Downloading binary artifacts is disabled in package-managed Flutter.',
++    );
+ 
+     // Download artifacts and display progress
+     final int total = artifactsToUpdate.length;
+diff --git a/packages/flutter_tools/lib/src/dart/pub.dart b/packages/flutter_tools/lib/src/dart/pub.dart
+index 2fea38ff61f..4bfb5cd41a2 100644
+--- a/packages/flutter_tools/lib/src/dart/pub.dart
++++ b/packages/flutter_tools/lib/src/dart/pub.dart
+@@ -573,10 +573,11 @@ class _DefaultPub implements Pub {
+ 
+   List<String> _computePubCommand() {
+     // TODO(zanderso): refactor to use artifacts.
++    final String cacheRoot =
++        _platform.environment[kFlutterCacheEnvironmentVariableName] ??
++        _fileSystem.path.join(Cache.flutterRoot!, 'bin', 'cache');
+     final String sdkPath = _fileSystem.path.joinAll(<String>[
+-      Cache.flutterRoot!,
+-      'bin',
+-      'cache',
++      cacheRoot,
+       'dart-sdk',
+       'bin',
+       'dart',
+diff --git a/packages/flutter_tools/lib/src/flutter_cache.dart b/packages/flutter_tools/lib/src/flutter_cache.dart
+index bf144dbc2a5..a1705ad9be2 100644
+--- a/packages/flutter_tools/lib/src/flutter_cache.dart
++++ b/packages/flutter_tools/lib/src/flutter_cache.dart
+@@ -128,13 +128,10 @@ class PubDependencies extends ArtifactSet {
+     OperatingSystemUtils operatingSystemUtils, {
+     bool offline = false,
+   }) async {
+-    await _pub().get(
+-      context: PubContext.pubGet,
+-      project: _projectFactory.fromDirectory(
+-        fileSystem.directory(fileSystem.path.join(_flutterRoot(), 'packages', 'flutter_tools')),
+-      ),
+-      offline: offline,
+-      outputMode: PubOutputMode.failuresOnly,
++    throwToolExit(
++      'The packaged Flutter SDK is immutable and its flutter_tools dependencies '
++      'must be provided by dev-lang/flutter. Reinstall the package if this '
++      'cache is incomplete.',
+     );
+   }
+ }
+@@ -804,6 +801,14 @@ class IosUsbArtifacts extends CachedArtifact {
+     : _platform = platform,
+       super(name, cache, DevelopmentArtifact.universal);
+ 
++  @override
++  Future<bool> isUpToDate(FileSystem fileSystem) async {
++    if (!_platform.isMacOS && !ignorePlatformFiltering) {
++      return true;
++    }
++    return super.isUpToDate(fileSystem);
++  }
++
+   final Platform _platform;
+ 
+   @override
+diff --git a/packages/flutter_tools/lib/src/version.dart b/packages/flutter_tools/lib/src/version.dart
+index 16d1c254417..d55a59304b5 100644
+--- a/packages/flutter_tools/lib/src/version.dart
++++ b/packages/flutter_tools/lib/src/version.dart
+@@ -230,6 +230,11 @@ abstract class FlutterVersion {
+ 
+   // This is static as it is called from a constructor.
+   static File getVersionFile(FileSystem fs, String flutterRoot) {
++    final String? cacheOverride =
++        globals.platform.environment[kFlutterCacheEnvironmentVariableName];
++    if (cacheOverride != null && cacheOverride.isNotEmpty) {
++      return fs.file(fs.path.join(cacheOverride, 'flutter.version.json'));
++    }
+     return fs.file(fs.path.join(flutterRoot, 'bin', 'cache', 'flutter.version.json'));
+   }
+ 
