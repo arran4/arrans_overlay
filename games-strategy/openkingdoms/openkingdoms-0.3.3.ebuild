@@ -7,7 +7,10 @@ inherit cmake
 
 DESCRIPTION="Open-source engine for Total Annihilation: Kingdoms"
 HOMEPAGE="https://openkingdoms.net/"
-SRC_URI="https://github.com/OpenKingdoms/OpenKingdoms/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
+SRC_URI="
+	https://github.com/OpenKingdoms/OpenKingdoms/archive/refs/tags/v${PV}.tar.gz
+		-> ${P}.tar.gz
+"
 S="${WORKDIR}/OpenKingdoms-${PV}"
 
 LICENSE="GPL-3"
