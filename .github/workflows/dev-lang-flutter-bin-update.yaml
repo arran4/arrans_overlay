@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install g2
         uses: arran4/g2-action@v1.2
@@ -79,6 +79,15 @@ jobs:
               sed -i -E \
                 "s/^UPSTREAM_PV=.*/UPSTREAM_PV=\"${version}\"/" \
                 "${ebuild_file}"
+
+              grep -Fq "!dev-lang/flutter" "${ebuild_file}" || {
+                echo "Missing !dev-lang/flutter blocker in ${ebuild_file}" >&2
+                exit 1
+              }
+              grep -Fq 'dosym -r "/usr/bin/flutter" "/opt/bin/flutter"' "${ebuild_file}" || {
+                echo "Missing relative dosym in ${ebuild_file}" >&2
+                exit 1
+              }
 
               g2 manifest upsert-from-url \
                 "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${version}-stable.tar.xz" \

@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 
 
@@ -17,6 +18,18 @@ FONT_PACKAGES = {
     "media-fonts/material-symbols-variable",
     "media-fonts/rubik",
 }
+FLUTTER_PACKAGES = {
+    "dev-lang/flutter",
+    "virtual/flutter",
+    "dev-libs/flutter-engine",
+    "dev-lang/dart",
+    "virtual/dart",
+}
+EXPENSIVE_SOURCE_PACKAGES = {
+    "dev-lang/flutter",
+    "dev-libs/flutter-engine",
+}
+EXPENSIVE_STEP_TIMEOUT = 350
 
 
 def normalize_path(path):
@@ -34,16 +47,11 @@ def atom_from_path(path):
 
 def cp_from_atom(atom):
     package_or_cpv = atom.removeprefix("=")
-    known_packages = (*CORE_PACKAGES, *PYTHON_PACKAGES, *FONT_PACKAGES)
-    if package_or_cpv in known_packages:
-        return package_or_cpv
-
     category, package_version = package_or_cpv.split("/", 1)
-    for package in known_packages:
-        package_category, package_name = package.split("/", 1)
-        if category == package_category and package_version.startswith(f"{package_name}-"):
-            return package
-    return None
+    m = re.match(r"^(.+?)-[0-9]+", package_version)
+    if m:
+        return f"{category}/{m.group(1)}"
+    return f"{category}/{package_version}"
 
 
 def cache_id(group, package):
@@ -52,14 +60,24 @@ def cache_id(group, package):
 
 
 def matrix_entry(group, package, source_target):
-    cache_lineage = group if group.startswith("caelestia-") else f"{group}-{cache_id(group, package)}"
-    return {
+    cp = cp_from_atom(package)
+    if cp in FLUTTER_PACKAGES:
+        cache_lineage = "flutter"
+    elif group.startswith("caelestia-"):
+        cache_lineage = group
+    else:
+        cache_lineage = f"{group}-{cache_id(group, package)}"
+
+    entry = {
         "group": group,
         "package": package,
         "source_target": source_target,
         "cache_id": cache_id(group, package),
         "cache_lineage": cache_lineage,
     }
+    if source_target and cp in EXPENSIVE_SOURCE_PACKAGES:
+        entry["step_timeout"] = EXPENSIVE_STEP_TIMEOUT
+    return entry
 
 
 def build_matrix(changed_files, source_files=()):

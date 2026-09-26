@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>gentoo@arran4.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
+	<longdescription>
+		Source-built Flutter SDK. Builds the flutter_tools tooling snapshot
+		from source using the system Dart SDK and integrates with the source-built
+		Flutter Engine (dev-libs/flutter-engine) without downloading binary SDK
+		or Engine artifacts.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">flutter/flutter</remote-id>
+	</upstream>
+</pkgmetadata>
