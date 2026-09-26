@@ -237,11 +237,14 @@ emerge -v --oneshot "${flutter_virtual_atom}"
 
 # Verify blocker prevents flutter-bin from installing alongside source flutter
 echo "Verifying dev-lang/flutter-bin blocker enforcement"
-if emerge --pretend "${flutter_bin_atom}" 2>&1 | grep -q "blocks"; then
-	echo "Blocker correctly detected for ${flutter_bin_atom}"
+pretend_output=$(emerge --pretend "${flutter_bin_atom}" 2>&1 || true)
+printf "emerge --pretend output:\n%s\n" "${pretend_output}"
+
+if echo "${pretend_output}" | grep -Fq "dev-lang/flutter" && \
+   echo "${pretend_output}" | grep -Eq "(blocks b|is soft blocking|is blocking)"; then
+	echo "Blocker correctly detected for ${flutter_bin_atom} against ${flutter_source_atom}"
 else
 	echo "ERROR: Blocker failed: ${flutter_bin_atom} did not report block against ${flutter_source_atom}" >&2
-	emerge --pretend "${flutter_bin_atom}" || true
 	exit 1
 fi
 

@@ -22,7 +22,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -51,14 +51,14 @@ jobs:
     needs: prepare
     if: needs.prepare.outputs.matrix != '{"include":[]}'
     runs-on: ubuntu-latest
-    timeout-minutes: 270
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -78,7 +78,7 @@ jobs:
           sudo chown -R "$(id -u):$(id -g)" /var/cache/distfiles /var/cache/binpkgs
 
       - name: Cache distfiles
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: /var/cache/distfiles
           key: gentoo-distfiles-v1-${{ github.sha }}-${{ matrix.cache_id }}
@@ -86,7 +86,7 @@ jobs:
             gentoo-distfiles-v1-
 
       - name: Restore binpkgs
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: /var/cache/binpkgs
           # Actions caches are immutable and restore one archive, not a union.
@@ -100,6 +100,8 @@ jobs:
           restore-keys: |
             gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_lineage }}-
             gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_lineage }}-
+            flutter-binpkgs-v1-
+            flutter-engine-binpkgs-v1-
             gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-
             gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-
             gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-
@@ -118,7 +120,7 @@ jobs:
             sleep infinity
 
       - name: Install and test packages
-        timeout-minutes: 240
+        timeout-minutes: ${{ matrix.step_timeout || 240 }}
         run: |
           PACKAGE="${{ matrix.package }}"
           SOURCE_TARGET="${{ matrix.source_target }}"
@@ -204,7 +206,8 @@ jobs:
           SOURCE_TARGET="$2"
 
           if [[ ${PKG} == "=dev-lang/dart-"* || \
-                ${PKG} == "=dev-libs/flutter-engine-"* ]]; then
+                ${PKG} == "=dev-libs/flutter-engine-"* || \
+                ${PKG} == "=dev-lang/flutter-"* ]]; then
             # The slim Docker stage3 records GCC with USE=cxx but omits its
             # cc1plus payload. Dart and Flutter Engine are C++ source builds,
             # so restore the complete compiler from Gentoo's binhost before
@@ -288,6 +291,12 @@ jobs:
             # to locate wayland.xml during protocol binding generation.
             CI_GRAPH_PREREQUISITES+=('=dev-util/wayland-scanner-1.25.0' '=dev-cpp/glaze-7.0.2::hyproverlay')
           fi
+          if [[ "$PKG" == *"virtual/flutter"* ]]; then
+            # Satisfy virtual/flutter with the prebuilt binary SDK in generic
+            # package testing. Full source build and source provider satisfaction
+            # are verified by dev-lang/flutter Source Integration.
+            CI_GRAPH_PREREQUISITES+=('~dev-lang/flutter-bin-3.47.2')
+          fi
           TARGET_BINARY_OPTIONS=()
           if [ "$SOURCE_TARGET" = "true" ]; then
             # A cached binary for this CP may predate the checked-out ebuild.
@@ -340,10 +349,10 @@ jobs:
 
       - name: Save built binpkgs
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: /var/cache/binpkgs
-          key: gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_lineage }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Stop and clean up containers
         if: always()

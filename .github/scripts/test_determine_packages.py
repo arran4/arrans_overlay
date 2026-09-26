@@ -22,10 +22,10 @@ def run_helper(paths, source_paths=None):
     )
     matrix = json.loads(result.stdout)
     assert all(
-        set(entry) == {
-            "group", "package", "source_target",
-            "cache_id", "cache_lineage",
-        }
+        set(entry) in (
+            {"group", "package", "source_target", "cache_id", "cache_lineage"},
+            {"group", "package", "source_target", "cache_id", "cache_lineage", "step_timeout"},
+        )
         for entry in matrix
     )
     assert all(entry["cache_id"] for entry in matrix)
@@ -155,22 +155,24 @@ for option in (
 ):
     assert option in package_emerge_options
 assert 'EMERGE_DEFAULT_OPTS="${EMERGE_DEFAULT_OPTS} --usepkg --getbinpkg"' in workflow
-assert "timeout-minutes: 270" in workflow
-assert "timeout-minutes: 240" in workflow
+assert "timeout-minutes: 360" in workflow
+assert "timeout-minutes: ${{ matrix.step_timeout || 240 }}" in workflow
 assert "\n  schedule:\n" not in workflow
 assert workflow.count("- '**/*.ebuild'") == 2
 assert "- '.github/workflows/gentoo-pkg-test.yml'" not in workflow
 assert "- '.github/scripts/determine_packages.py'" not in workflow
-assert workflow.count("actions/cache/restore@v4") == 1
-assert workflow.count("actions/cache/save@v4") == 1
-assert "if: always()\n        uses: actions/cache/save@v4" in workflow
+assert workflow.count("actions/cache/restore@v5") == 1
+assert workflow.count("actions/cache/save@v5") == 1
+assert "if: always()\n        uses: actions/cache/save@v5" in workflow
 assert 'sudo chown -R "$(id -u):$(id -g)" /var/cache/distfiles /var/cache/binpkgs' in workflow
 assert "sudo chmod 777 /var/cache/distfiles /var/cache/binpkgs" not in workflow
 assert "gentoo-binpkgs-restore-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ github.run_id }}-${{ matrix.cache_id }}" in workflow
-assert "gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
+assert "gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_lineage }}-${{ matrix.cache_id }}-${{ github.run_id }}-${{ github.run_attempt }}" in workflow
 assert """restore-keys: |
             gentoo-binpkgs-v6-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_lineage }}-
             gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_lineage }}-
+            flutter-binpkgs-v1-
+            flutter-engine-binpkgs-v1-
             gentoo-binpkgs-v4-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.cache_id }}-
             gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-${{ matrix.group }}-
             gentoo-binpkgs-v5-${{ steps.gentoo-environment.outputs.cache_id }}-
@@ -208,5 +210,28 @@ assert "dev-qt/qt5compat icu" in workflow
 assert 'echo "=dev-util/wayland-scanner-1.25.0 ~amd64" >> /etc/portage/package.accept_keywords/ci' in workflow
 assert "CI_GRAPH_PREREQUISITES+=('=dev-util/wayland-scanner-1.25.0' '=dev-cpp/glaze-7.0.2::hyproverlay')" in workflow
 assert 'echo ">=dev-util/wayland-scanner-1.26.0" >> /etc/portage/package.unmask/ci' not in workflow
+assert "CI_GRAPH_PREREQUISITES+=('~dev-lang/flutter-bin-3.47.2')" in workflow
+assert '${PKG} == "=dev-lang/flutter-"*' in workflow
+
+# Regression coverage: Flutter source targets receive extended timeout and
+# share the 'flutter' cache lineage, while virtual/flutter and binary flutter
+# preserve appropriate standard defaults.
+flutter_entries = run_helper([
+    "dev-lang/flutter/flutter-3.47.2.ebuild",
+    "virtual/flutter/flutter-3.47.2.ebuild",
+    "dev-lang/flutter-bin/flutter-bin-3.47.2-r1.ebuild",
+])
+flutter_source = next(item for item in flutter_entries if item["package"] == "=dev-lang/flutter-3.47.2")
+assert flutter_source["cache_lineage"] == "flutter"
+assert flutter_source["step_timeout"] == 350
+assert flutter_source["source_target"] is True
+
+virtual_flutter = next(item for item in flutter_entries if item["package"] == "=virtual/flutter-3.47.2")
+assert virtual_flutter["cache_lineage"] == "flutter"
+assert "step_timeout" not in virtual_flutter
+
+flutter_bin = next(item for item in flutter_entries if item["package"] == "=dev-lang/flutter-bin-3.47.2-r1")
+assert flutter_bin["cache_lineage"] == f"generic-{flutter_bin['cache_id']}"
+assert "step_timeout" not in flutter_bin
 
 print("determine_packages tests passed")
