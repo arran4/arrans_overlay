@@ -30,7 +30,8 @@ RDEPEND="
 QA_PREBUILT="/usr/bin/nanolathe"
 
 pkg_pretend() {
-	use elibc_glibc || die "The prebuilt Nanolathe binary requires glibc; musl is not supported."
+	use elibc_glibc || die \
+		"The prebuilt Nanolathe binary requires glibc; musl is not supported."
 }
 
 src_install() {
