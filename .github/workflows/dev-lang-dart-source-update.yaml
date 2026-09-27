@@ -1,0 +1,48 @@
+name: dev-lang/dart (Source) Update
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ci-dart-source-update-${{ github.ref }}
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: '20 0 * * *'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Target Dart version'
+        required: false
+        type: string
+  push:
+    paths:
+      - '.github/workflows/dev-lang-dart-source-update.yaml'
+      - 'scripts/update_dart_source.py'
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Run Dart Source Updater
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            python3 scripts/update_dart_source.py --version "${{ github.event.inputs.version }}"
+          else
+            python3 scripts/update_dart_source.py
+          fi
