@@ -1064,10 +1064,37 @@ def update_ebuild(generated: str, check: bool) -> int:
 
 
 def main() -> int:
+    global FLUTTER_VERSION, FLUTTER_ENGINE_REV, DART_REVISION, DEPS_URL, EBUILD
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--deps", type=Path)
+    parser.add_argument("--version", type=str, help="Target Flutter version")
+    parser.add_argument("--engine-revision", type=str, help="Target Flutter Engine revision")
+    parser.add_argument("--dart-revision", type=str, help="Target Dart SDK revision for Engine")
+    parser.add_argument("--ebuild", type=Path, help="Path to ebuild to modify")
     args = parser.parse_args()
+
+    if args.version:
+        FLUTTER_VERSION = args.version
+    if args.engine_revision:
+        FLUTTER_ENGINE_REV = args.engine_revision
+    if args.dart_revision:
+        DART_REVISION = args.dart_revision
+
+    if args.version or args.engine_revision:
+        DEPS_URL = f"https://raw.githubusercontent.com/flutter/flutter/{FLUTTER_ENGINE_REV}/DEPS"
+
+    if args.ebuild:
+        EBUILD = args.ebuild
+    elif args.version:
+        EBUILD = (
+            Path(__file__).parents[1]
+            / "dev-libs"
+            / "flutter-engine"
+            / f"flutter-engine-{FLUTTER_VERSION}.ebuild"
+        )
+
     deps_path, temporary = obtain_deps(args.deps)
     try:
         if not EBUILD.exists():

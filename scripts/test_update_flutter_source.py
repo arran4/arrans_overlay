@@ -34,6 +34,21 @@ class TestUpdateFlutterSource(unittest.TestCase):
         mock_run_cmd.side_effect = subprocess.CalledProcessError(1, 'git')
         self.assertFalse(update_flutter_source.check_branch_exists("my-branch"))
 
+    @patch('update_flutter_source.run_cmd')
+    def test_check_pr_exists(self, mock_run_cmd):
+        mock_run_cmd.return_value.stdout = '[{"url": "http://pr"}]'
+        self.assertTrue(update_flutter_source.check_pr_exists("my-branch"))
+
+        mock_run_cmd.return_value.stdout = '[]'
+        self.assertFalse(update_flutter_source.check_pr_exists("my-branch"))
+
+        mock_run_cmd.side_effect = subprocess.CalledProcessError(1, 'gh')
+        with self.assertRaises(subprocess.CalledProcessError):
+            update_flutter_source.check_pr_exists("my-branch")
+
+        mock_run_cmd.side_effect = FileNotFoundError()
+        self.assertFalse(update_flutter_source.check_pr_exists("my-branch"))
+
     @patch('update_flutter_source.REPO_ROOT', Path("/fake/root"))
     @patch('pathlib.Path.exists', return_value=True)
     @patch('pathlib.Path.glob', return_value=[Path("/fake/root/dev-lang/flutter/flutter-3.24.4.ebuild")])

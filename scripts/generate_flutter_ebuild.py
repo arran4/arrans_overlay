@@ -14,6 +14,10 @@ from pathlib import Path
 import re
 import sys
 
+import urllib.request
+import json
+import logging
+
 FLUTTER_VERSION = "3.47.2"
 FLUTTER_ENGINE_REV = "a804b261645ef8c13eb3d5c44a5c2fb0340c5539"
 MATERIAL_FONTS_REV = "3012db47f3130e62f7cc0beabff968a33cbec8d8"
@@ -28,8 +32,35 @@ EBUILD = (
 BEGIN = "# BEGIN GENERATED FLUTTER PUB DEPS"
 END = "# END GENERATED FLUTTER PUB DEPS"
 
-# The 101 pinned pub packages required for packages/flutter_tools in Flutter 3.47.2.
-# Every dependency is pinned to an exact version for deterministic offline builds.
+def fetch_pub_deps(version: str) -> dict[str, str]:
+	"""Dynamically fetches the exact pub dependency graph from pubspec.yaml."""
+	url = f"https://raw.githubusercontent.com/flutter/flutter/{version}/packages/flutter_tools/pubspec.yaml"
+	try:
+		req = urllib.request.urlopen(url)
+		content = req.read().decode('utf-8')
+		deps = {}
+		in_deps = False
+		for line in content.split('\n'):
+			if line.startswith('dependencies:'):
+				in_deps = True
+				continue
+			if line.startswith('dev_dependencies:'):
+				in_deps = False
+				break
+			if in_deps and line.startswith('  '):
+				parts = line.strip().split(':')
+				if len(parts) >= 2:
+					pkg = parts[0].strip()
+					ver = parts[1].strip().strip("'\"")
+					if pkg and not pkg.startswith('#') and ver and not ver.startswith('any'):
+						if 'path' not in line and 'sdk' not in line:
+							deps[pkg] = ver
+		return deps
+	except Exception as e:
+		logging.error(f"Error fetching pubspec.yaml for version {version}: {e}")
+		raise
+
+# The pinned pub packages required for packages/flutter_tools.
 PUB_DEPENDENCIES: dict[str, str] = {
 	"_fe_analyzer_shared": "95.0.0",
 	"analyzer": "10.1.0",
@@ -135,7 +166,7 @@ PUB_DEPENDENCIES: dict[str, str] = {
 }
 
 
-def render_pub_deps(deps: dict[str, str] = PUB_DEPENDENCIES) -> str:
+def render_pub_deps(deps: dict[str, str]) -> str:
 	lines: list[str] = [
 		BEGIN,
 		f'FLUTTER_FONTS_REV="{MATERIAL_FONTS_REV}"',
@@ -194,11 +225,44 @@ def update_ebuild(ebuild_path: Path, generated: str, check: bool) -> int:
 
 
 def main() -> int:
+	global FLUTTER_VERSION, FLUTTER_ENGINE_REV, MATERIAL_FONTS_REV, GRADLE_WRAPPER_REV, EBUILD
+
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--check", action="store_true")
-	parser.add_argument("--ebuild", type=Path, default=EBUILD)
+	parser.add_argument("--version", type=str, help="Target Flutter version")
+	parser.add_argument("--engine-revision", type=str, help="Target Engine revision")
+	parser.add_argument("--material-fonts-revision", type=str, help="Target Material fonts revision")
+	parser.add_argument("--gradle-wrapper-revision", type=str, help="Target Gradle wrapper revision")
+	parser.add_argument("--ebuild", type=Path, help="Path to ebuild to modify")
 	args = parser.parse_args()
-	return update_ebuild(args.ebuild, render_pub_deps(), args.check)
+
+	if args.version:
+		FLUTTER_VERSION = args.version
+	if args.engine_revision:
+		FLUTTER_ENGINE_REV = args.engine_revision
+	if args.material_fonts_revision:
+		MATERIAL_FONTS_REV = args.material_fonts_revision
+	if args.gradle_wrapper_revision:
+		GRADLE_WRAPPER_REV = args.gradle_wrapper_revision
+
+	if args.ebuild:
+		EBUILD = args.ebuild
+	elif args.version:
+		EBUILD = (
+			Path(__file__).parents[1]
+			/ "dev-lang"
+			/ "flutter"
+			/ f"flutter-{FLUTTER_VERSION}.ebuild"
+		)
+
+	# On check mode, if no arguments are passed, we check against the static dictionary
+	# If version is passed, fetch real dependencies to check or generate.
+	if args.version or not args.check:
+		deps = fetch_pub_deps(FLUTTER_VERSION)
+	else:
+		deps = PUB_DEPENDENCIES
+
+	return update_ebuild(EBUILD, render_pub_deps(deps), args.check)
 
 
 if __name__ == "__main__":

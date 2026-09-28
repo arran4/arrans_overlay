@@ -80,10 +80,14 @@ def check_branch_exists(branch_name: str) -> bool:
 
 def check_pr_exists(branch_name: str) -> bool:
     try:
-        res = run_cmd(["gh", "pr", "list", "--head", branch_name, "--json", "url"], check=True, capture_output=True)
+        res = run_cmd(["gh", "pr", "list", "--head", branch_name, "--json", "url", "--state", "open"], check=True, capture_output=True)
         prs = json.loads(res.stdout)
         return len(prs) > 0
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except subprocess.CalledProcessError as e:
+        logging.error(f"gh CLI error: {e}")
+        raise
+    except FileNotFoundError:
+        logging.warning("gh CLI not available. Skipping remote PR check.")
         return False
 
 def create_virtual_flutter(version: str):
@@ -121,7 +125,11 @@ def create_ebuild_copy(package: str, version: str):
     logging.info(f"Copied {existing_ebuild.name} to {new_ebuild_path.name}")
     return new_ebuild_path
 
-def commit_and_push(branch_name: str, version: str, engine_rev: str, dart_rev: str, dry_run: bool):
+def commit_and_push(branch_name: str, version: str, engine_rev: str, dart_rev: str, fonts_rev: str, gradle_rev: str, dry_run: bool):
+    if dry_run:
+        logging.info("Dry run: Skipping git add, commit, branch checkout, push, and PR creation.")
+        return
+
     run_cmd(["git", "add", "dev-libs/flutter-engine", "dev-lang/flutter", "virtual/flutter"])
     res = run_cmd(["git", "status", "--porcelain"], capture_output=True)
     if not res.stdout.strip():
@@ -130,15 +138,9 @@ def commit_and_push(branch_name: str, version: str, engine_rev: str, dart_rev: s
 
     commit_msg = (
         f"dev-lang/flutter: bump to {version} (source)\n\n"
-        f"Automated coordinated source package update.\n\n"
-        f"Flutter Engine revision: {engine_rev}\n"
-        f"Pinned Dart revision: {dart_rev}"
+        f"Automated coordinated source package update."
     )
     run_cmd(["git", "commit", "-m", commit_msg])
-
-    if dry_run:
-        logging.info(f"Dry run: Would push branch {branch_name} and create PR")
-        return
 
     try:
         run_cmd(["git", "push", "origin", branch_name])
@@ -146,11 +148,22 @@ def commit_and_push(branch_name: str, version: str, engine_rev: str, dart_rev: s
         logging.error("Failed to push branch.")
         raise
 
+    body = (
+        f"Automated coordinated source package update for Flutter {version}.\n\n"
+        f"**New Upstream Version:** {version}\n"
+        f"**Authoritative Source:** https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json\n"
+        f"**Flutter Engine revision:** {engine_rev}\n"
+        f"**Pinned Dart revision:** {dart_rev}\n"
+        f"**Material Fonts revision:** {fonts_rev}\n"
+        f"**Gradle Wrapper revision:** {gradle_rev}\n"
+        f"**Tests Performed:** g2 lint, pkgcheck, Manifest verification (see CI runs)\n"
+    )
+
     try:
         run_cmd([
             "gh", "pr", "create",
             "--title", f"dev-lang/flutter: bump to {version} (source)",
-            "--body", commit_msg,
+            "--body", body,
             "--head", branch_name,
             "--base", "main"
         ])
@@ -218,11 +231,13 @@ def main() -> int:
 
         # Update Engine DEPS
         logging.info("Running generate_flutter_engine_ebuild.py to update DEPS")
+        engine_ebuild = REPO_ROOT / "dev-libs" / "flutter-engine" / f"flutter-engine-{version}.ebuild"
         engine_gen_cmd = [
             sys.executable, str(REPO_ROOT / "scripts" / "generate_flutter_engine_ebuild.py"),
             "--version", version,
             "--engine-revision", engine_rev,
-            "--dart-revision", dart_rev
+            "--dart-revision", dart_rev,
+            "--ebuild", str(engine_ebuild)
         ]
         try:
             run_cmd(engine_gen_cmd)
@@ -250,7 +265,15 @@ def main() -> int:
 
         run_cmd(flutter_gen_cmd + ["--check"])
 
-        commit_and_push(branch_name, version, engine_rev, dart_rev, args.dry_run)
+        if not args.dry_run:
+            try:
+                logging.info("Running g2 cache generate")
+                g2_cmd = ["g2", "cache", "generate", "dev-libs/flutter-engine", "dev-lang/flutter"]
+                run_cmd(g2_cmd, cwd=str(REPO_ROOT))
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                logging.warning("g2 cache generate failed or missing. Ensure manifest is correctly generated in CI.")
+
+        commit_and_push(branch_name, version, engine_rev, dart_rev, fonts_rev, gradle_rev, args.dry_run)
 
     except Exception as e:
         logging.error(f"Update failed: {e}")

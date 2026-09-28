@@ -673,10 +673,40 @@ def update_ebuild(generated: str, check: bool) -> int:
 
 
 def main() -> int:
+    global DART_VERSION, DART_EBUILD_REVISION, BOOTSTRAP_SDK_TAG, SDK_DEPS_URL, EBUILD
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--sdk-tree", type=Path)
+    parser.add_argument("--version", type=str, help="Target Dart version")
+    parser.add_argument("--ebuild-revision", type=int, help="Target ebuild revision")
+    parser.add_argument("--bootstrap-sdk-tag", type=str, help="Target bootstrap SDK tag")
+    parser.add_argument("--ebuild", type=Path, help="Path to ebuild to modify")
     args = parser.parse_args()
+
+    if args.version:
+        DART_VERSION = args.version
+    if args.ebuild_revision is not None:
+        DART_EBUILD_REVISION = args.ebuild_revision
+    if args.bootstrap_sdk_tag:
+        BOOTSTRAP_SDK_TAG = args.bootstrap_sdk_tag
+
+    if args.version:
+        SDK_DEPS_URL = (
+            "https://raw.githubusercontent.com/dart-lang/sdk/"
+            f"{DART_VERSION}/DEPS"
+        )
+
+    if args.ebuild:
+        EBUILD = args.ebuild
+    elif args.version or args.ebuild_revision is not None:
+        EBUILD = (
+            Path(__file__).parents[1]
+            / "dev-lang"
+            / "dart"
+            / f"dart-{DART_VERSION}-r{DART_EBUILD_REVISION}.ebuild"
+        )
+
     deps_path, temporary = obtain_deps(args.sdk_tree)
     try:
         return update_ebuild(render(deps_path), args.check)

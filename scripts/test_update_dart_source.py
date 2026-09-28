@@ -41,6 +41,10 @@ class TestUpdateDartSource(unittest.TestCase):
         self.assertFalse(update_dart_source.check_pr_exists("my-branch"))
 
         mock_run_cmd.side_effect = subprocess.CalledProcessError(1, 'gh')
+        with self.assertRaises(subprocess.CalledProcessError):
+            update_dart_source.check_pr_exists("my-branch")
+
+        mock_run_cmd.side_effect = FileNotFoundError()
         self.assertFalse(update_dart_source.check_pr_exists("my-branch"))
 
 if __name__ == '__main__':

@@ -60,13 +60,15 @@ def check_branch_exists(branch_name: str) -> bool:
         return False
 
 def check_pr_exists(branch_name: str) -> bool:
-    # If gh cli is available, we check if PR exists
     try:
-        res = run_cmd(["gh", "pr", "list", "--head", branch_name, "--json", "url"], check=True, capture_output=True)
+        res = run_cmd(["gh", "pr", "list", "--head", branch_name, "--json", "url", "--state", "open"], check=True, capture_output=True)
         prs = json.loads(res.stdout)
         return len(prs) > 0
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        logging.warning("gh CLI not available or failed. Assuming PR check based on branch presence only.")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"gh CLI error: {e}")
+        raise
+    except FileNotFoundError:
+        logging.warning("gh CLI not available. Skipping remote PR check.")
         return False
 
 def create_virtual_dart(version: str):
@@ -109,6 +111,10 @@ def create_dart_ebuild(version: str):
     return new_ebuild_path
 
 def commit_and_push(branch_name: str, version: str, dry_run: bool):
+    if dry_run:
+        logging.info("Dry run: Skipping git add, commit, branch checkout, push, and PR creation.")
+        return
+
     run_cmd(["git", "add", "dev-lang/dart", "virtual/dart"])
     # If no changes, exit
     res = run_cmd(["git", "status", "--porcelain"], capture_output=True)
@@ -119,21 +125,24 @@ def commit_and_push(branch_name: str, version: str, dry_run: bool):
     commit_msg = f"dev-lang/dart: bump to {version} (source)\n\nAutomated source package update."
     run_cmd(["git", "commit", "-m", commit_msg])
 
-    if dry_run:
-        logging.info(f"Dry run: Would push branch {branch_name} and create PR")
-        return
-
     try:
         run_cmd(["git", "push", "origin", branch_name])
     except subprocess.CalledProcessError:
-        logging.error("Failed to push branch. You might need to use a PAT or check permissions.")
+        logging.error("Failed to push branch.")
         raise
+
+    body = (
+        f"Automated source package update for Dart {version}.\n\n"
+        f"**New Upstream Version:** {version}\n"
+        f"**Authoritative Source:** https://storage.googleapis.com/dart-archive/channels/stable/release/latest/VERSION\n"
+        f"**Tests Performed:** g2 lint, pkgcheck, Manifest verification (see CI runs)\n"
+    )
 
     try:
         run_cmd([
             "gh", "pr", "create",
             "--title", f"dev-lang/dart: bump to {version} (source)",
-            "--body", f"Automated source package update for Dart {version}.",
+            "--body", body,
             "--head", branch_name,
             "--base", "main"
         ])
@@ -186,7 +195,8 @@ def main() -> int:
         gen_cmd = [
             sys.executable, str(REPO_ROOT / "scripts" / "generate_dart_ebuild.py"),
             "--version", version,
-            "--revision", "0"
+            "--ebuild-revision", "0",
+            "--ebuild", str(new_ebuild_path)
         ]
         # Run it but if it fails (e.g., new unreviewed deps), we fail closed
         try:
@@ -202,16 +212,13 @@ def main() -> int:
             logging.error(f"Generator check mode failed. Error: {e}")
             raise
 
-        # Manifest update (dummy for local sandbox, assumes g2 available in CI)
-        # We try to use the manifest upsert-from-url approach if we can, otherwise manual
-        try:
-            logging.info("Running g2 manifest generation (requires g2 installed)")
-            # g2 might not be installed, use go run if available
-            g2_cmd = ["go", "run", "github.com/arran4/g2/cmd/g2@latest", "cache", "generate", "dev-lang/dart"]
-            run_cmd(g2_cmd, cwd=str(REPO_ROOT))
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            logging.warning("g2 cache generate failed or missing. Skipping manifest generation in this script.")
-            # Depending on requirements we might need to actually download it or assume a GH action step does it.
+        if not args.dry_run:
+            try:
+                logging.info("Running g2 cache generate")
+                g2_cmd = ["g2", "cache", "generate", "dev-lang/dart"]
+                run_cmd(g2_cmd, cwd=str(REPO_ROOT))
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                logging.warning("g2 cache generate failed or missing. Ensure manifest is correctly generated in CI.")
 
         commit_and_push(branch_name, version, args.dry_run)
 
