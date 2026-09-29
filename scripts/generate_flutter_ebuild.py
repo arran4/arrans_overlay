@@ -33,32 +33,37 @@ BEGIN = "# BEGIN GENERATED FLUTTER PUB DEPS"
 END = "# END GENERATED FLUTTER PUB DEPS"
 
 def fetch_pub_deps(version: str) -> dict[str, str]:
-	"""Dynamically fetches the exact pub dependency graph from pubspec.yaml."""
-	url = f"https://raw.githubusercontent.com/flutter/flutter/{version}/packages/flutter_tools/pubspec.yaml"
+	"""Dynamically fetches the exact pub dependency graph from pubspec.lock inside the release tarball."""
+	import subprocess
+	url = f"https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_{version}-stable.tar.xz"
 	try:
-		req = urllib.request.urlopen(url)
-		content = req.read().decode('utf-8')
+		cmd = f"set -o pipefail; curl --fail --location --silent --show-error {url} | tar -xJO flutter/packages/flutter_tools/pubspec.lock"
+		result = subprocess.run(['bash', '-c', cmd], capture_output=True, text=True, check=True)
+		content = result.stdout
+
 		deps = {}
-		in_deps = False
+		in_packages = False
+		current_pkg = None
+
 		for line in content.split('\n'):
-			if line.startswith('dependencies:'):
-				in_deps = True
+			line = line.rstrip()
+			if line == 'packages:':
+				in_packages = True
 				continue
-			if line.startswith('dev_dependencies:'):
-				in_deps = False
-				break
-			if in_deps and line.startswith('  '):
-				parts = line.strip().split(':')
-				if len(parts) >= 2:
-					pkg = parts[0].strip()
-					ver = parts[1].strip().strip("'\"")
-					if pkg and not pkg.startswith('#') and ver and not ver.startswith('any'):
-						if 'path' not in line and 'sdk' not in line:
-							deps[pkg] = ver
+			if not in_packages:
+				continue
+
+			if line.startswith('  ') and not line.startswith('    '):
+				current_pkg = line.strip().strip(':')
+			elif current_pkg and line.startswith('    version: '):
+				ver = line.split(':', 1)[1].strip().strip("'\"")
+				deps[current_pkg] = ver
+
 		return deps
-	except Exception as e:
-		logging.error(f"Error fetching pubspec.yaml for version {version}: {e}")
-		raise
+	except subprocess.CalledProcessError as e:
+		import logging
+		logging.warning(f"Could not fetch/parse pubspec.lock for {version}: {e.stderr}")
+		raise RuntimeError(f"Could not fetch/parse pubspec.lock for {version}: {e.stderr}")
 
 # The pinned pub packages required for packages/flutter_tools.
 PUB_DEPENDENCIES: dict[str, str] = {

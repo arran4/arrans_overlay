@@ -59,11 +59,36 @@ def check_dart_compatibility(required_sdk: str) -> bool:
     return True
 
 def check_superseding_release(pkg: str, version: str) -> bool:
-    '''Detect if older updates are pending and optionally close them.'''
+    '''Detect if older updates are pending.'''
     try:
-        # Search for PRs created by this automation for this package
         cmd = ["gh", "pr", "list", "--state", "open", "--search", f"auto-update-{pkg}-", "--json", "title,url,headRefName"]
         result = run_cmd(cmd, capture_output=True)
+        import json
+        prs = json.loads(result.stdout)
+
+        found_superseded = False
+        for pr in prs:
+            pr_branch = pr["headRefName"]
+            if not pr_branch.startswith(f"auto-update-{pkg}-"):
+                continue
+            pr_version = pr_branch.split(f"auto-update-{pkg}-")[-1]
+            if pr_version != version:
+                logging.info(f"Found superseded PR: {pr['url']} (version: {pr_version})")
+                found_superseded = True
+        return found_superseded
+    except subprocess.CalledProcessError as e:
+        logging.error(f"gh CLI error: {e}")
+        raise
+    except FileNotFoundError:
+        logging.error("gh CLI not found")
+        raise
+
+def close_superseding_releases(pkg: str, version: str):
+    '''Close older updates.'''
+    try:
+        cmd = ["gh", "pr", "list", "--state", "open", "--search", f"auto-update-{pkg}-", "--json", "title,url,headRefName"]
+        result = run_cmd(cmd, capture_output=True)
+        import json
         prs = json.loads(result.stdout)
 
         for pr in prs:
@@ -74,8 +99,6 @@ def check_superseding_release(pkg: str, version: str) -> bool:
             if pr_version != version:
                 logging.info(f"Closing superseded PR: {pr['url']} (version: {pr_version})")
                 run_cmd(["gh", "pr", "close", pr_branch, "--comment", f"Superseded by {version}"])
-                # We could delete the branch too, but closing the PR is sufficient
-        return False
     except subprocess.CalledProcessError as e:
         logging.error(f"gh CLI error: {e}")
         raise
@@ -99,8 +122,9 @@ def check_pr_exists(branch_name: str) -> bool:
         logging.error(f"gh CLI error: {e}")
         raise
     except FileNotFoundError:
-        logging.warning("gh CLI not available. Skipping remote PR check.")
-        return False
+        logging.error("gh CLI not available. Failing closed.")
+        import sys
+        sys.exit(1)
 
 def create_virtual_dart(version: str, work_root):
     virtual_dir = work_root / "virtual" / "dart"
@@ -178,6 +202,7 @@ def commit_and_push(branch_name: str, version: str, dry_run: bool):
             "--base", "main"
         ])
         logging.info("PR created successfully.")
+        close_superseding_releases("dart-source", version)
     except (subprocess.CalledProcessError, FileNotFoundError):
         logging.error("Failed to create PR using gh CLI.")
         raise
@@ -239,7 +264,7 @@ def main() -> int:
         create_virtual_dart(version, work_root)
 
         # Create main ebuild
-        new_ebuild_path = create_dart_ebuild(version)
+        new_ebuild_path = create_dart_ebuild(version, work_root)
 
         # Run generator to update DEPS
         logging.info("Running generate_dart_ebuild.py to update DEPS")
@@ -274,7 +299,6 @@ def main() -> int:
                 run_cmd(verify_manifest_cmd, cwd=str(work_root))
             except subprocess.CalledProcessError:
                 logging.error("verify_manifest.py failed. Failing.")
-                import sys
                 sys.exit(1)
 
         commit_and_push(branch_name, version, args.dry_run)

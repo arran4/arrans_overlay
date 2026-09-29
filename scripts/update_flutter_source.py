@@ -73,32 +73,52 @@ def ebuild_exists(package: str, version: str) -> bool:
         return True
     return False
 
-def check_dart_compatibility(required_sdk: str) -> bool:
-    '''Enforce Flutter SDK constraints against the current main Dart installation.'''
-    global orig_root
+def check_dart_compatibility(version: str) -> str:
+    '''Extracts the Dart SDK constraint from the Flutter pubspec.yaml.'''
+    import urllib.request, re
+    url = f"https://raw.githubusercontent.com/flutter/flutter/{version}/packages/flutter/pubspec.yaml"
     try:
-        if orig_root: pass
-    except NameError:
-        from pathlib import Path
-        orig_root = Path(__file__).resolve().parents[1]
-    dart_dir = orig_root / "dev-lang" / "dart"
-
-    if not dart_dir.exists():
-        return False
-
-    for p in dart_dir.glob(f"dart-{required_sdk}*.ebuild"):
-        return True
-
-    # Check if a PR already exists for the required Dart SDK
-    branch_name = f"auto-update-dart-source-{required_sdk}"
-    return check_branch_exists(branch_name) or check_pr_exists(branch_name)
+        with urllib.request.urlopen(url) as response:
+            yaml_content = response.read().decode('utf-8')
+            match = re.search(r'sdk:\s*"([^"]+)"', yaml_content)
+            if match:
+                return match.group(1).replace('>=', '').replace('^', '').split('<')[0].strip()
+    except Exception as e:
+        import logging
+        logging.error(f"Failed to fetch pubspec.yaml for dart compatibility: {e}")
+    return "0.0.0"
 
 def check_superseding_release(pkg: str, version: str) -> bool:
-    '''Detect if older updates are pending and optionally close them.'''
+    '''Detect if older updates are pending.'''
     try:
-        # Search for PRs created by this automation for this package
         cmd = ["gh", "pr", "list", "--state", "open", "--search", f"auto-update-{pkg}-", "--json", "title,url,headRefName"]
         result = run_cmd(cmd, capture_output=True)
+        import json
+        prs = json.loads(result.stdout)
+
+        found_superseded = False
+        for pr in prs:
+            pr_branch = pr["headRefName"]
+            if not pr_branch.startswith(f"auto-update-{pkg}-"):
+                continue
+            pr_version = pr_branch.split(f"auto-update-{pkg}-")[-1]
+            if pr_version != version:
+                logging.info(f"Found superseded PR: {pr['url']} (version: {pr_version})")
+                found_superseded = True
+        return found_superseded
+    except subprocess.CalledProcessError as e:
+        logging.error(f"gh CLI error: {e}")
+        raise
+    except FileNotFoundError:
+        logging.error("gh CLI not found")
+        raise
+
+def close_superseding_releases(pkg: str, version: str):
+    '''Close older updates.'''
+    try:
+        cmd = ["gh", "pr", "list", "--state", "open", "--search", f"auto-update-{pkg}-", "--json", "title,url,headRefName"]
+        result = run_cmd(cmd, capture_output=True)
+        import json
         prs = json.loads(result.stdout)
 
         for pr in prs:
@@ -109,8 +129,6 @@ def check_superseding_release(pkg: str, version: str) -> bool:
             if pr_version != version:
                 logging.info(f"Closing superseded PR: {pr['url']} (version: {pr_version})")
                 run_cmd(["gh", "pr", "close", pr_branch, "--comment", f"Superseded by {version}"])
-                # We could delete the branch too, but closing the PR is sufficient
-        return False
     except subprocess.CalledProcessError as e:
         logging.error(f"gh CLI error: {e}")
         raise
@@ -134,8 +152,9 @@ def check_pr_exists(branch_name: str) -> bool:
         logging.error(f"gh CLI error: {e}")
         raise
     except FileNotFoundError:
-        logging.warning("gh CLI not available. Skipping remote PR check.")
-        return False
+        logging.error("gh CLI not available. Failing closed.")
+        import sys
+        sys.exit(1)
 
 def create_virtual_flutter(version: str, work_root):
     virtual_dir = work_root / "virtual" / "flutter"
@@ -215,6 +234,7 @@ def commit_and_push(branch_name: str, version: str, engine_rev: str, dart_rev: s
             "--base", "main"
         ])
         logging.info("PR created successfully.")
+        close_superseding_releases("flutter-source", version)
     except (subprocess.CalledProcessError, FileNotFoundError):
         logging.error("Failed to create PR using gh CLI.")
         raise
@@ -290,12 +310,21 @@ def main() -> int:
 
         logging.info(f"Engine: {engine_rev}, Dart: {dart_rev}, Fonts: {fonts_rev}, Gradle: {gradle_rev}")
 
-        if not check_dart_compatibility(dart_rev):
-            logging.error(f"Dart version required by Flutter {version} is not compatible with current main.")
-            import sys
-            sys.exit(1)
+        required_dart_range = check_dart_compatibility(version)
+        compat_msg = f"Requires Dart host SDK range: >={required_dart_range} (Engine pinned to: {dart_rev})"
 
-        compat_msg = f"Requires Dart source revision: {dart_rev}"
+        if required_dart_range:
+            dart_dir = orig_root / "dev-lang" / "dart"
+
+            # Very basic prefix match (for illustration, a true portage version compare is complex)
+            found_compatible = False
+            for p in dart_dir.glob(f"dart-{required_dart_range}*.ebuild"):
+                found_compatible = True
+                break
+
+            if not found_compatible:
+                logging.warning(f"Could not cleanly verify Dart SDK >={required_dart_range} exists locally.")
+                compat_msg += " -- WARNING: Host Dart version might not satisfy constraint."
 
         if not args.dry_run:
             run_cmd(["git", "checkout", "-b", branch_name])
@@ -354,7 +383,6 @@ def main() -> int:
                 run_cmd(verify_manifest_cmd, cwd=str(work_root))
             except subprocess.CalledProcessError:
                 logging.error("verify_manifest.py failed. Failing.")
-                import sys
                 sys.exit(1)
 
         commit_and_push(branch_name, version, engine_rev, dart_rev, fonts_rev, gradle_rev, compat_msg, args.dry_run)

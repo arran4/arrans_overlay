@@ -47,7 +47,8 @@ class TestUpdateFlutterSource(unittest.TestCase):
             update_flutter_source.check_pr_exists("my-branch")
 
         mock_run_cmd.side_effect = FileNotFoundError()
-        self.assertFalse(update_flutter_source.check_pr_exists("my-branch"))
+        with self.assertRaises(SystemExit):
+            update_flutter_source.check_pr_exists("my-branch")
 
     @patch('update_flutter_source.REPO_ROOT', Path("/fake/root"))
     @patch('pathlib.Path.exists', return_value=True)

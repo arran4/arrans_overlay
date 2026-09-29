@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+from unittest.mock import patch
 
 # Ensure scripts directory is in sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
@@ -195,12 +196,13 @@ SRC_URI="
 
             self.assertEqual(manifest_dists, extracted_dists, f"Mismatch in {rel_pkg}")
 
-if __name__ == '__main__':
-    unittest.main()
 
 
     @patch('subprocess.run')
     def test_verify_manifest_failure(self, mock_run):
+        import subprocess
+        import tempfile
+        import os
         mock_run.side_effect = subprocess.CalledProcessError(1, 'cmd')
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -208,7 +210,7 @@ if __name__ == '__main__':
             with open(manifest_path, "w") as m:
                 m.write("DIST myfile.tar.gz 123 BLAKE2B 123 SHA512 123\n")
 
-            with open(os.path.join(tmpdir, "test.ebuild"), "w") as e:
+            with open(os.path.join(tmpdir, "test-1.0.0.ebuild"), "w") as e:
                 e.write("SRC_URI=\"https://example.com/fail.tar.gz\"")
 
             from verify_manifest import process_directory
@@ -220,3 +222,6 @@ if __name__ == '__main__':
             # Manifest should be unchanged
             with open(manifest_path, "r") as m:
                 self.assertEqual(m.read(), "DIST myfile.tar.gz 123 BLAKE2B 123 SHA512 123\n")
+
+if __name__ == '__main__':
+    unittest.main()

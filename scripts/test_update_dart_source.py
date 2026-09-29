@@ -46,7 +46,8 @@ class TestUpdateDartSource(unittest.TestCase):
             update_dart_source.check_pr_exists("my-branch")
 
         mock_run_cmd.side_effect = FileNotFoundError()
-        self.assertFalse(update_dart_source.check_pr_exists("my-branch"))
+        with self.assertRaises(SystemExit):
+            update_dart_source.check_pr_exists("my-branch")
 
 if __name__ == '__main__':
     unittest.main()
