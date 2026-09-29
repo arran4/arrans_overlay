@@ -166,7 +166,7 @@ def commit_and_push(branch_name: str, version: str, dry_run: bool):
         f"Automated source package update for Dart {version}.\n\n"
         f"**New Upstream Version:** {version}\n"
         f"**Authoritative Source:** https://storage.googleapis.com/dart-archive/channels/stable/release/latest/VERSION\n"
-        f"**Tests Performed:** g2 lint, pkgcheck, Manifest verification (see CI runs)\n"
+        f"**Tests Performed:** (Pending CI runs for g2 lint, pkgcheck, and Manifest verification)\n"
     )
 
     try:
@@ -273,7 +273,9 @@ def main() -> int:
                 ]
                 run_cmd(verify_manifest_cmd, cwd=str(work_root))
             except subprocess.CalledProcessError:
-                logging.warning("verify_manifest.py failed. Ensure manifest is correctly generated in CI.")
+                logging.error("verify_manifest.py failed. Failing.")
+                import sys
+                sys.exit(1)
 
         commit_and_push(branch_name, version, args.dry_run)
 

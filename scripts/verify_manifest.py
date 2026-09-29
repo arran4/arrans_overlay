@@ -99,7 +99,7 @@ def upsert_worker(url, filename):
         open(temp_path, 'a').close()
 
         try:
-            subprocess.run(['g2', 'manifest', 'upsert-from-url', url, filename, tmpdir], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+            subprocess.run(['g2', 'manifest', 'upsert-from-url', url, filename, temp_path], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
 
             with open(temp_path, 'r') as f:
                 lines = f.readlines()

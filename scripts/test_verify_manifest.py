@@ -197,3 +197,26 @@ SRC_URI="
 
 if __name__ == '__main__':
     unittest.main()
+
+
+    @patch('subprocess.run')
+    def test_verify_manifest_failure(self, mock_run):
+        mock_run.side_effect = subprocess.CalledProcessError(1, 'cmd')
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manifest_path = os.path.join(tmpdir, "Manifest")
+            with open(manifest_path, "w") as m:
+                m.write("DIST myfile.tar.gz 123 BLAKE2B 123 SHA512 123\n")
+
+            with open(os.path.join(tmpdir, "test.ebuild"), "w") as e:
+                e.write("SRC_URI=\"https://example.com/fail.tar.gz\"")
+
+            from verify_manifest import process_directory
+            with self.assertRaises(SystemExit) as cm:
+                process_directory(tmpdir)
+
+            self.assertEqual(cm.exception.code, 1)
+
+            # Manifest should be unchanged
+            with open(manifest_path, "r") as m:
+                self.assertEqual(m.read(), "DIST myfile.tar.gz 123 BLAKE2B 123 SHA512 123\n")

@@ -108,6 +108,7 @@ docker pull gentoo/portage:latest
 docker create --name "${portage_container}" gentoo/portage:latest >/dev/null
 docker run --detach \
 	--name "${gentoo_container}" \
+	--privileged \
 	--volumes-from "${portage_container}" \
 	--volume "${repo_root}:/var/db/repos/arrans-overlay:ro" \
 	--volume "${guru_tmp}:/var/db/repos/guru:ro" \
@@ -172,6 +173,7 @@ emerge_target_dependencies() {
 	emerge -v \
 		--onlydeps \
 		--usepkg --getbinpkg --binpkg-changed-deps=y \
+		--usepkg-exclude dev-libs/flutter-engine \
 		--autounmask=y --autounmask-keep-masks=y \
 		--autounmask-write=y --autounmask-continue=y \
 		--backtrack=50 \

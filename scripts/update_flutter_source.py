@@ -75,9 +75,23 @@ def ebuild_exists(package: str, version: str) -> bool:
 
 def check_dart_compatibility(required_sdk: str) -> bool:
     '''Enforce Flutter SDK constraints against the current main Dart installation.'''
-    # In a full implementation, we'd parse the SDK range from pubspec.lock
-    # and compare it against our ebuild tree. For now, we return True as a placeholder.
-    return True
+    global orig_root
+    try:
+        if orig_root: pass
+    except NameError:
+        from pathlib import Path
+        orig_root = Path(__file__).resolve().parents[1]
+    dart_dir = orig_root / "dev-lang" / "dart"
+
+    if not dart_dir.exists():
+        return False
+
+    for p in dart_dir.glob(f"dart-{required_sdk}*.ebuild"):
+        return True
+
+    # Check if a PR already exists for the required Dart SDK
+    branch_name = f"auto-update-dart-source-{required_sdk}"
+    return check_branch_exists(branch_name) or check_pr_exists(branch_name)
 
 def check_superseding_release(pkg: str, version: str) -> bool:
     '''Detect if older updates are pending and optionally close them.'''
@@ -189,7 +203,7 @@ def commit_and_push(branch_name: str, version: str, engine_rev: str, dart_rev: s
         f"**Pinned Dart revision:** {dart_rev}\n"
         f"**Material Fonts revision:** {fonts_rev}\n"
         f"**Gradle Wrapper revision:** {gradle_rev}\n"
-        f"**Tests Performed:** g2 lint, pkgcheck, Manifest verification (see CI runs)\n"
+        f"**Tests Performed:** (Pending CI runs for g2 lint, pkgcheck, and Manifest verification)\n"
     )
 
     try:
@@ -240,10 +254,9 @@ def main() -> int:
             for file in (orig_root / "virtual" / "flutter").glob("*.ebuild"):
                 shutil.copy2(file, work_root / "virtual" / "flutter")
 
-        if not re.match(r"^\d+\.\d+\.\d+(-\d+\.\d+\.pre)?$", version) and "beta" not in version:
-             if not re.match(r"^\d+\.\d+\.\d+$", version):
-                logging.info(f"Flutter version {version} does not look like stable release. Skipping.")
-                return 0
+        if not re.match(r"^\d+\.\d+\.\d+$", version):
+            logging.info(f"Flutter version {version} does not look like stable release. Skipping.")
+            return 0
 
         logging.info(f"Target Flutter version: {version}")
 
@@ -276,6 +289,13 @@ def main() -> int:
         gradle_rev = extract_hash_from_url_like(gradle_content)
 
         logging.info(f"Engine: {engine_rev}, Dart: {dart_rev}, Fonts: {fonts_rev}, Gradle: {gradle_rev}")
+
+        if not check_dart_compatibility(dart_rev):
+            logging.error(f"Dart version required by Flutter {version} is not compatible with current main.")
+            import sys
+            sys.exit(1)
+
+        compat_msg = f"Requires Dart source revision: {dart_rev}"
 
         if not args.dry_run:
             run_cmd(["git", "checkout", "-b", branch_name])
@@ -333,7 +353,9 @@ def main() -> int:
                 ]
                 run_cmd(verify_manifest_cmd, cwd=str(work_root))
             except subprocess.CalledProcessError:
-                logging.warning("verify_manifest.py failed. Ensure manifest is correctly generated in CI.")
+                logging.error("verify_manifest.py failed. Failing.")
+                import sys
+                sys.exit(1)
 
         commit_and_push(branch_name, version, engine_rev, dart_rev, fonts_rev, gradle_rev, compat_msg, args.dry_run)
 
