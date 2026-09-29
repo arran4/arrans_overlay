@@ -30,7 +30,7 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 		self.assertGreaterEqual(len(deps), 100)
 
 	def test_render_pub_deps_block_format(self):
-		rendered = generator.render_pub_deps()
+		rendered = generator.render_pub_deps({})
 		self.assertTrue(rendered.startswith(generator.BEGIN))
 		self.assertTrue(rendered.endswith(generator.END))
 		self.assertIn("https://github.com/flutter/flutter/archive", rendered)
@@ -39,7 +39,7 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 		self.assertIn("PUB_URI=\"https://pub.dev/api/archives\"", rendered)
 
 	def test_render_pub_deps_line_lengths(self):
-		rendered = generator.render_pub_deps()
+		rendered = generator.render_pub_deps({})
 		for index, line in enumerate(rendered.splitlines(), 1):
 			self.assertLessEqual(
 				len(line.expandtabs(4)),
@@ -54,20 +54,20 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 				f"EAPI=8\n{generator.BEGIN}\nold_content\n{generator.END}\n"
 			)
 			# Should update successfully
-			rc = generator.update_ebuild(fake_ebuild, generator.render_pub_deps(), check=False)
+			rc = generator.update_ebuild(fake_ebuild, generator.render_pub_deps({}), check=False)
 			self.assertEqual(rc, 0)
 			content = fake_ebuild.read_text()
 			self.assertIn("flutter-material-fonts", content)
 
 			# Running with check=True on synchronized file returns 0
-			rc_check = generator.update_ebuild(fake_ebuild, generator.render_pub_deps(), check=True)
+			rc_check = generator.update_ebuild(fake_ebuild, generator.render_pub_deps({}), check=True)
 			self.assertEqual(rc_check, 0)
 
 			# Desynchronized file with check=True returns 1
 			fake_ebuild.write_text(
 				f"EAPI=8\n{generator.BEGIN}\nstale\n{generator.END}\n"
 			)
-			rc_stale = generator.update_ebuild(fake_ebuild, generator.render_pub_deps(), check=True)
+			rc_stale = generator.update_ebuild(fake_ebuild, generator.render_pub_deps({}), check=True)
 			self.assertEqual(rc_stale, 1)
 
 

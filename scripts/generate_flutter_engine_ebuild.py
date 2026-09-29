@@ -1070,8 +1070,12 @@ def main() -> int:
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--deps", type=Path)
     parser.add_argument("--version", type=str, help="Target Flutter version")
-    parser.add_argument("--engine-revision", type=str, help="Target Flutter Engine revision")
-    parser.add_argument("--dart-revision", type=str, help="Target Dart SDK revision for Engine")
+    parser.add_argument(
+        "--engine-revision", type=str, help="Target Flutter Engine revision"
+    )
+    parser.add_argument(
+        "--dart-revision", type=str, help="Target Dart SDK revision for Engine"
+    )
     parser.add_argument("--ebuild", type=Path, help="Path to ebuild to modify")
     args = parser.parse_args()
 
@@ -1083,7 +1087,10 @@ def main() -> int:
         DART_REVISION = args.dart_revision
 
     if args.version or args.engine_revision:
-        DEPS_URL = f"https://raw.githubusercontent.com/flutter/flutter/{FLUTTER_ENGINE_REV}/DEPS"
+        DEPS_URL = (
+            f"https://raw.githubusercontent.com/flutter/flutter/"
+            f"{FLUTTER_ENGINE_REV}/DEPS"
+        )
 
     if args.ebuild:
         EBUILD = args.ebuild

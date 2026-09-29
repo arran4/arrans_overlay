@@ -52,6 +52,37 @@ def ebuild_exists(version: str) -> bool:
         return True
     return False
 
+def check_dart_compatibility(required_sdk: str) -> bool:
+    '''Enforce Flutter SDK constraints against the current main Dart installation.'''
+    # In a full implementation, we'd parse the SDK range from pubspec.lock
+    # and compare it against our ebuild tree. For now, we return True as a placeholder.
+    return True
+
+def check_superseding_release(pkg: str, version: str) -> bool:
+    '''Detect if older updates are pending and optionally close them.'''
+    try:
+        # Search for PRs created by this automation for this package
+        cmd = ["gh", "pr", "list", "--state", "open", "--search", f"auto-update-{pkg}-", "--json", "title,url,headRefName"]
+        result = run_cmd(cmd, capture_output=True)
+        prs = json.loads(result.stdout)
+
+        for pr in prs:
+            pr_branch = pr["headRefName"]
+            if not pr_branch.startswith(f"auto-update-{pkg}-"):
+                continue
+            pr_version = pr_branch.split(f"auto-update-{pkg}-")[-1]
+            if pr_version != version:
+                logging.info(f"Closing superseded PR: {pr['url']} (version: {pr_version})")
+                run_cmd(["gh", "pr", "close", pr_branch, "--comment", f"Superseded by {version}"])
+                # We could delete the branch too, but closing the PR is sufficient
+        return False
+    except subprocess.CalledProcessError as e:
+        logging.error(f"gh CLI error: {e}")
+        raise
+    except FileNotFoundError:
+        logging.error("gh CLI not found")
+        raise
+
 def check_branch_exists(branch_name: str) -> bool:
     try:
         run_cmd(["git", "show-ref", "--verify", f"refs/heads/{branch_name}"], check=True, capture_output=True)
@@ -71,8 +102,8 @@ def check_pr_exists(branch_name: str) -> bool:
         logging.warning("gh CLI not available. Skipping remote PR check.")
         return False
 
-def create_virtual_dart(version: str):
-    virtual_dir = REPO_ROOT / "virtual" / "dart"
+def create_virtual_dart(version: str, work_root):
+    virtual_dir = work_root / "virtual" / "dart"
     virtual_dir.mkdir(parents=True, exist_ok=True)
     ebuild_path = virtual_dir / f"dart-{version}.ebuild"
     content = f"""# Copyright 2026 Gentoo Authors
@@ -91,7 +122,7 @@ RDEPEND="|| (
 )"
 """
     ebuild_path.write_text(content)
-    logging.info(f"Created {ebuild_path.relative_to(REPO_ROOT)}")
+    logging.info(f"Created {ebuild_path}")
     return ebuild_path
 
 def create_dart_ebuild(version: str):
@@ -163,6 +194,26 @@ def main() -> int:
         else:
             version = get_latest_dart_version()
 
+        import tempfile, shutil, atexit
+        global orig_root
+        orig_root = Path(__file__).resolve().parents[1]
+        work_root = orig_root
+
+        if args.dry_run:
+            tmpdir = tempfile.mkdtemp(prefix="dart_update_dry_run_")
+            atexit.register(lambda: shutil.rmtree(tmpdir, ignore_errors=True))
+            work_root = Path(tmpdir)
+
+            # Copy skeleton
+            import os
+            os.makedirs(work_root / "dev-lang" / "dart", exist_ok=True)
+            os.makedirs(work_root / "virtual" / "dart", exist_ok=True)
+
+            for file in (orig_root / "dev-lang" / "dart").glob("*.ebuild"):
+                shutil.copy2(file, work_root / "dev-lang" / "dart")
+            for file in (orig_root / "virtual" / "dart").glob("*.ebuild"):
+                shutil.copy2(file, work_root / "virtual" / "dart")
+
         # Check if version is a prerelease
         if not re.match(r"^\d+\.\d+\.\d+$", version):
             logging.info(f"Dart version {version} is not a stable release (e.g. beta/dev). Skipping.")
@@ -214,11 +265,15 @@ def main() -> int:
 
         if not args.dry_run:
             try:
-                logging.info("Running g2 cache generate")
-                g2_cmd = ["g2", "cache", "generate", "dev-lang/dart"]
-                run_cmd(g2_cmd, cwd=str(REPO_ROOT))
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                logging.warning("g2 cache generate failed or missing. Ensure manifest is correctly generated in CI.")
+                logging.info("Updating manifests via verify_manifest.py")
+                verify_manifest_cmd = [
+                    sys.executable,
+                    str(orig_root / "scripts" / "verify_manifest.py"),
+                    str(work_root / "dev-lang" / "dart"),
+                ]
+                run_cmd(verify_manifest_cmd, cwd=str(work_root))
+            except subprocess.CalledProcessError:
+                logging.warning("verify_manifest.py failed. Ensure manifest is correctly generated in CI.")
 
         commit_and_push(branch_name, version, args.dry_run)
 

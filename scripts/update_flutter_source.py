@@ -62,7 +62,9 @@ def extract_hash_from_url_like(content: str) -> str:
 
 def ebuild_exists(package: str, version: str) -> bool:
     """Check if the ebuild for the version already exists."""
-    pkg_dir = REPO_ROOT / package
+    global orig_root
+    orig_root = Path(__file__).resolve().parents[1]
+    pkg_dir = orig_root / package
     if not pkg_dir.exists():
         return False
     # Use basename for glob matching
@@ -70,6 +72,37 @@ def ebuild_exists(package: str, version: str) -> bool:
     for p in pkg_dir.glob(f"{basename}-{version}*.ebuild"):
         return True
     return False
+
+def check_dart_compatibility(required_sdk: str) -> bool:
+    '''Enforce Flutter SDK constraints against the current main Dart installation.'''
+    # In a full implementation, we'd parse the SDK range from pubspec.lock
+    # and compare it against our ebuild tree. For now, we return True as a placeholder.
+    return True
+
+def check_superseding_release(pkg: str, version: str) -> bool:
+    '''Detect if older updates are pending and optionally close them.'''
+    try:
+        # Search for PRs created by this automation for this package
+        cmd = ["gh", "pr", "list", "--state", "open", "--search", f"auto-update-{pkg}-", "--json", "title,url,headRefName"]
+        result = run_cmd(cmd, capture_output=True)
+        prs = json.loads(result.stdout)
+
+        for pr in prs:
+            pr_branch = pr["headRefName"]
+            if not pr_branch.startswith(f"auto-update-{pkg}-"):
+                continue
+            pr_version = pr_branch.split(f"auto-update-{pkg}-")[-1]
+            if pr_version != version:
+                logging.info(f"Closing superseded PR: {pr['url']} (version: {pr_version})")
+                run_cmd(["gh", "pr", "close", pr_branch, "--comment", f"Superseded by {version}"])
+                # We could delete the branch too, but closing the PR is sufficient
+        return False
+    except subprocess.CalledProcessError as e:
+        logging.error(f"gh CLI error: {e}")
+        raise
+    except FileNotFoundError:
+        logging.error("gh CLI not found")
+        raise
 
 def check_branch_exists(branch_name: str) -> bool:
     try:
@@ -90,8 +123,8 @@ def check_pr_exists(branch_name: str) -> bool:
         logging.warning("gh CLI not available. Skipping remote PR check.")
         return False
 
-def create_virtual_flutter(version: str):
-    virtual_dir = REPO_ROOT / "virtual" / "flutter"
+def create_virtual_flutter(version: str, work_root):
+    virtual_dir = work_root / "virtual" / "flutter"
     virtual_dir.mkdir(parents=True, exist_ok=True)
     ebuild_path = virtual_dir / f"flutter-{version}.ebuild"
     content = f"""# Copyright 2026 Gentoo Authors
@@ -110,10 +143,10 @@ RDEPEND="|| (
 )"
 """
     ebuild_path.write_text(content)
-    logging.info(f"Created {ebuild_path.relative_to(REPO_ROOT)}")
+    logging.info(f"Created {ebuild_path}")
 
-def create_ebuild_copy(package: str, version: str):
-    pkg_dir = REPO_ROOT / package
+def create_ebuild_copy(package: str, version: str, work_root):
+    pkg_dir = work_root / package
     basename = package.split('/')[-1]
     existing_ebuilds = list(pkg_dir.glob(f"{basename}-*.ebuild"))
     if not existing_ebuilds:
@@ -125,7 +158,7 @@ def create_ebuild_copy(package: str, version: str):
     logging.info(f"Copied {existing_ebuild.name} to {new_ebuild_path.name}")
     return new_ebuild_path
 
-def commit_and_push(branch_name: str, version: str, engine_rev: str, dart_rev: str, fonts_rev: str, gradle_rev: str, dry_run: bool):
+def commit_and_push(branch_name: str, version: str, engine_rev: str, dart_rev: str, fonts_rev: str, gradle_rev: str, compat_msg: str, dry_run: bool):
     if dry_run:
         logging.info("Dry run: Skipping git add, commit, branch checkout, push, and PR creation.")
         return
@@ -184,6 +217,29 @@ def main() -> int:
         else:
             version = get_latest_flutter_version()
 
+        import tempfile, shutil, atexit
+        global orig_root
+        orig_root = Path(__file__).resolve().parents[1]
+        work_root = orig_root
+
+        if args.dry_run:
+            tmpdir = tempfile.mkdtemp(prefix="flutter_update_dry_run_")
+            atexit.register(lambda: shutil.rmtree(tmpdir, ignore_errors=True))
+            work_root = Path(tmpdir)
+
+            # Copy skeleton
+            import os
+            os.makedirs(work_root / "dev-libs" / "flutter-engine", exist_ok=True)
+            os.makedirs(work_root / "dev-lang" / "flutter", exist_ok=True)
+            os.makedirs(work_root / "virtual" / "flutter", exist_ok=True)
+
+            for file in (orig_root / "dev-libs" / "flutter-engine").glob("*.ebuild"):
+                shutil.copy2(file, work_root / "dev-libs" / "flutter-engine")
+            for file in (orig_root / "dev-lang" / "flutter").glob("*.ebuild"):
+                shutil.copy2(file, work_root / "dev-lang" / "flutter")
+            for file in (orig_root / "virtual" / "flutter").glob("*.ebuild"):
+                shutil.copy2(file, work_root / "virtual" / "flutter")
+
         if not re.match(r"^\d+\.\d+\.\d+(-\d+\.\d+\.pre)?$", version) and "beta" not in version:
              if not re.match(r"^\d+\.\d+\.\d+$", version):
                 logging.info(f"Flutter version {version} does not look like stable release. Skipping.")
@@ -225,15 +281,15 @@ def main() -> int:
             run_cmd(["git", "checkout", "-b", branch_name])
 
         # Create ebuilds
-        create_virtual_flutter(version)
-        create_ebuild_copy("dev-libs/flutter-engine", version)
-        flutter_ebuild = create_ebuild_copy("dev-lang/flutter", version)
+        create_virtual_flutter(version, work_root)
+        create_ebuild_copy("dev-libs/flutter-engine", version, work_root)
+        flutter_ebuild = create_ebuild_copy("dev-lang/flutter", version, work_root)
 
         # Update Engine DEPS
         logging.info("Running generate_flutter_engine_ebuild.py to update DEPS")
-        engine_ebuild = REPO_ROOT / "dev-libs" / "flutter-engine" / f"flutter-engine-{version}.ebuild"
+        engine_ebuild = work_root / "dev-libs" / "flutter-engine" / f"flutter-engine-{version}.ebuild"
         engine_gen_cmd = [
-            sys.executable, str(REPO_ROOT / "scripts" / "generate_flutter_engine_ebuild.py"),
+            sys.executable, str(orig_root / "scripts" / "generate_flutter_engine_ebuild.py"),
             "--version", version,
             "--engine-revision", engine_rev,
             "--dart-revision", dart_rev,
@@ -249,8 +305,9 @@ def main() -> int:
 
         # Update Flutter PUB DEPS
         logging.info("Running generate_flutter_ebuild.py to update PUB DEPS")
+        compat_msg = f"Requires Dart source revision: {dart_rev}"
         flutter_gen_cmd = [
-            sys.executable, str(REPO_ROOT / "scripts" / "generate_flutter_ebuild.py"),
+            sys.executable, str(orig_root / "scripts" / "generate_flutter_ebuild.py"),
             "--ebuild", str(flutter_ebuild),
             "--version", version,
             "--engine-revision", engine_rev,
@@ -267,13 +324,18 @@ def main() -> int:
 
         if not args.dry_run:
             try:
-                logging.info("Running g2 cache generate")
-                g2_cmd = ["g2", "cache", "generate", "dev-libs/flutter-engine", "dev-lang/flutter"]
-                run_cmd(g2_cmd, cwd=str(REPO_ROOT))
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                logging.warning("g2 cache generate failed or missing. Ensure manifest is correctly generated in CI.")
+                logging.info("Updating manifests via verify_manifest.py")
+                verify_manifest_cmd = [
+                    sys.executable,
+                    str(orig_root / "scripts" / "verify_manifest.py"),
+                    str(work_root / "dev-libs" / "flutter-engine"),
+                    str(work_root / "dev-lang" / "flutter"),
+                ]
+                run_cmd(verify_manifest_cmd, cwd=str(work_root))
+            except subprocess.CalledProcessError:
+                logging.warning("verify_manifest.py failed. Ensure manifest is correctly generated in CI.")
 
-        commit_and_push(branch_name, version, engine_rev, dart_rev, fonts_rev, gradle_rev, args.dry_run)
+        commit_and_push(branch_name, version, engine_rev, dart_rev, fonts_rev, gradle_rev, compat_msg, args.dry_run)
 
     except Exception as e:
         logging.error(f"Update failed: {e}")

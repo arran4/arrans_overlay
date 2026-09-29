@@ -180,11 +180,11 @@ def render_pub_deps(deps: dict[str, str]) -> str:
 	lines.append(
 		"\t${FLUTTER_GCS}/flutter/fonts/${FLUTTER_FONTS_REV}/fonts.zip"
 	)
-	lines.append("\t\t-> flutter-material-fonts-3012db47.zip")
+	lines.append(f"\t\t-> flutter-material-fonts-{MATERIAL_FONTS_REV[:8]}.zip")
 	lines.append(
 		"\t${FLUTTER_GCS}/gradle-wrapper/${FLUTTER_GRADLE_REV}/gradle-wrapper.tgz"
 	)
-	lines.append("\t\t-> flutter-gradle-wrapper-fd5c1f2c.tgz")
+	lines.append(f"\t\t-> flutter-gradle-wrapper-{GRADLE_WRAPPER_REV[:8]}.tgz")
 
 	for pkg, ver in sorted(deps.items()):
 		lines.append(f"\t${{PUB_URI}}/{pkg}-{ver}.tar.gz")
