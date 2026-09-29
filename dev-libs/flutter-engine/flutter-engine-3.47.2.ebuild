@@ -292,6 +292,7 @@ BDEPEND="
 
 PATCHES=(
 	"${FILESDIR}/flutter-engine-${PV}-gn-version-fallback.patch"
+	"${FILESDIR}/flutter-engine-${PV}-gcc-climits.patch"
 	"${FILESDIR}/flutter-engine-${PV}-compiler-version-python3.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-cpu-affinity.patch"
 	"${FILESDIR}/flutter-engine-${PV}-gcc-display-list.patch"
