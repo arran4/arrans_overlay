@@ -114,7 +114,6 @@ docker pull gentoo/portage:latest
 docker create --name "${portage_container}" gentoo/portage:latest >/dev/null
 docker run --detach \
 	--name "${gentoo_container}" \
-	--privileged \
 	--volumes-from "${portage_container}" \
 	--volume "${repo_root}:/var/db/repos/arrans-overlay:ro" \
 	--volume "${guru_tmp}:/var/db/repos/guru:ro" \
@@ -195,16 +194,6 @@ emerge -v --usepkg --getbinpkg \
 emerge -v --usepkg --getbinpkg --binpkg-changed-deps=y \
 	"${dart_virtual_atom}" \
 	"${engine_source_atom}"
-
-# Ensure all dependencies for source flutter are emerged online
-emerge -v --onlydeps --usepkg --getbinpkg --binpkg-changed-deps=y --usepkg-exclude dev-lang/flutter \
-    --autounmask=y --autounmask-keep-masks=y \
-	--autounmask-write=y --autounmask-continue=y \
-    "${flutter_source_atom}" || \
-    emerge -v --onlydeps --usepkg --getbinpkg --binpkg-changed-deps=y --usepkg-exclude dev-lang/flutter \
-    --autounmask=y --autounmask-keep-masks=y \
-	--autounmask-write=y --autounmask-continue=y \
-    "${flutter_source_atom}"
 
 # Pre-fetch all declared distfiles for source flutter
 emerge --fetchonly --nodeps "${flutter_source_atom}"

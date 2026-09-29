@@ -7,10 +7,6 @@ import concurrent.futures
 import tempfile
 import shutil
 
-# Regex to capture PN and PV from ebuild filename.
-# Example: ollama-bin-0.10.1.ebuild -> PN=ollama-bin, PV=0.10.1
-# Example: g2-bin-0.0.2.ebuild -> PN=g2-bin, PV=0.0.2
-# This regex is a simplification but covers most cases in this overlay
 EBUILD_FILENAME_PATTERN = re.compile(
     r'^(?P<pn>.+)-'
     r'(?P<pv>\d+(?:\.\d+)*(?:[a-z])?'
@@ -19,11 +15,8 @@ EBUILD_FILENAME_PATTERN = re.compile(
 )
 
 def parse_ebuild_variables(filename, content=""):
-    # Basic parsing for PV, P, PN from filename and assignments from ebuild
     basename = os.path.basename(filename)
-
     match = EBUILD_FILENAME_PATTERN.match(basename)
-
     if not match:
         return None
 
@@ -45,13 +38,11 @@ def parse_ebuild_variables(filename, content=""):
         'PF': pf,
     }
 
-    # Extract simple VAR="value" or VAR='value' definitions from ebuild
     for var_match in re.finditer(r'^[ \t]*([A-Za-z0-9_]+)\s*=\s*["\']([^"\'\n]*)["\']', content, re.MULTILINE):
         key, val = var_match.group(1), var_match.group(2)
         if key not in variables:
             variables[key] = val
 
-    # Resolve variables within variables (e.g. MDI_BASE using MDI_COMMIT)
     for _ in range(3):
         for k, v in list(variables.items()):
             variables[k] = resolve_variables(v, variables)
@@ -59,7 +50,6 @@ def parse_ebuild_variables(filename, content=""):
     return variables
 
 def resolve_variables(text, variables):
-    # Replace ${VAR} and $VAR, sorted by key length descending to prevent prefix collisions
     for key in sorted(variables.keys(), key=len, reverse=True):
         value = variables[key]
         text = text.replace(f"${{{key}}}", value)
@@ -67,12 +57,9 @@ def resolve_variables(text, variables):
     return text
 
 def extract_uris(content, variables):
-    # Remove comments
     lines = [line.split('#', 1)[0] for line in content.splitlines()]
     clean_content = '\n'.join(lines)
 
-    # Find SRC_URI block
-    # It might use " or '
     match = re.search(r'SRC_URI\s*=\s*"([^"]*)"', clean_content, re.DOTALL)
     if not match:
         match = re.search(r"SRC_URI\s*=\s*'([^']*)'", clean_content, re.DOTALL)
@@ -83,7 +70,6 @@ def extract_uris(content, variables):
     src_uri_body = match.group(1)
     src_uri_body = resolve_variables(src_uri_body, variables)
 
-    # Simple tokenizer
     tokens = src_uri_body.split()
 
     uris = []
@@ -91,17 +77,15 @@ def extract_uris(content, variables):
     while i < len(tokens):
         token = tokens[i]
 
-        # Check if it looks like a URL
         if '://' in token:
             url = token
             filename = os.path.basename(url)
 
-            # Check for -> rename
             if i + 2 < len(tokens) and tokens[i+1] == '->':
                 filename = tokens[i+2]
-                i += 3 # skip url, ->, filename
+                i += 3
             else:
-                i += 1 # skip url
+                i += 1
 
             uris.append((url, filename))
         else:
@@ -112,25 +96,22 @@ def extract_uris(content, variables):
 def upsert_worker(url, filename):
     with tempfile.TemporaryDirectory() as tmpdir:
         temp_path = os.path.join(tmpdir, 'Manifest')
-        # Create empty manifest file
         open(temp_path, 'a').close()
 
         try:
-            subprocess.run(['go', 'run', 'github.com/arran4/g2/cmd/g2@latest', 'manifest', 'upsert-from-url', url, filename, temp_path], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+            subprocess.run(['g2', 'manifest', 'upsert-from-url', url, filename, tmpdir], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
 
             with open(temp_path, 'r') as f:
                 lines = f.readlines()
 
             return lines
         except subprocess.CalledProcessError as e:
-            print(f"    Error updating manifest for {url}: {e}")
-            return []
+            raise RuntimeError(f"Upsert failed for {url}: {e}") from e
 
 def process_directory(directory):
     print(f"Processing directory: {directory}")
     manifest_path = os.path.join(directory, 'Manifest')
 
-    # Find all ebuilds
     ebuilds = [f for f in os.listdir(directory) if f.endswith('.ebuild')]
 
     if not ebuilds:
@@ -160,7 +141,6 @@ def process_directory(directory):
     print(f"  Upserting {len(tasks)} URIs in parallel...")
 
     new_entries = []
-    # Deduplicate tasks based on (url, filename) just in case
     tasks = list(set(tasks))
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=min(32, len(tasks) + 1)) as executor:
@@ -175,10 +155,11 @@ def process_directory(directory):
                     print(f"    Upserted: {url} -> {filename}")
                 else:
                     print(f"    Failed to upsert: {url}")
+                    sys.exit(1)
             except Exception as e:
                 print(f"    Exception processing {url}: {e}")
+                sys.exit(1)
 
-    # Now update Manifest
     header_lines = []
     dist_lines_map = {}
 
@@ -191,19 +172,21 @@ def process_directory(directory):
                 else:
                     header_lines.append(line)
 
-    # Update with new entries
     for line in new_entries:
         parts = line.strip().split()
         if len(parts) > 1 and parts[0] == 'DIST':
             dist_lines_map[parts[1]] = line
 
-    # Write back
-    with open(manifest_path, 'w') as f:
+    with tempfile.NamedTemporaryFile('w', delete=False) as tmpf:
         for line in header_lines:
-            f.write(line)
+            tmpf.write(line)
 
         for filename in sorted(dist_lines_map.keys()):
-            f.write(dist_lines_map[filename])
+            tmpf.write(dist_lines_map[filename])
+        tmpf_name = tmpf.name
+
+    shutil.move(tmpf_name, manifest_path)
+    os.chmod(manifest_path, 0o644)
 
 def main():
     if len(sys.argv) < 2:
@@ -215,6 +198,7 @@ def main():
             process_directory(directory)
         else:
             print(f"Directory not found: {directory}")
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()

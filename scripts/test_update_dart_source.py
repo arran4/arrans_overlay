@@ -1,3 +1,4 @@
+from pathlib import Path
 import unittest
 from unittest.mock import patch, mock_open, MagicMock
 import update_dart_source as update_dart_source
@@ -16,13 +17,13 @@ class TestUpdateDartSource(unittest.TestCase):
     @patch('pathlib.Path.exists', return_value=True)
     @patch('pathlib.Path.glob', return_value=[Path("/fake/root/dev-lang/dart/dart-3.14.0.ebuild")])
     def test_ebuild_exists(self, mock_glob, mock_exists):
-        self.assertTrue(update_dart_source.ebuild_exists("3.14.0"))
+        self.assertTrue(update_dart_source.ebuild_exists("3.14.0", Path("/tmp")))
 
     @patch('update_dart_source.REPO_ROOT', Path("/fake/root"))
     @patch('pathlib.Path.exists', return_value=True)
     @patch('pathlib.Path.glob', return_value=[])
     def test_ebuild_not_exists(self, mock_glob, mock_exists):
-        self.assertFalse(update_dart_source.ebuild_exists("3.14.0"))
+        self.assertFalse(update_dart_source.ebuild_exists("3.14.0", Path("/tmp")))
 
     @patch('update_dart_source.run_cmd')
     def test_check_branch_exists(self, mock_run_cmd):

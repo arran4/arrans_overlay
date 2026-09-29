@@ -43,9 +43,9 @@ def get_latest_dart_version() -> str:
             raise ValueError("Failed to parse version from Dart VERSION file")
         return version
 
-def ebuild_exists(version: str) -> bool:
+def ebuild_exists(version: str, orig_root) -> bool:
     """Check if the Dart ebuild for the version already exists."""
-    dart_dir = REPO_ROOT / "dev-lang" / "dart"
+    dart_dir = orig_root / "dev-lang" / "dart"
     if not dart_dir.exists():
         return False
     for p in dart_dir.glob(f"dart-{version}*.ebuild"):
@@ -125,9 +125,9 @@ RDEPEND="|| (
     logging.info(f"Created {ebuild_path}")
     return ebuild_path
 
-def create_dart_ebuild(version: str):
+def create_dart_ebuild(version: str, work_root):
     # Find existing ebuild to copy from
-    dart_dir = REPO_ROOT / "dev-lang" / "dart"
+    dart_dir = work_root / "dev-lang" / "dart"
     existing_ebuilds = list(dart_dir.glob("dart-*.ebuild"))
     if not existing_ebuilds:
         raise FileNotFoundError("No existing Dart ebuild found to copy from")
@@ -221,7 +221,7 @@ def main() -> int:
 
         logging.info(f"Target Dart version: {version}")
 
-        if ebuild_exists(version):
+        if ebuild_exists(version, orig_root):
             logging.info(f"Dart {version} is already packaged. Exiting.")
             return 0
 
@@ -236,7 +236,7 @@ def main() -> int:
             run_cmd(["git", "checkout", "-b", branch_name])
 
         # Create virtual ebuild
-        create_virtual_dart(version)
+        create_virtual_dart(version, work_root)
 
         # Create main ebuild
         new_ebuild_path = create_dart_ebuild(version)
