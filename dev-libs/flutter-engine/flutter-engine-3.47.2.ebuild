@@ -283,6 +283,7 @@ DEPEND="
 BDEPEND="
 	${PYTHON_DEPS}
 	dev-build/gn
+	dev-vcs/git
 	dev-build/ninja
 	dev-python/pyyaml
 	sys-devel/gcc[cxx]
