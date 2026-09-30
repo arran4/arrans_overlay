@@ -8,7 +8,7 @@ class TestUpdateFlutterSource(unittest.TestCase):
     @patch('update_flutter_source.urllib.request.urlopen')
     def test_get_latest_flutter_version(self, mock_urlopen):
         mock_response = MagicMock()
-        mock_response.read.return_value = b'{"releases": [{"channel": "stable", "version": "3.24.4"}, {"channel": "beta", "version": "3.25.0"}]}'
+        mock_response.read.return_value = b'{"current_release": {"stable": "hash123"}, "releases": [{"channel": "stable", "version": "3.24.4", "hash": "hash123"}, {"channel": "beta", "version": "3.25.0"}]}'
         mock_urlopen.return_value.__enter__.return_value = mock_response
         self.assertEqual(update_flutter_source.get_latest_flutter_version(), "3.24.4")
 

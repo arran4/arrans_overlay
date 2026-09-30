@@ -49,15 +49,35 @@ def run_cmd(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     kwargs.setdefault("text", True)
     return subprocess.run(cmd, **kwargs)
 
-def get_latest_flutter_version() -> str:
-    logging.info(f"Fetching latest Flutter version from {FLUTTER_RELEASES_URL}")
+def get_flutter_release(version: str = None) -> dict:
+    logging.info(f"Fetching Flutter release metadata from {FLUTTER_RELEASES_URL}")
     with urllib.request.urlopen(FLUTTER_RELEASES_URL) as response:
         data = json.loads(response.read().decode("utf-8"))
-        stable_releases = [r for r in data.get("releases", []) if r.get("channel") == "stable"]
-        if not stable_releases:
-            raise ValueError("No stable releases found")
-        # Releases are typically sorted newest first
-        return stable_releases[0]["version"]
+
+        # In releases_linux.json, current_release tells us the exact hash of the current stable channel tip
+        # OR we can search for the specific version in the array.
+
+        releases = data.get("releases", [])
+        if not version:
+            # We want the authoritative tip of the stable channel.
+            # data["current_release"]["stable"] contains the hash of the latest stable release.
+            stable_hash = data.get("current_release", {}).get("stable")
+            if not stable_hash:
+                raise ValueError("No current stable release hash found in metadata")
+
+            for r in releases:
+                if r.get("hash") == stable_hash:
+                    return r
+            raise ValueError(f"Could not find release object for stable hash {stable_hash}")
+        else:
+            # Find the exact release for the given version
+            for r in releases:
+                if r.get("version") == version and r.get("channel") == "stable":
+                    return r
+            raise ValueError(f"Could not find stable release object for version {version}")
+
+def get_latest_flutter_version() -> str:
+    return get_flutter_release()["version"]
 
 def get_flutter_internal_version(ref: str, file_path: str) -> str:
     url = f"https://raw.githubusercontent.com/flutter/flutter/{ref}/bin/internal/{file_path}"

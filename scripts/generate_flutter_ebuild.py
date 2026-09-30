@@ -43,6 +43,7 @@ def fetch_pub_deps(version: str) -> dict[str, str]:
 		curl.stdout.close()
 		out, err = tar.communicate()
 
+		# Exit 23 is expected when tar finds the pubspec.lock member and exits early, causing curl to receive SIGPIPE.
 		if curl.wait() != 0 and curl.returncode != 23:
 			raise RuntimeError(f"curl failed: {curl.stderr.read().decode('utf-8', 'ignore')}")
 
@@ -72,8 +73,11 @@ def fetch_pub_deps(version: str) -> dict[str, str]:
 				continue
 
 			if line.startswith('  ') and not line.startswith('   '):
-				if current_pkg and pkg_source == 'hosted' and pkg_version:
-					deps[current_pkg] = pkg_version
+				if current_pkg and pkg_version:
+					if pkg_source == 'hosted':
+						deps[current_pkg] = pkg_version
+					elif pkg_source not in ['sdk', 'path', 'git']:
+						raise RuntimeError(f"Unsupported source type '{pkg_source}' for package {current_pkg}")
 				current_pkg = line.strip().strip(':')
 				pkg_source = None
 				pkg_version = None
@@ -82,8 +86,11 @@ def fetch_pub_deps(version: str) -> dict[str, str]:
 			elif current_pkg and line.startswith('    version: '):
 				pkg_version = line.split(':', 1)[1].strip().strip("'\"")
 
-		if current_pkg and pkg_source == 'hosted' and pkg_version:
-			deps[current_pkg] = pkg_version
+		if current_pkg and pkg_version:
+			if pkg_source == 'hosted':
+				deps[current_pkg] = pkg_version
+			elif pkg_source not in ['sdk', 'path', 'git']:
+				raise RuntimeError(f"Unsupported source type '{pkg_source}' for package {current_pkg}")
 
 		if not deps:
 			raise RuntimeError("No hosted packages found in pubspec.lock.")

@@ -76,29 +76,27 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 
 
 	def test_fetch_pub_deps(self):
-		import os
-		if "CI" not in os.environ:
-			try:
-				deps = generator.fetch_pub_deps("3.47.2")
-				self.assertEqual(len(deps), 101, "3.47.2 should have exactly 101 hosted pub deps")
-				self.assertIn("analyzer", deps)
-				self.assertNotIn("flutter", deps)
-				self.assertNotIn("flutter_test", deps)
+		try:
+			deps = generator.fetch_pub_deps("3.47.2")
+			self.assertEqual(len(deps), 101, "3.47.2 should have exactly 101 hosted pub deps")
+			self.assertIn("analyzer", deps)
+			self.assertNotIn("flutter", deps)
+			self.assertNotIn("flutter_test", deps)
 
-				# Exact mapping test for 3.47.2
-				import copy
-				deps_copy = copy.deepcopy(deps)
+			# Exact mapping test for 3.47.2
+			import copy
+			deps_copy = copy.deepcopy(deps)
 
-				static_deps = generator.PUB_DEPENDENCIES
-				for pkg, ver in static_deps.items():
-					self.assertIn(pkg, deps_copy, f"{pkg} missing from dynamically fetched deps")
-					self.assertEqual(deps_copy[pkg], ver, f"{pkg} version mismatch: {deps_copy[pkg]} != {ver}")
-					del deps_copy[pkg]
+			static_deps = generator.PUB_DEPENDENCIES
+			for pkg, ver in static_deps.items():
+				self.assertIn(pkg, deps_copy, f"{pkg} missing from dynamically fetched deps")
+				self.assertEqual(deps_copy[pkg], ver, f"{pkg} version mismatch: {deps_copy[pkg]} != {ver}")
+				del deps_copy[pkg]
 
-				# If we matched all exactly, deps_copy should be empty
-				self.assertEqual(len(deps_copy), 0, f"Extra unexpected packages found in lockfile: {deps_copy.keys()}")
-			except RuntimeError as e:
-				self.skipTest(f"Failed to fetch real pubspec.lock: {e}")
+			# If we matched all exactly, deps_copy should be empty
+			self.assertEqual(len(deps_copy), 0, f"Extra unexpected packages found in lockfile: {deps_copy.keys()}")
+		except RuntimeError as e:
+			self.skipTest(f"Failed to fetch real pubspec.lock: {e}")
 
 	@unittest.mock.patch('subprocess.Popen')
 	def test_fetch_pub_deps_mocked(self, mock_popen):
@@ -178,6 +176,28 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 			MockProcess(b"", b"", 0)
 		]
 		with self.assertRaisesRegex(RuntimeError, "curl failed: curl: \\(22\\)"):
+			generator.fetch_pub_deps("1.0.0")
+
+
+	@unittest.mock.patch('subprocess.Popen')
+	def test_fetch_pub_deps_unsupported_source(self, mock_popen):
+		class MockProcess:
+			def __init__(self, out, err, rc):
+				self.stdout = type('obj', (object,), {'close': lambda: None})
+				self.stderr = type('obj', (object,), {'read': lambda: err})
+				self._out = out
+				self._err = err
+				self.returncode = rc
+			def communicate(self):
+				return self._out, self._err
+			def wait(self):
+				return self.returncode
+
+		mock_popen.side_effect = [
+			MockProcess(b"", b"", 0),
+			MockProcess(b"packages:\n  foo:\n    source: hosted\n    version: 1.0.0\n  bar:\n    source: unknown\n    version: 2.0.0\n", b"", 0)
+		]
+		with self.assertRaisesRegex(RuntimeError, "Unsupported source type 'unknown' for package bar"):
 			generator.fetch_pub_deps("1.0.0")
 
 if __name__ == "__main__":

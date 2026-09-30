@@ -50,14 +50,30 @@ def run_cmd(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
     kwargs.setdefault("text", True)
     return subprocess.run(cmd, **kwargs)
 
+def get_dart_release(version: str = None) -> dict:
+    logging.info(f"Fetching Dart release metadata from {DART_VERSION_URL}")
+    # Dart version URL actually just returns JSON for the latest version!
+    # e.g. {"date": "2024-10-23", "version": "3.5.4", "revision": "bc37... "}
+    # If a specific version is requested, we can't easily query a single file for it unless we use the archive list,
+    # but the API allows fetching version info directly if we construct the URL.
+    # Actually, we can fetch the specific version JSON from:
+    # https://storage.googleapis.com/dart-archive/channels/stable/release/{version}/VERSION
+    if version:
+        url = f"https://storage.googleapis.com/dart-archive/channels/stable/release/{version}/VERSION"
+    else:
+        url = DART_VERSION_URL
+
+    try:
+        with urllib.request.urlopen(url) as response:
+            data = json.loads(response.read().decode("utf-8"))
+            if not data.get("version"):
+                raise ValueError("Failed to parse version from Dart VERSION file")
+            return data
+    except Exception as e:
+        raise ValueError(f"Could not resolve Dart stable release metadata for {version or 'latest'}: {e}")
+
 def get_latest_dart_version() -> str:
-    logging.info(f"Fetching latest Dart version from {DART_VERSION_URL}")
-    with urllib.request.urlopen(DART_VERSION_URL) as response:
-        data = json.loads(response.read().decode("utf-8"))
-        version = data.get("version")
-        if not version:
-            raise ValueError("Failed to parse version from Dart VERSION file")
-        return version
+    return get_dart_release()["version"]
 
 def ebuild_exists(version: str, orig_root) -> bool:
     """Check if the Dart ebuild for the version already exists."""
@@ -201,8 +217,15 @@ def create_dart_ebuild(version: str, work_root):
     if not existing_ebuilds:
         raise FileNotFoundError("No existing Dart ebuild found to copy from")
 
+    def sort_key(ebuild_path):
+        import re
+        m = re.match(r'^dart-(.*)\.ebuild$', ebuild_path.name)
+        if m:
+            return parse_gentoo_version(m.group(1))
+        return ([0], 0)
+
     # Sort by version/revision to get the latest
-    existing_ebuild = sorted(existing_ebuilds)[-1]
+    existing_ebuild = sorted(existing_ebuilds, key=sort_key)[-1]
 
     new_ebuild_path = dart_dir / f"dart-{version}.ebuild"
     shutil.copy2(existing_ebuild, new_ebuild_path)
