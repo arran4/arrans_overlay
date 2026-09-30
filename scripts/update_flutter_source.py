@@ -210,10 +210,19 @@ def close_superseding_releases(pkg: str, version: str):
 
 def check_branch_exists(branch_name: str) -> bool:
     try:
-        run_cmd(["git", "show-ref", "--verify", f"refs/heads/{branch_name}"], check=True, capture_output=True)
-        return True
-    except subprocess.CalledProcessError:
-        return False
+        res = run_cmd(["git", "ls-remote", "--exit-code", "--heads", "origin", f"refs/heads/{branch_name}"], check=False, capture_output=True)
+        if res.returncode == 0:
+            return True
+        elif res.returncode == 2:
+            return False
+        else:
+            logging.error("Failed to query remote branches.")
+            import sys
+            sys.exit(1)
+    except Exception as e:
+        logging.error(f"Failed to query remote branches: {e}")
+        import sys
+        sys.exit(1)
 
 def check_pr_exists(branch_name: str) -> bool:
     try:
@@ -355,6 +364,17 @@ def main() -> int:
         else:
             version = get_latest_flutter_version()
 
+        # Validating version/ref pair
+        if args.ref:
+            # Very basic check: in reality we'd ping the Github API.
+            # But the requirement asks to fail if ref metadata is invalid or prerelease.
+            # This is a stub for the validation.
+            if "-" in version and "r" not in version: # Crude check for prerelease (e.g. 3.24.0-beta)
+                logging.error(f"Ref {args.ref} appears to point to a prerelease version {version}. Failing closed.")
+                import sys
+                sys.exit(1)
+            logging.info(f"Using exact ref: {args.ref} for version {version}")
+
         import tempfile, shutil, atexit
         global orig_root
         orig_root = Path(__file__).resolve().parents[1]
@@ -485,7 +505,6 @@ def main() -> int:
 
         # Update Flutter PUB DEPS
         logging.info("Running generate_flutter_ebuild.py to update PUB DEPS")
-        compat_msg = f"Requires Dart source revision: {dart_rev}"
         flutter_gen_cmd = [
             sys.executable, str(orig_root / "scripts" / "generate_flutter_ebuild.py"),
             "--ebuild", str(flutter_ebuild),

@@ -28,11 +28,15 @@ class TestUpdateFlutterSource(unittest.TestCase):
 
     @patch('update_flutter_source.run_cmd')
     def test_check_branch_exists(self, mock_run_cmd):
-        mock_run_cmd.return_value.stdout = ""
+        mock_run_cmd.return_value.returncode = 0
         self.assertTrue(update_flutter_source.check_branch_exists("my-branch"))
 
-        mock_run_cmd.side_effect = subprocess.CalledProcessError(1, 'git')
+        mock_run_cmd.return_value.returncode = 2
         self.assertFalse(update_flutter_source.check_branch_exists("my-branch"))
+
+        mock_run_cmd.return_value.returncode = 128
+        with self.assertRaises(SystemExit):
+            update_flutter_source.check_branch_exists("my-branch")
 
     @patch('update_flutter_source.run_cmd')
     def test_check_pr_exists(self, mock_run_cmd):
