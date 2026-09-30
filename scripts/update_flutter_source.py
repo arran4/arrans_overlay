@@ -59,8 +59,8 @@ def get_latest_flutter_version() -> str:
         # Releases are typically sorted newest first
         return stable_releases[0]["version"]
 
-def get_flutter_internal_version(flutter_version: str, file_path: str) -> str:
-    url = f"https://raw.githubusercontent.com/flutter/flutter/{flutter_version}/bin/internal/{file_path}"
+def get_flutter_internal_version(ref: str, file_path: str) -> str:
+    url = f"https://raw.githubusercontent.com/flutter/flutter/{ref}/bin/internal/{file_path}"
     logging.info(f"Fetching {url}")
     with urllib.request.urlopen(url) as response:
         content = response.read().decode("utf-8").strip()
@@ -95,10 +95,10 @@ def ebuild_exists(package: str, version: str) -> bool:
                 return True
     return False
 
-def check_dart_compatibility(version: str) -> str:
+def check_dart_compatibility(ref: str) -> str:
     '''Extracts the Dart SDK constraint from the Flutter pubspec.yaml.'''
     import urllib.request, re
-    url = f"https://raw.githubusercontent.com/flutter/flutter/{version}/packages/flutter_tools/pubspec.yaml"
+    url = f"https://raw.githubusercontent.com/flutter/flutter/{ref}/packages/flutter_tools/pubspec.yaml"
     try:
         with urllib.request.urlopen(url) as response:
             yaml_content = response.read().decode('utf-8')
@@ -473,8 +473,14 @@ def main() -> int:
 
                 # Defer flutter creation explicitly
                 logging.error(f"Must generate Dart update first for {req_base}. Deferring Flutter update.")
-                # We could dispatch the dart workflow here, or just fail closed safely indicating the dependency.
-                compat_msg += f" -- ERROR: Host Dart version {required_dart_range} not found. Missing Dart update PR."
+                # The issue requires us to explicitly dispatch the Dart workflow and link to it, OR create a PR ourselves.
+                # Since we run in Github Actions and GH CLI is available, we can trigger the dart workflow via `gh workflow run`.
+                try:
+                    run_cmd(["gh", "workflow", "run", "dev-lang-dart-source-update.yaml", "-f", f"version={req_base}"])
+                    logging.info(f"Dispatched dev-lang-dart-source-update.yaml for {req_base}")
+                except Exception as e:
+                    logging.error(f"Failed to dispatch prerequisite dart workflow: {e}")
+                compat_msg += f" -- ERROR: Host Dart version {required_dart_range} not found. Prerequisite Dart update has been dispatched."
                 sys.exit(1)
 
         if not args.dry_run:
