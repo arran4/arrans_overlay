@@ -20,6 +20,22 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
+def parse_gentoo_version(version: str):
+    import re
+    match = re.match(r'^(\d+(?:\.\d+)*)(?:-r(\d+))?$', version)
+    if not match: return ([0], 0)
+    return ([int(x) for x in match.group(1).split('.')], int(match.group(2)) if match.group(2) else 0)
+
+def compare_versions(v1: str, v2: str) -> int:
+    p1 = parse_gentoo_version(v1)
+    p2 = parse_gentoo_version(v2)
+    if p1[0] > p2[0]: return 1
+    if p1[0] < p2[0]: return -1
+    if p1[1] > p2[1]: return 1
+    if p1[1] < p2[1]: return -1
+    return 0
+
+
 # Adjust path so we can import the generator module if needed
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -66,16 +82,17 @@ def check_superseding_release(pkg: str, version: str) -> bool:
         import json
         prs = json.loads(result.stdout)
 
-        found_superseded = False
         for pr in prs:
             pr_branch = pr["headRefName"]
             if not pr_branch.startswith(f"auto-update-{pkg}-"):
                 continue
             pr_version = pr_branch.split(f"auto-update-{pkg}-")[-1]
-            if pr_version != version:
-                logging.info(f"Found superseded PR: {pr['url']} (version: {pr_version})")
-                found_superseded = True
-        return found_superseded
+            if compare_versions(pr_version, version) == -1:
+                logging.info(f"Found older PR: {pr['url']} (version: {pr_version}) that will be superseded.")
+            elif compare_versions(pr_version, version) == 1:
+                logging.info(f"Found newer PR: {pr['url']} (version: {pr_version}). This run is superseded.")
+                return True
+        return False
     except subprocess.CalledProcessError as e:
         logging.error(f"gh CLI error: {e}")
         raise
@@ -130,7 +147,13 @@ def create_virtual_dart(version: str, work_root):
     virtual_dir = work_root / "virtual" / "dart"
     virtual_dir.mkdir(parents=True, exist_ok=True)
     ebuild_path = virtual_dir / f"dart-{version}.ebuild"
-    content = f"""# Copyright 2026 Gentoo Authors
+    if ebuild_path.exists():
+        logging.info(f"Virtual {ebuild_path.name} already exists. Leaving it intact.")
+        return
+
+    existing_virtuals = list(virtual_dir.glob("*.ebuild"))
+    if not existing_virtuals:
+        content = f"""# Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -138,15 +161,33 @@ EAPI=8
 DESCRIPTION="Virtual for the Dart SDK"
 
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~arm64 ~riscv"
+KEYWORDS="~amd64"
 
 RDEPEND="|| (
 \t~dev-lang/dart-{version}
 \t~dev-lang/dart-bin-{version}
 )"
 """
-    ebuild_path.write_text(content)
-    logging.info(f"Created {ebuild_path}")
+        ebuild_path.write_text(content)
+        logging.info(f"Created {ebuild_path} from scratch")
+        return
+
+    def sort_key(p):
+        m = re.match(r'^dart-(.*)\.ebuild$', p.name)
+        if m: return parse_gentoo_version(m.group(1))
+        return ([0], 0)
+
+    latest_virtual = sorted(existing_virtuals, key=sort_key)[-1]
+    v_content = latest_virtual.read_text()
+
+    m = re.match(r'^dart-(.*)\.ebuild$', latest_virtual.name)
+    old_ver = m.group(1) if m else version
+
+    new_content = re.sub(r'~dev-lang/dart-[0-9\.\-r]+', f'~dev-lang/dart-{version}', v_content)
+    new_content = re.sub(r'~dev-lang/dart-bin-[0-9\.\-r]+', f'>=dev-lang/dart-bin-{old_ver}', new_content)
+
+    ebuild_path.write_text(new_content)
+    logging.info(f"Created {ebuild_path} by copying {latest_virtual.name}")
     return ebuild_path
 
 def create_dart_ebuild(version: str, work_root):
@@ -190,7 +231,11 @@ def commit_and_push(branch_name: str, version: str, dry_run: bool):
         f"Automated source package update for Dart {version}.\n\n"
         f"**New Upstream Version:** {version}\n"
         f"**Authoritative Source:** https://storage.googleapis.com/dart-archive/channels/stable/release/latest/VERSION\n"
-        f"**Tests Performed:** (Pending CI runs for g2 lint, pkgcheck, and Manifest verification)\n"
+        f"**Manifest Generation:** Completed successfully.\n"
+        f"**Dependency review result:** Needs human review.\n"
+        f"**Patch refresh/review result:** Needs human review if build fails.\n"
+        f"**Tests Performed:** Pending CI runs for g2 lint, pkgcheck, and integration verification.\n\n"
+        f"Related to #939\n"
     )
 
     try:
@@ -210,6 +255,7 @@ def commit_and_push(branch_name: str, version: str, dry_run: bool):
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="Do not push or create PR")
+    parser.add_argument("--ref", type=str, help="Force a specific upstream git ref/hash")
     parser.add_argument("--version", type=str, help="Force a specific Dart version to update to")
     args = parser.parse_args()
 

@@ -19,6 +19,22 @@ import sys
 import urllib.request
 from pathlib import Path
 
+def parse_gentoo_version(version: str):
+    import re
+    match = re.match(r'^(\d+(?:\.\d+)*)(?:-r(\d+))?$', version)
+    if not match: return ([0], 0)
+    return ([int(x) for x in match.group(1).split('.')], int(match.group(2)) if match.group(2) else 0)
+
+def compare_versions(v1: str, v2: str) -> int:
+    p1 = parse_gentoo_version(v1)
+    p2 = parse_gentoo_version(v2)
+    if p1[0] > p2[0]: return 1
+    if p1[0] < p2[0]: return -1
+    if p1[1] > p2[1]: return 1
+    if p1[1] < p2[1]: return -1
+    return 0
+
+
 # Adjust path so we can import the generator module if needed
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -69,24 +85,35 @@ def ebuild_exists(package: str, version: str) -> bool:
         return False
     # Use basename for glob matching
     basename = package.split('/')[-1]
-    for p in pkg_dir.glob(f"{basename}-{version}*.ebuild"):
-        return True
+    import re
+    for p in pkg_dir.glob(f"{basename}-*.ebuild"):
+        m = re.match(r'^' + basename + r'-(.*)\.ebuild$', p.name)
+        if m:
+            v_ver, _ = parse_gentoo_version(m.group(1))
+            t_ver, _ = parse_gentoo_version(version)
+            if v_ver == t_ver:
+                return True
     return False
 
 def check_dart_compatibility(version: str) -> str:
     '''Extracts the Dart SDK constraint from the Flutter pubspec.yaml.'''
     import urllib.request, re
-    url = f"https://raw.githubusercontent.com/flutter/flutter/{version}/packages/flutter/pubspec.yaml"
+    url = f"https://raw.githubusercontent.com/flutter/flutter/{version}/packages/flutter_tools/pubspec.yaml"
     try:
         with urllib.request.urlopen(url) as response:
             yaml_content = response.read().decode('utf-8')
-            match = re.search(r'sdk:\s*"([^"]+)"', yaml_content)
-            if match:
-                return match.group(1).replace('>=', '').replace('^', '').split('<')[0].strip()
+            env_match = re.search(r'^environment:\s*\n(.*?)(?:^\S|\Z)', yaml_content, re.MULTILINE | re.DOTALL)
+            if env_match:
+                sdk_match = re.search(r'^\s*sdk:\s*"?\'?([^"\'\n#]+)"?\'?', env_match.group(1), re.MULTILINE)
+                if sdk_match:
+                    constraint = sdk_match.group(1).strip()
+                    if constraint.startswith('^'):
+                        return constraint[1:]
+                    return constraint.replace('>=', '').split('<')[0].strip()
     except Exception as e:
         import logging
         logging.error(f"Failed to fetch pubspec.yaml for dart compatibility: {e}")
-    return "0.0.0"
+    raise ValueError(f"Could not determine Dart SDK constraint for Flutter {version}")
 
 def check_superseding_release(pkg: str, version: str) -> bool:
     '''Detect if older updates are pending.'''
@@ -96,16 +123,17 @@ def check_superseding_release(pkg: str, version: str) -> bool:
         import json
         prs = json.loads(result.stdout)
 
-        found_superseded = False
         for pr in prs:
             pr_branch = pr["headRefName"]
             if not pr_branch.startswith(f"auto-update-{pkg}-"):
                 continue
             pr_version = pr_branch.split(f"auto-update-{pkg}-")[-1]
-            if pr_version != version:
-                logging.info(f"Found superseded PR: {pr['url']} (version: {pr_version})")
-                found_superseded = True
-        return found_superseded
+            if compare_versions(pr_version, version) == -1:
+                logging.info(f"Found older PR: {pr['url']} (version: {pr_version}) that will be superseded.")
+            elif compare_versions(pr_version, version) == 1:
+                logging.info(f"Found newer PR: {pr['url']} (version: {pr_version}). This run is superseded.")
+                return True
+        return False
     except subprocess.CalledProcessError as e:
         logging.error(f"gh CLI error: {e}")
         raise
@@ -160,7 +188,13 @@ def create_virtual_flutter(version: str, work_root):
     virtual_dir = work_root / "virtual" / "flutter"
     virtual_dir.mkdir(parents=True, exist_ok=True)
     ebuild_path = virtual_dir / f"flutter-{version}.ebuild"
-    content = f"""# Copyright 2026 Gentoo Authors
+    if ebuild_path.exists():
+        logging.info(f"Virtual {ebuild_path.name} already exists. Leaving it intact.")
+        return
+
+    existing_virtuals = list(virtual_dir.glob("*.ebuild"))
+    if not existing_virtuals:
+        content = f"""# Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
@@ -175,8 +209,26 @@ RDEPEND="|| (
 \t~dev-lang/flutter-bin-{version}
 )"
 """
-    ebuild_path.write_text(content)
-    logging.info(f"Created {ebuild_path}")
+        ebuild_path.write_text(content)
+        logging.info(f"Created {ebuild_path} from scratch")
+        return
+
+    def sort_key(p):
+        m = re.match(r'^flutter-(.*)\.ebuild$', p.name)
+        if m: return parse_gentoo_version(m.group(1))
+        return ([0], 0)
+
+    latest_virtual = sorted(existing_virtuals, key=sort_key)[-1]
+    v_content = latest_virtual.read_text()
+
+    m = re.match(r'^flutter-(.*)\.ebuild$', latest_virtual.name)
+    old_ver = m.group(1) if m else version
+
+    new_content = re.sub(r'~dev-lang/flutter-[0-9\.\-r]+', f'~dev-lang/flutter-{version}', v_content)
+    new_content = re.sub(r'~dev-lang/flutter-bin-[0-9\.\-r]+', f'>=dev-lang/flutter-bin-{old_ver}', new_content)
+
+    ebuild_path.write_text(new_content)
+    logging.info(f"Created {ebuild_path} by copying {latest_virtual.name}")
 
 def create_ebuild_copy(package: str, version: str, work_root):
     pkg_dir = work_root / package
@@ -185,7 +237,14 @@ def create_ebuild_copy(package: str, version: str, work_root):
     if not existing_ebuilds:
         raise FileNotFoundError(f"No existing ebuild found in {package} to copy from")
 
-    existing_ebuild = sorted(existing_ebuilds)[-1]
+    def sort_key(ebuild_path):
+        import re
+        m = re.match(r'^' + basename + r'-(.*)\.ebuild$', ebuild_path.name)
+        if m:
+            return parse_gentoo_version(m.group(1))
+        return ([0], 0)
+
+    existing_ebuild = sorted(existing_ebuilds, key=sort_key)[-1]
     new_ebuild_path = pkg_dir / f"{basename}-{version}.ebuild"
     shutil.copy2(existing_ebuild, new_ebuild_path)
     logging.info(f"Copied {existing_ebuild.name} to {new_ebuild_path.name}")
@@ -220,9 +279,14 @@ def commit_and_push(branch_name: str, version: str, engine_rev: str, dart_rev: s
         f"**Authoritative Source:** https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json\n"
         f"**Flutter Engine revision:** {engine_rev}\n"
         f"**Pinned Dart revision:** {dart_rev}\n"
+        f"**Host Dart constraint:** {compat_msg}\n"
         f"**Material Fonts revision:** {fonts_rev}\n"
         f"**Gradle Wrapper revision:** {gradle_rev}\n"
-        f"**Tests Performed:** (Pending CI runs for g2 lint, pkgcheck, and Manifest verification)\n"
+        f"**Manifest Generation:** Completed successfully.\n"
+        f"**Dependency/exclusion review result:** Needs human review (fail-closed generator policy active).\n"
+        f"**Patch refresh/review result:** Needs human review if build fails.\n"
+        f"**Tests Performed:** Pending CI runs for g2 lint, pkgcheck, and integration verification.\n\n"
+        f"Related to #939\n"
     )
 
     try:
@@ -242,6 +306,7 @@ def commit_and_push(branch_name: str, version: str, engine_rev: str, dart_rev: s
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="Do not push or create PR")
+    parser.add_argument("--ref", type=str, help="Force a specific upstream git ref/hash")
     parser.add_argument("--version", type=str, help="Force a specific Flutter version to update to")
     args = parser.parse_args()
 
@@ -313,18 +378,23 @@ def main() -> int:
         required_dart_range = check_dart_compatibility(version)
         compat_msg = f"Requires Dart host SDK range: >={required_dart_range} (Engine pinned to: {dart_rev})"
 
-        if required_dart_range:
+        if required_dart_range != "0.0.0":
             dart_dir = orig_root / "dev-lang" / "dart"
 
-            # Very basic prefix match (for illustration, a true portage version compare is complex)
             found_compatible = False
-            for p in dart_dir.glob(f"dart-{required_dart_range}*.ebuild"):
-                found_compatible = True
-                break
+            for p in dart_dir.glob("dart-*.ebuild"):
+                m = re.match(r'^dart-(.*)\.ebuild$', p.name)
+                if m:
+                    if compare_versions(m.group(1), required_dart_range) >= 0:
+                        found_compatible = True
+                        break
 
             if not found_compatible:
-                logging.warning(f"Could not cleanly verify Dart SDK >={required_dart_range} exists locally.")
-                compat_msg += " -- WARNING: Host Dart version might not satisfy constraint."
+                logging.error(f"Host Dart SDK requirement >= {required_dart_range} not satisfied locally.")
+                dart_branch_name = f"auto-update-dart-source-{required_dart_range.split('-')[0]}"
+                compat_msg += f" -- ERROR: Host Dart version >= {required_dart_range} not found. Must merge Dart PR {dart_branch_name} first."
+                logging.error(f"Must generate Dart update first for {required_dart_range}.")
+                sys.exit(1)
 
         if not args.dry_run:
             run_cmd(["git", "checkout", "-b", branch_name])

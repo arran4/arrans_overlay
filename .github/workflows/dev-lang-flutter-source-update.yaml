@@ -17,6 +17,10 @@ on:
         description: 'Target Flutter version'
         required: false
         type: string
+      ref:
+        description: 'Explicit stable upstream ref/hash (optional)'
+        required: false
+        type: string
   push:
     branches:
       - main
@@ -45,8 +49,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          ARGS=""
           if [ -n "${{ github.event.inputs.version }}" ]; then
-            python3 scripts/update_flutter_source.py --version "${{ github.event.inputs.version }}"
-          else
-            python3 scripts/update_flutter_source.py
+            ARGS="$ARGS --version ${{ github.event.inputs.version }}"
           fi
+          if [ -n "${{ github.event.inputs.ref }}" ]; then
+            ARGS="$ARGS --ref ${{ github.event.inputs.ref }}"
+          fi
+          python3 scripts/update_flutter_source.py $ARGS
