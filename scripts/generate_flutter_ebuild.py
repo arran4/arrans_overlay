@@ -44,7 +44,7 @@ def fetch_pub_deps(version: str) -> dict[str, str]:
 		out, err = tar.communicate()
 
 		if curl.wait() != 0 and curl.returncode != 23:
-			pass
+			raise RuntimeError(f"curl failed: {curl.stderr.read().decode('utf-8', 'ignore')}")
 
 		if tar.returncode != 0:
 			raise RuntimeError(f"Failed to extract pubspec.lock: {err.decode('utf-8', 'ignore')}")

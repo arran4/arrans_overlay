@@ -84,6 +84,19 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 				self.assertIn("analyzer", deps)
 				self.assertNotIn("flutter", deps)
 				self.assertNotIn("flutter_test", deps)
+
+				# Exact mapping test for 3.47.2
+				import copy
+				deps_copy = copy.deepcopy(deps)
+
+				static_deps = generator.PUB_DEPENDENCIES
+				for pkg, ver in static_deps.items():
+					self.assertIn(pkg, deps_copy, f"{pkg} missing from dynamically fetched deps")
+					self.assertEqual(deps_copy[pkg], ver, f"{pkg} version mismatch: {deps_copy[pkg]} != {ver}")
+					del deps_copy[pkg]
+
+				# If we matched all exactly, deps_copy should be empty
+				self.assertEqual(len(deps_copy), 0, f"Extra unexpected packages found in lockfile: {deps_copy.keys()}")
 			except RuntimeError as e:
 				self.skipTest(f"Failed to fetch real pubspec.lock: {e}")
 
@@ -92,6 +105,7 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 		class MockProcess:
 			def __init__(self, out, err, rc):
 				self.stdout = type('obj', (object,), {'close': lambda: None})
+				self.stderr = type('obj', (object,), {'read': lambda: err})
 				self._out = out
 				self._err = err
 				self.returncode = rc
@@ -127,6 +141,14 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 		]
 		with self.assertRaisesRegex(RuntimeError, "Failed to extract pubspec.lock"):
 			generator.fetch_pub_deps("1.0.0")
+
+		# Test curl failure
+		mock_popen.side_effect = [
+			MockProcess(b"", b"curl: (22) The requested URL returned error: 404", 22),
+			MockProcess(b"", b"", 0)
+		]
+		with self.assertRaisesRegex(RuntimeError, "curl failed: curl: \\(22\\)"):
+			generator.fetch_pub_deps("1.0.0")
 		self.assertEqual(deps, {"foo": "1.0.0"})
 
 		mock_popen.side_effect = [
@@ -148,6 +170,14 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 			MockProcess(b"", b"Not found in archive", 2)
 		]
 		with self.assertRaisesRegex(RuntimeError, "Failed to extract pubspec.lock"):
+			generator.fetch_pub_deps("1.0.0")
+
+		# Test curl failure
+		mock_popen.side_effect = [
+			MockProcess(b"", b"curl: (22) The requested URL returned error: 404", 22),
+			MockProcess(b"", b"", 0)
+		]
+		with self.assertRaisesRegex(RuntimeError, "curl failed: curl: \\(22\\)"):
 			generator.fetch_pub_deps("1.0.0")
 
 if __name__ == "__main__":
