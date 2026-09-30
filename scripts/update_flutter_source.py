@@ -106,14 +106,58 @@ def check_dart_compatibility(version: str) -> str:
             if env_match:
                 sdk_match = re.search(r'^\s*sdk:\s*"?\'?([^"\'\n#]+)"?\'?', env_match.group(1), re.MULTILINE)
                 if sdk_match:
-                    constraint = sdk_match.group(1).strip()
-                    if constraint.startswith('^'):
-                        return constraint[1:]
-                    return constraint.replace('>=', '').split('<')[0].strip()
+                    return sdk_match.group(1).strip()
     except Exception as e:
         import logging
         logging.error(f"Failed to fetch pubspec.yaml for dart compatibility: {e}")
     raise ValueError(f"Could not determine Dart SDK constraint for Flutter {version}")
+
+def evaluate_dart_constraint(constraint: str, available_version: str) -> bool:
+    '''Evaluates a Dart pub sdk constraint against a given version.'''
+    import re
+    # Convert available_version (e.g. 3.11.0-r1) into base pub semver (3.11.0)
+    avail_base = re.match(r'^(\d+\.\d+\.\d+)', available_version)
+    if not avail_base: return False
+    avail_str = avail_base.group(1)
+    avail_parts = [int(x) for x in avail_str.split('.')]
+
+    # Simple caret constraint evaluator
+    if constraint.startswith('^'):
+        base = constraint[1:].split('-')[0] # e.g. 3.11.0 from ^3.11.0-0
+        base_parts = [int(x) for x in base.split('.')]
+        if len(base_parts) != 3: return False
+
+        # >= base && < (base.major + 1)
+        if avail_parts[0] != base_parts[0]: return False
+
+        # Check >= base
+        if avail_parts[1] > base_parts[1]: return True
+        if avail_parts[1] < base_parts[1]: return False
+        if avail_parts[2] >= base_parts[2]: return True
+        return False
+
+    # Simple >= < evaluator
+    # (very basic for standard flutter cases)
+    # E.g. ">=3.2.0-0 <4.0.0"
+    m = re.match(r'>=([\d\.]+).*?<\s*([\d\.]+)', constraint)
+    if m:
+        lower = [int(x) for x in m.group(1).split('.')]
+        upper = [int(x) for x in m.group(2).split('.')]
+        # check >= lower
+        if avail_parts[0] < lower[0]: return False
+        if avail_parts[0] == lower[0]:
+            if avail_parts[1] < lower[1]: return False
+            if avail_parts[1] == lower[1] and avail_parts[2] < lower[2]: return False
+
+        # check < upper
+        if avail_parts[0] > upper[0]: return False
+        if avail_parts[0] == upper[0]:
+            if avail_parts[1] > upper[1]: return False
+            if avail_parts[1] == upper[1] and avail_parts[2] >= upper[2]: return False
+
+        return True
+
+    return False
 
 def check_superseding_release(pkg: str, version: str) -> bool:
     '''Detect if older updates are pending.'''
@@ -154,7 +198,7 @@ def close_superseding_releases(pkg: str, version: str):
             if not pr_branch.startswith(f"auto-update-{pkg}-"):
                 continue
             pr_version = pr_branch.split(f"auto-update-{pkg}-")[-1]
-            if pr_version != version:
+            if compare_versions(pr_version, version) == -1:
                 logging.info(f"Closing superseded PR: {pr['url']} (version: {pr_version})")
                 run_cmd(["gh", "pr", "close", pr_branch, "--comment", f"Superseded by {version}"])
     except subprocess.CalledProcessError as e:
@@ -213,22 +257,17 @@ RDEPEND="|| (
         logging.info(f"Created {ebuild_path} from scratch")
         return
 
-    def sort_key(p):
-        m = re.match(r'^flutter-(.*)\.ebuild$', p.name)
-        if m: return parse_gentoo_version(m.group(1))
-        return ([0], 0)
-
-    latest_virtual = sorted(existing_virtuals, key=sort_key)[-1]
-    v_content = latest_virtual.read_text()
-
-    m = re.match(r'^flutter-(.*)\.ebuild$', latest_virtual.name)
-    old_ver = m.group(1) if m else version
-
-    new_content = re.sub(r'~dev-lang/flutter-[0-9\.\-r]+', f'~dev-lang/flutter-{version}', v_content)
-    new_content = re.sub(r'~dev-lang/flutter-bin-[0-9\.\-r]+', f'>=dev-lang/flutter-bin-{old_ver}', new_content)
-
-    ebuild_path.write_text(new_content)
-    logging.info(f"Created {ebuild_path} by copying {latest_virtual.name}")
+    # Check if we ACTUALLY need a new virtual.
+    # The requirement: "if the existing virtual constraints still correctly represent the available providers, leave the virtual untouched;"
+    # "an older binary provider must not satisfy a newer versioned virtual merely to keep the OR dependency resolvable unless that compatibility is explicitly valid by package contract."
+    # Since virtuals mirror the EXACT version in Gentoo typically, we don't automatically generate one if we don't know the exact bin version is available,
+    # OR we strictly mirror it. The issue states: "Do not invent compatibility by weakening the binary dependency."
+    # So we MUST NOT use `>=dev-lang/foo-bin-old_version`.
+    # It says "if the old binary provider cannot truthfully satisfy the new virtual version, do not claim that it can; leave the virtual untouched when appropriate, or defer the virtual change until provider constraints can be represented truthfully."
+    # Therefore, we just DO NOT CREATE a new virtual version automatically during a source bump unless instructed.
+    # A user can install =dev-lang/flutter-X.Y.Z directly.
+    logging.info("Source advanced, but binary provider might not have. Deferring virtual package update to prevent breaking binary providers.")
+    return
 
 def create_ebuild_copy(package: str, version: str, work_root):
     pkg_dir = work_root / package
@@ -355,6 +394,9 @@ def main() -> int:
             logging.info(f"Branch or PR for {branch_name} already exists. Exiting.")
             return 0
 
+        if check_superseding_release("flutter-source", version):
+            return 0
+
         # Fetch internal versions
         engine_rev = get_flutter_internal_version(version, "engine.version")
 
@@ -376,7 +418,7 @@ def main() -> int:
         logging.info(f"Engine: {engine_rev}, Dart: {dart_rev}, Fonts: {fonts_rev}, Gradle: {gradle_rev}")
 
         required_dart_range = check_dart_compatibility(version)
-        compat_msg = f"Requires Dart host SDK range: >={required_dart_range} (Engine pinned to: {dart_rev})"
+        compat_msg = f"Requires Dart host SDK range: {required_dart_range} (Engine pinned to: {dart_rev})"
 
         if required_dart_range != "0.0.0":
             dart_dir = orig_root / "dev-lang" / "dart"
@@ -385,15 +427,34 @@ def main() -> int:
             for p in dart_dir.glob("dart-*.ebuild"):
                 m = re.match(r'^dart-(.*)\.ebuild$', p.name)
                 if m:
-                    if compare_versions(m.group(1), required_dart_range) >= 0:
+                    if evaluate_dart_constraint(required_dart_range, m.group(1)):
                         found_compatible = True
                         break
 
             if not found_compatible:
-                logging.error(f"Host Dart SDK requirement >= {required_dart_range} not satisfied locally.")
-                dart_branch_name = f"auto-update-dart-source-{required_dart_range.split('-')[0]}"
-                compat_msg += f" -- ERROR: Host Dart version >= {required_dart_range} not found. Must merge Dart PR {dart_branch_name} first."
-                logging.error(f"Must generate Dart update first for {required_dart_range}.")
+                logging.error(f"Host Dart SDK requirement {required_dart_range} not satisfied locally.")
+
+                # Determine required base version for a PR
+                req_base = required_dart_range.replace('^', '').replace('>=', '').split('-')[0].split()[0]
+                dart_branch_name = f"auto-update-dart-source-{req_base}"
+
+                # Check if PR already exists
+                try:
+                    res = run_cmd(["gh", "pr", "list", "--head", dart_branch_name, "--json", "url", "--state", "open"], check=True, capture_output=True)
+                    import json
+                    prs = json.loads(res.stdout)
+                    if prs:
+                        pr_url = prs[0]['url']
+                        logging.error(f"Dart PR {pr_url} must be merged before Flutter {version} can be updated.")
+                        print(f"Prerequisite Dart update PR found: {pr_url}")
+                        sys.exit(1)
+                except Exception:
+                    pass
+
+                # Defer flutter creation explicitly
+                logging.error(f"Must generate Dart update first for {req_base}. Deferring Flutter update.")
+                # We could dispatch the dart workflow here, or just fail closed safely indicating the dependency.
+                compat_msg += f" -- ERROR: Host Dart version {required_dart_range} not found. Missing Dart update PR."
                 sys.exit(1)
 
         if not args.dry_run:
@@ -441,19 +502,18 @@ def main() -> int:
 
         run_cmd(flutter_gen_cmd + ["--check"])
 
-        if not args.dry_run:
-            try:
-                logging.info("Updating manifests via verify_manifest.py")
-                verify_manifest_cmd = [
-                    sys.executable,
-                    str(orig_root / "scripts" / "verify_manifest.py"),
-                    str(work_root / "dev-libs" / "flutter-engine"),
-                    str(work_root / "dev-lang" / "flutter"),
-                ]
-                run_cmd(verify_manifest_cmd, cwd=str(work_root))
-            except subprocess.CalledProcessError:
-                logging.error("verify_manifest.py failed. Failing.")
-                sys.exit(1)
+        try:
+            logging.info("Updating manifests via verify_manifest.py")
+            verify_manifest_cmd = [
+                sys.executable,
+                str(orig_root / "scripts" / "verify_manifest.py"),
+                str(work_root / "dev-libs" / "flutter-engine"),
+                str(work_root / "dev-lang" / "flutter"),
+            ]
+            run_cmd(verify_manifest_cmd, cwd=str(work_root))
+        except subprocess.CalledProcessError:
+            logging.error("verify_manifest.py failed. Failing.")
+            sys.exit(1)
 
         commit_and_push(branch_name, version, engine_rev, dart_rev, fonts_rev, gradle_rev, compat_msg, args.dry_run)
 

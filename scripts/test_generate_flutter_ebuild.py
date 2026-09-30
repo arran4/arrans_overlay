@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+import unittest.mock
 
 GENERATOR = Path(__file__).with_name("generate_flutter_ebuild.py")
 SPEC = importlib.util.spec_from_file_location(
@@ -70,6 +71,84 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 			rc_stale = generator.update_ebuild(fake_ebuild, generator.render_pub_deps({}), check=True)
 			self.assertEqual(rc_stale, 1)
 
+
+
+
+
+	def test_fetch_pub_deps(self):
+		import os
+		if "CI" not in os.environ:
+			try:
+				deps = generator.fetch_pub_deps("3.47.2")
+				self.assertEqual(len(deps), 101, "3.47.2 should have exactly 101 hosted pub deps")
+				self.assertIn("analyzer", deps)
+				self.assertNotIn("flutter", deps)
+				self.assertNotIn("flutter_test", deps)
+			except RuntimeError as e:
+				self.skipTest(f"Failed to fetch real pubspec.lock: {e}")
+
+	@unittest.mock.patch('subprocess.Popen')
+	def test_fetch_pub_deps_mocked(self, mock_popen):
+		class MockProcess:
+			def __init__(self, out, err, rc):
+				self.stdout = type('obj', (object,), {'close': lambda: None})
+				self._out = out
+				self._err = err
+				self.returncode = rc
+			def communicate(self):
+				return self._out, self._err
+			def wait(self):
+				return self.returncode
+
+		mock_popen.side_effect = [
+			MockProcess(b"", b"", 0),
+			MockProcess(b"packages:\n  foo:\n    source: hosted\n    version: 1.0.0\n", b"", 0)
+		]
+		deps = generator.fetch_pub_deps("1.0.0")
+		self.assertEqual(deps, {"foo": "1.0.0"})
+
+		mock_popen.side_effect = [
+			MockProcess(b"", b"", 0),
+			MockProcess(b"", b"", 0)
+		]
+		with self.assertRaisesRegex(RuntimeError, "Extracted pubspec.lock is empty"):
+			generator.fetch_pub_deps("1.0.0")
+
+		mock_popen.side_effect = [
+			MockProcess(b"", b"", 0),
+			MockProcess(b"packages:\n  foo:\n    source: sdk\n    version: 1.0.0\n", b"", 0)
+		]
+		with self.assertRaisesRegex(RuntimeError, "No hosted packages found in pubspec.lock"):
+			generator.fetch_pub_deps("1.0.0")
+
+		mock_popen.side_effect = [
+			MockProcess(b"", b"", 0),
+			MockProcess(b"", b"Not found in archive", 2)
+		]
+		with self.assertRaisesRegex(RuntimeError, "Failed to extract pubspec.lock"):
+			generator.fetch_pub_deps("1.0.0")
+		self.assertEqual(deps, {"foo": "1.0.0"})
+
+		mock_popen.side_effect = [
+			MockProcess(b"", b"", 0),
+			MockProcess(b"", b"", 0)
+		]
+		with self.assertRaisesRegex(RuntimeError, "Extracted pubspec.lock is empty"):
+			generator.fetch_pub_deps("1.0.0")
+
+		mock_popen.side_effect = [
+			MockProcess(b"", b"", 0),
+			MockProcess(b"packages:\n  foo:\n    source: sdk\n    version: 1.0.0\n", b"", 0)
+		]
+		with self.assertRaisesRegex(RuntimeError, "No hosted packages found in pubspec.lock"):
+			generator.fetch_pub_deps("1.0.0")
+
+		mock_popen.side_effect = [
+			MockProcess(b"", b"", 0),
+			MockProcess(b"", b"Not found in archive", 2)
+		]
+		with self.assertRaisesRegex(RuntimeError, "Failed to extract pubspec.lock"):
+			generator.fetch_pub_deps("1.0.0")
 
 if __name__ == "__main__":
 	unittest.main()

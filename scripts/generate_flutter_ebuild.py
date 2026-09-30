@@ -36,14 +36,28 @@ def fetch_pub_deps(version: str) -> dict[str, str]:
 	"""Dynamically fetches the exact pub dependency graph from pubspec.lock inside the release tarball."""
 	import subprocess
 	url = f"https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_{version}-stable.tar.xz"
+
 	try:
-		cmd = f"set -o pipefail; curl --fail --location --silent --show-error {url} | tar -xJO flutter/packages/flutter_tools/pubspec.lock"
-		result = subprocess.run(['bash', '-c', cmd], capture_output=True, text=True, check=True)
-		content = result.stdout
+		curl = subprocess.Popen(["curl", "--fail", "--location", "--silent", "--show-error", url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		tar = subprocess.Popen(["tar", "-xJO", "flutter/packages/flutter_tools/pubspec.lock"], stdin=curl.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		curl.stdout.close()
+		out, err = tar.communicate()
+
+		if curl.wait() != 0 and curl.returncode != 23:
+			pass
+
+		if tar.returncode != 0:
+			raise RuntimeError(f"Failed to extract pubspec.lock: {err.decode('utf-8', 'ignore')}")
+
+		content = out.decode('utf-8')
+		if not content.strip():
+			raise RuntimeError("Extracted pubspec.lock is empty.")
 
 		deps = {}
 		in_packages = False
 		current_pkg = None
+		pkg_source = None
+		pkg_version = None
 
 		for line in content.split('\n'):
 			line = line.rstrip()
@@ -53,17 +67,32 @@ def fetch_pub_deps(version: str) -> dict[str, str]:
 			if not in_packages:
 				continue
 
-			if line.startswith('  ') and not line.startswith('    '):
+			if line and not line.startswith(' '):
+				in_packages = False
+				continue
+
+			if line.startswith('  ') and not line.startswith('   '):
+				if current_pkg and pkg_source == 'hosted' and pkg_version:
+					deps[current_pkg] = pkg_version
 				current_pkg = line.strip().strip(':')
+				pkg_source = None
+				pkg_version = None
+			elif current_pkg and line.startswith('    source: '):
+				pkg_source = line.split(':', 1)[1].strip().strip("'\"")
 			elif current_pkg and line.startswith('    version: '):
-				ver = line.split(':', 1)[1].strip().strip("'\"")
-				deps[current_pkg] = ver
+				pkg_version = line.split(':', 1)[1].strip().strip("'\"")
+
+		if current_pkg and pkg_source == 'hosted' and pkg_version:
+			deps[current_pkg] = pkg_version
+
+		if not deps:
+			raise RuntimeError("No hosted packages found in pubspec.lock.")
 
 		return deps
-	except subprocess.CalledProcessError as e:
+	except Exception as e:
 		import logging
-		logging.warning(f"Could not fetch/parse pubspec.lock for {version}: {e.stderr}")
-		raise RuntimeError(f"Could not fetch/parse pubspec.lock for {version}: {e.stderr}")
+		logging.error(f"Could not fetch/parse pubspec.lock for {version}: {e}")
+		raise RuntimeError(f"Could not fetch/parse pubspec.lock for {version}: {e}")
 
 # The pinned pub packages required for packages/flutter_tools.
 PUB_DEPENDENCIES: dict[str, str] = {

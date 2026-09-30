@@ -113,7 +113,7 @@ def close_superseding_releases(pkg: str, version: str):
             if not pr_branch.startswith(f"auto-update-{pkg}-"):
                 continue
             pr_version = pr_branch.split(f"auto-update-{pkg}-")[-1]
-            if pr_version != version:
+            if compare_versions(pr_version, version) == -1:
                 logging.info(f"Closing superseded PR: {pr['url']} (version: {pr_version})")
                 run_cmd(["gh", "pr", "close", pr_branch, "--comment", f"Superseded by {version}"])
     except subprocess.CalledProcessError as e:
@@ -172,22 +172,17 @@ RDEPEND="|| (
         logging.info(f"Created {ebuild_path} from scratch")
         return
 
-    def sort_key(p):
-        m = re.match(r'^dart-(.*)\.ebuild$', p.name)
-        if m: return parse_gentoo_version(m.group(1))
-        return ([0], 0)
-
-    latest_virtual = sorted(existing_virtuals, key=sort_key)[-1]
-    v_content = latest_virtual.read_text()
-
-    m = re.match(r'^dart-(.*)\.ebuild$', latest_virtual.name)
-    old_ver = m.group(1) if m else version
-
-    new_content = re.sub(r'~dev-lang/dart-[0-9\.\-r]+', f'~dev-lang/dart-{version}', v_content)
-    new_content = re.sub(r'~dev-lang/dart-bin-[0-9\.\-r]+', f'>=dev-lang/dart-bin-{old_ver}', new_content)
-
-    ebuild_path.write_text(new_content)
-    logging.info(f"Created {ebuild_path} by copying {latest_virtual.name}")
+    # Check if we ACTUALLY need a new virtual.
+    # The requirement: "if the existing virtual constraints still correctly represent the available providers, leave the virtual untouched;"
+    # "an older binary provider must not satisfy a newer versioned virtual merely to keep the OR dependency resolvable unless that compatibility is explicitly valid by package contract."
+    # Since virtuals mirror the EXACT version in Gentoo typically, we don't automatically generate one if we don't know the exact bin version is available,
+    # OR we strictly mirror it. The issue states: "Do not invent compatibility by weakening the binary dependency."
+    # So we MUST NOT use `>=dev-lang/foo-bin-old_version`.
+    # It says "if the old binary provider cannot truthfully satisfy the new virtual version, do not claim that it can; leave the virtual untouched when appropriate, or defer the virtual change until provider constraints can be represented truthfully."
+    # Therefore, we just DO NOT CREATE a new virtual version automatically during a source bump unless instructed.
+    # A user can install =dev-lang/dart-X.Y.Z directly.
+    logging.info("Source advanced, but binary provider might not have. Deferring virtual package update to prevent breaking binary providers.")
+    return
     return ebuild_path
 
 def create_dart_ebuild(version: str, work_root):
@@ -303,6 +298,9 @@ def main() -> int:
             logging.info(f"Branch or PR for {branch_name} already exists. Exiting.")
             return 0
 
+        if check_superseding_release("dart-source", version):
+            return 0
+
         if not args.dry_run:
             run_cmd(["git", "checkout", "-b", branch_name])
 
@@ -334,18 +332,17 @@ def main() -> int:
             logging.error(f"Generator check mode failed. Error: {e}")
             raise
 
-        if not args.dry_run:
-            try:
-                logging.info("Updating manifests via verify_manifest.py")
-                verify_manifest_cmd = [
-                    sys.executable,
-                    str(orig_root / "scripts" / "verify_manifest.py"),
-                    str(work_root / "dev-lang" / "dart"),
-                ]
-                run_cmd(verify_manifest_cmd, cwd=str(work_root))
-            except subprocess.CalledProcessError:
-                logging.error("verify_manifest.py failed. Failing.")
-                sys.exit(1)
+        try:
+            logging.info("Updating manifests via verify_manifest.py")
+            verify_manifest_cmd = [
+                sys.executable,
+                str(orig_root / "scripts" / "verify_manifest.py"),
+                str(work_root / "dev-lang" / "dart"),
+            ]
+            run_cmd(verify_manifest_cmd, cwd=str(work_root))
+        except subprocess.CalledProcessError:
+            logging.error("verify_manifest.py failed. Failing.")
+            sys.exit(1)
 
         commit_and_push(branch_name, version, args.dry_run)
 
