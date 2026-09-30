@@ -417,11 +417,23 @@ def main() -> int:
         if check_superseding_release("flutter-source", version):
             return 0
 
-        # Fetch internal versions
-        engine_rev = get_flutter_internal_version(version, "engine.version")
+        ref = args.ref if args.ref else version
+        if args.ref:
+            # Validate the ref is a real stable release / upstream commit
+            try:
+                urllib.request.urlopen(f"https://raw.githubusercontent.com/flutter/flutter/{ref}/DEPS")
+            except urllib.error.HTTPError as e:
+                logging.error(f"Supplied ref '{ref}' does not appear to be a valid upstream stable reference: {e}")
+                sys.exit(1)
+            if '-' in ref and 'beta' in ref:
+                logging.error(f"Supplied ref '{ref}' appears to be a prerelease/beta branch. Failing closed.")
+                sys.exit(1)
 
-        # Dart revision is inside DEPS
-        deps_url = f"https://raw.githubusercontent.com/flutter/flutter/{version}/DEPS"
+        # Fetch internal versions using ref
+        engine_rev = get_flutter_internal_version(ref, "engine.version")
+
+        # Dart revision is inside DEPS using ref
+        deps_url = f"https://raw.githubusercontent.com/flutter/flutter/{ref}/DEPS"
         logging.info(f"Fetching {deps_url}")
         with urllib.request.urlopen(deps_url) as response:
             deps_content = response.read().decode("utf-8")
@@ -430,14 +442,14 @@ def main() -> int:
                 raise ValueError("Could not find dart_revision in DEPS")
             dart_rev = match.group(1)
 
-        fonts_content = get_flutter_internal_version(version, "material_fonts.version")
+        fonts_content = get_flutter_internal_version(ref, "material_fonts.version")
         fonts_rev = extract_hash_from_url_like(fonts_content)
-        gradle_content = get_flutter_internal_version(version, "gradle_wrapper.version")
+        gradle_content = get_flutter_internal_version(ref, "gradle_wrapper.version")
         gradle_rev = extract_hash_from_url_like(gradle_content)
 
         logging.info(f"Engine: {engine_rev}, Dart: {dart_rev}, Fonts: {fonts_rev}, Gradle: {gradle_rev}")
 
-        required_dart_range = check_dart_compatibility(version)
+        required_dart_range = check_dart_compatibility(ref)
         compat_msg = f"Requires Dart host SDK range: {required_dart_range} (Engine pinned to: {dart_rev})"
 
         if required_dart_range != "0.0.0":
@@ -476,10 +488,15 @@ def main() -> int:
                 # The issue requires us to explicitly dispatch the Dart workflow and link to it, OR create a PR ourselves.
                 # Since we run in Github Actions and GH CLI is available, we can trigger the dart workflow via `gh workflow run`.
                 try:
-                    run_cmd(["gh", "workflow", "run", "dev-lang-dart-source-update.yaml", "-f", f"version={req_base}"])
+                    run_cmd(["gh", "workflow", "run", "dev-lang-dart-source-update.yaml", "-f", f"version={req_base}"], check=True)
                     logging.info(f"Dispatched dev-lang-dart-source-update.yaml for {req_base}")
+                    # We can fetch the run URL later or just say it succeeded
+                except subprocess.CalledProcessError as e:
+                    logging.error(f"Failed to dispatch prerequisite dart workflow: {e}. Exiting.")
+                    sys.exit(1)
                 except Exception as e:
-                    logging.error(f"Failed to dispatch prerequisite dart workflow: {e}")
+                    logging.error(f"Failed to dispatch prerequisite dart workflow: {e}. Exiting.")
+                    sys.exit(1)
                 compat_msg += f" -- ERROR: Host Dart version {required_dart_range} not found. Prerequisite Dart update has been dispatched."
                 sys.exit(1)
 
