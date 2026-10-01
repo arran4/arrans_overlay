@@ -7,6 +7,7 @@ and creates a new PR with the updated source ebuilds (Engine, Flutter, Virtual).
 """
 
 from __future__ import annotations
+import sys
 
 import argparse
 import json
@@ -15,7 +16,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import urllib.request
 from pathlib import Path
 
@@ -237,11 +237,9 @@ def check_branch_exists(branch_name: str) -> bool:
             return False
         else:
             logging.error("Failed to query remote branches.")
-            import sys
             sys.exit(1)
     except Exception as e:
         logging.error(f"Failed to query remote branches: {e}")
-        import sys
         sys.exit(1)
 
 def check_pr_exists(branch_name: str) -> bool:
@@ -254,7 +252,6 @@ def check_pr_exists(branch_name: str) -> bool:
         raise
     except FileNotFoundError:
         logging.error("gh CLI not available. Failing closed.")
-        import sys
         sys.exit(1)
 
 def create_virtual_flutter(version: str, work_root):
@@ -443,7 +440,6 @@ def main() -> int:
             logging.error(f"Remote branch {branch_name} exists but no open PR is found.")
             logging.error("This indicates a previous run failed between pushing the branch and creating the PR.")
             logging.error("Please manually recover the PR using `gh pr create` or delete the stranded branch.")
-            import sys
             sys.exit(1)
 
         if check_superseding_release("flutter-source", version):
@@ -500,8 +496,29 @@ def main() -> int:
                         logging.error(f"Dart PR {pr_url} must be merged before Flutter {version} can be updated.")
                         print(f"Prerequisite Dart update PR found: {pr_url}")
                         sys.exit(1)
-                except Exception:
-                    pass
+                except subprocess.CalledProcessError as e:
+                    logging.error(f"Failed to check existing Dart PRs: {e}. Failing closed.")
+                    sys.exit(1)
+                except json.JSONDecodeError as e:
+                    logging.error(f"Failed to parse gh pr list JSON: {e}. Failing closed.")
+                    sys.exit(1)
+                except Exception as e:
+                    logging.error(f"Unexpected error checking existing Dart PRs: {e}. Failing closed.")
+                    sys.exit(1)
+
+                try:
+                    # If we got here, lookup succeeded + no PR. Check branch
+                    res_branch = run_cmd(["git", "ls-remote", "--exit-code", "--heads", "origin", dart_branch_name], capture_output=True)
+                    if res_branch.returncode == 0:
+                         logging.error(f"Remote branch {dart_branch_name} exists but no PR was found. Failing closed to avoid duplicate dispatch/recovery collision.")
+                         sys.exit(1)
+                except subprocess.CalledProcessError as e:
+                    if e.returncode != 2:
+                        logging.error(f"Failed to check remote branches: {e}. Failing closed.")
+                        sys.exit(1)
+                except Exception as e:
+                    logging.error(f"Unexpected error checking remote branches: {e}. Failing closed.")
+                    sys.exit(1)
 
                 # Defer flutter creation explicitly
                 logging.error(f"Must generate Dart update first for {req_base}. Deferring Flutter update.")
@@ -531,7 +548,6 @@ def main() -> int:
         # Update Engine DEPS
         logging.info("Running generate_flutter_engine_ebuild.py to update DEPS")
         engine_ebuild = work_root / "dev-libs" / "flutter-engine" / f"flutter-engine-{version}.ebuild"
-        import sys
         engine_gen_cmd = [
             sys.executable, str(orig_root / "scripts" / "generate_flutter_engine_ebuild.py"),
             "--version", version,
@@ -566,7 +582,6 @@ def main() -> int:
         run_cmd(flutter_gen_cmd + ["--check"])
 
         try:
-            import sys
             logging.info("Updating manifests via verify_manifest.py")
             verify_manifest_cmd = [
                 sys.executable,

@@ -62,6 +62,7 @@ class TestUpdateFlutterSource(unittest.TestCase):
         self.assertTrue(update_flutter_source.ebuild_exists("dev-lang/flutter", "3.24.4"))
 
 
+    @patch('tempfile.TemporaryDirectory')
     @patch('scripts.update_flutter_source.run_cmd')
     @patch('scripts.update_flutter_source.check_branch_exists')
     @patch('scripts.update_flutter_source.check_pr_exists')
@@ -69,9 +70,14 @@ class TestUpdateFlutterSource(unittest.TestCase):
     @patch('scripts.update_flutter_source.ebuild_exists')
     @patch('scripts.update_flutter_source.get_flutter_release')
     @patch('urllib.request.urlopen')
-    def test_main_orchestration(self, mock_urlopen, mock_get_rel, mock_ebuild_exists, mock_super, mock_pr, mock_branch, mock_run_cmd):
+    def test_main_orchestration(self, mock_urlopen, mock_get_rel, mock_ebuild_exists, mock_super, mock_pr, mock_branch, mock_run_cmd, mock_tempdir):
         from scripts import update_flutter_source
         import sys
+
+        # Test isolation
+        import tempfile
+        real_temp = tempfile.TemporaryDirectory()
+        mock_tempdir.return_value.__enter__.return_value = real_temp.name
 
         mock_get_rel.return_value = {"version": "3.24.4", "hash": "abcdef", "channel": "stable"}
         mock_ebuild_exists.return_value = False
@@ -118,8 +124,9 @@ class TestUpdateFlutterSource(unittest.TestCase):
 
             mock_run_cmd.side_effect = mock_run_cmd_side_effect
 
-            with patch('sys.argv', ['update_flutter_source.py']):
-                self.assertEqual(update_flutter_source.main(), 1)
+            with patch('scripts.update_flutter_source.REPO_ROOT', Path(real_temp.name)):
+                with patch('sys.argv', ['update_flutter_source.py']):
+                    self.assertEqual(update_flutter_source.main(), 1)
 
             push_call_found = False
             for call in mock_run_cmd.call_args_list:

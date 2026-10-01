@@ -7,6 +7,7 @@ and virtual package.
 """
 
 from __future__ import annotations
+import sys
 
 import argparse
 import json
@@ -15,7 +16,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import tempfile
 import urllib.request
 from pathlib import Path
@@ -153,11 +153,9 @@ def check_branch_exists(branch_name: str) -> bool:
             return False
         else:
             logging.error("Failed to query remote branches.")
-            import sys
             sys.exit(1)
     except Exception as e:
         logging.error(f"Failed to query remote branches: {e}")
-        import sys
         sys.exit(1)
 
 def check_pr_exists(branch_name: str) -> bool:
@@ -170,7 +168,6 @@ def check_pr_exists(branch_name: str) -> bool:
         raise
     except FileNotFoundError:
         logging.error("gh CLI not available. Failing closed.")
-        import sys
         sys.exit(1)
 
 def create_virtual_dart(version: str, work_root):
@@ -304,7 +301,6 @@ def main() -> int:
         if args.ref:
             if args.ref != auth_hash:
                 logging.error(f"Supplied ref '{args.ref}' does not match authoritative stable Dart revision '{auth_hash}' for version {version}. Failing closed.")
-                import sys
                 sys.exit(1)
             ref = args.ref
         else:
@@ -353,7 +349,6 @@ def main() -> int:
             logging.error(f"Remote branch {branch_name} exists but no open PR is found.")
             logging.error("This indicates a previous run failed between pushing the branch and creating the PR.")
             logging.error("Please manually recover the PR using `gh pr create` or delete the stranded branch.")
-            import sys
             sys.exit(1)
 
         if check_superseding_release("dart-source", version):
@@ -370,7 +365,6 @@ def main() -> int:
 
         # Run generator to update DEPS
         logging.info("Running generate_dart_ebuild.py to update DEPS")
-        import sys
         gen_cmd = [
             sys.executable, str(REPO_ROOT / "scripts" / "generate_dart_ebuild.py"),
             "--version", version,
@@ -392,7 +386,6 @@ def main() -> int:
             raise
 
         try:
-            import sys
             logging.info("Updating manifests via verify_manifest.py")
             verify_manifest_cmd = [
                 sys.executable,
@@ -402,7 +395,6 @@ def main() -> int:
             run_cmd(verify_manifest_cmd, cwd=str(work_root))
         except subprocess.CalledProcessError:
             logging.error("verify_manifest.py failed. Failing.")
-            import sys
             sys.exit(1)
 
         commit_and_push(branch_name, version, ref, args.dry_run)

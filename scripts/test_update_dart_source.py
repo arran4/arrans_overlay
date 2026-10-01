@@ -66,15 +66,21 @@ class TestUpdateDartSource(unittest.TestCase):
             update_dart_source.check_pr_exists("my-branch")
 
 
+    @patch('tempfile.TemporaryDirectory')
     @patch('scripts.update_dart_source.run_cmd')
     @patch('scripts.update_dart_source.check_branch_exists')
     @patch('scripts.update_dart_source.check_pr_exists')
     @patch('scripts.update_dart_source.check_superseding_release')
     @patch('scripts.update_dart_source.ebuild_exists')
     @patch('scripts.update_dart_source.get_dart_release')
-    def test_main_orchestration(self, mock_get_rel, mock_ebuild_exists, mock_super, mock_pr, mock_branch, mock_run_cmd):
+    def test_main_orchestration(self, mock_get_rel, mock_ebuild_exists, mock_super, mock_pr, mock_branch, mock_run_cmd, mock_tempdir):
         from scripts import update_dart_source
         import sys
+
+        # Test isolation
+        import tempfile
+        real_temp = tempfile.TemporaryDirectory()
+        mock_tempdir.return_value.__enter__.return_value = real_temp.name
 
         mock_get_rel.return_value = {"version": "3.5.4", "revision": "abcdef"}
         mock_ebuild_exists.return_value = False
@@ -110,8 +116,9 @@ class TestUpdateDartSource(unittest.TestCase):
 
         mock_run_cmd.side_effect = mock_run_cmd_side_effect
 
-        with patch('sys.argv', ['update_dart_source.py']):
-            self.assertEqual(update_dart_source.main(), 1)
+        with patch('scripts.update_dart_source.REPO_ROOT', Path(real_temp.name)):
+            with patch('sys.argv', ['update_dart_source.py']):
+                self.assertEqual(update_dart_source.main(), 1)
 
         push_call_found = False
         for call in mock_run_cmd.call_args_list:
@@ -119,6 +126,14 @@ class TestUpdateDartSource(unittest.TestCase):
                 push_call_found = True
                 break
         self.assertTrue(push_call_found, "push should be called")
+
+        mock_run_cmd.reset_mock()
+        # test branch recovery
+        mock_branch.return_value = True
+        mock_pr.return_value = False
+        with patch('sys.argv', ['update_dart_source.py']):
+            with self.assertRaises(SystemExit):
+                update_dart_source.main()
 
 if __name__ == '__main__':
     unittest.main()
