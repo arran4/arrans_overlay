@@ -233,7 +233,7 @@ def create_dart_ebuild(version: str, work_root):
 
     return new_ebuild_path
 
-def commit_and_push(branch_name: str, version: str, dry_run: bool):
+def commit_and_push(branch_name: str, version: str, ref: str, dry_run: bool):
     if dry_run:
         logging.info("Dry run: Skipping git add, commit, branch checkout, push, and PR creation.")
         return
@@ -389,7 +389,7 @@ def main() -> int:
             logging.error("verify_manifest.py failed. Failing.")
             sys.exit(1)
 
-        commit_and_push(branch_name, version, args.dry_run)
+        commit_and_push(branch_name, version, ref, args.dry_run)
 
     except Exception as e:
         logging.error(f"Update failed: {e}")
