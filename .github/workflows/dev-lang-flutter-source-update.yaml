@@ -3,6 +3,7 @@ name: dev-lang/flutter (Source) Update
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 concurrency:
   group: ci-flutter-source-update-${{ github.ref }}

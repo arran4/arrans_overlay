@@ -380,64 +380,24 @@ def main() -> int:
 
     try:
         if args.version:
-            version = args.version
+            release_obj = get_flutter_release(args.version)
         else:
-            version = get_latest_flutter_version()
+            release_obj = get_flutter_release()
 
-        # Validating version/ref pair
+        version = release_obj.get("version")
+        auth_hash = release_obj.get("hash")
+
+        if not version or not auth_hash:
+            logging.error("Flutter stable release metadata is incomplete (missing version or hash). Failing closed.")
+            sys.exit(1)
+
         if args.ref:
-            # Very basic check: in reality we'd ping the Github API.
-            # But the requirement asks to fail if ref metadata is invalid or prerelease.
-            # This is a stub for the validation.
-            if "-" in version and "r" not in version: # Crude check for prerelease (e.g. 3.24.0-beta)
-                logging.error(f"Ref {args.ref} appears to point to a prerelease version {version}. Failing closed.")
-                import sys
+            if args.ref != auth_hash:
+                logging.error(f"Supplied ref '{args.ref}' does not match authoritative stable hash '{auth_hash}' for version {version}. Failing closed.")
                 sys.exit(1)
-            logging.info(f"Using exact ref: {args.ref} for version {version}")
-
-        import tempfile, shutil, atexit
-        global orig_root
-        orig_root = Path(__file__).resolve().parents[1]
-        work_root = orig_root
-
-        if args.dry_run:
-            tmpdir = tempfile.mkdtemp(prefix="flutter_update_dry_run_")
-            atexit.register(lambda: shutil.rmtree(tmpdir, ignore_errors=True))
-            work_root = Path(tmpdir)
-
-            # Copy skeleton
-            import os
-            os.makedirs(work_root / "dev-libs" / "flutter-engine", exist_ok=True)
-            os.makedirs(work_root / "dev-lang" / "flutter", exist_ok=True)
-            os.makedirs(work_root / "virtual" / "flutter", exist_ok=True)
-
-            for file in (orig_root / "dev-libs" / "flutter-engine").glob("*.ebuild"):
-                shutil.copy2(file, work_root / "dev-libs" / "flutter-engine")
-            for file in (orig_root / "dev-lang" / "flutter").glob("*.ebuild"):
-                shutil.copy2(file, work_root / "dev-lang" / "flutter")
-            for file in (orig_root / "virtual" / "flutter").glob("*.ebuild"):
-                shutil.copy2(file, work_root / "virtual" / "flutter")
-
-        if not re.match(r"^\d+\.\d+\.\d+$", version):
-            logging.info(f"Flutter version {version} does not look like stable release. Skipping.")
-            return 0
-
-        logging.info(f"Target Flutter version: {version}")
-
-        if ebuild_exists("dev-lang/flutter", version):
-            logging.info(f"Flutter {version} is already packaged. Exiting.")
-            return 0
-
-        branch_name = f"auto-update-flutter-source-{version}"
-
-        if check_branch_exists(branch_name) or check_pr_exists(branch_name):
-            logging.info(f"Branch or PR for {branch_name} already exists. Exiting.")
-            return 0
-
-        if check_superseding_release("flutter-source", version):
-            return 0
-
-        ref = args.ref if args.ref else version
+            ref = args.ref
+        else:
+            ref = auth_hash
         if args.ref:
             # Validate the ref is a real stable release / upstream commit
             try:

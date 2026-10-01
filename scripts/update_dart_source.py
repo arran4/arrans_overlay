@@ -257,7 +257,8 @@ def commit_and_push(branch_name: str, version: str, dry_run: bool):
     body = (
         f"Automated source package update for Dart {version}.\n\n"
         f"**New Upstream Version:** {version}\n"
-        f"**Authoritative Source:** https://storage.googleapis.com/dart-archive/channels/stable/release/latest/VERSION\n"
+        f"**Authoritative Source:** https://storage.googleapis.com/dart-archive/channels/stable/release/{version}/VERSION\n"
+        f"**Authoritative Revision:** {ref}\n"
         f"**Manifest Generation:** Completed successfully.\n"
         f"**Dependency review result:** Needs human review.\n"
         f"**Patch refresh/review result:** Needs human review if build fails.\n"
