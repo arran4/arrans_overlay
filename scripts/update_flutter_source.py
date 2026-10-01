@@ -318,7 +318,7 @@ def create_ebuild_copy(package: str, version: str, work_root):
     logging.info(f"Copied {existing_ebuild.name} to {new_ebuild_path.name}")
     return new_ebuild_path
 
-def commit_and_push(branch_name: str, version: str, engine_rev: str, dart_rev: str, fonts_rev: str, gradle_rev: str, compat_msg: str, dry_run: bool):
+def commit_and_push(branch_name: str, version: str, auth_hash: str, engine_rev: str, dart_rev: str, fonts_rev: str, gradle_rev: str, compat_msg: str, dry_run: bool):
     if dry_run:
         logging.info("Dry run: Skipping git add, commit, branch checkout, push, and PR creation.")
         return
@@ -345,6 +345,7 @@ def commit_and_push(branch_name: str, version: str, engine_rev: str, dart_rev: s
         f"Automated coordinated source package update for Flutter {version}.\n\n"
         f"**New Upstream Version:** {version}\n"
         f"**Authoritative Source:** https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json\n"
+        f"**Authoritative Revision:** {auth_hash}\n"
         f"**Flutter Engine revision:** {engine_rev}\n"
         f"**Pinned Dart revision:** {dart_rev}\n"
         f"**Host Dart constraint:** {compat_msg}\n"
@@ -433,9 +434,17 @@ def main() -> int:
 
         branch_name = f"auto-update-flutter-source-{version}"
 
-        if check_branch_exists(branch_name) or check_pr_exists(branch_name):
-            logging.info(f"Branch or PR for {branch_name} already exists. Exiting.")
+        branch_exists = check_branch_exists(branch_name)
+        pr_exists = check_pr_exists(branch_name)
+        if pr_exists:
+            logging.info(f"Open PR for {branch_name} already exists. Exiting (dedup).")
             return 0
+        if branch_exists and not pr_exists:
+            logging.error(f"Remote branch {branch_name} exists but no open PR is found.")
+            logging.error("This indicates a previous run failed between pushing the branch and creating the PR.")
+            logging.error("Please manually recover the PR using `gh pr create` or delete the stranded branch.")
+            import sys
+            sys.exit(1)
 
         if check_superseding_release("flutter-source", version):
             return 0
@@ -568,7 +577,7 @@ def main() -> int:
             logging.error("verify_manifest.py failed. Failing.")
             sys.exit(1)
 
-        commit_and_push(branch_name, version, engine_rev, dart_rev, fonts_rev, gradle_rev, compat_msg, args.dry_run)
+        commit_and_push(branch_name, version, ref, engine_rev, dart_rev, fonts_rev, gradle_rev, compat_msg, args.dry_run)
 
     except Exception as e:
         logging.error(f"Update failed: {e}")

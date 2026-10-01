@@ -54,6 +54,48 @@ class TestUpdateFlutterSource(unittest.TestCase):
         with self.assertRaises(SystemExit):
             update_flutter_source.check_pr_exists("my-branch")
 
+
+    @patch('scripts.update_flutter_source.run_cmd')
+    @patch('scripts.update_flutter_source.check_branch_exists')
+    @patch('scripts.update_flutter_source.check_pr_exists')
+    @patch('scripts.update_flutter_source.check_superseding_release')
+    @patch('scripts.update_flutter_source.ebuild_exists')
+    @patch('scripts.update_flutter_source.get_flutter_release')
+    def test_main_lifecycle(self, mock_get_rel, mock_ebuild_exists, mock_super, mock_pr, mock_branch, mock_run_cmd):
+        from scripts import update_flutter_source
+        import sys
+
+        mock_get_rel.return_value = {"version": "3.24.4", "hash": "abcdef", "channel": "stable"}
+        mock_ebuild_exists.return_value = True
+
+        # Test no-op if packaged
+        with patch('sys.argv', ['update_flutter_source.py']):
+            self.assertEqual(update_flutter_source.main(), 0)
+
+        mock_ebuild_exists.return_value = False
+        mock_branch.return_value = True
+        mock_pr.return_value = False
+
+        # Test branch recovery failure
+        with patch('sys.argv', ['update_flutter_source.py']):
+            with self.assertRaises(SystemExit):
+                update_flutter_source.main()
+
+        # Test dedup
+        mock_branch.return_value = True
+        mock_pr.return_value = True
+        with patch('sys.argv', ['update_flutter_source.py']):
+            self.assertEqual(update_flutter_source.main(), 0)
+
+
+    def test_evaluate_dart_constraint(self):
+        from scripts import update_flutter_source
+        self.assertTrue(update_flutter_source.evaluate_dart_constraint("^3.11.0-0", "3.11.0-r1"))
+        self.assertTrue(update_flutter_source.evaluate_dart_constraint("^3.11.0-0", "3.13.0"))
+        self.assertFalse(update_flutter_source.evaluate_dart_constraint("^3.11.0-0", "3.10.0"))
+        self.assertFalse(update_flutter_source.evaluate_dart_constraint("^3.11.0-0", "4.0.0"))
+        self.assertTrue(update_flutter_source.evaluate_dart_constraint(">=3.2.0-0 <4.0.0", "3.24.4"))
+
     @patch('update_flutter_source.REPO_ROOT', Path("/fake/root"))
     @patch('pathlib.Path.exists', return_value=True)
     @patch('pathlib.Path.glob', return_value=[Path("/fake/root/dev-lang/flutter/flutter-3.24.4.ebuild")])

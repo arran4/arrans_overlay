@@ -66,8 +66,13 @@ def get_dart_release(version: str = None) -> dict:
     try:
         with urllib.request.urlopen(url) as response:
             data = json.loads(response.read().decode("utf-8"))
-            if not data.get("version"):
+            ret_version = data.get("version")
+            if not ret_version:
                 raise ValueError("Failed to parse version from Dart VERSION file")
+            if version and ret_version != version:
+                raise ValueError(f"Requested Dart version {version} but metadata returned {ret_version}")
+            if not data.get("revision"):
+                raise ValueError("Dart VERSION metadata is missing revision field")
             return data
     except Exception as e:
         raise ValueError(f"Could not resolve Dart stable release metadata for {version or 'latest'}: {e}")
@@ -339,9 +344,17 @@ def main() -> int:
         branch_name = f"auto-update-dart-source-{version}"
 
         # In a real GH action, we might just be on detached HEAD, but locally we check branches
-        if check_branch_exists(branch_name) or check_pr_exists(branch_name):
-            logging.info(f"Branch or PR for {branch_name} already exists. Exiting.")
+        branch_exists = check_branch_exists(branch_name)
+        pr_exists = check_pr_exists(branch_name)
+        if pr_exists:
+            logging.info(f"Open PR for {branch_name} already exists. Exiting (dedup).")
             return 0
+        if branch_exists and not pr_exists:
+            logging.error(f"Remote branch {branch_name} exists but no open PR is found.")
+            logging.error("This indicates a previous run failed between pushing the branch and creating the PR.")
+            logging.error("Please manually recover the PR using `gh pr create` or delete the stranded branch.")
+            import sys
+            sys.exit(1)
 
         if check_superseding_release("dart-source", version):
             return 0
