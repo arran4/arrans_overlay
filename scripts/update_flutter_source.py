@@ -531,6 +531,7 @@ def main() -> int:
         # Update Engine DEPS
         logging.info("Running generate_flutter_engine_ebuild.py to update DEPS")
         engine_ebuild = work_root / "dev-libs" / "flutter-engine" / f"flutter-engine-{version}.ebuild"
+        import sys
         engine_gen_cmd = [
             sys.executable, str(orig_root / "scripts" / "generate_flutter_engine_ebuild.py"),
             "--version", version,
@@ -565,6 +566,7 @@ def main() -> int:
         run_cmd(flutter_gen_cmd + ["--check"])
 
         try:
+            import sys
             logging.info("Updating manifests via verify_manifest.py")
             verify_manifest_cmd = [
                 sys.executable,

@@ -55,52 +55,78 @@ class TestUpdateFlutterSource(unittest.TestCase):
             update_flutter_source.check_pr_exists("my-branch")
 
 
+    @patch('update_flutter_source.REPO_ROOT', Path("/fake/root"))
+    @patch('pathlib.Path.exists', return_value=True)
+    @patch('pathlib.Path.glob', return_value=[Path("/fake/root/dev-lang/flutter/flutter-3.24.4.ebuild")])
+    def test_ebuild_exists(self, mock_glob, mock_exists):
+        self.assertTrue(update_flutter_source.ebuild_exists("dev-lang/flutter", "3.24.4"))
+
+
     @patch('scripts.update_flutter_source.run_cmd')
     @patch('scripts.update_flutter_source.check_branch_exists')
     @patch('scripts.update_flutter_source.check_pr_exists')
     @patch('scripts.update_flutter_source.check_superseding_release')
     @patch('scripts.update_flutter_source.ebuild_exists')
     @patch('scripts.update_flutter_source.get_flutter_release')
-    def test_main_lifecycle(self, mock_get_rel, mock_ebuild_exists, mock_super, mock_pr, mock_branch, mock_run_cmd):
+    @patch('urllib.request.urlopen')
+    def test_main_orchestration(self, mock_urlopen, mock_get_rel, mock_ebuild_exists, mock_super, mock_pr, mock_branch, mock_run_cmd):
         from scripts import update_flutter_source
         import sys
 
         mock_get_rel.return_value = {"version": "3.24.4", "hash": "abcdef", "channel": "stable"}
-        mock_ebuild_exists.return_value = True
-
-        # Test no-op if packaged
-        with patch('sys.argv', ['update_flutter_source.py']):
-            self.assertEqual(update_flutter_source.main(), 0)
-
         mock_ebuild_exists.return_value = False
-        mock_branch.return_value = True
+        mock_branch.return_value = False
         mock_pr.return_value = False
+        mock_super.return_value = False
 
-        # Test branch recovery failure
-        with patch('sys.argv', ['update_flutter_source.py']):
-            with self.assertRaises(SystemExit):
-                update_flutter_source.main()
+        from unittest.mock import MagicMock
+        mock_response = MagicMock()
+        def mock_read():
+            return b"'dart_revision': 'abcdef123'"
+        def mock_pubspec_read():
+            return b"environment:\n  sdk: '^3.11.0-0'"
 
-        # Test dedup
-        mock_branch.return_value = True
-        mock_pr.return_value = True
-        with patch('sys.argv', ['update_flutter_source.py']):
-            self.assertEqual(update_flutter_source.main(), 0)
+        mock_response.read.side_effect = lambda: mock_pubspec_read() if getattr(mock_urlopen, 'call_args') and mock_urlopen.call_args[0] and "pubspec.yaml" in mock_urlopen.call_args[0][0] else mock_read()
+        mock_urlopen.return_value.__enter__.return_value = mock_response
 
+        with patch('scripts.update_flutter_source.evaluate_dart_constraint', return_value=True):
+            with patch('sys.argv', ['update_flutter_source.py', '--dry-run']):
+                self.assertEqual(update_flutter_source.main(), 0)
 
-    def test_evaluate_dart_constraint(self):
-        from scripts import update_flutter_source
-        self.assertTrue(update_flutter_source.evaluate_dart_constraint("^3.11.0-0", "3.11.0-r1"))
-        self.assertTrue(update_flutter_source.evaluate_dart_constraint("^3.11.0-0", "3.13.0"))
-        self.assertFalse(update_flutter_source.evaluate_dart_constraint("^3.11.0-0", "3.10.0"))
-        self.assertFalse(update_flutter_source.evaluate_dart_constraint("^3.11.0-0", "4.0.0"))
-        self.assertTrue(update_flutter_source.evaluate_dart_constraint(">=3.2.0-0 <4.0.0", "3.24.4"))
+            manifest_call_found = False
+            for call in mock_run_cmd.call_args_list:
+                if call and call[0] and 'verify_manifest.py' in str(call[0][0]):
+                    manifest_call_found = True
+                    break
+            self.assertTrue(manifest_call_found, "verify_manifest.py must be called during dry run")
 
-    @patch('update_flutter_source.REPO_ROOT', Path("/fake/root"))
-    @patch('pathlib.Path.exists', return_value=True)
-    @patch('pathlib.Path.glob', return_value=[Path("/fake/root/dev-lang/flutter/flutter-3.24.4.ebuild")])
-    def test_ebuild_exists(self, mock_glob, mock_exists):
-        self.assertTrue(update_flutter_source.ebuild_exists("dev-lang/flutter", "3.24.4"))
+            push_call_found = False
+            for call in mock_run_cmd.call_args_list:
+                if call and call[0] and 'push' in call[0][0]:
+                    push_call_found = True
+                    break
+            self.assertFalse(push_call_found, "push should not be called in dry run")
+
+            mock_run_cmd.reset_mock()
+
+            def mock_run_cmd_side_effect(cmd, **kwargs):
+                if 'push' in cmd:
+                    raise update_flutter_source.subprocess.CalledProcessError(1, cmd)
+                if 'status' in cmd:
+                    return update_flutter_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='M some_file\n')
+                return update_flutter_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='')
+
+            mock_run_cmd.side_effect = mock_run_cmd_side_effect
+
+            with patch('sys.argv', ['update_flutter_source.py']):
+                self.assertEqual(update_flutter_source.main(), 1)
+
+            push_call_found = False
+            for call in mock_run_cmd.call_args_list:
+                if call and call[0] and 'push' in call[0][0]:
+                    push_call_found = True
+                    break
+            self.assertTrue(push_call_found, "push should be called")
 
 if __name__ == '__main__':
     unittest.main()

@@ -370,6 +370,7 @@ def main() -> int:
 
         # Run generator to update DEPS
         logging.info("Running generate_dart_ebuild.py to update DEPS")
+        import sys
         gen_cmd = [
             sys.executable, str(REPO_ROOT / "scripts" / "generate_dart_ebuild.py"),
             "--version", version,
@@ -391,6 +392,7 @@ def main() -> int:
             raise
 
         try:
+            import sys
             logging.info("Updating manifests via verify_manifest.py")
             verify_manifest_cmd = [
                 sys.executable,
@@ -400,6 +402,7 @@ def main() -> int:
             run_cmd(verify_manifest_cmd, cwd=str(work_root))
         except subprocess.CalledProcessError:
             logging.error("verify_manifest.py failed. Failing.")
+            import sys
             sys.exit(1)
 
         commit_and_push(branch_name, version, ref, args.dry_run)
