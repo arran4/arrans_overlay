@@ -288,20 +288,21 @@ def main() -> int:
 
     try:
         if args.version:
-            version = args.version
+            release_obj = get_dart_release(args.version)
         else:
-            version = get_latest_dart_version()
+            release_obj = get_dart_release()
 
-        # Validating version/ref pair
+        version = release_obj["version"]
+        auth_hash = release_obj.get("revision")
+
         if args.ref:
-            # Very basic check: in reality we'd ping the Github API.
-            # But the requirement asks to fail if ref metadata is invalid or prerelease.
-            # This is a stub for the validation.
-            if "-" in version and "r" not in version: # Crude check for prerelease (e.g. 3.24.0-beta)
-                logging.error(f"Ref {args.ref} appears to point to a prerelease version {version}. Failing closed.")
+            if args.ref != auth_hash:
+                logging.error(f"Supplied ref '{args.ref}' does not match authoritative stable Dart revision '{auth_hash}' for version {version}. Failing closed.")
                 import sys
                 sys.exit(1)
-            logging.info(f"Using exact ref: {args.ref} for version {version}")
+            ref = args.ref
+        else:
+            ref = auth_hash
 
         import tempfile, shutil, atexit
         global orig_root

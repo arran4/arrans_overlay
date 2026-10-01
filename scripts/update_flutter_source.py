@@ -130,7 +130,7 @@ def check_dart_compatibility(ref: str) -> str:
     except Exception as e:
         import logging
         logging.error(f"Failed to fetch pubspec.yaml for dart compatibility: {e}")
-    raise ValueError(f"Could not determine Dart SDK constraint for Flutter {version}")
+    raise ValueError(f"Could not determine Dart SDK constraint for Flutter {ref}")
 
 def evaluate_dart_constraint(constraint: str, available_version: str) -> bool:
     '''Evaluates a Dart pub sdk constraint against a given version.'''
