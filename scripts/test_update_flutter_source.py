@@ -128,5 +128,14 @@ class TestUpdateFlutterSource(unittest.TestCase):
                     break
             self.assertTrue(push_call_found, "push should be called")
 
+            mock_run_cmd.reset_mock()
+            # test branch recovery
+            mock_branch.return_value = True
+            mock_pr.return_value = False
+            with patch('sys.argv', ['update_flutter_source.py']):
+                with self.assertRaises(SystemExit):
+                    update_flutter_source.main()
+
+
 if __name__ == '__main__':
     unittest.main()
