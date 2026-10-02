@@ -40,6 +40,13 @@ class FlutterUpdaterTest(unittest.TestCase):
         with patch.object(updater, "get_flutter_release", return_value=release), patch.object(sys, "argv", ["updater", "--version", "3.14.0", "--ref", "wrong"]):
             with self.assertRaises(SystemExit): updater.main()
 
+    def test_open_pr_is_idempotent_and_stranded_branch_is_recovery_state(self):
+        release = {"version": "3.14.0", "hash": "r", "channel": "stable"}
+        with patch.object(updater, "get_flutter_release", return_value=release), patch.object(updater, "ebuild_exists", return_value=False), patch.object(updater, "check_branch_exists", return_value=False), patch.object(updater, "check_pr_exists", return_value=True), patch.object(sys, "argv", ["updater", "--dry-run"]):
+            self.assertEqual(updater.main(), 0)
+        with patch.object(updater, "get_flutter_release", return_value=release), patch.object(updater, "ebuild_exists", return_value=False), patch.object(updater, "check_branch_exists", return_value=True), patch.object(updater, "check_pr_exists", return_value=False), patch.object(sys, "argv", ["updater", "--dry-run"]):
+            with self.assertRaises(SystemExit): updater.main()
+
     def test_dart_constraint_evaluator(self):
         for version, expected in (("3.10.9", False), ("3.11.0", True), ("3.13.9-r1", True), ("4.0.0", False)):
             self.assertEqual(updater.evaluate_dart_constraint("^3.11.0-0", version), expected)

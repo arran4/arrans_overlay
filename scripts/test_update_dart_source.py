@@ -42,6 +42,13 @@ class DartUpdaterTest(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 updater.main()
 
+    def test_open_pr_is_idempotent_and_stranded_branch_is_recovery_state(self):
+        common = dict(get_dart_release=patch.object(updater, "get_dart_release", return_value={"version": "3.14.0", "revision": "r"}), ebuild_exists=patch.object(updater, "ebuild_exists", return_value=False))
+        with common["get_dart_release"], common["ebuild_exists"], patch.object(updater, "check_branch_exists", return_value=False), patch.object(updater, "check_pr_exists", return_value=True), patch.object(sys, "argv", ["updater", "--dry-run"]):
+            self.assertEqual(updater.main(), 0)
+        with patch.object(updater, "get_dart_release", return_value={"version": "3.14.0", "revision": "r"}), patch.object(updater, "ebuild_exists", return_value=False), patch.object(updater, "check_branch_exists", return_value=True), patch.object(updater, "check_pr_exists", return_value=False), patch.object(sys, "argv", ["updater", "--dry-run"]):
+            with self.assertRaises(SystemExit): updater.main()
+
     @patch.object(updater, "run_cmd")
     def test_branch_and_pr_lookup_fail_closed(self, run):
         run.return_value = subprocess.CompletedProcess([], 128, "")
