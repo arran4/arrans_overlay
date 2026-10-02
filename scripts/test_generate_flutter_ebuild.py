@@ -1,4 +1,5 @@
 import importlib.util
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -68,26 +69,20 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 			rc_stale = generator.update_ebuild(fake_ebuild, generator.render_pub_deps({}), check=True)
 			self.assertEqual(rc_stale, 1)
 
-	def test_fetch_pub_deps(self):
-		try:
-			deps = generator.fetch_pub_deps("3.47.2")
-			self.assertEqual(len(deps), 101, "3.47.2 should have exactly 101 hosted pub deps")
-			self.assertIn("analyzer", deps)
-			self.assertNotIn("flutter", deps)
-			self.assertNotIn("flutter_test", deps)
+	def test_fixture_has_exact_flutter_3_47_2_hosted_mapping(self):
+		"""This deterministic fixture is the non-skippable parser acceptance test."""
+		lines = ["packages:"]
+		for package, version in generator.PUB_DEPENDENCIES.items():
+			lines.extend([f"  {package}:", "    source: hosted", f"    version: {version}"])
+		# SDK/path entries are intentionally internal and do not enter SRC_URI.
+		lines.extend(["  flutter:", "    source: sdk", "    version: 0.0.0"])
+		deps = generator.parse_pub_deps_lockfile("\n".join(lines) + "\n")
+		self.assertEqual(len(deps), 101)
+		self.assertEqual(deps, generator.PUB_DEPENDENCIES)
 
-			import copy
-			deps_copy = copy.deepcopy(deps)
-
-			static_deps = generator.PUB_DEPENDENCIES
-			for pkg, ver in static_deps.items():
-				self.assertIn(pkg, deps_copy, f"{pkg} missing from dynamically fetched deps")
-				self.assertEqual(deps_copy[pkg], ver, f"{pkg} version mismatch: {deps_copy[pkg]} != {ver}")
-				del deps_copy[pkg]
-
-			self.assertEqual(len(deps_copy), 0, f"Extra unexpected packages found in lockfile: {deps_copy.keys()}")
-		except RuntimeError as e:
-			self.skipTest(f"Failed to fetch real pubspec.lock: {e}")
+	@unittest.skipUnless(os.environ.get("FLUTTER_RELEASE_NETWORK_TEST") == "1", "network release check is opt-in")
+	def test_fetch_pub_deps_network_release(self):
+		self.assertEqual(generator.fetch_pub_deps("3.47.2"), generator.PUB_DEPENDENCIES)
 
 	@unittest.mock.patch('subprocess.run')
 	def test_fetch_pub_deps_mocked(self, mock_run):

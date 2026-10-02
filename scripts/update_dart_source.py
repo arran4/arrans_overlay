@@ -10,6 +10,7 @@ from __future__ import annotations
 import sys
 
 import argparse
+import atexit
 import json
 import logging
 import os
@@ -233,9 +234,9 @@ def create_dart_ebuild(version: str, work_root):
     shutil.copy2(existing_ebuild, new_ebuild_path)
     logging.info(f"Copied {existing_ebuild.name} to {new_ebuild_path.name}")
 
-    return new_ebuild_path
+    return existing_ebuild, new_ebuild_path
 
-def commit_and_push(branch_name: str, version: str, ref: str, dry_run: bool):
+def commit_and_push(branch_name: str, old_version: str, version: str, ref: str, dry_run: bool):
     if dry_run:
         logging.info("Dry run: Skipping git add, commit, branch checkout, push, and PR creation.")
         return
@@ -258,9 +259,12 @@ def commit_and_push(branch_name: str, version: str, ref: str, dry_run: bool):
 
     body = (
         f"Automated source package update for Dart {version}.\n\n"
+        f"**Old Packaged Version:** {old_version}\n"
         f"**New Upstream Version:** {version}\n"
         f"**Authoritative Source:** https://storage.googleapis.com/dart-archive/channels/stable/release/{version}/VERSION\n"
         f"**Authoritative Revision:** {ref}\n"
+        f"**Host-Dart compatibility/prerequisite:** Independent Dart stable update; no Flutter prerequisite.\n"
+        f"**Virtual-provider decision:** Existing virtual constraints were left untouched unless a truthful matching provider exists.\n"
         f"**Manifest Generation:** Completed successfully.\n"
         f"**Dependency review result:** Needs human review.\n"
         f"**Patch refresh/review result:** Needs human review if build fails.\n"
@@ -306,16 +310,7 @@ def main() -> int:
         else:
             ref = auth_hash
 
-        import tempfile, shutil, atexit
-        global orig_root
-
-        # Test patching safe lookup fallback
-        try:
-            test_override = REPO_ROOT
-            orig_root = REPO_ROOT
-        except NameError:
-            orig_root = Path(__file__).resolve().parents[1]
-
+        orig_root = REPO_ROOT
         work_root = orig_root
 
         if args.dry_run:
@@ -368,7 +363,8 @@ def main() -> int:
         create_virtual_dart(version, work_root)
 
         # Create main ebuild
-        new_ebuild_path = create_dart_ebuild(version, work_root)
+        previous_ebuild, new_ebuild_path = create_dart_ebuild(version, work_root)
+        previous_version = previous_ebuild.name.removeprefix("dart-").removesuffix(".ebuild")
 
         # Run generator to update DEPS
         logging.info("Running generate_dart_ebuild.py to update DEPS")
@@ -404,7 +400,7 @@ def main() -> int:
             logging.error("verify_manifest.py failed. Failing.")
             sys.exit(1)
 
-        commit_and_push(branch_name, version, ref, args.dry_run)
+        commit_and_push(branch_name, previous_version, version, ref, args.dry_run)
 
     except Exception as e:
         logging.error(f"Update failed: {e}")

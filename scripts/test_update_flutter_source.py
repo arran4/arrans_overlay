@@ -1,168 +1,121 @@
-import unittest
-from unittest.mock import patch, MagicMock
-import update_flutter_source as update_flutter_source
-from pathlib import Path
+import json
 import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-class TestUpdateFlutterSource(unittest.TestCase):
-    @patch('update_flutter_source.urllib.request.urlopen')
-    def test_get_latest_flutter_version(self, mock_urlopen):
-        mock_response = MagicMock()
-        mock_response.read.return_value = b'{"current_release": {"stable": "hash123"}, "releases": [{"channel": "stable", "version": "3.24.4", "hash": "hash123"}, {"channel": "beta", "version": "3.25.0"}]}'
-        mock_urlopen.return_value.__enter__.return_value = mock_response
-        self.assertEqual(update_flutter_source.get_latest_flutter_version(), "3.24.4")
+import update_flutter_source as updater
 
-    @patch('update_flutter_source.urllib.request.urlopen')
-    def test_get_flutter_internal_version(self, mock_urlopen):
-        mock_response = MagicMock()
-        mock_response.read.return_value = b'abcdef123456\n'
-        mock_urlopen.return_value.__enter__.return_value = mock_response
-        self.assertEqual(update_flutter_source.get_flutter_internal_version("3.24.4", "engine.version"), "abcdef123456")
 
-    def test_extract_hash_from_url_like(self):
-        url = "flutter_infra_release/flutter/fonts/3012db47f3130e62f7cc0beabff968a33cbec8d8/fonts.zip"
-        self.assertEqual(update_flutter_source.extract_hash_from_url_like(url), "3012db47f3130e62f7cc0beabff968a33cbec8d8")
+class FlutterUpdaterTest(unittest.TestCase):
+    def releases(self, payload, version=None):
+        response = MagicMock(); response.read.return_value = json.dumps(payload).encode()
+        with patch.object(updater.urllib.request, "urlopen") as open_url:
+            open_url.return_value.__enter__.return_value = response
+            return updater.get_flutter_release(version)
 
-        hash_only = "abcdef1234567890abcdef1234567890abcdef12"
-        self.assertEqual(update_flutter_source.extract_hash_from_url_like(hash_only), hash_only)
+    def test_stable_release_metadata_and_manual_selection(self):
+        data = {"current_release": {"stable": "stable-hash"}, "releases": [
+            {"version": "3.14.0", "hash": "stable-hash", "channel": "stable"},
+            {"version": "3.15.0-0.1.pre", "hash": "beta", "channel": "beta"},
+        ]}
+        self.assertEqual(self.releases(data)["version"], "3.14.0")
+        self.assertEqual(self.releases(data, "3.14.0")["hash"], "stable-hash")
 
-    @patch('update_flutter_source.run_cmd')
-    def test_check_branch_exists(self, mock_run_cmd):
-        mock_run_cmd.return_value.returncode = 0
-        self.assertTrue(update_flutter_source.check_branch_exists("my-branch"))
+    def test_stable_release_metadata_rejects_incomplete_or_prerelease(self):
+        cases = (
+            {"current_release": {"stable": "h"}, "releases": [{"hash": "h", "channel": "stable"}]},
+            {"current_release": {"stable": "h"}, "releases": [{"version": "3.14.0", "hash": "h", "channel": "beta"}]},
+            {"current_release": {"stable": "h"}, "releases": [{"version": "3.14.0", "channel": "stable", "hash": "h"}]},
+        )
+        with self.assertRaises(ValueError): self.releases(cases[0])
+        with self.assertRaises(ValueError): self.releases(cases[1], "3.14.0")
+        self.assertEqual(self.releases(cases[2], "3.14.0")["hash"], "h")
+        with self.assertRaises(ValueError): self.releases(cases[2], "3.15.0-0.1.pre")
 
-        mock_run_cmd.return_value.returncode = 2
-        self.assertFalse(update_flutter_source.check_branch_exists("my-branch"))
+    def test_dart_constraint_evaluator(self):
+        for version, expected in (("3.10.9", False), ("3.11.0", True), ("3.13.9-r1", True), ("4.0.0", False)):
+            self.assertEqual(updater.evaluate_dart_constraint("^3.11.0-0", version), expected)
+        for version, expected in (("3.1.9", False), ("3.2.0", True), ("3.99.0", True), ("4.0.0", False)):
+            self.assertEqual(updater.evaluate_dart_constraint(">=3.2.0-0 <4.0.0", version), expected)
+        self.assertFalse(updater.evaluate_dart_constraint("wat", "3.11.0"))
+        self.assertFalse(updater.evaluate_dart_constraint("^3.bad.0", "3.11.0"))
 
-        mock_run_cmd.return_value.returncode = 128
-        with self.assertRaises(SystemExit):
-            update_flutter_source.check_branch_exists("my-branch")
+    @patch.object(updater, "run_cmd")
+    def test_pending_dart_run_is_version_specific(self, run):
+        run.return_value = subprocess.CompletedProcess([], 0, json.dumps([
+            {"status": "in_progress", "displayTitle": "Dart source update (3.13.0)", "url": "old"},
+            {"status": "queued", "displayTitle": "Dart source update (3.14.0)", "url": "match"},
+        ]))
+        self.assertEqual(updater.pending_dart_update_run("3.14.0")["url"], "match")
+        self.assertIsNone(updater.pending_dart_update_run("3.15.0"))
 
-    @patch('update_flutter_source.run_cmd')
-    def test_check_pr_exists(self, mock_run_cmd):
-        mock_run_cmd.return_value.stdout = '[{"url": "http://pr"}]'
-        self.assertTrue(update_flutter_source.check_pr_exists("my-branch"))
+    @patch.object(updater, "run_cmd")
+    def test_branch_pr_and_superseding_fail_closed_or_correct(self, run):
+        run.return_value = subprocess.CompletedProcess([], 128, "")
+        with self.assertRaises(SystemExit): updater.check_branch_exists("x")
+        run.return_value = subprocess.CompletedProcess([], 0, json.dumps([
+            {"headRefName": "auto-update-flutter-source-3.13.0", "url": "old"},
+            {"headRefName": "auto-update-flutter-source-3.15.0", "url": "new"},
+        ]))
+        self.assertTrue(updater.check_superseding_release("flutter-source", "3.14.0"))
+        updater.close_superseding_releases("flutter-source", "3.14.0")
+        self.assertTrue(any(c.args[0][:4] == ["gh", "pr", "close", "auto-update-flutter-source-3.13.0"] for c in run.call_args_list))
 
-        mock_run_cmd.return_value.stdout = '[]'
-        self.assertFalse(update_flutter_source.check_pr_exists("my-branch"))
-
-        mock_run_cmd.side_effect = subprocess.CalledProcessError(1, 'gh')
+    @patch.object(updater, "close_superseding_releases")
+    @patch.object(updater, "run_cmd")
+    def test_pr_creation_success_and_failure_after_push(self, run, close):
+        run.side_effect = lambda cmd, **kwargs: subprocess.CompletedProcess(cmd, 0, "M x\n" if cmd[:3] == ["git", "status", "--porcelain"] else "")
+        updater.commit_and_push("branch", "3.13.3", "3.14.0", "release-hash", "engine", "dart", "fonts", "gradle", "^3.11.0", False)
+        pr = next(c.args[0] for c in run.call_args_list if c.args[0][:3] == ["gh", "pr", "create"])
+        body = pr[pr.index("--body") + 1]
+        self.assertIn("Old Packaged Version:** 3.13.3", body)
+        self.assertIn("Authoritative Revision:** release-hash", body)
+        self.assertIn("Flutter Engine revision:** engine", body)
+        self.assertIn("Pinned Dart revision:** dart", body)
+        close.assert_called_once()
+        def fail(cmd, **kwargs):
+            if cmd[:3] == ["git", "status", "--porcelain"]: return subprocess.CompletedProcess(cmd, 0, "M x\n")
+            if cmd[:3] == ["gh", "pr", "create"]: raise subprocess.CalledProcessError(1, cmd)
+            return subprocess.CompletedProcess(cmd, 0, "")
+        run.reset_mock(); run.side_effect = fail
         with self.assertRaises(subprocess.CalledProcessError):
-            update_flutter_source.check_pr_exists("my-branch")
+            updater.commit_and_push("branch", "3.13.3", "3.14.0", "h", "e", "d", "f", "g", "c", False)
+        self.assertTrue(any(c.args[0][:3] == ["git", "push", "origin"] for c in run.call_args_list))
 
-        mock_run_cmd.side_effect = FileNotFoundError()
-        with self.assertRaises(SystemExit):
-            update_flutter_source.check_pr_exists("my-branch")
+    def make_repo(self, root):
+        for directory, filename in (("dev-libs/flutter-engine", "flutter-engine-3.13.3.ebuild"), ("dev-lang/flutter", "flutter-3.13.3.ebuild"), ("virtual/flutter", "flutter-3.13.3.ebuild"), ("dev-lang/dart", "dart-3.13.3.ebuild")):
+            path = root / directory; path.mkdir(parents=True, exist_ok=True)
+            (path / filename).write_text('EAPI=8\nSRC_URI="https://example.invalid/a.tar.xz"\n')
+        subprocess.run(["git", "init", "-q"], cwd=root, check=True); subprocess.run(["git", "add", "."], cwd=root, check=True)
+        subprocess.run(["git", "-c", "commit.gpgsign=false", "-c", "user.email=t@example", "-c", "user.name=t", "commit", "-qm", "base"], cwd=root, check=True)
 
-
-    @patch('scripts.update_flutter_source.REPO_ROOT', Path("/fake/root"))
-    @patch('pathlib.Path.exists', return_value=True)
-    @patch('pathlib.Path.glob', return_value=[Path("/fake/root/dev-lang/flutter/flutter-3.24.4.ebuild")])
-    def test_ebuild_exists(self, mock_glob, mock_exists):
-        self.assertTrue(update_flutter_source.ebuild_exists("dev-lang/flutter", "3.24.4"))
-
-
-    @patch('tempfile.TemporaryDirectory')
-    @patch('scripts.update_flutter_source.run_cmd')
-    @patch('scripts.update_flutter_source.check_branch_exists')
-    @patch('scripts.update_flutter_source.check_pr_exists')
-    @patch('scripts.update_flutter_source.check_superseding_release')
-    @patch('scripts.update_flutter_source.ebuild_exists')
-    @patch('scripts.update_flutter_source.get_flutter_release')
-    @patch('urllib.request.urlopen')
-    def test_main_orchestration(self, mock_urlopen, mock_get_rel, mock_ebuild_exists, mock_super, mock_pr, mock_branch, mock_run_cmd, mock_tempdir):
-        from scripts import update_flutter_source
-        import sys
-
-        # Test isolation
-        import tempfile
-        import os
-        from pathlib import Path
-        real_temp = tempfile.TemporaryDirectory()
-        mock_tempdir.return_value.__enter__.return_value = real_temp.name
-        os.makedirs(Path(real_temp.name) / "dev-lang" / "flutter")
-        os.makedirs(Path(real_temp.name) / "dev-libs" / "flutter-engine")
-        os.makedirs(Path(real_temp.name) / "virtual" / "flutter")
-        os.makedirs(Path(real_temp.name) / "dev-lang" / "dart")
-        (Path(real_temp.name) / "dev-lang" / "dart" / "dart-3.13.3-r1.ebuild").touch()
-        (Path(real_temp.name) / "dev-lang" / "flutter" / "flutter-3.13.3-r1.ebuild").touch()
-        (Path(real_temp.name) / "dev-libs" / "flutter-engine" / "flutter-engine-3.13.3-r1.ebuild").touch()
-        (Path(real_temp.name) / "virtual" / "flutter" / "flutter-3.13.3-r1.ebuild").touch()
-
-        mock_get_rel.return_value = {"version": "3.24.4", "hash": "abcdef", "channel": "stable"}
-        mock_ebuild_exists.return_value = False
-        mock_branch.return_value = False
-        mock_pr.return_value = False
-        mock_super.return_value = False
-
-        from unittest.mock import MagicMock
-        mock_response = MagicMock()
-        def mock_read():
-            return b"'dart_revision': 'abcdef123'"
-        def mock_pubspec_read():
-            return b"environment:\n  sdk: '^3.11.0-0'"
-
-        mock_response.read.side_effect = lambda: mock_pubspec_read() if getattr(mock_urlopen, 'call_args') and mock_urlopen.call_args[0] and "pubspec.yaml" in mock_urlopen.call_args[0][0] else mock_read()
-        mock_urlopen.return_value.__enter__.return_value = mock_response
-
-        with patch('scripts.update_flutter_source.evaluate_dart_constraint', return_value=True):
-            with patch('sys.argv', ['update_flutter_source.py', '--dry-run']):
-                self.assertEqual(update_flutter_source.main(), 0)
-
-            manifest_call_found = False
-            for call in mock_run_cmd.call_args_list:
-                if call and call[0] and 'verify_manifest.py' in str(call[0][0]):
-                    manifest_call_found = True
-                    break
-            self.assertTrue(manifest_call_found, "verify_manifest.py must be called during dry run")
-
-            push_call_found = False
-            for call in mock_run_cmd.call_args_list:
-                if call and call[0] and 'push' in call[0][0]:
-                    push_call_found = True
-                    break
-            self.assertFalse(push_call_found, "push should not be called in dry run")
-
-            mock_run_cmd.reset_mock()
-
-            def mock_run_cmd_side_effect(cmd, **kwargs):
-                if 'push' in cmd:
-                    raise update_flutter_source.subprocess.CalledProcessError(1, cmd)
-                if 'status' in cmd:
-                    return update_flutter_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='M some_file\n')
-                if cmd and cmd[0] == 'gh' and 'run' in cmd:
-                    # Mock no active workflow
-                    return update_flutter_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='[]')
-                if cmd and cmd[0] == 'gh' and 'pr' in cmd and 'list' in cmd:
-                    return update_flutter_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='[]')
-                if cmd and cmd[0] == 'git' and 'ls-remote' in cmd:
-                    # Mock no stranded branch
-                    e = update_flutter_source.subprocess.CalledProcessError(2, cmd)
-                    e.returncode = 2
-                    raise e
-                return update_flutter_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='')
-
-            mock_run_cmd.side_effect = mock_run_cmd_side_effect
-
-            with patch('scripts.update_flutter_source.REPO_ROOT', Path(real_temp.name)):
-                with patch('sys.argv', ['update_flutter_source.py']):
-                    self.assertEqual(update_flutter_source.main(), 1)
-
-            push_call_found = False
-            for call in mock_run_cmd.call_args_list:
-                if call and call[0] and 'push' in call[0][0]:
-                    push_call_found = True
-                    break
-            self.assertTrue(push_call_found, "push should be called")
-
-            mock_run_cmd.reset_mock()
-            # test branch recovery
-            mock_branch.return_value = True
-            mock_pr.return_value = False
-            with patch('sys.argv', ['update_flutter_source.py']):
-                with self.assertRaises(SystemExit):
-                    update_flutter_source.main()
+    def test_flutter_dry_run_real_git_repo_is_immutable_and_generates_coordinated_tree(self):
+        checkout_targets = [Path(updater.REPO_ROOT) / p for p in ("dev-lang/flutter/flutter-3.24.4.ebuild", "dev-libs/flutter-engine/flutter-engine-3.24.4.ebuild")]
+        self.assertFalse(any(p.exists() for p in checkout_targets))
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td); self.make_repo(root)
+            staged, unstaged, untracked = root / "staged", root / "unstaged", root / "untracked"
+            staged.write_text("staged\n"); subprocess.run(["git", "add", "staged"], cwd=root, check=True)
+            unstaged.write_text("before\n"); subprocess.run(["git", "add", "unstaged"], cwd=root, check=True); unstaged.write_text("after\n"); untracked.write_text("untracked\n")
+            status = subprocess.check_output(["git", "status", "--porcelain=v1"], cwd=root); generated = []
+            def command(cmd, **kwargs):
+                joined = " ".join(cmd)
+                if "generate_flutter_" in joined:
+                    target = Path(cmd[cmd.index("--ebuild") + 1]); target.write_text(target.read_text() + "# generated\n"); generated.append(target)
+                if "verify_manifest.py" in joined:
+                    for directory in map(Path, cmd[2:]): (directory / "Manifest").write_text("DIST fixture 1 BLAKE2B dead SHA512 beef\n"); generated.append(directory / "Manifest")
+                return subprocess.CompletedProcess(cmd, 0, "")
+            release = {"version": "3.24.4", "hash": "release", "channel": "stable"}
+            with patch.object(updater, "REPO_ROOT", root), patch.object(updater, "get_flutter_release", return_value=release), patch.object(updater, "check_branch_exists", return_value=False), patch.object(updater, "check_pr_exists", return_value=False), patch.object(updater, "check_superseding_release", return_value=False), patch.object(updater, "get_flutter_internal_version", side_effect=["engine", "fonts", "gradle"]), patch.object(updater, "check_dart_compatibility", return_value="^3.11.0-0"), patch.object(updater.urllib.request, "urlopen") as urlopen, patch.object(updater, "run_cmd", side_effect=command), patch.object(sys, "argv", ["updater", "--dry-run"]):
+                response = MagicMock(); response.read.return_value = b"'dart_revision': 'deadbeef'"; urlopen.return_value.__enter__.return_value = response
+                self.assertEqual(updater.main(), 0)
+            self.assertGreaterEqual(len(generated), 4); self.assertEqual(subprocess.check_output(["git", "status", "--porcelain=v1"], cwd=root), status)
+            self.assertEqual((staged).read_text(), "staged\n"); self.assertEqual(unstaged.read_text(), "after\n"); self.assertEqual(untracked.read_text(), "untracked\n")
+        self.assertFalse(any(p.exists() for p in checkout_targets))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

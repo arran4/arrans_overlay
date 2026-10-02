@@ -1,11 +1,14 @@
 name: dev-lang/dart (Source) Update
+run-name: Dart source update (${{ inputs.version || 'latest' }})
 
 permissions:
   contents: write
   pull-requests: write
 
 concurrency:
-  group: ci-dart-source-update-${{ github.ref }}
+  # This is intentionally version-specific so Flutter can inspect a durable
+  # prerequisite identity without treating another Dart release as a match.
+  group: ci-dart-source-update-${{ inputs.version || github.ref }}
   cancel-in-progress: false
 
 on:

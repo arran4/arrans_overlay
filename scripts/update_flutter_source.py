@@ -10,12 +10,14 @@ from __future__ import annotations
 import sys
 
 import argparse
+import atexit
 import json
 import logging
 import os
 import re
 import shutil
 import subprocess
+import tempfile
 import urllib.request
 from pathlib import Path
 
@@ -67,12 +69,16 @@ def get_flutter_release(version: str = None) -> dict:
 
             for r in releases:
                 if r.get("hash") == stable_hash:
+                    if r.get("channel") != "stable" or not r.get("version"):
+                        raise ValueError("Current stable release object is incomplete or non-stable")
                     return r
             raise ValueError(f"Could not find release object for stable hash {stable_hash}")
         else:
             # Find the exact release for the given version
             for r in releases:
                 if r.get("version") == version and r.get("channel") == "stable":
+                    if not r.get("hash"):
+                        raise ValueError(f"Stable release {version} is missing hash")
                     return r
             raise ValueError(f"Could not find stable release object for version {version}")
 
@@ -98,9 +104,7 @@ def extract_hash_from_url_like(content: str) -> str:
 
 def ebuild_exists(package: str, version: str) -> bool:
     """Check if the ebuild for the version already exists."""
-    global orig_root
-    orig_root = Path(__file__).resolve().parents[1]
-    pkg_dir = orig_root / package
+    pkg_dir = REPO_ROOT / package
     if not pkg_dir.exists():
         return False
     # Use basename for glob matching
@@ -144,8 +148,9 @@ def evaluate_dart_constraint(constraint: str, available_version: str) -> bool:
     # Simple caret constraint evaluator
     if constraint.startswith('^'):
         base = constraint[1:].split('-')[0] # e.g. 3.11.0 from ^3.11.0-0
+        if not re.fullmatch(r"\d+\.\d+\.\d+", base):
+            return False
         base_parts = [int(x) for x in base.split('.')]
-        if len(base_parts) != 3: return False
 
         # >= base && < (base.major + 1)
         if avail_parts[0] != base_parts[0]: return False
@@ -161,6 +166,8 @@ def evaluate_dart_constraint(constraint: str, available_version: str) -> bool:
     # E.g. ">=3.2.0-0 <4.0.0"
     m = re.match(r'>=([\d\.]+).*?<\s*([\d\.]+)', constraint)
     if m:
+        if not re.fullmatch(r"\d+\.\d+\.\d+", m.group(1)) or not re.fullmatch(r"\d+\.\d+\.\d+", m.group(2)):
+            return False
         lower = [int(x) for x in m.group(1).split('.')]
         upper = [int(x) for x in m.group(2).split('.')]
         # check >= lower
@@ -178,6 +185,25 @@ def evaluate_dart_constraint(constraint: str, available_version: str) -> bool:
         return True
 
     return False
+
+
+def pending_dart_update_run(version: str) -> dict | None:
+    """Return a pending run for exactly ``version``, never an unrelated one.
+
+    The Dart workflow's run-name includes the requested version.  That makes
+    the dispatch identity inspectable during the small interval before its
+    branch and PR are visible remotely.
+    """
+    result = run_cmd([
+        "gh", "run", "list", "--workflow", "dev-lang-dart-source-update.yaml",
+        "--json", "status,displayTitle,url,databaseId", "--limit", "30",
+    ], capture_output=True)
+    runs = json.loads(result.stdout)
+    needle = f"Dart source update ({version})"
+    for run in runs:
+        if run.get("status") in {"queued", "in_progress", "pending"} and run.get("displayTitle") == needle:
+            return run
+    return None
 
 def check_superseding_release(pkg: str, version: str) -> bool:
     '''Detect if older updates are pending.'''
@@ -313,9 +339,9 @@ def create_ebuild_copy(package: str, version: str, work_root):
     new_ebuild_path = pkg_dir / f"{basename}-{version}.ebuild"
     shutil.copy2(existing_ebuild, new_ebuild_path)
     logging.info(f"Copied {existing_ebuild.name} to {new_ebuild_path.name}")
-    return new_ebuild_path
+    return existing_ebuild, new_ebuild_path
 
-def commit_and_push(branch_name: str, version: str, auth_hash: str, engine_rev: str, dart_rev: str, fonts_rev: str, gradle_rev: str, compat_msg: str, dry_run: bool):
+def commit_and_push(branch_name: str, old_version: str, version: str, auth_hash: str, engine_rev: str, dart_rev: str, fonts_rev: str, gradle_rev: str, compat_msg: str, dry_run: bool):
     if dry_run:
         logging.info("Dry run: Skipping git add, commit, branch checkout, push, and PR creation.")
         return
@@ -340,12 +366,14 @@ def commit_and_push(branch_name: str, version: str, auth_hash: str, engine_rev: 
 
     body = (
         f"Automated coordinated source package update for Flutter {version}.\n\n"
+        f"**Old Packaged Version:** {old_version}\n"
         f"**New Upstream Version:** {version}\n"
         f"**Authoritative Source:** https://storage.googleapis.com/flutter_infra_release/releases/releases_linux.json\n"
         f"**Authoritative Revision:** {auth_hash}\n"
         f"**Flutter Engine revision:** {engine_rev}\n"
         f"**Pinned Dart revision:** {dart_rev}\n"
         f"**Host Dart constraint:** {compat_msg}\n"
+        f"**Virtual-provider decision:** Existing virtual constraints were left untouched unless a truthful matching provider exists.\n"
         f"**Material Fonts revision:** {fonts_rev}\n"
         f"**Gradle Wrapper revision:** {gradle_rev}\n"
         f"**Manifest Generation:** Completed successfully.\n"
@@ -397,16 +425,7 @@ def main() -> int:
         else:
             ref = auth_hash
 
-        import tempfile, shutil, atexit
-        global orig_root
-
-        # Test patching safe lookup fallback
-        try:
-            test_override = REPO_ROOT
-            orig_root = REPO_ROOT
-        except NameError:
-            orig_root = Path(__file__).resolve().parents[1]
-
+        orig_root = REPO_ROOT
         work_root = orig_root
 
         if args.dry_run:
@@ -527,17 +546,14 @@ def main() -> int:
                     logging.error(f"Unexpected error checking remote branches: {e}. Failing closed.")
                     sys.exit(1)
 
-                # Check for an already queued/in-progress workflow run to avoid duplicate dispatch
+                # Check a version-specific durable run identity before dispatching.
                 try:
-                    res_run = run_cmd(["gh", "run", "list", "--workflow", "dev-lang-dart-source-update.yaml", "--json", "status,headBranch", "--limit", "10"], check=True, capture_output=True)
-                    import json
-                    runs = json.loads(res_run.stdout)
-                    # For workflow_dispatch, headBranch is usually the branch it was triggered from (e.g. main),
-                    # so we just check if ANY dart update workflow is pending/in_progress.
-                    # It's safer to defer if any dart update is running.
-                    pending = any(r.get('status') in ('in_progress', 'queued', 'pending') for r in runs)
+                    pending = pending_dart_update_run(req_base)
                     if pending:
-                        logging.error(f"A Dart update workflow is already running/queued. Deferring dispatch to avoid duplicates.")
+                        logging.error(
+                            "Dart prerequisite workflow already pending for %s: %s",
+                            req_base, pending.get("url", pending.get("databaseId", "unknown run")),
+                        )
                         sys.exit(1)
                 except subprocess.CalledProcessError as e:
                     logging.error(f"Failed to check existing workflow runs: {e}. Failing closed.")
@@ -556,13 +572,19 @@ def main() -> int:
                 try:
                     run_cmd(["gh", "workflow", "run", "dev-lang-dart-source-update.yaml", "-f", f"version={req_base}"], check=True)
                     logging.info(f"Dispatched dev-lang-dart-source-update.yaml for {req_base}")
-                    # We can fetch the run URL later or just say it succeeded
                 except subprocess.CalledProcessError as e:
                     logging.error(f"Failed to dispatch prerequisite dart workflow: {e}. Exiting.")
                     sys.exit(1)
                 except Exception as e:
                     logging.error(f"Failed to dispatch prerequisite dart workflow: {e}. Exiting.")
                     sys.exit(1)
+                # Best-effort only: a new run is not always listed immediately.
+                try:
+                    pending = pending_dart_update_run(req_base)
+                    if pending and pending.get("url"):
+                        logging.info("Prerequisite Dart workflow: %s", pending["url"])
+                except Exception as e:
+                    logging.warning("Dart workflow dispatched but URL lookup is not yet available: %s", e)
                 compat_msg += f" -- ERROR: Host Dart version {required_dart_range} not found. Prerequisite Dart update has been dispatched."
                 sys.exit(1)
 
@@ -571,12 +593,12 @@ def main() -> int:
 
         # Create ebuilds
         create_virtual_flutter(version, work_root)
-        create_ebuild_copy("dev-libs/flutter-engine", version, work_root)
-        flutter_ebuild = create_ebuild_copy("dev-lang/flutter", version, work_root)
+        _, engine_ebuild = create_ebuild_copy("dev-libs/flutter-engine", version, work_root)
+        previous_flutter_ebuild, flutter_ebuild = create_ebuild_copy("dev-lang/flutter", version, work_root)
+        previous_version = previous_flutter_ebuild.name.removeprefix("flutter-").removesuffix(".ebuild")
 
         # Update Engine DEPS
         logging.info("Running generate_flutter_engine_ebuild.py to update DEPS")
-        engine_ebuild = work_root / "dev-libs" / "flutter-engine" / f"flutter-engine-{version}.ebuild"
         engine_gen_cmd = [
             sys.executable, str(orig_root / "scripts" / "generate_flutter_engine_ebuild.py"),
             "--version", version,
@@ -623,7 +645,7 @@ def main() -> int:
             logging.error("verify_manifest.py failed. Failing.")
             sys.exit(1)
 
-        commit_and_push(branch_name, version, ref, engine_rev, dart_rev, fonts_rev, gradle_rev, compat_msg, args.dry_run)
+        commit_and_push(branch_name, previous_version, version, ref, engine_rev, dart_rev, fonts_rev, gradle_rev, compat_msg, args.dry_run)
 
     except Exception as e:
         logging.error(f"Update failed: {e}")

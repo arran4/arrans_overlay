@@ -32,36 +32,13 @@ EBUILD = (
 BEGIN = "# BEGIN GENERATED FLUTTER PUB DEPS"
 END = "# END GENERATED FLUTTER PUB DEPS"
 
-def fetch_pub_deps(version: str) -> dict[str, str]:
-	"""Fetch the exact hosted pub dependency graph from the stable release lockfile."""
-	import subprocess
-	import tempfile
-
-	url = f"https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_{version}-stable.tar.xz"
-
+def parse_pub_deps_lockfile(content: str) -> dict[str, str]:
+	"""Parse a Flutter tooling lockfile and reject non-local source types."""
 	try:
-		with tempfile.NamedTemporaryFile(suffix=".tar.xz") as archive:
-			curl = subprocess.run(
-				["curl", "--fail", "--location", "--silent", "--show-error", "--output", archive.name, url],
-				capture_output=True,
-				check=False,
-			)
-			if curl.returncode != 0:
-				raise RuntimeError(f"curl failed: {curl.stderr.decode('utf-8', 'ignore')}")
-
-			tar = subprocess.run(
-				["tar", "-xJOf", archive.name, "flutter/packages/flutter_tools/pubspec.lock"],
-				capture_output=True,
-				check=False,
-			)
-			if tar.returncode != 0:
-				raise RuntimeError(f"Failed to extract pubspec.lock: {tar.stderr.decode('utf-8', 'ignore')}")
-
-		content = tar.stdout.decode('utf-8')
 		if not content.strip():
 			raise RuntimeError("Extracted pubspec.lock is empty.")
 
-		deps = {}
+		deps: dict[str, str] = {}
 		in_packages = False
 		current_pkg = None
 		pkg_source = None
@@ -104,9 +81,33 @@ def fetch_pub_deps(version: str) -> dict[str, str]:
 
 		return deps
 	except Exception as e:
-		import logging
+		raise RuntimeError(f"Could not parse pubspec.lock: {e}") from e
+
+
+def fetch_pub_deps(version: str) -> dict[str, str]:
+	"""Fetch the exact hosted pub graph using a checked temporary archive."""
+	import subprocess
+	import tempfile
+
+	url = f"https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_{version}-stable.tar.xz"
+	try:
+		with tempfile.NamedTemporaryFile(suffix=".tar.xz") as archive:
+			curl = subprocess.run(
+				["curl", "--fail", "--location", "--silent", "--show-error", "--output", archive.name, url],
+				capture_output=True, check=False,
+			)
+			if curl.returncode != 0:
+				raise RuntimeError(f"curl failed: {curl.stderr.decode('utf-8', 'ignore')}")
+			tar = subprocess.run(
+				["tar", "-xJOf", archive.name, "flutter/packages/flutter_tools/pubspec.lock"],
+				capture_output=True, check=False,
+			)
+			if tar.returncode != 0:
+				raise RuntimeError(f"Failed to extract pubspec.lock: {tar.stderr.decode('utf-8', 'ignore')}")
+			return parse_pub_deps_lockfile(tar.stdout.decode("utf-8"))
+	except Exception as e:
 		logging.error(f"Could not fetch/parse pubspec.lock for {version}: {e}")
-		raise RuntimeError(f"Could not fetch/parse pubspec.lock for {version}: {e}")
+		raise RuntimeError(f"Could not fetch/parse pubspec.lock for {version}: {e}") from e
 
 # The pinned pub packages required for packages/flutter_tools.
 PUB_DEPENDENCIES: dict[str, str] = {
