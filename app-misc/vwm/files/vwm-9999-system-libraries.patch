@@ -1,0 +1,42 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -28,23 +28,11 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+ #find_package(PROTOTHREAD REQUIRED)
+ 
+ find_package(VTERM REQUIRED)
++include_directories(BEFORE ${VTERM_INCLUDE_DIRS})
+ 
+-# use libviper source tree (headers + library not yet installed).
+-# Defaults to a sibling checkout (../libviper); override with
+-# -DLIBVIPER_SOURCE_DIR=/path/to/libviper at configure time.
+-set(LIBVIPER_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../libviper"
+-    CACHE PATH "Path to the libviper source tree (contains vdk/, vkmio/, libvdk.so)")
+-get_filename_component(LIBVIPER_SOURCE_DIR "${LIBVIPER_SOURCE_DIR}" ABSOLUTE)
+-
+-if(NOT EXISTS "${LIBVIPER_SOURCE_DIR}/libvdk.so")
+-  message(FATAL_ERROR
+-    "libvdk.so not found at ${LIBVIPER_SOURCE_DIR}/libvdk.so. "
+-    "Build libviper first, or pass -DLIBVIPER_SOURCE_DIR=<path> "
+-    "to point at your libviper checkout.")
+-endif()
+-
+-include_directories(BEFORE ${LIBVIPER_SOURCE_DIR}/vdk ${LIBVIPER_SOURCE_DIR}/vkmio)
+-set(VDK_LIBRARY "${LIBVIPER_SOURCE_DIR}/libvdk.so")
++find_package(VDK REQUIRED)
++include_directories(BEFORE ${VDK_INCLUDE_DIRS})
+ 
+ find_package(GPM)
+ 
+@@ -135,9 +123,9 @@ set(PKG_CONFIG_LIBS
+ 
+ install (TARGETS vwm DESTINATION bin)
+ install (TARGETS vwm-msg DESTINATION bin)
+-install (TARGETS vwmterm DESTINATION lib/vwm/)
+-install (TARGETS vwmprint DESTINATION lib/vwm/)
+-install (TARGETS vwmfont DESTINATION lib/vwm/)
++install (TARGETS vwmterm DESTINATION ${CMAKE_INSTALL_LIBDIR}/vwm/)
++install (TARGETS vwmprint DESTINATION ${CMAKE_INSTALL_LIBDIR}/vwm/)
++install (TARGETS vwmfont DESTINATION ${CMAKE_INSTALL_LIBDIR}/vwm/)
+ 
+ # dtach session launchers -- PROGRAMS installs them with the execute bit
+ # set, alongside the vwm binary so they share its PATH (and tab-complete
