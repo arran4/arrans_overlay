@@ -55,7 +55,7 @@ class TestUpdateFlutterSource(unittest.TestCase):
             update_flutter_source.check_pr_exists("my-branch")
 
 
-    @patch('update_flutter_source.REPO_ROOT', Path("/fake/root"))
+    @patch('scripts.update_flutter_source.REPO_ROOT', Path("/fake/root"))
     @patch('pathlib.Path.exists', return_value=True)
     @patch('pathlib.Path.glob', return_value=[Path("/fake/root/dev-lang/flutter/flutter-3.24.4.ebuild")])
     def test_ebuild_exists(self, mock_glob, mock_exists):
@@ -76,8 +76,18 @@ class TestUpdateFlutterSource(unittest.TestCase):
 
         # Test isolation
         import tempfile
+        import os
+        from pathlib import Path
         real_temp = tempfile.TemporaryDirectory()
         mock_tempdir.return_value.__enter__.return_value = real_temp.name
+        os.makedirs(Path(real_temp.name) / "dev-lang" / "flutter")
+        os.makedirs(Path(real_temp.name) / "dev-libs" / "flutter-engine")
+        os.makedirs(Path(real_temp.name) / "virtual" / "flutter")
+        os.makedirs(Path(real_temp.name) / "dev-lang" / "dart")
+        (Path(real_temp.name) / "dev-lang" / "dart" / "dart-3.13.3-r1.ebuild").touch()
+        (Path(real_temp.name) / "dev-lang" / "flutter" / "flutter-3.13.3-r1.ebuild").touch()
+        (Path(real_temp.name) / "dev-libs" / "flutter-engine" / "flutter-engine-3.13.3-r1.ebuild").touch()
+        (Path(real_temp.name) / "virtual" / "flutter" / "flutter-3.13.3-r1.ebuild").touch()
 
         mock_get_rel.return_value = {"version": "3.24.4", "hash": "abcdef", "channel": "stable"}
         mock_ebuild_exists.return_value = False
@@ -120,6 +130,16 @@ class TestUpdateFlutterSource(unittest.TestCase):
                     raise update_flutter_source.subprocess.CalledProcessError(1, cmd)
                 if 'status' in cmd:
                     return update_flutter_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='M some_file\n')
+                if cmd and cmd[0] == 'gh' and 'run' in cmd:
+                    # Mock no active workflow
+                    return update_flutter_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='[]')
+                if cmd and cmd[0] == 'gh' and 'pr' in cmd and 'list' in cmd:
+                    return update_flutter_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='[]')
+                if cmd and cmd[0] == 'git' and 'ls-remote' in cmd:
+                    # Mock no stranded branch
+                    e = update_flutter_source.subprocess.CalledProcessError(2, cmd)
+                    e.returncode = 2
+                    raise e
                 return update_flutter_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='')
 
             mock_run_cmd.side_effect = mock_run_cmd_side_effect

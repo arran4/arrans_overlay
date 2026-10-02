@@ -399,7 +399,14 @@ def main() -> int:
 
         import tempfile, shutil, atexit
         global orig_root
-        orig_root = Path(__file__).resolve().parents[1]
+
+        # Test patching safe lookup fallback
+        try:
+            test_override = REPO_ROOT
+            orig_root = REPO_ROOT
+        except NameError:
+            orig_root = Path(__file__).resolve().parents[1]
+
         work_root = orig_root
 
         if args.dry_run:
@@ -513,11 +520,33 @@ def main() -> int:
                          logging.error(f"Remote branch {dart_branch_name} exists but no PR was found. Failing closed to avoid duplicate dispatch/recovery collision.")
                          sys.exit(1)
                 except subprocess.CalledProcessError as e:
-                    if e.returncode != 2:
+                    if getattr(e, 'returncode', None) != 2:
                         logging.error(f"Failed to check remote branches: {e}. Failing closed.")
                         sys.exit(1)
                 except Exception as e:
                     logging.error(f"Unexpected error checking remote branches: {e}. Failing closed.")
+                    sys.exit(1)
+
+                # Check for an already queued/in-progress workflow run to avoid duplicate dispatch
+                try:
+                    res_run = run_cmd(["gh", "run", "list", "--workflow", "dev-lang-dart-source-update.yaml", "--json", "status,headBranch", "--limit", "10"], check=True, capture_output=True)
+                    import json
+                    runs = json.loads(res_run.stdout)
+                    # For workflow_dispatch, headBranch is usually the branch it was triggered from (e.g. main),
+                    # so we just check if ANY dart update workflow is pending/in_progress.
+                    # It's safer to defer if any dart update is running.
+                    pending = any(r.get('status') in ('in_progress', 'queued', 'pending') for r in runs)
+                    if pending:
+                        logging.error(f"A Dart update workflow is already running/queued. Deferring dispatch to avoid duplicates.")
+                        sys.exit(1)
+                except subprocess.CalledProcessError as e:
+                    logging.error(f"Failed to check existing workflow runs: {e}. Failing closed.")
+                    sys.exit(1)
+                except json.JSONDecodeError as e:
+                    logging.error(f"Failed to parse gh run list JSON: {e}. Failing closed.")
+                    sys.exit(1)
+                except Exception as e:
+                    logging.error(f"Unexpected error checking workflow runs: {e}. Failing closed.")
                     sys.exit(1)
 
                 # Defer flutter creation explicitly

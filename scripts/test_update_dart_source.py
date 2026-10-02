@@ -79,8 +79,14 @@ class TestUpdateDartSource(unittest.TestCase):
 
         # Test isolation
         import tempfile
+        import os
+        from pathlib import Path
         real_temp = tempfile.TemporaryDirectory()
         mock_tempdir.return_value.__enter__.return_value = real_temp.name
+        os.makedirs(Path(real_temp.name) / "dev-lang" / "dart")
+        os.makedirs(Path(real_temp.name) / "virtual" / "dart")
+        (Path(real_temp.name) / "dev-lang" / "dart" / "dart-3.13.3-r1.ebuild").touch()
+        (Path(real_temp.name) / "virtual" / "dart" / "dart-3.13.3-r1.ebuild").touch()
 
         mock_get_rel.return_value = {"version": "3.5.4", "revision": "abcdef"}
         mock_ebuild_exists.return_value = False
@@ -112,6 +118,13 @@ class TestUpdateDartSource(unittest.TestCase):
                 raise update_dart_source.subprocess.CalledProcessError(1, cmd)
             if 'status' in cmd:
                 return update_dart_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='M some_file\n')
+            if cmd and cmd[0] == 'gh' and 'pr' in cmd and 'list' in cmd:
+                return update_dart_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='[]')
+            if cmd and cmd[0] == 'git' and 'ls-remote' in cmd:
+                # Mock no stranded branch
+                e = update_dart_source.subprocess.CalledProcessError(2, cmd)
+                e.returncode = 2
+                raise e
             return update_dart_source.subprocess.CompletedProcess(args=cmd, returncode=0, stdout='')
 
         mock_run_cmd.side_effect = mock_run_cmd_side_effect

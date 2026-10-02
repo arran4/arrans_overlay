@@ -308,7 +308,14 @@ def main() -> int:
 
         import tempfile, shutil, atexit
         global orig_root
-        orig_root = Path(__file__).resolve().parents[1]
+
+        # Test patching safe lookup fallback
+        try:
+            test_override = REPO_ROOT
+            orig_root = REPO_ROOT
+        except NameError:
+            orig_root = Path(__file__).resolve().parents[1]
+
         work_root = orig_root
 
         if args.dry_run:
