@@ -54,26 +54,19 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 			fake_ebuild.write_text(
 				f"EAPI=8\n{generator.BEGIN}\nold_content\n{generator.END}\n"
 			)
-			# Should update successfully
 			rc = generator.update_ebuild(fake_ebuild, generator.render_pub_deps({}), check=False)
 			self.assertEqual(rc, 0)
 			content = fake_ebuild.read_text()
 			self.assertIn("flutter-material-fonts", content)
 
-			# Running with check=True on synchronized file returns 0
 			rc_check = generator.update_ebuild(fake_ebuild, generator.render_pub_deps({}), check=True)
 			self.assertEqual(rc_check, 0)
 
-			# Desynchronized file with check=True returns 1
 			fake_ebuild.write_text(
 				f"EAPI=8\n{generator.BEGIN}\nstale\n{generator.END}\n"
 			)
 			rc_stale = generator.update_ebuild(fake_ebuild, generator.render_pub_deps({}), check=True)
 			self.assertEqual(rc_stale, 1)
-
-
-
-
 
 	def test_fetch_pub_deps(self):
 		try:
@@ -83,7 +76,6 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 			self.assertNotIn("flutter", deps)
 			self.assertNotIn("flutter_test", deps)
 
-			# Exact mapping test for 3.47.2
 			import copy
 			deps_copy = copy.deepcopy(deps)
 
@@ -93,122 +85,61 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 				self.assertEqual(deps_copy[pkg], ver, f"{pkg} version mismatch: {deps_copy[pkg]} != {ver}")
 				del deps_copy[pkg]
 
-			# If we matched all exactly, deps_copy should be empty
 			self.assertEqual(len(deps_copy), 0, f"Extra unexpected packages found in lockfile: {deps_copy.keys()}")
 		except RuntimeError as e:
 			self.skipTest(f"Failed to fetch real pubspec.lock: {e}")
 
-	@unittest.mock.patch('subprocess.Popen')
-	def test_fetch_pub_deps_mocked(self, mock_popen):
-		class MockProcess:
-			def __init__(self, out, err, rc):
-				self.stdout = type('obj', (object,), {'close': lambda: None})
-				self.stderr = type('obj', (object,), {'read': lambda: err})
-				self._out = out
-				self._err = err
-				self.returncode = rc
-			def communicate(self):
-				return self._out, self._err
-			def wait(self):
-				return self.returncode
-				def __enter__(self):
-					return self
-				def __exit__(self, exc_type, exc_val, exc_tb):
-					pass
-			def __enter__(self):
-				return self
-			def __exit__(self, exc_type, exc_val, exc_tb):
-				pass
+	@unittest.mock.patch('subprocess.run')
+	def test_fetch_pub_deps_mocked(self, mock_run):
+		def cp(stdout=b"", stderr=b"", rc=0):
+			return unittest.mock.Mock(stdout=stdout, stderr=stderr, returncode=rc)
 
-		mock_popen.side_effect = [
-			MockProcess(b"", b"", 0),
-			MockProcess(b"packages:\n  foo:\n    source: hosted\n    version: 1.0.0\n", b"", 0)
-		]
+		lock = b"packages:\n  foo:\n    source: hosted\n    version: 1.0.0\n"
+		mock_run.side_effect = [cp(), cp(stdout=lock)]
 		deps = generator.fetch_pub_deps("1.0.0")
 		self.assertEqual(deps, {"foo": "1.0.0"})
 
-		mock_popen.side_effect = [
-			MockProcess(b"", b"", 0),
-			MockProcess(b"", b"", 0)
-		]
+		mock_run.side_effect = [cp(), cp(stdout=b"")]
 		with self.assertRaisesRegex(RuntimeError, "Extracted pubspec.lock is empty"):
 			generator.fetch_pub_deps("1.0.0")
 
-		mock_popen.side_effect = [
-			MockProcess(b"", b"", 0),
-			MockProcess(b"packages:\n  foo:\n    source: sdk\n    version: 1.0.0\n", b"", 0)
-		]
+		mock_run.side_effect = [cp(), cp(stdout=b"packages:\n  foo:\n    source: sdk\n    version: 1.0.0\n")]
 		with self.assertRaisesRegex(RuntimeError, "No hosted packages found in pubspec.lock"):
 			generator.fetch_pub_deps("1.0.0")
 
-		mock_popen.side_effect = [
-			MockProcess(b"", b"", 0),
-			MockProcess(b"", b"Not found in archive", 2)
-		]
+		mock_run.side_effect = [cp(), cp(stderr=b"Not found in archive", rc=2)]
 		with self.assertRaisesRegex(RuntimeError, "Failed to extract pubspec.lock"):
 			generator.fetch_pub_deps("1.0.0")
 
-		# Test curl failure
-		mock_popen.side_effect = [
-			MockProcess(b"", b"curl: (22) The requested URL returned error: 404", 22),
-			MockProcess(b"", b"", 0)
-		]
-		with self.assertRaisesRegex(RuntimeError, "curl failed: curl: \\(22\\)"):
-			generator.fetch_pub_deps("1.0.0")
-		self.assertEqual(deps, {"foo": "1.0.0"})
-
-		mock_popen.side_effect = [
-			MockProcess(b"", b"", 0),
-			MockProcess(b"", b"", 0)
-		]
-		with self.assertRaisesRegex(RuntimeError, "Extracted pubspec.lock is empty"):
+		mock_run.side_effect = [cp(stderr=b"curl: (22) The requested URL returned error: 404", rc=22)]
+		with self.assertRaisesRegex(RuntimeError, r"curl failed: curl: \(22\)"):
 			generator.fetch_pub_deps("1.0.0")
 
-		mock_popen.side_effect = [
-			MockProcess(b"", b"", 0),
-			MockProcess(b"packages:\n  foo:\n    source: sdk\n    version: 1.0.0\n", b"", 0)
-		]
-		with self.assertRaisesRegex(RuntimeError, "No hosted packages found in pubspec.lock"):
+	@unittest.mock.patch('subprocess.run')
+	def test_fetch_pub_deps_rejects_git_source(self, mock_run):
+		def cp(stdout=b"", stderr=b"", rc=0):
+			return unittest.mock.Mock(stdout=stdout, stderr=stderr, returncode=rc)
+
+		lock = (
+			b"packages:\n"
+			b"  foo:\n    source: hosted\n    version: 1.0.0\n"
+			b"  bar:\n    source: git\n    version: 2.0.0\n"
+		)
+		mock_run.side_effect = [cp(), cp(stdout=lock)]
+		with self.assertRaisesRegex(RuntimeError, "Unsupported source type 'git' for package bar"):
 			generator.fetch_pub_deps("1.0.0")
 
-		mock_popen.side_effect = [
-			MockProcess(b"", b"", 0),
-			MockProcess(b"", b"Not found in archive", 2)
-		]
-		with self.assertRaisesRegex(RuntimeError, "Failed to extract pubspec.lock"):
-			generator.fetch_pub_deps("1.0.0")
+	@unittest.mock.patch('subprocess.run')
+	def test_fetch_pub_deps_unsupported_source(self, mock_run):
+		def cp(stdout=b"", stderr=b"", rc=0):
+			return unittest.mock.Mock(stdout=stdout, stderr=stderr, returncode=rc)
 
-		# Test curl failure
-		mock_popen.side_effect = [
-			MockProcess(b"", b"curl: (22) The requested URL returned error: 404", 22),
-			MockProcess(b"", b"", 0)
-		]
-		with self.assertRaisesRegex(RuntimeError, "curl failed: curl: \\(22\\)"):
-			generator.fetch_pub_deps("1.0.0")
-
-
-	@unittest.mock.patch('subprocess.Popen')
-	def test_fetch_pub_deps_unsupported_source(self, mock_popen):
-		class MockProcess:
-			def __init__(self, out, err, rc):
-				self.stdout = type('obj', (object,), {'close': lambda: None})
-				self.stderr = type('obj', (object,), {'read': lambda: err})
-				self._out = out
-				self._err = err
-				self.returncode = rc
-			def communicate(self):
-				return self._out, self._err
-			def wait(self):
-				return self.returncode
-			def __enter__(self):
-				return self
-			def __exit__(self, exc_type, exc_val, exc_tb):
-				pass
-
-		mock_popen.side_effect = [
-			MockProcess(b"", b"", 0),
-			MockProcess(b"packages:\n  foo:\n    source: hosted\n    version: 1.0.0\n  bar:\n    source: unknown\n    version: 2.0.0\n", b"", 0)
-		]
+		lock = (
+			b"packages:\n"
+			b"  foo:\n    source: hosted\n    version: 1.0.0\n"
+			b"  bar:\n    source: unknown\n    version: 2.0.0\n"
+		)
+		mock_run.side_effect = [cp(), cp(stdout=lock)]
 		with self.assertRaisesRegex(RuntimeError, "Unsupported source type 'unknown' for package bar"):
 			generator.fetch_pub_deps("1.0.0")
 
