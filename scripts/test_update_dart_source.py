@@ -37,6 +37,11 @@ class DartUpdaterTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 updater.get_dart_release()
 
+    def test_explicit_ref_must_match_authoritative_dart_revision(self):
+        with patch.object(updater, "get_dart_release", return_value={"version": "3.14.0", "revision": "authoritative"}), patch.object(sys, "argv", ["updater", "--version", "3.14.0", "--ref", "wrong"]):
+            with self.assertRaises(SystemExit):
+                updater.main()
+
     @patch.object(updater, "run_cmd")
     def test_branch_and_pr_lookup_fail_closed(self, run):
         run.return_value = subprocess.CompletedProcess([], 128, "")

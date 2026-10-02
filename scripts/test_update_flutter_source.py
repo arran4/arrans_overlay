@@ -35,6 +35,11 @@ class FlutterUpdaterTest(unittest.TestCase):
         self.assertEqual(self.releases(cases[2], "3.14.0")["hash"], "h")
         with self.assertRaises(ValueError): self.releases(cases[2], "3.15.0-0.1.pre")
 
+    def test_manual_ref_must_match_authoritative_stable_hash(self):
+        release = {"version": "3.14.0", "hash": "authoritative", "channel": "stable"}
+        with patch.object(updater, "get_flutter_release", return_value=release), patch.object(sys, "argv", ["updater", "--version", "3.14.0", "--ref", "wrong"]):
+            with self.assertRaises(SystemExit): updater.main()
+
     def test_dart_constraint_evaluator(self):
         for version, expected in (("3.10.9", False), ("3.11.0", True), ("3.13.9-r1", True), ("4.0.0", False)):
             self.assertEqual(updater.evaluate_dart_constraint("^3.11.0-0", version), expected)
