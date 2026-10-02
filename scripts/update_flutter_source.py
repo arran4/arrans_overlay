@@ -205,6 +205,44 @@ def pending_dart_update_run(version: str) -> dict | None:
             return run
     return None
 
+
+def dispatch_dart_prerequisite(version: str) -> str:
+    """Deduplicate and dispatch the exact host-Dart prerequisite.
+
+    A non-empty result identifies an existing PR, stranded branch, pending
+    run, or newly dispatched run.  Lookup failures deliberately propagate:
+    callers must not interpret an unknown remote state as permission to make
+    another workflow dispatch.
+    """
+    branch = f"auto-update-dart-source-{version}"
+    response = run_cmd([
+        "gh", "pr", "list", "--head", branch, "--json", "url", "--state", "open",
+    ], capture_output=True)
+    prs = json.loads(response.stdout)
+    if prs:
+        return f"existing prerequisite PR {prs[0]['url']}"
+    remote = run_cmd([
+        "git", "ls-remote", "--exit-code", "--heads", "origin", branch,
+    ], check=False, capture_output=True)
+    if remote.returncode == 0:
+        return f"stranded prerequisite branch {branch}"
+    if remote.returncode != 2:
+        raise RuntimeError(f"failed to query prerequisite branch {branch}")
+    pending = pending_dart_update_run(version)
+    if pending:
+        return f"pending prerequisite workflow {pending.get('url', pending.get('databaseId'))}"
+    run_cmd([
+        "gh", "workflow", "run", "dev-lang-dart-source-update.yaml", "-f", f"version={version}",
+    ])
+    try:
+        pending = pending_dart_update_run(version)
+    except Exception as e:
+        logging.warning("Dart workflow dispatched but URL lookup is not yet available: %s", e)
+        return f"dispatched prerequisite workflow for {version}"
+    if pending:
+        return f"dispatched prerequisite workflow {pending.get('url', pending.get('databaseId'))}"
+    return f"dispatched prerequisite workflow for {version}"
+
 def check_superseding_release(pkg: str, version: str) -> bool:
     '''Detect if older updates are pending.'''
     try:
@@ -507,85 +545,13 @@ def main() -> int:
 
             if not found_compatible:
                 logging.error(f"Host Dart SDK requirement {required_dart_range} not satisfied locally.")
-
-                # Determine required base version for a PR
                 req_base = required_dart_range.replace('^', '').replace('>=', '').split('-')[0].split()[0]
-                dart_branch_name = f"auto-update-dart-source-{req_base}"
-
-                # Check if PR already exists
                 try:
-                    res = run_cmd(["gh", "pr", "list", "--head", dart_branch_name, "--json", "url", "--state", "open"], check=True, capture_output=True)
-                    import json
-                    prs = json.loads(res.stdout)
-                    if prs:
-                        pr_url = prs[0]['url']
-                        logging.error(f"Dart PR {pr_url} must be merged before Flutter {version} can be updated.")
-                        print(f"Prerequisite Dart update PR found: {pr_url}")
-                        sys.exit(1)
-                except subprocess.CalledProcessError as e:
-                    logging.error(f"Failed to check existing Dart PRs: {e}. Failing closed.")
-                    sys.exit(1)
-                except json.JSONDecodeError as e:
-                    logging.error(f"Failed to parse gh pr list JSON: {e}. Failing closed.")
-                    sys.exit(1)
+                    state = dispatch_dart_prerequisite(req_base)
                 except Exception as e:
-                    logging.error(f"Unexpected error checking existing Dart PRs: {e}. Failing closed.")
+                    logging.error("Failed to resolve Dart prerequisite safely: %s", e)
                     sys.exit(1)
-
-                try:
-                    # If we got here, lookup succeeded + no PR. Check branch
-                    res_branch = run_cmd(["git", "ls-remote", "--exit-code", "--heads", "origin", dart_branch_name], capture_output=True)
-                    if res_branch.returncode == 0:
-                         logging.error(f"Remote branch {dart_branch_name} exists but no PR was found. Failing closed to avoid duplicate dispatch/recovery collision.")
-                         sys.exit(1)
-                except subprocess.CalledProcessError as e:
-                    if getattr(e, 'returncode', None) != 2:
-                        logging.error(f"Failed to check remote branches: {e}. Failing closed.")
-                        sys.exit(1)
-                except Exception as e:
-                    logging.error(f"Unexpected error checking remote branches: {e}. Failing closed.")
-                    sys.exit(1)
-
-                # Check a version-specific durable run identity before dispatching.
-                try:
-                    pending = pending_dart_update_run(req_base)
-                    if pending:
-                        logging.error(
-                            "Dart prerequisite workflow already pending for %s: %s",
-                            req_base, pending.get("url", pending.get("databaseId", "unknown run")),
-                        )
-                        sys.exit(1)
-                except subprocess.CalledProcessError as e:
-                    logging.error(f"Failed to check existing workflow runs: {e}. Failing closed.")
-                    sys.exit(1)
-                except json.JSONDecodeError as e:
-                    logging.error(f"Failed to parse gh run list JSON: {e}. Failing closed.")
-                    sys.exit(1)
-                except Exception as e:
-                    logging.error(f"Unexpected error checking workflow runs: {e}. Failing closed.")
-                    sys.exit(1)
-
-                # Defer flutter creation explicitly
-                logging.error(f"Must generate Dart update first for {req_base}. Deferring Flutter update.")
-                # The issue requires us to explicitly dispatch the Dart workflow and link to it, OR create a PR ourselves.
-                # Since we run in Github Actions and GH CLI is available, we can trigger the dart workflow via `gh workflow run`.
-                try:
-                    run_cmd(["gh", "workflow", "run", "dev-lang-dart-source-update.yaml", "-f", f"version={req_base}"], check=True)
-                    logging.info(f"Dispatched dev-lang-dart-source-update.yaml for {req_base}")
-                except subprocess.CalledProcessError as e:
-                    logging.error(f"Failed to dispatch prerequisite dart workflow: {e}. Exiting.")
-                    sys.exit(1)
-                except Exception as e:
-                    logging.error(f"Failed to dispatch prerequisite dart workflow: {e}. Exiting.")
-                    sys.exit(1)
-                # Best-effort only: a new run is not always listed immediately.
-                try:
-                    pending = pending_dart_update_run(req_base)
-                    if pending and pending.get("url"):
-                        logging.info("Prerequisite Dart workflow: %s", pending["url"])
-                except Exception as e:
-                    logging.warning("Dart workflow dispatched but URL lookup is not yet available: %s", e)
-                compat_msg += f" -- ERROR: Host Dart version {required_dart_range} not found. Prerequisite Dart update has been dispatched."
+                logging.error("Must resolve Dart %s before Flutter %s: %s", req_base, version, state)
                 sys.exit(1)
 
         if not args.dry_run:

@@ -53,6 +53,30 @@ class FlutterUpdaterTest(unittest.TestCase):
         self.assertIsNone(updater.pending_dart_update_run("3.15.0"))
 
     @patch.object(updater, "run_cmd")
+    def test_prerequisite_dispatch_dedup_and_failure_matrix(self, run):
+        cp = lambda output="", rc=0: subprocess.CompletedProcess([], rc, output)
+        # Existing prerequisite PR: report it and do not dispatch.
+        run.side_effect = [cp('[{"url":"https://example/pr"}]')]
+        self.assertIn("existing prerequisite PR", updater.dispatch_dart_prerequisite("3.14.0"))
+        self.assertFalse(any("workflow" in c.args[0] for c in run.call_args_list))
+        # Lookup failure is fatal, never a reason to dispatch.
+        run.reset_mock(); run.side_effect = subprocess.CalledProcessError(1, "gh")
+        with self.assertRaises(subprocess.CalledProcessError): updater.dispatch_dart_prerequisite("3.14.0")
+        # A remote branch with no PR is a recovery state, not completion.
+        run.reset_mock(); run.side_effect = [cp("[]"), cp("", 0)]
+        self.assertIn("stranded prerequisite branch", updater.dispatch_dart_prerequisite("3.14.0"))
+        # Matching pending run defers; an unrelated version does not.
+        run.reset_mock(); run.side_effect = [cp("[]"), cp("", 2), cp('[{"status":"queued","displayTitle":"Dart source update (3.14.0)","url":"match"}]')]
+        self.assertIn("pending prerequisite workflow", updater.dispatch_dart_prerequisite("3.14.0"))
+        run.reset_mock(); run.side_effect = [cp("[]"), cp("", 2), cp('[{"status":"queued","displayTitle":"Dart source update (3.13.0)","url":"other"}]'), cp(), cp("[]")]
+        self.assertIn("dispatched prerequisite workflow", updater.dispatch_dart_prerequisite("3.14.0"))
+        dispatched = [c for c in run.call_args_list if c.args[0][:3] == ["gh", "workflow", "run"]]
+        self.assertEqual(len(dispatched), 1)
+        # Dispatch failure is fatal.
+        run.reset_mock(); run.side_effect = [cp("[]"), cp("", 2), cp("[]"), subprocess.CalledProcessError(1, "gh")]
+        with self.assertRaises(subprocess.CalledProcessError): updater.dispatch_dart_prerequisite("3.14.0")
+
+    @patch.object(updater, "run_cmd")
     def test_branch_pr_and_superseding_fail_closed_or_correct(self, run):
         run.return_value = subprocess.CompletedProcess([], 128, "")
         with self.assertRaises(SystemExit): updater.check_branch_exists("x")
