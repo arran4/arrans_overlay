@@ -111,6 +111,14 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 				return self._out, self._err
 			def wait(self):
 				return self.returncode
+				def __enter__(self):
+					return self
+				def __exit__(self, exc_type, exc_val, exc_tb):
+					pass
+			def __enter__(self):
+				return self
+			def __exit__(self, exc_type, exc_val, exc_tb):
+				pass
 
 		mock_popen.side_effect = [
 			MockProcess(b"", b"", 0),
@@ -192,6 +200,10 @@ class GenerateFlutterEbuildTest(unittest.TestCase):
 				return self._out, self._err
 			def wait(self):
 				return self.returncode
+			def __enter__(self):
+				return self
+			def __exit__(self, exc_type, exc_val, exc_tb):
+				pass
 
 		mock_popen.side_effect = [
 			MockProcess(b"", b"", 0),

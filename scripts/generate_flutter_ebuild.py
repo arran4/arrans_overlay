@@ -38,14 +38,15 @@ def fetch_pub_deps(version: str) -> dict[str, str]:
 	url = f"https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_{version}-stable.tar.xz"
 
 	try:
-		curl = subprocess.Popen(["curl", "--fail", "--location", "--silent", "--show-error", url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		tar = subprocess.Popen(["tar", "-xJO", "flutter/packages/flutter_tools/pubspec.lock"], stdin=curl.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		curl.stdout.close()
-		out, err = tar.communicate()
+		with subprocess.Popen(["curl", "--fail", "--location", "--silent", "--show-error", url], stdout=subprocess.PIPE, stderr=subprocess.PIPE) as curl:
+			with subprocess.Popen(["tar", "-xJO", "flutter/packages/flutter_tools/pubspec.lock"], stdin=curl.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as tar:
+				out, err = tar.communicate()
+				curl_stderr = curl.stderr.read()
 
 		# Exit 23 is expected when tar finds the pubspec.lock member and exits early, causing curl to receive SIGPIPE.
-		if curl.wait() != 0 and curl.returncode != 23:
-			raise RuntimeError(f"curl failed: {curl.stderr.read().decode('utf-8', 'ignore')}")
+		curl.wait()
+		if curl.returncode != 0 and curl.returncode != 23:
+			raise RuntimeError(f"curl failed: {curl_stderr.decode('utf-8', 'ignore')}")
 
 		if tar.returncode != 0:
 			raise RuntimeError(f"Failed to extract pubspec.lock: {err.decode('utf-8', 'ignore')}")
@@ -76,7 +77,7 @@ def fetch_pub_deps(version: str) -> dict[str, str]:
 				if current_pkg and pkg_version:
 					if pkg_source == 'hosted':
 						deps[current_pkg] = pkg_version
-					elif pkg_source not in ['sdk', 'path', 'git']:
+					elif pkg_source not in ['sdk', 'path']:
 						raise RuntimeError(f"Unsupported source type '{pkg_source}' for package {current_pkg}")
 				current_pkg = line.strip().strip(':')
 				pkg_source = None
@@ -89,7 +90,7 @@ def fetch_pub_deps(version: str) -> dict[str, str]:
 		if current_pkg and pkg_version:
 			if pkg_source == 'hosted':
 				deps[current_pkg] = pkg_version
-			elif pkg_source not in ['sdk', 'path', 'git']:
+			elif pkg_source not in ['sdk', 'path']:
 				raise RuntimeError(f"Unsupported source type '{pkg_source}' for package {current_pkg}")
 
 		if not deps:
