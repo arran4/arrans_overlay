@@ -22,7 +22,7 @@ import urllib.request
 
 
 DART_VERSION = "3.13.3"
-DART_EBUILD_REVISION = 1
+DART_EBUILD_REVISION = 2
 BOOTSTRAP_SDK_TAG = "version:3.13.0-103.1.beta"
 SDK_DEPS_URL = (
     "https://raw.githubusercontent.com/dart-lang/sdk/"

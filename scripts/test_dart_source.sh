@@ -58,7 +58,7 @@ command -v docker >/dev/null || {
 mkdir -p "${distfiles}"
 distfiles=$(cd "${distfiles}" && pwd -P)
 
-source_atom=${DART_SOURCE_ATOM:-=dev-lang/dart-3.13.3-r1}
+source_atom=${DART_SOURCE_ATOM:-=dev-lang/dart-3.13.3-r2}
 binary_atom=${DART_BINARY_ATOM:-=dev-lang/dart-bin-3.13.3-r2}
 bootstrap_atom=${DART_BOOTSTRAP_ATOM:-=dev-lang/dart-bootstrap-bin-3.13.0_beta103_p1-r0}
 virtual_atom=${DART_VIRTUAL_ATOM:-=virtual/dart-3.13.3-r1}

@@ -11,7 +11,7 @@ EBUILD = (
     Path(__file__).parents[1]
     / "dev-lang"
     / "dart"
-    / "dart-3.13.3-r1.ebuild"
+    / "dart-3.13.3-r2.ebuild"
 )
 SPEC = importlib.util.spec_from_file_location("dart_ebuild_generator", GENERATOR)
 assert SPEC is not None and SPEC.loader is not None
@@ -21,6 +21,10 @@ SPEC.loader.exec_module(generator)
 
 
 class ReviewedExclusionTest(unittest.TestCase):
+    def test_current_ebuild_applies_binaryen_assert_compatibility_patch(self):
+        content = EBUILD.read_text()
+        self.assertIn("${P}-binaryen-assert-unused.patch", content)
+
     def test_unchanged_reviewed_exclusion_succeeds(self):
         dependency = {
             "packages": [

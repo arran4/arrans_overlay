@@ -1,0 +1,10 @@
+--- a/third_party/binaryen/src/third_party/llvm-project/include/llvm/ADT/DenseMap.h
++++ b/third_party/binaryen/src/third_party/llvm-project/include/llvm/ADT/DenseMap.h
+@@ -136,6 +136,7 @@ public:
+         }
+       }
+       assert(NumEntries == 0 && "Node count imbalance!");
++      (void)NumEntries;
+     }
+     setNumEntries(0);
+     setNumTombstones(0);
