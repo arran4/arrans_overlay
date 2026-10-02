@@ -33,25 +33,31 @@ BEGIN = "# BEGIN GENERATED FLUTTER PUB DEPS"
 END = "# END GENERATED FLUTTER PUB DEPS"
 
 def fetch_pub_deps(version: str) -> dict[str, str]:
-	"""Dynamically fetches the exact pub dependency graph from pubspec.lock inside the release tarball."""
+	"""Fetch the exact hosted pub dependency graph from the stable release lockfile."""
 	import subprocess
+	import tempfile
+
 	url = f"https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_{version}-stable.tar.xz"
 
 	try:
-		with subprocess.Popen(["curl", "--fail", "--location", "--silent", "--show-error", url], stdout=subprocess.PIPE, stderr=subprocess.PIPE) as curl:
-			with subprocess.Popen(["tar", "-xJO", "flutter/packages/flutter_tools/pubspec.lock"], stdin=curl.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as tar:
-				out, err = tar.communicate()
-				curl_stderr = curl.stderr.read()
+		with tempfile.NamedTemporaryFile(suffix=".tar.xz") as archive:
+			curl = subprocess.run(
+				["curl", "--fail", "--location", "--silent", "--show-error", "--output", archive.name, url],
+				capture_output=True,
+				check=False,
+			)
+			if curl.returncode != 0:
+				raise RuntimeError(f"curl failed: {curl.stderr.decode('utf-8', 'ignore')}")
 
-		# Exit 23 is expected when tar finds the pubspec.lock member and exits early, causing curl to receive SIGPIPE.
-		curl.wait()
-		if curl.returncode != 0 and curl.returncode != 23:
-			raise RuntimeError(f"curl failed: {curl_stderr.decode('utf-8', 'ignore')}")
+			tar = subprocess.run(
+				["tar", "-xJOf", archive.name, "flutter/packages/flutter_tools/pubspec.lock"],
+				capture_output=True,
+				check=False,
+			)
+			if tar.returncode != 0:
+				raise RuntimeError(f"Failed to extract pubspec.lock: {tar.stderr.decode('utf-8', 'ignore')}")
 
-		if tar.returncode != 0:
-			raise RuntimeError(f"Failed to extract pubspec.lock: {err.decode('utf-8', 'ignore')}")
-
-		content = out.decode('utf-8')
+		content = tar.stdout.decode('utf-8')
 		if not content.strip():
 			raise RuntimeError("Extracted pubspec.lock is empty.")
 
