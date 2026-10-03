@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from source_update_utils import (
+    _patch_references,
     carry_forward_versioned_files,
     drop_inherited_patch_reference,
     inherit_previous_patch_files,
@@ -245,6 +246,98 @@ class SourceUpdateUtilsTest(unittest.TestCase):
             self.assertFalse(
                 (repo / "dev-libs/flutter-engine/files/flutter-engine-99.0.0-gcc-climits.patch").exists()
             )
+
+    def test_patch_references_supports_array_append_and_multiple_blocks(self):
+        with tempfile.TemporaryDirectory() as td:
+            ebuild = Path(td) / "test-1.0.ebuild"
+            ebuild.write_text(
+                'PATCHES=(\n'
+                '  "${FILESDIR}/first-r1.patch"\n'
+                ')\n'
+                'if use foo; then\n'
+                '  PATCHES+=(\n'
+                '    "${FILESDIR}/second-r1.patch"\n'
+                '  )\n'
+                'fi\n'
+                'PATCHES+=( "${FILESDIR}/third-r1.patch" ) # inline comment\n'
+            )
+            refs = _patch_references(ebuild)
+            self.assertEqual(
+                refs,
+                ["first-r1.patch", "second-r1.patch", "third-r1.patch"],
+            )
+
+    def test_patch_references_fails_closed_on_unsupported_syntax(self):
+        cases = [
+            (
+                "scalar assignment",
+                'PATCHES="${FILESDIR}/foo-r1.patch"\n',
+                ValueError,
+                "Unsupported scalar PATCHES syntax",
+            ),
+            (
+                "scalar append",
+                'PATCHES+="${FILESDIR}/foo-r1.patch"\n',
+                ValueError,
+                "Unsupported scalar PATCHES syntax",
+            ),
+            (
+                "direct eapply",
+                'src_prepare() {\n  eapply "${FILESDIR}/foo-r1.patch"\n}\n',
+                ValueError,
+                "Unsupported direct patch command",
+            ),
+            (
+                "direct epatch",
+                'src_prepare() {\n  epatch "${FILESDIR}/foo-r1.patch"\n}\n',
+                ValueError,
+                "Unsupported direct patch command",
+            ),
+            (
+                "non-FILESDIR patch in array",
+                'PATCHES=(\n  "${DISTDIR}/foo-r1.patch"\n)\n',
+                ValueError,
+                "does not reference ${FILESDIR}",
+            ),
+            (
+                "bare patch filename in array",
+                'PATCHES=(\n  "foo-r1.patch"\n)\n',
+                ValueError,
+                "does not reference ${FILESDIR}",
+            ),
+            (
+                "unhandled patch outside PATCHES array",
+                'EXTRA_PATCHES=( "${FILESDIR}/extra-r1.patch" )\n',
+                ValueError,
+                "outside supported PATCHES array",
+            ),
+            (
+                "unclosed PATCHES array",
+                'PATCHES=(\n  "${FILESDIR}/foo-r1.patch"\n',
+                ValueError,
+                "Unclosed PATCHES array",
+            ),
+        ]
+        with tempfile.TemporaryDirectory() as td:
+            for label, body, exc_type, match_str in cases:
+                with self.subTest(label=label):
+                    ebuild = Path(td) / "test-1.0.ebuild"
+                    ebuild.write_text(body)
+                    with self.assertRaises(exc_type) as ctx:
+                        _patch_references(ebuild)
+                    self.assertIn(match_str, str(ctx.exception))
+
+    def test_legacy_patch_canonicalisation_preserves_version_as_series_conservatively(self):
+        parsed = parse_patch_filename("dart-3.13.3-fix.patch", "dart")
+        self.assertTrue(parsed.is_legacy)
+        self.assertEqual(parsed.series, "3.13.3")
+        self.assertEqual(parsed.family, "dart-fix")
+        self.assertEqual(parsed.canonical_filename(), "dart-3.13.3-fix-r1.patch")
+
+        engine = parse_patch_filename("flutter-engine-3.47-gcc-climits.patch", "flutter-engine")
+        self.assertTrue(engine.is_legacy)
+        self.assertEqual(engine.series, "3.47")
+        self.assertEqual(engine.canonical_filename(), "flutter-engine-3.47-gcc-climits-r1.patch")
 
 
 if __name__ == "__main__":
