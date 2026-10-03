@@ -8,7 +8,7 @@ EBUILD = (
     Path(__file__).parents[1]
     / "dev-libs"
     / "flutter-engine"
-    / "flutter-engine-3.47.2.ebuild"
+    / "flutter-engine-3.47.2-r1.ebuild"
 )
 SPEC = importlib.util.spec_from_file_location(
     "flutter_engine_ebuild_generator", GENERATOR
@@ -283,7 +283,7 @@ class ToolchainConfigurationTest(unittest.TestCase):
         self.patch = (
             EBUILD.parent
             / "files"
-            / "flutter-engine-3.47.2-system-gcc-prefix.patch"
+            / "flutter-engine-system-gcc-prefix-r1.patch"
         )
         self.patch_text = self.patch.read_text()
 
@@ -367,17 +367,17 @@ class ToolchainConfigurationTest(unittest.TestCase):
         compiler_patch = (
             EBUILD.parent
             / "files"
-            / "flutter-engine-3.47.2-gcc-impeller-compiler.patch"
+            / "flutter-engine-gcc-impeller-compiler-r1.patch"
         )
         werror_patch = (
             EBUILD.parent
             / "files"
-            / "flutter-engine-3.47.2-gcc-no-werror.patch"
+            / "flutter-engine-gcc-no-werror-r1.patch"
         )
         dl_patch = (
             EBUILD.parent
             / "files"
-            / "flutter-engine-3.47.2-gcc-display-list.patch"
+            / "flutter-engine-gcc-display-list-r1.patch"
         )
         self.assertTrue(
             compiler_patch.exists(),
@@ -413,15 +413,15 @@ class ToolchainConfigurationTest(unittest.TestCase):
         self.assertIn("#include <cstring>", dl_text)
 
         self.assertIn(
-            "flutter-engine-${PV}-gcc-impeller-compiler.patch",
+            "flutter-engine-gcc-impeller-compiler-r1.patch",
             self.ebuild_text,
         )
         self.assertIn(
-            "flutter-engine-${PV}-gcc-no-werror.patch",
+            "flutter-engine-gcc-no-werror-r1.patch",
             self.ebuild_text,
         )
         self.assertIn(
-            "flutter-engine-${PV}-gcc-display-list.patch",
+            "flutter-engine-gcc-display-list-r1.patch",
             self.ebuild_text,
         )
 

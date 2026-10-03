@@ -68,22 +68,29 @@ source_atom=${DART_SOURCE_ATOM:-=dev-lang/${default_source_pf}}
 source_pvr=${source_atom#=dev-lang/dart-}
 source_version=${source_pvr%-r[0-9]*}
 
-latest_binary_ebuild=$(find "${repo_root}/dev-lang/dart-bin" -maxdepth 1 -type f -name 'dart-bin-*.ebuild' -printf '%f\n' | sort -V | tail -n1)
 latest_virtual_ebuild=$(find "${repo_root}/virtual/dart" -maxdepth 1 -type f -name 'dart-*.ebuild' -printf '%f\n' | sort -V | tail -n1)
-if [[ -z ${latest_binary_ebuild} || -z ${latest_virtual_ebuild} ]]; then
-	echo "Missing Dart binary/virtual integration fixture" >&2
+if [[ -z ${latest_virtual_ebuild} ]]; then
+	echo "Missing Dart virtual integration fixture" >&2
 	exit 1
 fi
-default_binary_pf=${latest_binary_ebuild%.ebuild}
 default_virtual_pf=${latest_virtual_ebuild%.ebuild}
-binary_atom=${DART_BINARY_ATOM:-=dev-lang/${default_binary_pf}}
 virtual_atom=${DART_VIRTUAL_ATOM:-=virtual/${default_virtual_pf}}
 virtual_pvr=${virtual_atom#=virtual/dart-}
 virtual_version=${virtual_pvr%-r[0-9]*}
+matching_binary_ebuild=$(find "${repo_root}/dev-lang/dart-bin" -maxdepth 1 -type f \
+	-name "dart-bin-${virtual_version}*.ebuild" -printf '%f\n' | sort -V | tail -n1)
+latest_binary_ebuild=$(find "${repo_root}/dev-lang/dart-bin" -maxdepth 1 -type f \
+	-name 'dart-bin-*.ebuild' -printf '%f\n' | sort -V | tail -n1)
+if [[ -z ${latest_binary_ebuild} ]]; then
+	echo "Missing Dart binary integration fixture" >&2
+	exit 1
+fi
+default_binary_pf=${matching_binary_ebuild:-${latest_binary_ebuild}}
+binary_atom=${DART_BINARY_ATOM:-=dev-lang/${default_binary_pf}}
 test_dart_virtual=true
-if [[ ${virtual_version} != "${source_version}" ]]; then
+if [[ ${virtual_version} != "${source_version}" || -z ${matching_binary_ebuild} ]]; then
 	test_dart_virtual=false
-	echo "No matching virtual/dart for ${source_version}; testing source package without changing deferred virtual policy"
+	echo "No matching virtual/dart providers for ${source_version}; testing source package without changing deferred virtual policy"
 fi
 
 bootstrap_atom=${DART_BOOTSTRAP_ATOM:-=dev-lang/dart-bootstrap-bin-3.13.0_beta103_p1-r0}

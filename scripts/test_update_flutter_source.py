@@ -107,7 +107,8 @@ class FlutterUpdaterTest(unittest.TestCase):
         updater.commit_and_push(
             "branch", "3.13.3", "3.14.0", "release-hash", "engine", "dart",
             "fonts", "gradle", "^3.11.0", False,
-            ["dev-libs/flutter-engine/files/flutter-engine-3.14.0-fix.patch"],
+            ["dev-libs/flutter-engine/files/flutter-engine-3.14.0-helper.py"],
+            ["dev-libs/flutter-engine/files/flutter-engine-fix-r1.patch"],
         )
         pr = next(c.args[0] for c in run.call_args_list if c.args[0][:3] == ["gh", "pr", "create"])
         body = pr[pr.index("--body") + 1]
@@ -115,8 +116,9 @@ class FlutterUpdaterTest(unittest.TestCase):
         self.assertIn("Authoritative Revision:** release-hash", body)
         self.assertIn("Flutter Engine revision:** engine", body)
         self.assertIn("Pinned Dart revision:** dart", body)
-        self.assertIn("Optimistic FILESDIR carry-forward", body)
-        self.assertIn("flutter-engine-3.14.0-fix.patch", body)
+        self.assertIn("Version-qualified non-patch FILESDIR carry-forward", body)
+        self.assertIn("Inherited immutable patches", body)
+        self.assertIn("flutter-engine-fix-r1.patch", body)
         close.assert_called_once()
         def fail(cmd, **kwargs):
             if cmd[:3] == ["git", "status", "--porcelain"]: return subprocess.CompletedProcess(cmd, 0, "M x\n")

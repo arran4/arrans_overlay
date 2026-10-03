@@ -21,7 +21,10 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
-from source_update_utils import carry_forward_versioned_files
+from source_update_utils import (
+    carry_forward_versioned_files,
+    inherit_previous_patch_files,
+)
 
 def parse_gentoo_version(version: str):
     import re
@@ -238,7 +241,7 @@ def create_dart_ebuild(version: str, work_root):
 
     return existing_ebuild, new_ebuild_path
 
-def commit_and_push(branch_name: str, old_version: str, version: str, ref: str, dry_run: bool, carried_files: list[str] | None = None):
+def commit_and_push(branch_name: str, old_version: str, version: str, ref: str, dry_run: bool, carried_files: list[str] | None = None, inherited_patches: list[str] | None = None):
     if dry_run:
         logging.info("Dry run: Skipping git add, commit, branch checkout, push, and PR creation.")
         return
@@ -261,6 +264,8 @@ def commit_and_push(branch_name: str, old_version: str, version: str, ref: str, 
 
     carried_files = carried_files or []
     carried_summary = ", ".join(f"`{path}`" for path in carried_files) or "None"
+    inherited_patches = inherited_patches or []
+    patch_summary = ", ".join(f"`{path}`" for path in inherited_patches) or "None"
 
     body = (
         f"Automated source package update for Dart {version}.\n\n"
@@ -272,8 +277,9 @@ def commit_and_push(branch_name: str, old_version: str, version: str, ref: str, 
         f"**Virtual-provider decision:** Existing virtual constraints were left untouched unless a truthful matching provider exists.\n"
         f"**Manifest Generation:** Completed successfully.\n"
         f"**Dependency review result:** Needs human review.\n"
-        f"**Optimistic FILESDIR carry-forward:** {carried_summary}\n"
-        f"**Patch refresh/review result:** Carried version-qualified assets are provisional; source CI must confirm they still apply.\n"
+        f"**Version-qualified non-patch FILESDIR carry-forward:** {carried_summary}\n"
+        f"**Inherited immutable patches:** {patch_summary}\n"
+        f"**Patch refresh/review result:** Exact patch revisions are inherited from the previous ebuild; source CI must confirm they still apply.\n"
         f"**Tests Performed:** Pending CI runs for g2 lint, pkgcheck, and integration verification.\n\n"
         f"Related to #939\n"
     )
@@ -371,6 +377,13 @@ def main() -> int:
         # Create main ebuild
         previous_ebuild, new_ebuild_path = create_dart_ebuild(version, work_root)
         previous_version = previous_ebuild.name.removeprefix("dart-").removesuffix(".ebuild")
+        inherited_patches = inherit_previous_patch_files(
+            previous_ebuild,
+            new_ebuild_path,
+            orig_root,
+            work_root,
+            "dev-lang/dart",
+        )
         carried_files = carry_forward_versioned_files(
             previous_ebuild,
             version,
@@ -378,8 +391,10 @@ def main() -> int:
             work_root,
             "dev-lang/dart",
         )
+        if inherited_patches:
+            logging.info("Inherited immutable patch files: %s", ", ".join(inherited_patches))
         if carried_files:
-            logging.info("Optimistically carried forward versioned FILESDIR assets: %s", ", ".join(carried_files))
+            logging.info("Carried version-qualified non-patch FILESDIR assets: %s", ", ".join(carried_files))
 
         # Run generator to update DEPS
         logging.info("Running generate_dart_ebuild.py to update DEPS")
@@ -415,7 +430,15 @@ def main() -> int:
             logging.error("verify_manifest.py failed. Failing.")
             sys.exit(1)
 
-        commit_and_push(branch_name, previous_version, version, ref, args.dry_run, carried_files)
+        commit_and_push(
+            branch_name,
+            previous_version,
+            version,
+            ref,
+            args.dry_run,
+            carried_files,
+            inherited_patches,
+        )
 
     except Exception as e:
         logging.error(f"Update failed: {e}")
