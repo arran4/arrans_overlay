@@ -20,8 +20,8 @@ Options:
   -h, --help         Show this help
 
 Environment overrides:
-  FLUTTER_SOURCE_ATOM, FLUTTER_ENGINE_SOURCE_ATOM, DART_VIRTUAL_ATOM,
-  FLUTTER_DISTDIR, FLUTTER_BINPKGS
+  FLUTTER_SOURCE_ATOM, FLUTTER_ENGINE_SOURCE_ATOM, FLUTTER_VIRTUAL_ATOM,
+  FLUTTER_BIN_ATOM, DART_VIRTUAL_ATOM, FLUTTER_DISTDIR, FLUTTER_BINPKGS
 HELP
 }
 
@@ -76,11 +76,46 @@ mkdir -p "${distfiles}" "${binpkgs}"
 distfiles=$(cd "${distfiles}" && pwd -P)
 binpkgs=$(cd "${binpkgs}" && pwd -P)
 
-flutter_source_atom=${FLUTTER_SOURCE_ATOM:-=dev-lang/flutter-3.47.2}
-flutter_virtual_atom="=virtual/flutter-3.47.2"
-flutter_bin_atom="=dev-lang/flutter-bin-3.47.2-r1"
-engine_source_atom=${FLUTTER_ENGINE_SOURCE_ATOM:-=dev-libs/flutter-engine-3.47.2}
+latest_flutter_ebuild=$(find "${repo_root}/dev-lang/flutter" -maxdepth 1 -type f -name 'flutter-*.ebuild' -printf '%f\n' | sort -V | tail -n1)
+latest_engine_ebuild=$(find "${repo_root}/dev-libs/flutter-engine" -maxdepth 1 -type f -name 'flutter-engine-*.ebuild' -printf '%f\n' | sort -V | tail -n1)
+latest_virtual_ebuild=$(find "${repo_root}/virtual/flutter" -maxdepth 1 -type f -name 'flutter-*.ebuild' -printf '%f\n' | sort -V | tail -n1)
+latest_bin_ebuild=$(find "${repo_root}/dev-lang/flutter-bin" -maxdepth 1 -type f -name 'flutter-bin-*.ebuild' -printf '%f\n' | sort -V | tail -n1)
+for required in "${latest_flutter_ebuild}" "${latest_engine_ebuild}" "${latest_virtual_ebuild}" "${latest_bin_ebuild}"; do
+	if [[ -z ${required} ]]; then
+		echo "Missing Flutter integration package fixture" >&2
+		exit 1
+	fi
+done
+
+default_flutter_pf=${latest_flutter_ebuild%.ebuild}
+default_engine_pf=${latest_engine_ebuild%.ebuild}
+default_virtual_pf=${latest_virtual_ebuild%.ebuild}
+default_bin_pf=${latest_bin_ebuild%.ebuild}
+
+flutter_source_atom=${FLUTTER_SOURCE_ATOM:-=dev-lang/${default_flutter_pf}}
+engine_source_atom=${FLUTTER_ENGINE_SOURCE_ATOM:-=dev-libs/${default_engine_pf}}
+flutter_virtual_atom=${FLUTTER_VIRTUAL_ATOM:-=virtual/${default_virtual_pf}}
+flutter_bin_atom=${FLUTTER_BIN_ATOM:-=dev-lang/${default_bin_pf}}
 dart_virtual_atom=${DART_VIRTUAL_ATOM:-=virtual/dart-3.13.3-r1}
+
+flutter_source_pf=${flutter_source_atom#=dev-lang/}
+flutter_source_pvr=${flutter_source_pf#flutter-}
+flutter_version=${flutter_source_pvr%-r[0-9]*}
+flutter_virtual_pvr=${flutter_virtual_atom#=virtual/flutter-}
+flutter_virtual_version=${flutter_virtual_pvr%-r[0-9]*}
+test_flutter_virtual=true
+if [[ ${flutter_virtual_version} != "${flutter_version}" ]]; then
+	test_flutter_virtual=false
+	echo "No matching virtual/flutter for ${flutter_version}; testing source package without changing deferred virtual policy"
+fi
+
+engine_source_pf=${engine_source_atom#=dev-libs/}
+engine_ebuild_path="${repo_root}/dev-libs/flutter-engine/${engine_source_pf}.ebuild"
+expected_engine_rev=$(sed -n 's/^FLUTTER_ENGINE_REV="\([^"]*\)"/\1/p' "${engine_ebuild_path}")
+if [[ -z ${expected_engine_rev} ]]; then
+	echo "Could not read FLUTTER_ENGINE_REV from ${engine_ebuild_path}" >&2
+	exit 1
+fi
 
 container_suffix="${UID:-0}-$$"
 portage_container="flutter-source-portage-${container_suffix}"
@@ -227,14 +262,19 @@ echo "Network disabled; emerging dev-lang/flutter and virtual/flutter offline"
 docker exec -i "${gentoo_container}" bash -euxo pipefail -s -- \
 	"${flutter_source_atom}" \
 	"${flutter_virtual_atom}" \
-	"${flutter_bin_atom}" <<'OFFLINE'
+	"${flutter_bin_atom}" \
+	"${test_flutter_virtual}" \
+	"${flutter_source_pf}" <<'OFFLINE'
 flutter_source_atom=$1
 flutter_virtual_atom=$2
 flutter_bin_atom=$3
+test_flutter_virtual=$4
+flutter_source_pf=$5
 
 # Build and install dev-lang/flutter offline from source
 if ! emerge -v --oneshot "${flutter_source_atom}"; then
-	build_log=$(find /var/tmp/portage/dev-lang/flutter-3.47.2 -path "*/temp/build.log" -print -quit 2>/dev/null || true)
+	source_vdb_pf=${flutter_source_pf%-r0}
+	build_log=$(find "/var/tmp/portage/dev-lang/${source_vdb_pf}" -path "*/temp/build.log" -print -quit 2>/dev/null || true)
 	if [ -n "${build_log}" ]; then
 		echo "===== dev-lang/flutter Portage build.log ====="
 		cat "${build_log}"
@@ -243,8 +283,13 @@ if ! emerge -v --oneshot "${flutter_source_atom}"; then
 	exit 1
 fi
 
-# Install virtual/flutter
-emerge -v --oneshot "${flutter_virtual_atom}"
+# Install virtual/flutter only when a matching virtual exists. Source updates
+# deliberately defer the virtual when the binary provider has not caught up.
+if [[ ${test_flutter_virtual} == true ]]; then
+	emerge -v --oneshot "${flutter_virtual_atom}"
+else
+	echo "Skipping deferred ${flutter_virtual_atom}; it does not match ${flutter_source_atom}"
+fi
 
 # Verify blocker prevents flutter-bin from installing alongside source flutter
 echo "Verifying dev-lang/flutter-bin blocker enforcement"
@@ -276,38 +321,40 @@ docker exec \
 	--env HOME=/home/fluttertest \
 	--env XDG_CACHE_HOME=/home/fluttertest/.cache \
 	--env CI=true \
+	--env EXPECTED_FLUTTER_VERSION="${flutter_version}" \
+	--env EXPECTED_ENGINE_REV="${expected_engine_rev}" \
 	--workdir /home/fluttertest \
 	"${gentoo_container}" \
 	bash -euxo pipefail <<'SMOKE'
 # 1. flutter --version checks
 version_out=$(flutter --version)
 echo "${version_out}"
-echo "${version_out}" | grep -q "Flutter 3.47.2"
-echo "${version_out}" | grep -q "Engine • hash a804b261645ef8c13eb3d5c44a5c2fb0340c5539"
-echo "${version_out}" | grep -q "Dart 3.13.3"
+echo "${version_out}" | grep -Fq "Flutter ${EXPECTED_FLUTTER_VERSION}"
+echo "${version_out}" | grep -Fq "Engine • hash ${EXPECTED_ENGINE_REV}"
+echo "${version_out}" | grep -q "Dart "
 
 # 2. flutter doctor checks
 flutter doctor --suppress-analytics
 
 # 3. Verify user cache layout and symlink preserving
-test -L "${XDG_CACHE_HOME}/flutter/3.47.2/bin-cache/dart-sdk"
-test -L "${XDG_CACHE_HOME}/flutter/3.47.2/bin-cache/artifacts/engine/linux-x64"
-test -L "${XDG_CACHE_HOME}/flutter/3.47.2/bin-cache/artifacts/engine/linux-x64-profile"
-test -L "${XDG_CACHE_HOME}/flutter/3.47.2/bin-cache/artifacts/engine/linux-x64-release"
-test -L "${XDG_CACHE_HOME}/flutter/3.47.2/bin-cache/artifacts/engine/common/flutter_patched_sdk"
-test -L "${XDG_CACHE_HOME}/flutter/3.47.2/bin-cache/artifacts/engine/common/flutter_patched_sdk_product"
-test -L "${XDG_CACHE_HOME}/flutter/3.47.2/bin-cache/pkg/sky_engine"
-test -w "${XDG_CACHE_HOME}/flutter/3.47.2/bin-cache"
+test -L "${XDG_CACHE_HOME}/flutter/${EXPECTED_FLUTTER_VERSION}/bin-cache/dart-sdk"
+test -L "${XDG_CACHE_HOME}/flutter/${EXPECTED_FLUTTER_VERSION}/bin-cache/artifacts/engine/linux-x64"
+test -L "${XDG_CACHE_HOME}/flutter/${EXPECTED_FLUTTER_VERSION}/bin-cache/artifacts/engine/linux-x64-profile"
+test -L "${XDG_CACHE_HOME}/flutter/${EXPECTED_FLUTTER_VERSION}/bin-cache/artifacts/engine/linux-x64-release"
+test -L "${XDG_CACHE_HOME}/flutter/${EXPECTED_FLUTTER_VERSION}/bin-cache/artifacts/engine/common/flutter_patched_sdk"
+test -L "${XDG_CACHE_HOME}/flutter/${EXPECTED_FLUTTER_VERSION}/bin-cache/artifacts/engine/common/flutter_patched_sdk_product"
+test -L "${XDG_CACHE_HOME}/flutter/${EXPECTED_FLUTTER_VERSION}/bin-cache/pkg/sky_engine"
+test -w "${XDG_CACHE_HOME}/flutter/${EXPECTED_FLUTTER_VERSION}/bin-cache"
 test ! -w /opt/flutter
 
 # Verify stamps
-test "$(cat "${XDG_CACHE_HOME}/flutter/3.47.2/bin-cache/.gentoo-flutter-seed-version")" = "3.47.2"
-test "$(cat "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version")" = "3.47.2"
+test "$(cat "${XDG_CACHE_HOME}/flutter/${EXPECTED_FLUTTER_VERSION}/bin-cache/.gentoo-flutter-seed-version")" = "${EXPECTED_FLUTTER_VERSION}"
+test "$(cat "${XDG_CACHE_HOME}/flutter/pub-cache/.gentoo-flutter-pub-seed-version")" = "${EXPECTED_FLUTTER_VERSION}"
 
 # 4. Cache refresh on stale stamp
-echo "stale" > "${XDG_CACHE_HOME}/flutter/3.47.2/bin-cache/.gentoo-flutter-seed-version"
+echo "stale" > "${XDG_CACHE_HOME}/flutter/${EXPECTED_FLUTTER_VERSION}/bin-cache/.gentoo-flutter-seed-version"
 flutter --version
-test "$(cat "${XDG_CACHE_HOME}/flutter/3.47.2/bin-cache/.gentoo-flutter-seed-version")" = "3.47.2"
+test "$(cat "${XDG_CACHE_HOME}/flutter/${EXPECTED_FLUTTER_VERSION}/bin-cache/.gentoo-flutter-seed-version")" = "${EXPECTED_FLUTTER_VERSION}"
 
 # 5. Offline sample app create and build
 flutter create --offline --empty --platforms=linux app

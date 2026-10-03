@@ -9,6 +9,8 @@ on:
     paths:
       - 'dev-libs/flutter-engine/**'
       - 'scripts/generate_flutter_engine_ebuild.py'
+      - 'scripts/source_update_utils.py'
+      - 'scripts/update_flutter_source.py'
       - 'scripts/test_flutter_engine_source.sh'
       - 'scripts/test_generate_flutter_engine_ebuild.py'
       - '.github/workflows/dev-libs-flutter-engine-source-test.yaml'
