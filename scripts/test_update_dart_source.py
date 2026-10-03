@@ -86,12 +86,17 @@ class DartUpdaterTest(unittest.TestCase):
     @patch.object(updater, "run_cmd")
     def test_pr_creation_boundary_and_body(self, run, close):
         run.side_effect = lambda cmd, **kwargs: subprocess.CompletedProcess(cmd, 0, "M x\n" if cmd[:3] == ["git", "status", "--porcelain"] else "")
-        updater.commit_and_push("branch", "3.13.3-r1", "3.14.0", "revision-14", False)
+        updater.commit_and_push(
+            "branch", "3.13.3-r1", "3.14.0", "revision-14", False,
+            ["dev-lang/dart/files/dart-3.14.0-fix.patch"],
+        )
         pr = next(c.args[0] for c in run.call_args_list if c.args[0][:3] == ["gh", "pr", "create"])
         body = pr[pr.index("--body") + 1]
         self.assertIn("Old Packaged Version:** 3.13.3-r1", body)
         self.assertIn("Authoritative Revision:** revision-14", body)
         self.assertIn("Virtual-provider decision", body)
+        self.assertIn("Optimistic FILESDIR carry-forward", body)
+        self.assertIn("dart-3.14.0-fix.patch", body)
         close.assert_called_once()
 
     @patch.object(updater, "run_cmd")
