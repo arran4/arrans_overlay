@@ -104,13 +104,19 @@ class FlutterUpdaterTest(unittest.TestCase):
     @patch.object(updater, "run_cmd")
     def test_pr_creation_success_and_failure_after_push(self, run, close):
         run.side_effect = lambda cmd, **kwargs: subprocess.CompletedProcess(cmd, 0, "M x\n" if cmd[:3] == ["git", "status", "--porcelain"] else "")
-        updater.commit_and_push("branch", "3.13.3", "3.14.0", "release-hash", "engine", "dart", "fonts", "gradle", "^3.11.0", False)
+        updater.commit_and_push(
+            "branch", "3.13.3", "3.14.0", "release-hash", "engine", "dart",
+            "fonts", "gradle", "^3.11.0", False,
+            ["dev-libs/flutter-engine/files/flutter-engine-3.14.0-fix.patch"],
+        )
         pr = next(c.args[0] for c in run.call_args_list if c.args[0][:3] == ["gh", "pr", "create"])
         body = pr[pr.index("--body") + 1]
         self.assertIn("Old Packaged Version:** 3.13.3", body)
         self.assertIn("Authoritative Revision:** release-hash", body)
         self.assertIn("Flutter Engine revision:** engine", body)
         self.assertIn("Pinned Dart revision:** dart", body)
+        self.assertIn("Optimistic FILESDIR carry-forward", body)
+        self.assertIn("flutter-engine-3.14.0-fix.patch", body)
         close.assert_called_once()
         def fail(cmd, **kwargs):
             if cmd[:3] == ["git", "status", "--porcelain"]: return subprocess.CompletedProcess(cmd, 0, "M x\n")
