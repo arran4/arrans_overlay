@@ -58,7 +58,15 @@ command -v docker >/dev/null || {
 mkdir -p "${distfiles}"
 distfiles=$(cd "${distfiles}" && pwd -P)
 
-source_atom=${DART_SOURCE_ATOM:-=dev-lang/dart-3.13.3-r2}
+latest_source_ebuild=$(find "${repo_root}/dev-lang/dart" -maxdepth 1 -type f -name 'dart-*.ebuild' -printf '%f\n' | sort -V | tail -n1)
+if [[ -z ${latest_source_ebuild} ]]; then
+	echo "No dev-lang/dart source ebuild found" >&2
+	exit 1
+fi
+default_source_pf=${latest_source_ebuild%.ebuild}
+source_atom=${DART_SOURCE_ATOM:-=dev-lang/${default_source_pf}}
+source_pvr=${source_atom#=dev-lang/dart-}
+source_version=${source_pvr%-r[0-9]*}
 binary_atom=${DART_BINARY_ATOM:-=dev-lang/dart-bin-3.13.3-r2}
 bootstrap_atom=${DART_BOOTSTRAP_ATOM:-=dev-lang/dart-bootstrap-bin-3.13.0_beta103_p1-r0}
 virtual_atom=${DART_VIRTUAL_ATOM:-=virtual/dart-3.13.3-r1}
@@ -199,9 +207,10 @@ fi
 echo "Network disabled; beginning the source-only Dart emerge"
 
 docker exec -i "${gentoo_container}" bash -euxo pipefail -s -- \
-	"${source_atom}" "${bootstrap_atom}" <<'OFFLINE'
+	"${source_atom}" "${bootstrap_atom}" "${source_version}" <<'OFFLINE'
 source_atom=$1
 bootstrap_atom=$2
+source_version=$3
 source_pf=${source_atom#=dev-lang/}
 bootstrap_pf=${bootstrap_atom#=dev-lang/}
 # Portage omits the explicit revision-zero suffix from VDB directory names.
@@ -275,7 +284,7 @@ for binary in bin/dart bin/dartaotruntime bin/utils/gen_snapshot; do
 done
 
 version=$(/opt/bin/dart --version 2>&1)
-[[ ${version} == 'Dart SDK version: 3.13.3 (stable)'*'on "linux_x64"' ]]
+[[ ${version} == "Dart SDK version: ${source_version} (stable)"*'on "linux_x64"' ]]
 
 printf '%s\n' \
 	'void main() {' \
