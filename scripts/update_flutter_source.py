@@ -21,6 +21,8 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
+from source_update_utils import carry_forward_versioned_files
+
 def parse_gentoo_version(version: str):
     import re
     match = re.match(r'^(\d+(?:\.\d+)*)(?:-r(\d+))?$', version)
@@ -379,7 +381,7 @@ def create_ebuild_copy(package: str, version: str, work_root):
     logging.info(f"Copied {existing_ebuild.name} to {new_ebuild_path.name}")
     return existing_ebuild, new_ebuild_path
 
-def commit_and_push(branch_name: str, old_version: str, version: str, auth_hash: str, engine_rev: str, dart_rev: str, fonts_rev: str, gradle_rev: str, compat_msg: str, dry_run: bool):
+def commit_and_push(branch_name: str, old_version: str, version: str, auth_hash: str, engine_rev: str, dart_rev: str, fonts_rev: str, gradle_rev: str, compat_msg: str, dry_run: bool, carried_files: list[str] | None = None):
     if dry_run:
         logging.info("Dry run: Skipping git add, commit, branch checkout, push, and PR creation.")
         return
@@ -402,6 +404,9 @@ def commit_and_push(branch_name: str, old_version: str, version: str, auth_hash:
         logging.error("Failed to push branch.")
         raise
 
+    carried_files = carried_files or []
+    carried_summary = ", ".join(f"`{path}`" for path in carried_files) or "None"
+
     body = (
         f"Automated coordinated source package update for Flutter {version}.\n\n"
         f"**Old Packaged Version:** {old_version}\n"
@@ -416,7 +421,8 @@ def commit_and_push(branch_name: str, old_version: str, version: str, auth_hash:
         f"**Gradle Wrapper revision:** {gradle_rev}\n"
         f"**Manifest Generation:** Completed successfully.\n"
         f"**Dependency/exclusion review result:** Needs human review (fail-closed generator policy active).\n"
-        f"**Patch refresh/review result:** Needs human review if build fails.\n"
+        f"**Optimistic FILESDIR carry-forward:** {carried_summary}\n"
+        f"**Patch refresh/review result:** Carried version-qualified assets are provisional; source CI must confirm they still apply.\n"
         f"**Tests Performed:** Pending CI runs for g2 lint, pkgcheck, and integration verification.\n\n"
         f"Related to #939\n"
     )
@@ -559,9 +565,27 @@ def main() -> int:
 
         # Create ebuilds
         create_virtual_flutter(version, work_root)
-        _, engine_ebuild = create_ebuild_copy("dev-libs/flutter-engine", version, work_root)
+        previous_engine_ebuild, engine_ebuild = create_ebuild_copy("dev-libs/flutter-engine", version, work_root)
         previous_flutter_ebuild, flutter_ebuild = create_ebuild_copy("dev-lang/flutter", version, work_root)
         previous_version = previous_flutter_ebuild.name.removeprefix("flutter-").removesuffix(".ebuild")
+        carried_files = carry_forward_versioned_files(
+            previous_engine_ebuild,
+            version,
+            orig_root,
+            work_root,
+            "dev-libs/flutter-engine",
+        )
+        carried_files.extend(
+            carry_forward_versioned_files(
+                previous_flutter_ebuild,
+                version,
+                orig_root,
+                work_root,
+                "dev-lang/flutter",
+            )
+        )
+        if carried_files:
+            logging.info("Optimistically carried forward versioned FILESDIR assets: %s", ", ".join(carried_files))
 
         # Update Engine DEPS
         logging.info("Running generate_flutter_engine_ebuild.py to update DEPS")
@@ -611,7 +635,7 @@ def main() -> int:
             logging.error("verify_manifest.py failed. Failing.")
             sys.exit(1)
 
-        commit_and_push(branch_name, previous_version, version, ref, engine_rev, dart_rev, fonts_rev, gradle_rev, compat_msg, args.dry_run)
+        commit_and_push(branch_name, previous_version, version, ref, engine_rev, dart_rev, fonts_rev, gradle_rev, compat_msg, args.dry_run, carried_files)
 
     except Exception as e:
         logging.error(f"Update failed: {e}")
