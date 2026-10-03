@@ -74,7 +74,15 @@ mkdir -p "${distfiles}" "${binpkgs}"
 distfiles=$(cd "${distfiles}" && pwd -P)
 binpkgs=$(cd "${binpkgs}" && pwd -P)
 
-source_atom=${FLUTTER_ENGINE_SOURCE_ATOM:-=dev-libs/flutter-engine-3.47.2}
+latest_engine_ebuild=$(find "${repo_root}/dev-libs/flutter-engine" -maxdepth 1 -type f -name 'flutter-engine-*.ebuild' -printf '%f\n' | sort -V | tail -n1)
+if [[ -z ${latest_engine_ebuild} ]]; then
+	echo "No dev-libs/flutter-engine source ebuild found" >&2
+	exit 1
+fi
+default_engine_pf=${latest_engine_ebuild%.ebuild}
+source_atom=${FLUTTER_ENGINE_SOURCE_ATOM:-=dev-libs/${default_engine_pf}}
+source_pvr=${source_atom#=dev-libs/flutter-engine-}
+engine_version=${source_pvr%-r[0-9]*}
 virtual_atom=${DART_VIRTUAL_ATOM:-=virtual/dart-3.13.3-r1}
 container_suffix="${UID:-0}-$$"
 portage_container="flutter-engine-portage-${container_suffix}"
@@ -197,8 +205,9 @@ fi
 echo "Network disabled; emerging Flutter Engine offline"
 
 docker exec -i "${gentoo_container}" bash -euxo pipefail -s -- \
-	"${source_atom}" <<'OFFLINE'
+	"${source_atom}" "${engine_version}" <<'OFFLINE'
 source_atom=$1
+engine_version=$2
 source_pf=${source_atom#=dev-libs/}
 source_pf=${source_pf%-r0}
 
@@ -215,7 +224,7 @@ if ! emerge -v --oneshot \
 	exit 1
 fi
 
-engine_root="/usr/lib/flutter-engine/3.47.2"
+engine_root="/usr/lib/flutter-engine/${engine_version}"
 linux_x64="${engine_root}/linux-x64"
 linux_profile="${engine_root}/linux-x64-profile"
 linux_release="${engine_root}/linux-x64-release"
