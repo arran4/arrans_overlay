@@ -14,6 +14,10 @@ from pathlib import Path
 import re
 import sys
 
+import urllib.request
+import json
+import logging
+
 FLUTTER_VERSION = "3.47.2"
 FLUTTER_ENGINE_REV = "a804b261645ef8c13eb3d5c44a5c2fb0340c5539"
 MATERIAL_FONTS_REV = "3012db47f3130e62f7cc0beabff968a33cbec8d8"
@@ -28,8 +32,84 @@ EBUILD = (
 BEGIN = "# BEGIN GENERATED FLUTTER PUB DEPS"
 END = "# END GENERATED FLUTTER PUB DEPS"
 
-# The 101 pinned pub packages required for packages/flutter_tools in Flutter 3.47.2.
-# Every dependency is pinned to an exact version for deterministic offline builds.
+def parse_pub_deps_lockfile(content: str) -> dict[str, str]:
+	"""Parse a Flutter tooling lockfile and reject non-local source types."""
+	try:
+		if not content.strip():
+			raise RuntimeError("Extracted pubspec.lock is empty.")
+
+		deps: dict[str, str] = {}
+		in_packages = False
+		current_pkg = None
+		pkg_source = None
+		pkg_version = None
+
+		for line in content.split('\n'):
+			line = line.rstrip()
+			if line == 'packages:':
+				in_packages = True
+				continue
+			if not in_packages:
+				continue
+
+			if line and not line.startswith(' '):
+				in_packages = False
+				continue
+
+			if line.startswith('  ') and not line.startswith('   '):
+				if current_pkg and pkg_version:
+					if pkg_source == 'hosted':
+						deps[current_pkg] = pkg_version
+					elif pkg_source not in ['sdk', 'path']:
+						raise RuntimeError(f"Unsupported source type '{pkg_source}' for package {current_pkg}")
+				current_pkg = line.strip().strip(':')
+				pkg_source = None
+				pkg_version = None
+			elif current_pkg and line.startswith('    source: '):
+				pkg_source = line.split(':', 1)[1].strip().strip("'\"")
+			elif current_pkg and line.startswith('    version: '):
+				pkg_version = line.split(':', 1)[1].strip().strip("'\"")
+
+		if current_pkg and pkg_version:
+			if pkg_source == 'hosted':
+				deps[current_pkg] = pkg_version
+			elif pkg_source not in ['sdk', 'path']:
+				raise RuntimeError(f"Unsupported source type '{pkg_source}' for package {current_pkg}")
+
+		if not deps:
+			raise RuntimeError("No hosted packages found in pubspec.lock.")
+
+		return deps
+	except Exception as e:
+		raise RuntimeError(f"Could not parse pubspec.lock: {e}") from e
+
+
+def fetch_pub_deps(version: str) -> dict[str, str]:
+	"""Fetch the exact hosted pub graph using a checked temporary archive."""
+	import subprocess
+	import tempfile
+
+	url = f"https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_{version}-stable.tar.xz"
+	try:
+		with tempfile.NamedTemporaryFile(suffix=".tar.xz") as archive:
+			curl = subprocess.run(
+				["curl", "--fail", "--location", "--silent", "--show-error", "--output", archive.name, url],
+				capture_output=True, check=False,
+			)
+			if curl.returncode != 0:
+				raise RuntimeError(f"curl failed: {curl.stderr.decode('utf-8', 'ignore')}")
+			tar = subprocess.run(
+				["tar", "-xJOf", archive.name, "flutter/packages/flutter_tools/pubspec.lock"],
+				capture_output=True, check=False,
+			)
+			if tar.returncode != 0:
+				raise RuntimeError(f"Failed to extract pubspec.lock: {tar.stderr.decode('utf-8', 'ignore')}")
+			return parse_pub_deps_lockfile(tar.stdout.decode("utf-8"))
+	except Exception as e:
+		logging.error(f"Could not fetch/parse pubspec.lock for {version}: {e}")
+		raise RuntimeError(f"Could not fetch/parse pubspec.lock for {version}: {e}") from e
+
+# The pinned pub packages required for packages/flutter_tools.
 PUB_DEPENDENCIES: dict[str, str] = {
 	"_fe_analyzer_shared": "95.0.0",
 	"analyzer": "10.1.0",
@@ -135,7 +215,7 @@ PUB_DEPENDENCIES: dict[str, str] = {
 }
 
 
-def render_pub_deps(deps: dict[str, str] = PUB_DEPENDENCIES) -> str:
+def render_pub_deps(deps: dict[str, str]) -> str:
 	lines: list[str] = [
 		BEGIN,
 		f'FLUTTER_FONTS_REV="{MATERIAL_FONTS_REV}"',
@@ -149,11 +229,11 @@ def render_pub_deps(deps: dict[str, str] = PUB_DEPENDENCIES) -> str:
 	lines.append(
 		"\t${FLUTTER_GCS}/flutter/fonts/${FLUTTER_FONTS_REV}/fonts.zip"
 	)
-	lines.append("\t\t-> flutter-material-fonts-3012db47.zip")
+	lines.append(f"\t\t-> flutter-material-fonts-{MATERIAL_FONTS_REV[:8]}.zip")
 	lines.append(
 		"\t${FLUTTER_GCS}/gradle-wrapper/${FLUTTER_GRADLE_REV}/gradle-wrapper.tgz"
 	)
-	lines.append("\t\t-> flutter-gradle-wrapper-fd5c1f2c.tgz")
+	lines.append(f"\t\t-> flutter-gradle-wrapper-{GRADLE_WRAPPER_REV[:8]}.tgz")
 
 	for pkg, ver in sorted(deps.items()):
 		lines.append(f"\t${{PUB_URI}}/{pkg}-{ver}.tar.gz")
@@ -194,11 +274,44 @@ def update_ebuild(ebuild_path: Path, generated: str, check: bool) -> int:
 
 
 def main() -> int:
+	global FLUTTER_VERSION, FLUTTER_ENGINE_REV, MATERIAL_FONTS_REV, GRADLE_WRAPPER_REV, EBUILD
+
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--check", action="store_true")
-	parser.add_argument("--ebuild", type=Path, default=EBUILD)
+	parser.add_argument("--version", type=str, help="Target Flutter version")
+	parser.add_argument("--engine-revision", type=str, help="Target Engine revision")
+	parser.add_argument("--material-fonts-revision", type=str, help="Target Material fonts revision")
+	parser.add_argument("--gradle-wrapper-revision", type=str, help="Target Gradle wrapper revision")
+	parser.add_argument("--ebuild", type=Path, help="Path to ebuild to modify")
 	args = parser.parse_args()
-	return update_ebuild(args.ebuild, render_pub_deps(), args.check)
+
+	if args.version:
+		FLUTTER_VERSION = args.version
+	if args.engine_revision:
+		FLUTTER_ENGINE_REV = args.engine_revision
+	if args.material_fonts_revision:
+		MATERIAL_FONTS_REV = args.material_fonts_revision
+	if args.gradle_wrapper_revision:
+		GRADLE_WRAPPER_REV = args.gradle_wrapper_revision
+
+	if args.ebuild:
+		EBUILD = args.ebuild
+	elif args.version:
+		EBUILD = (
+			Path(__file__).parents[1]
+			/ "dev-lang"
+			/ "flutter"
+			/ f"flutter-{FLUTTER_VERSION}.ebuild"
+		)
+
+	# On check mode, if no arguments are passed, we check against the static dictionary
+	# If version is passed, fetch real dependencies to check or generate.
+	if args.version or not args.check:
+		deps = fetch_pub_deps(FLUTTER_VERSION)
+	else:
+		deps = PUB_DEPENDENCIES
+
+	return update_ebuild(EBUILD, render_pub_deps(deps), args.check)
 
 
 if __name__ == "__main__":

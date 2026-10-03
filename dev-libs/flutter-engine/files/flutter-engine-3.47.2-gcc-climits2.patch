@@ -1,0 +1,10 @@
+--- a/flutter/impeller/tessellator/tessellator_libtess.cc
++++ b/flutter/impeller/tessellator/tessellator_libtess.cc
+@@ -2,6 +2,7 @@
+ // Use of this source code is governed by a BSD-style license that can be
+ // found in the LICENSE file.
+
++#include <climits>
+ #include "impeller/tessellator/tessellator_libtess.h"
+
+ #include "impeller/tessellator/path_tessellator.h"

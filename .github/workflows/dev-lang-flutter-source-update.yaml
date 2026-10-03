@@ -1,0 +1,60 @@
+name: dev-lang/flutter (Source) Update
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: ci-flutter-source-update-${{ github.ref }}
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: '25 0 * * *'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Target Flutter version'
+        required: false
+        type: string
+      ref:
+        description: 'Explicit stable upstream ref/hash (optional)'
+        required: false
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/dev-lang-flutter-source-update.yaml'
+      - 'scripts/update_flutter_source.py'
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Run Flutter Source Updater
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            ARGS="$ARGS --version ${{ github.event.inputs.version }}"
+          fi
+          if [ -n "${{ github.event.inputs.ref }}" ]; then
+            ARGS="$ARGS --ref ${{ github.event.inputs.ref }}"
+          fi
+          python3 scripts/update_flutter_source.py $ARGS

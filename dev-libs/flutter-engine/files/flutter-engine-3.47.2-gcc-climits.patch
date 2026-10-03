@@ -1,0 +1,10 @@
+--- a/flutter/fml/message_loop_task_queues.cc
++++ b/flutter/fml/message_loop_task_queues.cc
+@@ -10,6 +10,7 @@
+ #include <iostream>
+ #include <memory>
+ #include <optional>
++#include <climits>
+
+ #include "flutter/fml/make_copyable.h"
+ #include "flutter/fml/task_source.h"

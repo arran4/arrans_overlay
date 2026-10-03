@@ -1,0 +1,62 @@
+name: dev-lang/dart (Source) Update
+run-name: Dart source update (${{ inputs.version || 'latest' }})
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  # This is intentionally version-specific so Flutter can inspect a durable
+  # prerequisite identity without treating another Dart release as a match.
+  group: ci-dart-source-update-${{ inputs.version || github.ref }}
+  cancel-in-progress: false
+
+on:
+  schedule:
+    - cron: '20 0 * * *'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Target Dart version'
+        required: false
+        type: string
+      ref:
+        description: 'Explicit stable upstream ref/hash (optional)'
+        required: false
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/dev-lang-dart-source-update.yaml'
+      - 'scripts/update_dart_source.py'
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Run Dart Source Updater
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            ARGS="$ARGS --version ${{ github.event.inputs.version }}"
+          fi
+          if [ -n "${{ github.event.inputs.ref }}" ]; then
+            ARGS="$ARGS --ref ${{ github.event.inputs.ref }}"
+          fi
+          python3 scripts/update_dart_source.py $ARGS

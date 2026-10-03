@@ -147,6 +147,7 @@ BDEPEND="${PYTHON_DEPS}
 PATCHES=(
 	"${FILESDIR}/${P}-gentoo-gcc-prefixes.patch"
 	"${FILESDIR}/${P}-no-prebuilt-devtools.patch"
+	"${FILESDIR}/${P}-binaryen-assert-unused.patch"
 )
 
 src_unpack() {
