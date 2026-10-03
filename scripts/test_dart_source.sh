@@ -86,6 +86,7 @@ if [[ -z ${latest_binary_ebuild} ]]; then
 	exit 1
 fi
 default_binary_pf=${matching_binary_ebuild:-${latest_binary_ebuild}}
+default_binary_pf=${default_binary_pf%.ebuild}
 binary_atom=${DART_BINARY_ATOM:-=dev-lang/${default_binary_pf}}
 test_dart_virtual=true
 if [[ ${virtual_version} != "${source_version}" || -z ${matching_binary_ebuild} ]]; then
