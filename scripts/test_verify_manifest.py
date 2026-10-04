@@ -87,6 +87,55 @@ MY_VAR='custom_value'
         self.assertEqual(vars_dict['COMMIT'], 'e337a5f69a9bea30e58d05bd40184d79cc099628')
         self.assertEqual(vars_dict['MY_VAR'], 'custom_value')
 
+    def test_parameter_substitution_first_and_all(self):
+        variables = {"PV": "1.2_p3_p4"}
+        self.assertEqual(
+            resolve_variables("${PV/_p/+}", variables),
+            "1.2+3_p4",
+        )
+        self.assertEqual(
+            resolve_variables("${PV//_p/+}", variables),
+            "1.2+3+4",
+        )
+
+    def test_parameter_substitution_rejects_shell_patterns(self):
+        with self.assertRaisesRegex(ValueError, "non-literal parameter substitution"):
+            resolve_variables("${PV/*/-}", {"PV": "1.2.3"})
+
+    def test_ollama_parameter_substitution_uris(self):
+        content = """MY_PV="${PV/_/-}"
+OLLAMA_RELEASE_BASE="github.com/ollama/ollama/releases/download"
+SRC_URI="
+    https://${OLLAMA_RELEASE_BASE}/v${MY_PV}/ollama-linux-amd64.tar.zst
+        -> ${P}.amd64.tar.zst
+"
+"""
+        variables = parse_ebuild_variables("ollama-bin-0.35.1.ebuild", content)
+        self.assertEqual(variables["MY_PV"], "0.35.1")
+        self.assertEqual(
+            extract_uris(content, variables),
+            [(
+                "https://github.com/ollama/ollama/releases/download/v0.35.1/ollama-linux-amd64.tar.zst",
+                "ollama-bin-0.35.1.amd64.tar.zst",
+            )],
+        )
+
+    def test_xtensa_parameter_substitution_uris(self):
+        content = """MY_PV="${PV/_p/_}"
+SRC_URI="https://example.com/esp-${MY_PV}/toolchain-${MY_PV}.tar.xz"
+"""
+        variables = parse_ebuild_variables(
+            "xtensa-esp-elf-bin-16.1.0_p20260609-r1.ebuild", content
+        )
+        self.assertEqual(variables["MY_PV"], "16.1.0_20260609")
+        self.assertEqual(
+            extract_uris(content, variables),
+            [(
+                "https://example.com/esp-16.1.0_20260609/toolchain-16.1.0_20260609.tar.xz",
+                "toolchain-16.1.0_20260609.tar.xz",
+            )],
+        )
+
     def test_src_uri_regression_revision_independent_naming(self):
         # When an ebuild is revised (e.g. rubik-1.0-r1.ebuild or foo-1.0-r1.ebuild),
         # SRC_URI using ${P} or ${PN}-${PV} MUST resolve to the base version (1.0),
@@ -166,6 +215,8 @@ SRC_URI="
     def test_actual_overlay_manifests(self):
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         pkgs = [
+            "app-misc/ollama-bin",
+            "dev-embedded/xtensa-esp-elf-bin",
             "dev-python/materialyoucolor",
             "gui-apps/quickshell",
             "gui-apps/caelestia-cli",

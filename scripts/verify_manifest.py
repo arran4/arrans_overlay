@@ -14,6 +14,12 @@ EBUILD_FILENAME_PATTERN = re.compile(
     r'(?:-r(?P<pr>\d+))?\.ebuild$'
 )
 
+PARAMETER_SUBSTITUTION_PATTERN = re.compile(
+    r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?P<operator>//?)"
+    r"(?P<search>[^/}]*)/(?P<replacement>[^}]*)\}"
+)
+UNSUPPORTED_SUBSTITUTION_PATTERN_CHARS = re.compile(r"[*?\[\]\\]")
+
 def parse_ebuild_variables(filename, content=""):
     basename = os.path.basename(filename)
     match = EBUILD_FILENAME_PATTERN.match(basename)
@@ -50,6 +56,40 @@ def parse_ebuild_variables(filename, content=""):
     return variables
 
 def resolve_variables(text, variables):
+    """Resolve the limited shell-style variable forms used by SRC_URI metadata.
+
+    This intentionally supports only literal Bash parameter substitutions
+    (${VAR/old/new} and ${VAR//old/new}). Shell glob patterns and escaped
+    replacement expressions are rejected rather than approximated.
+    """
+    def replace_parameter_substitution(match):
+        name = match.group("name")
+        if name not in variables:
+            return match.group(0)
+
+        search = match.group("search")
+        replacement = match.group("replacement")
+        expression = match.group(0)
+
+        if not search:
+            raise ValueError(f"Unsupported empty substitution pattern: {expression}")
+        if (
+            UNSUPPORTED_SUBSTITUTION_PATTERN_CHARS.search(search)
+            or "\\" in replacement
+        ):
+            raise ValueError(
+                f"Unsupported non-literal parameter substitution: {expression}"
+            )
+
+        value = variables[name]
+        if match.group("operator") == "//":
+            return value.replace(search, replacement)
+        return value.replace(search, replacement, 1)
+
+    text = PARAMETER_SUBSTITUTION_PATTERN.sub(
+        replace_parameter_substitution, text
+    )
+
     for key in sorted(variables.keys(), key=len, reverse=True):
         value = variables[key]
         text = text.replace(f"${{{key}}}", value)
