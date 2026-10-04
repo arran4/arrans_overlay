@@ -217,11 +217,11 @@ assert '${PKG} == "=dev-lang/flutter-"*' in workflow
 # share the 'flutter' cache lineage, while virtual/flutter and binary flutter
 # preserve appropriate standard defaults.
 flutter_entries = run_helper([
-    "dev-lang/flutter/flutter-3.47.2.ebuild",
+    "dev-lang/flutter/flutter-3.47.2-r1.ebuild",
     "virtual/flutter/flutter-3.47.2.ebuild",
     "dev-lang/flutter-bin/flutter-bin-3.47.2-r1.ebuild",
 ])
-flutter_source = next(item for item in flutter_entries if item["package"] == "=dev-lang/flutter-3.47.2")
+flutter_source = next(item for item in flutter_entries if item["package"] == "=dev-lang/flutter-3.47.2-r1")
 assert flutter_source["cache_lineage"] == "flutter"
 assert flutter_source["step_timeout"] == 350
 assert flutter_source["source_target"] is True

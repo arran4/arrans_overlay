@@ -58,10 +58,43 @@ command -v docker >/dev/null || {
 mkdir -p "${distfiles}"
 distfiles=$(cd "${distfiles}" && pwd -P)
 
-source_atom=${DART_SOURCE_ATOM:-=dev-lang/dart-3.13.3-r2}
-binary_atom=${DART_BINARY_ATOM:-=dev-lang/dart-bin-3.13.3-r2}
+latest_source_ebuild=$(find "${repo_root}/dev-lang/dart" -maxdepth 1 -type f -name 'dart-*.ebuild' -printf '%f\n' | sort -V | tail -n1)
+if [[ -z ${latest_source_ebuild} ]]; then
+	echo "No dev-lang/dart source ebuild found" >&2
+	exit 1
+fi
+default_source_pf=${latest_source_ebuild%.ebuild}
+source_atom=${DART_SOURCE_ATOM:-=dev-lang/${default_source_pf}}
+source_pvr=${source_atom#=dev-lang/dart-}
+source_version=${source_pvr%-r[0-9]*}
+
+latest_virtual_ebuild=$(find "${repo_root}/virtual/dart" -maxdepth 1 -type f -name 'dart-*.ebuild' -printf '%f\n' | sort -V | tail -n1)
+if [[ -z ${latest_virtual_ebuild} ]]; then
+	echo "Missing Dart virtual integration fixture" >&2
+	exit 1
+fi
+default_virtual_pf=${latest_virtual_ebuild%.ebuild}
+virtual_atom=${DART_VIRTUAL_ATOM:-=virtual/${default_virtual_pf}}
+virtual_pvr=${virtual_atom#=virtual/dart-}
+virtual_version=${virtual_pvr%-r[0-9]*}
+matching_binary_ebuild=$(find "${repo_root}/dev-lang/dart-bin" -maxdepth 1 -type f \
+	-name "dart-bin-${virtual_version}*.ebuild" -printf '%f\n' | sort -V | tail -n1)
+latest_binary_ebuild=$(find "${repo_root}/dev-lang/dart-bin" -maxdepth 1 -type f \
+	-name 'dart-bin-*.ebuild' -printf '%f\n' | sort -V | tail -n1)
+if [[ -z ${latest_binary_ebuild} ]]; then
+	echo "Missing Dart binary integration fixture" >&2
+	exit 1
+fi
+default_binary_pf=${matching_binary_ebuild:-${latest_binary_ebuild}}
+default_binary_pf=${default_binary_pf%.ebuild}
+binary_atom=${DART_BINARY_ATOM:-=dev-lang/${default_binary_pf}}
+test_dart_virtual=true
+if [[ ${virtual_version} != "${source_version}" || -z ${matching_binary_ebuild} ]]; then
+	test_dart_virtual=false
+	echo "No matching virtual/dart providers for ${source_version}; testing source package without changing deferred virtual policy"
+fi
+
 bootstrap_atom=${DART_BOOTSTRAP_ATOM:-=dev-lang/dart-bootstrap-bin-3.13.0_beta103_p1-r0}
-virtual_atom=${DART_VIRTUAL_ATOM:-=virtual/dart-3.13.3-r1}
 container_suffix="${UID:-0}-$$"
 portage_container="dart-source-portage-${container_suffix}"
 gentoo_container="dart-source-gentoo-${container_suffix}"
@@ -95,11 +128,12 @@ docker run --detach \
 
 echo "Preparing toolchain, dependencies, virtual resolution, and distfiles online"
 docker exec -i "${gentoo_container}" bash -euxo pipefail -s -- \
-	"${source_atom}" "${binary_atom}" "${bootstrap_atom}" "${virtual_atom}" <<'ONLINE'
+	"${source_atom}" "${binary_atom}" "${bootstrap_atom}" "${virtual_atom}" "${test_dart_virtual}" <<'ONLINE'
 source_atom=$1
 binary_atom=$2
 bootstrap_atom=$3
 virtual_atom=$4
+test_dart_virtual=$5
 
 chmod 777 /var/cache/distfiles
 mkdir -p /etc/portage/repos.conf
@@ -129,31 +163,35 @@ printf '%s ~amd64\n' \
 	"${virtual_atom}" \
 	> /etc/portage/package.accept_keywords/dart-source-test
 
-# Prove that virtual/dart can independently resolve to either normal provider.
-# The bootstrap must never satisfy the virtual or appear in the binary plan.
-mkdir -p /etc/portage/package.mask
-printf '%s\n' 'dev-lang/dart-bin' > /etc/portage/package.mask/dart-provider-test
-source_plan=$(emerge --pretend --verbose "${virtual_atom}")
-printf '%s\n' "${source_plan}"
-grep -Fq "${source_atom#=}" <<<"${source_plan}"
+# Prove virtual/dart provider behavior only when a matching virtual exists.
+# Source updates deliberately defer the virtual while dart-bin is behind.
+if [[ ${test_dart_virtual} == true ]]; then
+	mkdir -p /etc/portage/package.mask
+	printf '%s\n' 'dev-lang/dart-bin' > /etc/portage/package.mask/dart-provider-test
+	source_plan=$(emerge --pretend --verbose "${virtual_atom}")
+	printf '%s\n' "${source_plan}"
+	grep -Fq "${source_atom#=}" <<<"${source_plan}"
 
-printf '%s\n' 'dev-lang/dart' > /etc/portage/package.mask/dart-provider-test
-binary_plan=$(emerge --pretend --verbose "${virtual_atom}")
-printf '%s\n' "${binary_plan}"
-grep -Fq "${binary_atom#=}" <<<"${binary_plan}"
-if grep -Fq 'dev-lang/dart-bootstrap-bin-' <<<"${binary_plan}"; then
-	echo 'The private bootstrap unexpectedly satisfies virtual/dart' >&2
-	exit 1
-fi
+	printf '%s\n' 'dev-lang/dart' > /etc/portage/package.mask/dart-provider-test
+	binary_plan=$(emerge --pretend --verbose "${virtual_atom}")
+	printf '%s\n' "${binary_plan}"
+	grep -Fq "${binary_atom#=}" <<<"${binary_plan}"
+	if grep -Fq 'dev-lang/dart-bootstrap-bin-' <<<"${binary_plan}"; then
+		echo 'The private bootstrap unexpectedly satisfies virtual/dart' >&2
+		exit 1
+	fi
 
-printf '%s\n' 'dev-lang/dart' 'dev-lang/dart-bin' \
-	> /etc/portage/package.mask/dart-provider-test
-if unexpected_plan=$(emerge --pretend --verbose "${virtual_atom}" 2>&1); then
-	printf '%s\n' "${unexpected_plan}"
-	echo 'virtual/dart resolved without either normal Dart provider' >&2
-	exit 1
+	printf '%s\n' 'dev-lang/dart' 'dev-lang/dart-bin' \
+		> /etc/portage/package.mask/dart-provider-test
+	if unexpected_plan=$(emerge --pretend --verbose "${virtual_atom}" 2>&1); then
+		printf '%s\n' "${unexpected_plan}"
+		echo 'virtual/dart resolved without either normal Dart provider' >&2
+		exit 1
+	fi
+	rm /etc/portage/package.mask/dart-provider-test
+else
+	echo "Skipping deferred ${virtual_atom}; it does not match ${source_atom}"
 fi
-rm /etc/portage/package.mask/dart-provider-test
 
 # The slim Docker stage3 records GCC with USE=cxx but omits cc1plus. Restore
 # the complete compiler from Gentoo's binhost and prove it works before the
@@ -199,9 +237,10 @@ fi
 echo "Network disabled; beginning the source-only Dart emerge"
 
 docker exec -i "${gentoo_container}" bash -euxo pipefail -s -- \
-	"${source_atom}" "${bootstrap_atom}" <<'OFFLINE'
+	"${source_atom}" "${bootstrap_atom}" "${source_version}" <<'OFFLINE'
 source_atom=$1
 bootstrap_atom=$2
+source_version=$3
 source_pf=${source_atom#=dev-lang/}
 bootstrap_pf=${bootstrap_atom#=dev-lang/}
 # Portage omits the explicit revision-zero suffix from VDB directory names.
@@ -275,7 +314,7 @@ for binary in bin/dart bin/dartaotruntime bin/utils/gen_snapshot; do
 done
 
 version=$(/opt/bin/dart --version 2>&1)
-[[ ${version} == 'Dart SDK version: 3.13.3 (stable)'*'on "linux_x64"' ]]
+[[ ${version} == "Dart SDK version: ${source_version} (stable)"*'on "linux_x64"' ]]
 
 printf '%s\n' \
 	'void main() {' \

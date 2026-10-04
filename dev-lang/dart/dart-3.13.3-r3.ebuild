@@ -145,9 +145,9 @@ BDEPEND="${PYTHON_DEPS}
 "
 
 PATCHES=(
-	"${FILESDIR}/${P}-gentoo-gcc-prefixes.patch"
-	"${FILESDIR}/${P}-no-prebuilt-devtools.patch"
-	"${FILESDIR}/${P}-binaryen-assert-unused.patch"
+	"${FILESDIR}/dart-gentoo-gcc-prefixes-r1.patch"
+	"${FILESDIR}/dart-no-prebuilt-devtools-r1.patch"
+	"${FILESDIR}/dart-binaryen-assert-unused-r1.patch"
 )
 
 src_unpack() {

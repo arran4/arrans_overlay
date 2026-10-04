@@ -11,6 +11,8 @@ on:
       - 'virtual/flutter/**'
       - 'dev-lang/flutter-bin/**'
       - 'scripts/generate_flutter_ebuild.py'
+      - 'scripts/source_update_utils.py'
+      - 'scripts/update_flutter_source.py'
       - 'scripts/test_generate_flutter_ebuild.py'
       - 'scripts/test_flutter_source.sh'
       - '.github/workflows/dev-lang-flutter-source-test.yaml'

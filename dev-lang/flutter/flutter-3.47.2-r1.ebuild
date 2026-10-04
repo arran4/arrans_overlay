@@ -155,7 +155,7 @@ BDEPEND="
 "
 
 PATCHES=(
-	"${FILESDIR}/flutter-xdg-cache.patch"
+	"${FILESDIR}/flutter-xdg-cache-r1.patch"
 )
 
 src_unpack() {
