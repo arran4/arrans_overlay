@@ -8,9 +8,15 @@ on:
   push:
     paths:
       - '**/Manifest'
+      - '.github/workflows/verify-manifests.yml'
+      - 'scripts/verify_manifest.py'
+      - 'scripts/test_verify_manifest.py'
   pull_request:
     paths:
       - '**/Manifest'
+      - '.github/workflows/verify-manifests.yml'
+      - 'scripts/verify_manifest.py'
+      - 'scripts/test_verify_manifest.py'
 
 jobs:
   verify-manifests:
@@ -30,13 +36,17 @@ jobs:
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             BASE="origin/${{ github.base_ref }}"
             HEAD="HEAD"
-          else
+          elif [ "${{ github.ref_name }}" == "${{ github.event.repository.default_branch }}" ]; then
             BASE="${{ github.event.before }}"
             HEAD="${{ github.sha }}"
-            # Handle empty before (new branch)
+            # Handle the first push when GitHub has no previous commit.
             if [ -z "$BASE" ] || [ "$BASE" == "0000000000000000000000000000000000000000" ]; then
-               BASE="HEAD~1"
+              BASE="HEAD~1"
             fi
+          else
+            HEAD="${{ github.sha }}"
+            DEFAULT_BRANCH="origin/${{ github.event.repository.default_branch }}"
+            BASE="$(git merge-base "$DEFAULT_BRANCH" "$HEAD")"
           fi
 
           echo "Comparing $BASE to $HEAD"
