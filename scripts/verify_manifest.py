@@ -15,10 +15,10 @@ EBUILD_FILENAME_PATTERN = re.compile(
 )
 
 PARAMETER_SUBSTITUTION_PATTERN = re.compile(
-    r"\\$\\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?P<operator>//?)"
-    r"(?P<search>[^/}]*)/(?P<replacement>[^}]*)\\}"
+    r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?P<operator>//?)"
+    r"(?P<search>[^/}]*)/(?P<replacement>[^}]*)\}"
 )
-UNSUPPORTED_SUBSTITUTION_PATTERN_CHARS = re.compile(r"[*?\\[\\]\\\\]")
+UNSUPPORTED_SUBSTITUTION_PATTERN_CHARS = re.compile(r"[*?\[\]\\]")
 
 def parse_ebuild_variables(filename, content=""):
     basename = os.path.basename(filename)
