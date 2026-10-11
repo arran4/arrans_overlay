@@ -6,8 +6,8 @@
 		<name>Arran Ubels</name>
 	</maintainer>
 	<longdescription>
-		Installs package-specific Portage environment configuration so
-		git-r3 can authenticate private GitHub HTTPS fetches using the portage
-		user's GitHub CLI credentials without exposing them in ebuilds.
+		Installs a reusable, opt-in Portage environment for HTTPS git-r3
+		fetches from private GitHub repositories, using credentials provided by
+		the portage user's GitHub CLI authentication. No credentials are packaged.
 	</longdescription>
 </pkgmetadata>
