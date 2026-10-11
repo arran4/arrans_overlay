@@ -20,14 +20,16 @@ src_install() {
 	insinto /etc/portage/env/app-shells
 	newins "${FILESDIR}/a4sh.env" a4sh
 
-	dodoc "${FILESDIR}/README.md"
 }
 
 pkg_postinst() {
-	elog "Installed the Portage environment for app-shells/a4sh."
-	elog "Authenticate the portage user separately using GitHub CLI over HTTPS:"
-	elog "    sudo -u portage -H gh auth login --hostname github.com --git-protocol https"
-	elog "Then test access with:"
-	elog "    sudo -u portage -H git ls-remote https://github.com/arran4/shell.git HEAD"
-	elog "See /usr/share/doc/${PF}/README.md* for security notes and other packages."
+	einfo "Configured GitHub HTTPS credential helper for app-shells/a4sh."
+	einfo "Authenticate the portage account (once) if not already logged in:"
+	einfo "    sudo -u portage -H gh auth login --hostname github.com --git-protocol https"
+	einfo "Verify private repository access:"
+	einfo "    sudo -u portage -H git ls-remote https://github.com/arran4/shell.git HEAD"
+	elog "Use a read-only, repository-scoped credential where possible."
+	elog "gh may store authentication in plaintext if no secure credential store is available."
+	elog "The package does not create, store, or revoke GitHub credentials."
+	elog "For a nondefault portage home, adjust GH_CONFIG_DIR in the installed config."
 }
