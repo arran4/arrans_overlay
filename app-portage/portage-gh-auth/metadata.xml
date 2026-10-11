@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>gentoo@arran4.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
+	<longdescription>
+		Installs package-specific Portage environment configuration so
+		git-r3 can authenticate private GitHub HTTPS fetches using the portage
+		user's GitHub CLI credentials without exposing them in ebuilds.
+	</longdescription>
+</pkgmetadata>
