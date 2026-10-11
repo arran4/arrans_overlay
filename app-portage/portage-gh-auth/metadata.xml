@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>gentoo@arran4.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
+	<longdescription>
+		Installs a reusable, opt-in Portage environment for HTTPS git-r3
+		fetches from private GitHub repositories, using credentials provided by
+		the portage user's GitHub CLI authentication. No credentials are packaged.
+	</longdescription>
+</pkgmetadata>
