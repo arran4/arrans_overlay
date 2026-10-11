@@ -12,7 +12,7 @@ ENV_FILE = (
     Path(__file__).resolve().parents[1]
     / "app-portage/portage-gh-auth/files/github-auth.env"
 )
-EBUILD_FILE = ENV_FILE.parents[1] / "portage-gh-auth-1-r1.ebuild"
+EBUILD_FILE = ENV_FILE.parents[1] / "portage-gh-auth-1-r2.ebuild"
 
 
 @unittest.skipUnless(shutil.which("git") and shutil.which("bash"), "git and bash required")
@@ -44,6 +44,14 @@ class TestPortageGhAuth(unittest.TestCase):
                 ["!gh auth git-credential", "/tmp/portage-checkout"],
             )
             self.assertTrue((Path(home) / ".gitconfig").exists())
+
+    def test_ebuild_respects_lint_line_length(self):
+        long_lines = [
+            line_number
+            for line_number, line in enumerate(EBUILD_FILE.read_text().splitlines(), 1)
+            if len(line.expandtabs(8)) > 80
+        ]
+        self.assertEqual(long_lines, [])
 
     def test_installer_is_generic_and_does_not_modify_local_package_env(self):
         ebuild = EBUILD_FILE.read_text()
