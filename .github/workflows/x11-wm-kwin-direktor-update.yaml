@@ -1,0 +1,143 @@
+name: x11-wm/kwin-direktor update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '34 22 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/x11-wm-kwin-direktor-update.yaml'
+
+concurrency:
+  group: ci-${{ github.ref }}-x11-wm-kwin-direktor
+  cancel-in-progress: false
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Process each release
+        id: process_releases
+        run: |
+          ebuild_dir="./x11-wm/kwin-direktor"
+          mkdir -p "$ebuild_dir"
+          metadata_file="${ebuild_dir}/metadata.xml"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:Alex-Bini/kwin-direktor" --use-add "amd64:Enable amd64" "$metadata_file"
+          declare -A releaseTypes=()
+          tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/Alex-Bini/kwin-direktor/tags" --jq '.[].name')
+          for tag in $tags; do
+            version="${tag#v}"
+            if [ "${version}" = "${tag}" ]; then
+                echo "$version == $tag so there is no v removed skipping"
+                continue
+            fi
+            originalVersion="${version}"
+            version="${version/-/_}"
+            if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                echo "tag / $version doesn't match regexp";
+                continue;
+            fi
+            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
+            if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
+                if [[ -v releaseTypes[release] ]]; then
+                  echo "Already have a newer main release: ${releaseTypes[release]}"
+                  continue
+                fi
+                releaseTypes[${releaseType:=release}]="${version}"
+            else
+                echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+                continue
+            fi
+            tmp_ebuild_file="${ebuild_dir}/kwin-direktor-${version}.ebuild.tmp"
+
+              {
+                echo '# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/x11-wm-kwin-direktor-update.yaml'
+                echo 'EAPI=8'
+                echo 'DESCRIPTION="An ultra-modern, zero-bloat, Wayland-First Tiling Window Manager for KDE Plasma 6"'
+                echo 'HOMEPAGE="https://github.com/Alex-Bini/kwin-direktor"'
+                echo 'SRC_URI="https://github.com/Alex-Bini/kwin-direktor/archive/refs/tags/v${PV/_/-}.tar.gz -> ${P}.tar.gz"'
+                echo 'LICENSE="GPL-3"'
+                echo 'SLOT="0"'
+                echo 'KEYWORDS="~amd64"'
+                echo -n 'IUSE="'
+                echo '"'
+                echo ''
+                echo -n 'REQUIRED_USE="'
+                echo '"'
+                echo ''
+                echo 'RDEPEND="kde-plasma/kwin kde-frameworks/kpackage"'
+                echo 'DEPEND="${RDEPEND}"'
+                echo ''
+                echo 'S="${WORKDIR}/${P/_/-}"'
+                echo ''
+                echo 'src_compile() {'
+                echo '	./package.sh || die "Package building failed"'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '	insinto /usr/share/kwin/scripts/direktor'
+                echo '	doins -r build_package/*'
+                echo '	'
+                echo '	exeinto /opt/bin'
+                echo '	doexe bin/direktor-osd'
+                echo '}'
+              } > "$tmp_ebuild_file"
+              sed -i "s|\${PV/_/-}|${originalVersion}|g" "$tmp_ebuild_file"
+              next_ebuild_file="${ebuild_dir}/$(basename $(g2 ebuild next-revision -inspect "$tmp_ebuild_file" "${ebuild_dir}" "kwin-direktor-${version}"))"
+              if [ "$?" -eq 0 ] && [ -n "$next_ebuild_file" ]; then
+                  echo "Content changed or new version for $version. Writing $next_ebuild_file"
+                  mv "$tmp_ebuild_file" "${next_ebuild_file}.ebuild"
+                  ebuild_file="${next_ebuild_file}.ebuild"
+              else
+                  echo "Matches existing ebuild. Skipping."
+                  rm -f "$tmp_ebuild_file"
+                  continue
+              fi
+              failed=0
+              if ! g2 manifest upsert-from-url "https://github.com/Alex-Bini/kwin-direktor/archive/refs/tags/${tag}.tar.gz" "kwin-direktor-${version}.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if [ "$failed" -eq 1 ]; then
+                  echo "Failed to generate manifest for $tag. Skipping..."
+                  rm -f "$ebuild_file"
+                  continue
+              fi
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+          done
+          g2 ebuild deduplicate "${ebuild_dir}"
+          g2 manifest clean "${ebuild_dir}"
+
+      - name: Generate Overlay
+        run: |
+          mkdir -p profiles
+          echo "overlay_name" > profiles/repo_name
+          echo "8" > profiles/eapi
+
+      - name: Lint output
+        uses: arran4/g2-action@v1.2
+        with:
+          mode: 'run'
+          action: 'lint . x11-wm/kwin-direktor'
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./x11-wm/kwin-direktor"
+          mkdir -p profiles; [ ! -f profiles/repo_name ] && echo "kwin-direktor" > profiles/repo_name; [ ! -f profiles/eapi ] && echo "8" > profiles/eapi; g2 cache generate "x11-wm/kwin-direktor"
+          git add "./${ebuild_dir}"
+          if git commit -m "Add ebuilds for new kwin-direktor releases tag ${generated_tag}"; then
+            git pull --rebase &&
+            git push
+          fi || true
+        if: steps.process_releases.outputs.generated_tag
