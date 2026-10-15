@@ -1,0 +1,54 @@
+name: games-strategy/beyond-all-reason Update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/beyond-all-reason-update.yaml'
+      - 'games-strategy/beyond-all-reason/beyond-all-reason-9999.ebuild'
+
+concurrency:
+  group: ci-${{ github.ref }}-beyond-all-reason
+  cancel-in-progress: false
+
+env:
+  ebuild_category: games-strategy
+  ebuild_name: beyond-all-reason
+  github_owner: beyond-all-reason
+  github_repo: Beyond-All-Reason
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Generate cache
+        run: |
+          ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
+          g2 cache generate -repo .
+
+      - name: Commit changes
+        run: |
+          ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
+          if ! git diff --quiet "${ebuild_dir}"; then
+            git add "${ebuild_dir}"
+            git commit -m "Update cache for ${{ env.ebuild_name }}" && git fetch && git rebase FETCH_HEAD
+            git push || true
+          fi
