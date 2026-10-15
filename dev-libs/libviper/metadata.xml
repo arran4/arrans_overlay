@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>maintainer@example.invalid</email>
+		<name>Overlay maintainer</name>
+	</maintainer>
+	<use>
+		<flag name="gpm">Enable mouse support through sys-libs/gpm</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">TragicWarrior/libviper</remote-id>
+		<bugs-to>https://github.com/TragicWarrior/libviper/issues</bugs-to>
+	</upstream>
+</pkgmetadata>
