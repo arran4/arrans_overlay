@@ -29,7 +29,7 @@ src_prepare() {
 	default
 }
 
-src_compile() {
+src_configure() {
 	local backends=()
 	use wayland && backends+=( wayland )
 	use X && backends+=( x11 )
@@ -37,19 +37,21 @@ src_compile() {
 	local addons=()
 	use libconfig && addons+=( libconfig )
 
-	local myemakeargs=(
+	myemakeargs=(
 		CC="$(tc-getCC)"
 		PREFIX="${EPREFIX}/usr"
+		MANDIR="${EPREFIX}/usr/share/man"
 		backends="${backends[*]}"
 		with="${addons[*]}"
 	)
+}
+
+src_compile() {
+	src_configure
 	emake "${myemakeargs[@]}"
 }
 
 src_install() {
-	local myemakeargs=(
-		PREFIX="${EPREFIX}/usr"
-		DESTDIR="${D}"
-	)
-	emake "${myemakeargs[@]}" install
+	src_configure
+	emake "${myemakeargs[@]}" DESTDIR="${D}" install
 }
