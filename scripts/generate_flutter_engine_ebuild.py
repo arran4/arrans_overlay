@@ -765,7 +765,9 @@ def reviewed_exclusions_for_dart_revision(
             )
         package, _previous_version = identity.packages[0]
         reviews[destination] = (
-            cipd_identity(package, f"git_revision:{dart_revision}", identity.condition),
+            cipd_identity(
+                package, f"git_revision:{dart_revision}", identity.condition
+            ),
             reason,
         )
     return reviews
