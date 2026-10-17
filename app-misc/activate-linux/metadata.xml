@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>arran@arranubels.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
+	<use>
+		<flag name="libconfig">Enable libconfig backend for reading config file</flag>
+		<flag name="gui">Control optional GUI support for historic toolkit flag X</flag>
+		<flag name="wayland">Enable wayland backend</flag>
+		<flag name="X">Enable X11 backend</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">MrGlockenspiel/activate-linux</remote-id>
+	</upstream>
+</pkgmetadata>
