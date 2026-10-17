@@ -760,7 +760,9 @@ def reviewed_exclusions_for_dart_revision(
     ):
         identity, reason = reviews[destination]
         if identity.dep_type != "cipd" or len(identity.packages) != 1:
-            raise ValueError(f"unexpected reviewed Dart SDK identity at {destination}")
+            raise ValueError(
+                f"unexpected reviewed Dart SDK identity at {destination}"
+            )
         package, _previous_version = identity.packages[0]
         reviews[destination] = (
             cipd_identity(package, f"git_revision:{dart_revision}", identity.condition),
