@@ -13,7 +13,7 @@ SRC_URI="${BASE_URI}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="gui libconfig wayland X"
+IUSE="gui libconfig +wayland X"
 REQUIRED_USE="|| ( wayland X ) X? ( gui )"
 
 DEPEND="X? ( x11-libs/libX11 x11-libs/libXext x11-libs/libXfixes"
