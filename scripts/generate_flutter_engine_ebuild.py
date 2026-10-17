@@ -931,7 +931,9 @@ def render(deps_path: Path) -> str:
             else "git"
         )
         if dep_type == "cipd":
-            validate_reviewed_exclusion(destination, dependency, reviewed_exclusions)
+            validate_reviewed_exclusion(
+                destination, dependency, reviewed_exclusions
+            )
             active_reviews.add(destination)
             devtools_dest = (
                 "engine/src/flutter/third_party/dart/third_party/devtools"
@@ -951,7 +953,9 @@ def render(deps_path: Path) -> str:
                 )
         elif dep_type == "git":
             if destination in reviewed_exclusions:
-                validate_reviewed_exclusion(destination, dependency, reviewed_exclusions)
+                validate_reviewed_exclusion(
+                    destination, dependency, reviewed_exclusions
+                )
                 active_reviews.add(destination)
                 if destination == "engine/src/flutter/third_party/vulkan-deps":
                     for ident, repo, rev, dest in VULKAN_DEPS_SUBPACKAGES:
