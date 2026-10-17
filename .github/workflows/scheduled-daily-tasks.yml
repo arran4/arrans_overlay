@@ -100,11 +100,34 @@ jobs:
             cp -p -- "$manifest" "$relative"
           done < <(find /tmp/manifest-snapshot -type f -name Manifest -print0)
 
-          if ! git diff --quiet -- '**/Manifest'; then
-            echo "Refusing to continue: dedupe left Manifest changes after restoration." >&2
-            git diff -- '**/Manifest' >&2
+          # Verify exact-byte preservation without relying on git (which fails if dedupe breaks .git metadata)
+          CHANGED=0
+          while IFS= read -r -d '' manifest; do
+            relative=${manifest#./}
+            if [ ! -f "/tmp/manifest-snapshot/$relative" ]; then
+              echo "Refusing to continue: dedupe added new Manifest file: $relative" >&2
+              CHANGED=1
+            elif ! cmp -s "$manifest" "/tmp/manifest-snapshot/$relative"; then
+              echo "Refusing to continue: dedupe left Manifest changes after restoration: $relative" >&2
+              diff -u "/tmp/manifest-snapshot/$relative" "$manifest" >&2 || true
+              CHANGED=1
+            fi
+          done < <(find . -type f -name Manifest -print0)
+
+          # Check for deleted manifests
+          cd /tmp/manifest-snapshot
+          while IFS= read -r -d '' manifest; do
+            relative=${manifest#./}
+            if [ ! -f "$GITHUB_WORKSPACE/$relative" ]; then
+              echo "Refusing to continue: dedupe deleted Manifest file: $relative" >&2
+              CHANGED=1
+            fi
+          done < <(find . -type f -name Manifest -print0)
+
+          if [ "$CHANGED" -ne 0 ]; then
             exit 1
           fi
+          cd "$GITHUB_WORKSPACE"
 
       # Repository-wide `g2 manifest clean .` is intentionally disabled while
       # g2#483 / PR #540 is pending. Use the package-scoped manual
