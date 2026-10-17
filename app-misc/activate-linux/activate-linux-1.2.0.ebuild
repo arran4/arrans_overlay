@@ -7,36 +7,22 @@ inherit toolchain-funcs
 
 DESCRIPTION="The 'Activate Windows' watermark ported to Linux"
 HOMEPAGE="https://github.com/MrGlockenspiel/activate-linux"
-SRC_URI="https://github.com/MrGlockenspiel/activate-linux/archive/v${PV}.tar.gz -> ${P}.tar.gz"
+BASE_URI="https://github.com/MrGlockenspiel/activate-linux"
+SRC_URI="${BASE_URI}/archive/v${PV}.tar.gz -> ${P}.tar.gz"
 
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="wayland X libconfig"
-REQUIRED_USE="|| ( wayland X )"
+IUSE="gui libconfig wayland X"
+REQUIRED_USE="|| ( wayland X ) X? ( gui )"
 
-DEPEND="
-	X? (
-		x11-libs/libX11
-		x11-libs/libXext
-		x11-libs/libXfixes
-		x11-libs/libXinerama
-		x11-libs/libXrandr
-		x11-libs/cairo
-		x11-libs/pango
-	)
-	wayland? (
-		dev-libs/wayland
-		x11-libs/cairo
-		x11-libs/pango
-	)
-	libconfig? ( dev-libs/libconfig:= )
-"
+DEPEND="X? ( x11-libs/libX11 x11-libs/libXext x11-libs/libXfixes"
+DEPEND+=" x11-libs/libXinerama x11-libs/libXrandr x11-libs/cairo"
+DEPEND+=" x11-libs/pango )"
+DEPEND+=" wayland? ( dev-libs/wayland x11-libs/cairo x11-libs/pango )"
+DEPEND+=" libconfig? ( dev-libs/libconfig:= )"
 RDEPEND="${DEPEND}"
-BDEPEND="
-	virtual/pkgconfig
-	wayland? ( dev-libs/wayland-protocols )
-"
+BDEPEND="virtual/pkgconfig wayland? ( dev-libs/wayland-protocols )"
 
 src_prepare() {
 	default
