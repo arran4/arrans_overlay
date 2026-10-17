@@ -22,7 +22,8 @@ DEPEND+=" x11-libs/pango )"
 DEPEND+=" wayland? ( dev-libs/wayland x11-libs/cairo x11-libs/pango )"
 DEPEND+=" libconfig? ( dev-libs/libconfig:= )"
 RDEPEND="${DEPEND}"
-BDEPEND="virtual/pkgconfig wayland? ( dev-libs/wayland-protocols )"
+BDEPEND="virtual/pkgconfig"
+BDEPEND+=" wayland? ( dev-util/wayland-scanner dev-libs/wayland-protocols )"
 
 src_prepare() {
 	default
