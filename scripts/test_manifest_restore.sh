@@ -13,6 +13,7 @@ run_test_case() {
   local expected_error_grep="${4:-}"
   local pass_dedupe_failed="${5:-false}"
   local post_assert_func="${6:-}"
+  local fail_find="${7:-false}"
 
   echo "--- Running Test: $test_name ---"
 
@@ -32,11 +33,19 @@ run_test_case() {
   "$mock_setup_func" "$REPO_DIR" "$SNAPSHOT_DIR"
 
   local ERR_FILE="$TEST_DIR/err.log"
+  local test_path="$PATH"
+  if [ "$fail_find" = "true" ]; then
+    # Inject an inventory scan error to prove we do not accept partial find output.
+    mkdir -p "$TEST_DIR/bin"
+    printf '#!/bin/sh\nexit 37\n' > "$TEST_DIR/bin/find"
+    chmod +x "$TEST_DIR/bin/find"
+    test_path="$TEST_DIR/bin:$PATH"
+  fi
 
   set +e
   (
     cd "$REPO_DIR"
-    bash "$RESTORE_SCRIPT" "$SNAPSHOT_DIR" "$pass_dedupe_failed"
+    PATH="$test_path" bash "$RESTORE_SCRIPT" "$SNAPSHOT_DIR" "$pass_dedupe_failed"
   ) 2> "$ERR_FILE"
   local EXIT_CODE=$?
   set -e
@@ -174,6 +183,7 @@ run_test_case "last ebuild removed rejected" setup_last_ebuild_removed 1 "dedupe
 run_test_case "nonzero dedupe exact-byte restore failure" setup_modified_bytes_restored 1 "dedupe command failed." true assert_bytes_restored
 run_test_case "missing .git rejected" setup_git_missing 1 "Not a valid git repository worktree or broken git metadata"
 run_test_case "bare .git rejected" setup_git_bare 1 "Not a valid git repository worktree or broken git metadata"
+run_test_case "failed inventory scan rejected" setup_no_change 1 "failed to enumerate snapshot Manifests" false "" true
 
 # Simulate the actual snapshot logic from scheduled-daily-tasks.yml
 echo "--- Running Test: integration snapshot simulation ---"
@@ -190,13 +200,16 @@ echo "original" > "$REPO_DIR/app-misc/pkg/Manifest"
 
 (
   cd "$REPO_DIR"
-  # EXACT logic from workflow
+  # Workflow-equivalent inventory and snapshot logic.
   mkdir -p "$SNAPSHOT_DIR"
+  manifest_list=$(mktemp)
+  trap 'rm -f -- "$manifest_list"' EXIT
+  find . -type f -name Manifest -print0 > "$manifest_list"
   while IFS= read -r -d '' manifest; do
     relative=${manifest#./}
     mkdir -p "$SNAPSHOT_DIR/$(dirname "$relative")"
     cp -p -- "$manifest" "$SNAPSHOT_DIR/$relative"
-  done < <(find . -type f -name Manifest -print0)
+  done < "$manifest_list"
 )
 
 # Mutate repo
