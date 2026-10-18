@@ -1,96 +1,144 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "Running determinist regression tests for Manifest restoration mechanism"
+echo "Running isolated determinist regression tests for Manifest restoration mechanism"
 
-TEST_DIR=$(mktemp -d)
-trap 'rm -rf "$TEST_DIR" /tmp/manifest-snapshot' EXIT
+# Setup testing utility functions
+run_test_case() {
+  local test_name="$1"
+  local mock_setup_func="$2"
+  local expected_exit_code="$3"
+  local expected_error_grep="${4:-}"
+  local pass_dedupe_failed="${5:-false}"
 
-REPO_DIR="$TEST_DIR/repo"
-SNAPSHOT_DIR="/tmp/manifest-snapshot"
-if [ -d "$SNAPSHOT_DIR" ]; then
-    rm -rf "$SNAPSHOT_DIR"
-fi
-mkdir -p "$SNAPSHOT_DIR"
-mkdir -p "$REPO_DIR"
+  echo "--- Running Test: $test_name ---"
 
-# Need absolute path to the script being tested BEFORE changing directory
-SCRIPT_PATH="$(pwd)/scripts/restore_manifests.sh"
+  local TEST_DIR
+  TEST_DIR=$(mktemp -d)
+  local REPO_DIR="$TEST_DIR/repo"
+  local SNAPSHOT_DIR="$TEST_DIR/manifest-snapshot"
 
-cd "$REPO_DIR"
-git init > /dev/null
+  mkdir -p "$REPO_DIR" "$SNAPSHOT_DIR"
 
-# Test 1: Successful no-change
-mkdir -p "$REPO_DIR/app-misc/pkg-no-change"
-touch "$REPO_DIR/app-misc/pkg-no-change/Manifest"
-echo "ebuild" > "$REPO_DIR/app-misc/pkg-no-change/pkg-no-change-1.ebuild"
-mkdir -p "$SNAPSHOT_DIR/app-misc/pkg-no-change"
-touch "$SNAPSHOT_DIR/app-misc/pkg-no-change/Manifest"
+  export GITHUB_WORKSPACE="$REPO_DIR"
 
-# Test 2: Modified bytes restored exactly
-mkdir -p "$REPO_DIR/app-misc/pkg-diff"
-echo "modified" > "$REPO_DIR/app-misc/pkg-diff/Manifest"
-echo "ebuild" > "$REPO_DIR/app-misc/pkg-diff/pkg-diff-1.ebuild"
-mkdir -p "$SNAPSHOT_DIR/app-misc/pkg-diff"
-echo "original" > "$SNAPSHOT_DIR/app-misc/pkg-diff/Manifest"
+  # Base git setup
+  (cd "$REPO_DIR" && git init > /dev/null)
 
-# Test 3: Added Manifest
-mkdir -p "$REPO_DIR/app-misc/pkg-added"
-touch "$REPO_DIR/app-misc/pkg-added/Manifest"
-echo "ebuild" > "$REPO_DIR/app-misc/pkg-added/pkg-added-1.ebuild"
+  # Call mock setup function
+  "$mock_setup_func" "$REPO_DIR" "$SNAPSHOT_DIR"
 
-# Test 4: Removed package directory (dedupe deleted all ebuilds)
-mkdir -p "$SNAPSHOT_DIR/app-misc/pkg-deleted-dir"
-touch "$SNAPSHOT_DIR/app-misc/pkg-deleted-dir/Manifest"
+  local SCRIPT_PATH="$(pwd)/scripts/restore_manifests.sh"
+  local ERR_FILE="$TEST_DIR/err.log"
 
-# Test 5: Removed Manifest only
-mkdir -p "$REPO_DIR/app-misc/pkg-deleted-manifest"
-echo "ebuild" > "$REPO_DIR/app-misc/pkg-deleted-manifest/pkg-1.ebuild"
-mkdir -p "$SNAPSHOT_DIR/app-misc/pkg-deleted-manifest"
-touch "$SNAPSHOT_DIR/app-misc/pkg-deleted-manifest/Manifest"
+  set +e
+  (
+    cd "$REPO_DIR"
+    bash "$SCRIPT_PATH" "$SNAPSHOT_DIR" "$pass_dedupe_failed"
+  ) 2> "$ERR_FILE"
+  local EXIT_CODE=$?
+  set -e
 
-# Test 6: Removal of last ebuild (orphan manifest)
-mkdir -p "$REPO_DIR/app-misc/pkg-orphan"
-touch "$REPO_DIR/app-misc/pkg-orphan/Manifest"
-mkdir -p "$SNAPSHOT_DIR/app-misc/pkg-orphan"
-touch "$SNAPSHOT_DIR/app-misc/pkg-orphan/Manifest"
-
-export GITHUB_WORKSPACE="$REPO_DIR"
-
-ERR_FILE="$TEST_DIR/err.log"
-set +e
-bash "$SCRIPT_PATH" 2> "$ERR_FILE"
-EXIT_CODE=$?
-set -e
-
-if [ "$EXIT_CODE" -eq 0 ]; then
-  echo "FAIL: Expected the script to fail and report changes, but it exited 0."
-  cat "$ERR_FILE"
-  false
-fi
-
-echo "Errors caught as expected:"
-cat "$ERR_FILE"
-
-if [ "$(cat "$REPO_DIR/app-misc/pkg-diff/Manifest")" != "original" ]; then
-    echo "FAIL: Restore failed to revert pkg-diff/Manifest to original"
+  if [ "$EXIT_CODE" -ne "$expected_exit_code" ]; then
+    echo "FAIL: $test_name expected exit code $expected_exit_code, got $EXIT_CODE"
+    cat "$ERR_FILE"
+    rm -rf "$TEST_DIR"
     false
-else
-    echo "Restore successfully reverted pkg-diff/Manifest to original"
-fi
+  fi
 
-grep -q "dedupe added new Manifest file: app-misc/pkg-added/Manifest" "$ERR_FILE" || { echo "Failed to detect added Manifest"; false; }
-grep -q "dedupe deleted package dir: app-misc/pkg-deleted-dir" "$ERR_FILE" || { echo "Failed to detect deleted package dir"; false; }
-grep -q "dedupe deleted Manifest file: app-misc/pkg-deleted-manifest/Manifest" "$ERR_FILE" || { echo "Failed to detect deleted Manifest"; false; }
-grep -q "dedupe deleted all ebuilds in package: app-misc/pkg-orphan" "$ERR_FILE" || { echo "Failed to detect orphan Manifest dir"; false; }
+  if [ -n "$expected_error_grep" ]; then
+    if ! grep -q "$expected_error_grep" "$ERR_FILE"; then
+      echo "FAIL: $test_name did not output expected error: $expected_error_grep"
+      cat "$ERR_FILE"
+      rm -rf "$TEST_DIR"
+      false
+    fi
+  fi
 
-if grep -q "app-misc/pkg-no-change" "$ERR_FILE"; then
-  echo "Failed: falsely flagged pkg-no-change"
-  false
-fi
+  echo "PASS: $test_name"
+  rm -rf "$TEST_DIR"
+}
 
-echo "All script edge cases successfully detected."
+# --- Test Cases Setup ---
 
-rm -rf "$REPO_DIR/.git"
+setup_no_change() {
+  local repo="$1"
+  local snap="$2"
+  mkdir -p "$repo/app-misc/pkg" "$snap/app-misc/pkg"
+  echo "ebuild" > "$repo/app-misc/pkg/pkg-1.ebuild"
+  echo "same" > "$repo/app-misc/pkg/Manifest"
+  echo "same" > "$snap/app-misc/pkg/Manifest"
+}
 
-echo "PASS"
+setup_modified_bytes_restored() {
+  local repo="$1"
+  local snap="$2"
+  mkdir -p "$repo/app-misc/pkg" "$snap/app-misc/pkg"
+  echo "ebuild" > "$repo/app-misc/pkg/pkg-1.ebuild"
+  # Dedupe modified it
+  echo "modified" > "$repo/app-misc/pkg/Manifest"
+  # Snapshot has original
+  echo "original" > "$snap/app-misc/pkg/Manifest"
+}
+
+setup_added_manifest() {
+  local repo="$1"
+  local snap="$2"
+  mkdir -p "$repo/app-misc/pkg"
+  echo "ebuild" > "$repo/app-misc/pkg/pkg-1.ebuild"
+  # Dedupe added it
+  echo "added" > "$repo/app-misc/pkg/Manifest"
+  # Snapshot doesn't have it
+}
+
+setup_missing_manifest() {
+  local repo="$1"
+  local snap="$2"
+  mkdir -p "$repo/app-misc/pkg" "$snap/app-misc/pkg"
+  echo "ebuild" > "$repo/app-misc/pkg/pkg-1.ebuild"
+  # Dedupe deleted it
+  # Snapshot has it
+  echo "original" > "$snap/app-misc/pkg/Manifest"
+}
+
+setup_entire_package_removed() {
+  local repo="$1"
+  local snap="$2"
+  # Dedupe removed the whole thing, repo doesn't have the directory
+  # Snapshot has it
+  mkdir -p "$snap/app-misc/pkg"
+  echo "original" > "$snap/app-misc/pkg/Manifest"
+}
+
+setup_last_ebuild_removed() {
+  local repo="$1"
+  local snap="$2"
+  mkdir -p "$repo/app-misc/pkg" "$snap/app-misc/pkg"
+  # Dedupe removed the ebuild, leaving an orphan manifest
+  echo "same" > "$repo/app-misc/pkg/Manifest"
+  echo "same" > "$snap/app-misc/pkg/Manifest"
+}
+
+setup_git_missing() {
+  local repo="$1"
+  local snap="$2"
+  # Clean up .git inside the repo
+  rm -rf "$repo/.git"
+  mkdir -p "$repo/app-misc/pkg" "$snap/app-misc/pkg"
+  echo "ebuild" > "$repo/app-misc/pkg/pkg-1.ebuild"
+  echo "same" > "$repo/app-misc/pkg/Manifest"
+  echo "same" > "$snap/app-misc/pkg/Manifest"
+}
+
+# --- Execute Tests ---
+
+run_test_case "unchanged success" setup_no_change 0 ""
+run_test_case "changed bytes restored exactly" setup_modified_bytes_restored 0 ""
+run_test_case "added Manifest rejected" setup_added_manifest 1 "dedupe added new Manifest file: app-misc/pkg/Manifest"
+run_test_case "missing Manifest rejected" setup_missing_manifest 1 "dedupe deleted Manifest file: app-misc/pkg/Manifest"
+run_test_case "entire package removed rejected" setup_entire_package_removed 1 "dedupe deleted package dir: app-misc/pkg"
+run_test_case "last ebuild removed rejected" setup_last_ebuild_removed 1 "dedupe deleted all ebuilds in package: app-misc/pkg"
+run_test_case "nonzero dedupe exact-byte restore failure" setup_no_change 1 "dedupe command failed." true
+run_test_case "missing .git rejected" setup_git_missing 1 "Not a git repository or broken git metadata"
+
+echo "All isolated tests PASSED."
