@@ -38,8 +38,8 @@ fi
 
 if [ "$ERRORS" -gt 0 ]; then
     echo "Found $ERRORS workflows failing the check."
-    return 1 2>/dev/null || (kill -s TERM $$; return 1 2>/dev/null || false)
+    exit 1
 fi
 
 echo "All checked workflows have proper concurrency groups."
-return 0 2>/dev/null || true
+exit 0
