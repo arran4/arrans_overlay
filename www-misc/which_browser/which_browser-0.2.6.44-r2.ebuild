@@ -1,7 +1,11 @@
 EAPI=8
 
 # Upstream changed their download host from arran4.sdf.org to
-# https://which-browser-site.pages.dev, update SRC_URI accordingly.
+# https://which-browser-site.pages.dev, but the assets are returning 404.
+# The GitHub repository arran4/which_browser is private, so we cannot fetch
+# directly from GitHub Releases without authentication.
+# This ebuild is marked with RESTRICT="fetch" until a public artifact hosting
+# solution is implemented outside arrans_overlay.
 
 DESCRIPTION="Which Browser? A browser selecting tool with rules to automate."
 HOMEPAGE="https://which-browser-site.pages.dev"
@@ -15,7 +19,7 @@ fi
 
 MY_DEB_ARCHIVE="which_browser-0.2.6+44-linux.deb"
 
-# Updated SRC_URI for new host structure: downloads/vBase/file
+# The following SRC_URI is currently broken (returns HTTP 404).
 SRC_URI="https://which-browser-site.pages.dev/downloads/v0.2.6/which_browser-0.2.6+44-linux.deb"
 LICENSE="All-rights-reserved"
 SLOT="0"
@@ -24,14 +28,21 @@ IUSE=""
 
 BDEPEND="dev-util/patchelf"
 RDEPEND="|| ( dev-libs/libayatana-appindicator )"
-RESTRICT="mirror"
+RESTRICT="mirror fetch"
 
-# Verify the SHA256 checksum
 S="${WORKDIR}"
 
 inherit unpacker xdg
 
 QA_PREBUILT="usr/share/which_browser/*"
+
+pkg_nofetch() {
+	einfo "The upstream download URL for Which Browser is currently unavailable."
+	einfo "The GitHub repository is private and the Cloudflare Pages host does not"
+	einfo "serve the required assets. This package requires public artifact hosting"
+	einfo "to be configured upstream before it can be installed automatically."
+	einfo "Please place ${MY_DEB_ARCHIVE} into your DISTDIR manually."
+}
 
 src_prepare() {
 	default
@@ -45,7 +56,6 @@ src_unpack() {
 
 src_install() {
 	# Install the contents of the deb package
-	# find .
 	cp -vr "${S}"/usr/ "${D}"/usr/
 
 	# Ensure the executable has the correct permissions
@@ -69,7 +79,6 @@ src_install() {
 pkg_postinst() {
 	xdg_pkg_postinst
 	einfo "Which Browser? has been installed."
-
 	einfo "Please set Which Browser? as the default HTTP and HTTPS handler."
 }
 
