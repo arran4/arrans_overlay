@@ -8,9 +8,16 @@ SNAPSHOT_DIR="${1:-/tmp/manifest-snapshot}"
 DEDUPE_FAILED="${2:-false}"
 CHANGED=0
 
-# Ensure we are inside a valid git repository before proceeding to restore
-if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  echo "Refusing to continue: Not a git repository or broken git metadata" >&2
+# Ensure we are inside a valid, usable git repository before proceeding to restore
+# A bare repo can return exit 0 but print "false" for --is-inside-work-tree
+if [ "$(git rev-parse --is-inside-work-tree 2>/dev/null || echo "false")" != "true" ]; then
+  echo "Refusing to continue: Not a valid git repository worktree or broken git metadata" >&2
+  CHANGED=1
+elif ! git status --porcelain >/dev/null 2>&1; then
+  echo "Refusing to continue: git status is unusable" >&2
+  CHANGED=1
+elif [ "$(realpath "$(git rev-parse --show-toplevel 2>/dev/null || echo "")")" != "$(realpath "$GITHUB_WORKSPACE")" ]; then
+  echo "Refusing to continue: git toplevel does not match GITHUB_WORKSPACE" >&2
   CHANGED=1
 fi
 
