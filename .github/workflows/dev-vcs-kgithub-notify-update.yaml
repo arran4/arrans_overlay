@@ -45,7 +45,35 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y wget jq coreutils
 
+      - name: Verify Authentication Setup
+        id: auth
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+            echo "auth_type=app" >> "$GITHUB_OUTPUT"
+            echo "Using GitHub App for authentication."
+          elif [[ -n "$PAT_TOKEN" ]]; then
+            echo "auth_type=pat" >> "$GITHUB_OUTPUT"
+            echo "Using PAT_TOKEN for authentication."
+          else
+            echo "::error::Authentication missing. To create PRs that trigger CI, configure either a GitHub App (secrets.APP_ID & secrets.APP_PRIVATE_KEY) or a PAT (secrets.PAT_TOKEN). GITHUB_TOKEN is insufficient as it prevents subsequent CI checks."
+            bash -c "exit 1"
+          fi
+
+      - name: Generate App Token
+        if: steps.auth.outputs.auth_type == 'app'
+        id: app_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Process each release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         id: process_releases
         run: |
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
@@ -74,6 +102,12 @@ jobs:
                 releaseTypes[${releaseType:=release}]="${version}"
             else
                 echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+                continue
+            fi
+            branch_name="update-${{ env.epn }}-${tag}"
+            pr_exists=$(gh pr list --head "$branch_name" --state all --json number --jq 'length')
+            if [ "$pr_exists" -gt 0 ]; then
+                echo "PR for $tag already exists or existed. Skipping."
                 continue
             fi
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
@@ -127,7 +161,7 @@ jobs:
         if: steps.process_releases.outputs.generated_tag
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ steps.auth.outputs.auth_type == 'app' && steps.app_token.outputs.token || secrets.PAT_TOKEN }}
           commit-message: "Add ebuilds for new ${{ env.epn }} releases tag ${{ steps.process_releases.outputs.generated_tag }}"
           title: "Update ${{ env.epn }} to ${{ steps.process_releases.outputs.generated_tag }}"
           body: "This PR updates ${{ env.epn }} to the latest release ${{ steps.process_releases.outputs.generated_tag }}."
