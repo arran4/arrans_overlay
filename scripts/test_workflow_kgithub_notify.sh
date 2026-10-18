@@ -22,6 +22,10 @@ mkdir -p bin
 
 cat << 'MOCK_CURL' > bin/curl
 #!/bin/bash
+if [[ "$MOCK_CURL_FAIL" == "1" ]]; then
+    echo "HTTP error" >&2
+    exit 1
+fi
 if [[ "$*" == *"releases"* ]]; then
     echo "$MOCK_CURL_RESPONSE"
 else
@@ -47,20 +51,12 @@ if [[ "$1" == "pr" && "$2" == "list" ]]; then
         echo '[{"number": 102, "state": "MERGED"}]'
     elif [[ "$head_branch" == "update-kgithub-notify-v1.4" || "$head_branch" == "update-kgithub-notify-1.4" ]]; then
         echo "API rate limit exceeded" >&2
-        E_VAR="e"
-        X_VAR="x"
-        I_VAR="i"
-        T_VAR="t"
-        $E_VAR$X_VAR$I_VAR$T_VAR 1
+        exit 1
     else
         echo '[]'
     fi
 else
-    E_VAR="e"
-    X_VAR="x"
-    I_VAR="i"
-    T_VAR="t"
-    $E_VAR$X_VAR$I_VAR$T_VAR 1
+    exit 1
 fi
 MOCK_GH
 chmod +x bin/gh
@@ -76,6 +72,8 @@ export PATH="$WF_TEST_DIR/bin:$PATH"
 cat << 'EXTRACTOR' > extract_wf.py
 import sys
 import os
+import re
+
 with open(os.path.join(os.environ['OLDPWD'], '.github/workflows/dev-vcs-kgithub-notify-update.yaml'), 'r') as f:
     lines = f.readlines()
 
@@ -97,14 +95,20 @@ def extract_run_block(step_id_or_name):
                 block.append("\n")
             else:
                 in_block = False
-    return "".join(block).strip()
+
+    out = "".join(block).strip()
+    if not out:
+        print(f"FAILED to extract step: {step_id_or_name}")
+        sys.exit(1)
+    return out
 
 process_script = extract_run_block("id: process_releases")
 enforce_script = extract_run_block("name: Enforce Authentication for PR Creation")
 
-import re
 process_script = re.sub(r'\$\{\{\s*env\.([A-Za-z0-9_]+)\s*\}\}', r'${\1}', process_script)
 process_script = re.sub(r'\$\{\{\s*secrets\.GITHUB_TOKEN\s*\}\}', r'dummy', process_script)
+
+enforce_script = re.sub(r'\$\{\{\s*steps\.auth\.outputs\.auth_type\s*\}\}', r'$auth_type', enforce_script)
 
 with open('process_releases.sh', 'w') as f:
     f.write("#!/bin/bash\n" + process_script + "\n")
@@ -112,10 +116,12 @@ with open('process_releases.sh', 'w') as f:
 with open('enforce_auth.sh', 'w') as f:
     f.write("#!/bin/bash\n" + enforce_script + "\n")
 EXTRACTOR
+
 python3 extract_wf.py
 chmod +x process_releases.sh enforce_auth.sh
 
 echo "=== Test: Open PR (should skip) ==="
+export MOCK_CURL_FAIL=0
 export MOCK_CURL_RESPONSE='[{"tag_name": "v1.0", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
 ./process_releases.sh > process_out.txt 2>&1
@@ -172,8 +178,13 @@ echo "=== Test: New update missing secrets ==="
 export MOCK_CURL_RESPONSE='[{"tag_name": "v1.5", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
 export auth_type="none"
-sed -i 's/\${{ steps.auth.outputs.auth_type }}/'"$auth_type"'/g' enforce_auth.sh
 ./process_releases.sh > /dev/null 2>&1
+# We assert that generated_tag was set before testing missing auth
+if ! grep -xq "generated_tag=v1.5" "$GITHUB_OUTPUT"; then
+    echo "FAILED: expected generated_tag=v1.5 not found"
+    exit 1
+fi
+
 if ./enforce_auth.sh > auth_out.txt 2>&1; then
     echo "FAILED: enforce_auth.sh should have failed due to missing secrets!"
     exit 1
@@ -185,17 +196,7 @@ else
 fi
 
 echo "=== Test: Credential selection provided (app) ==="
-# Re-create enforce_auth.sh cleanly for test g
-cat << 'AUTH_SCRIPT3' > enforce_auth.sh
-#!/bin/bash
-set -euo pipefail
-if [[ "app" == "none" ]]; then
-  echo "::error::Missing explicit credentials to create PR. Please configure a GitHub App or PAT."
-  bash -c "exit 1"
-fi
-AUTH_SCRIPT3
-chmod +x enforce_auth.sh
-
+export auth_type="app"
 if ! ./enforce_auth.sh > auth_out2.txt 2>&1; then
     echo "FAILED: enforce_auth.sh failed when auth_type=app"
     cat auth_out2.txt
@@ -204,23 +205,14 @@ fi
 echo "Enforce Auth passed with auth_type=app"
 
 echo "=== Test: Credential selection provided (pat) ==="
-cat << 'AUTH_SCRIPT4' > enforce_auth.sh
-#!/bin/bash
-set -euo pipefail
-if [[ "pat" == "none" ]]; then
-  echo "::error::Missing explicit credentials to create PR. Please configure a GitHub App or PAT."
-  bash -c "exit 1"
-fi
-AUTH_SCRIPT4
-chmod +x enforce_auth.sh
-
+export auth_type="pat"
 if ! ./enforce_auth.sh > auth_out3.txt 2>&1; then
     echo "FAILED: enforce_auth.sh failed when auth_type=pat"
-    bash -c "exit 1"
+    exit 1
 fi
 echo "Enforce Auth passed with auth_type=pat"
 
-echo "=== Test: Failed GitHub API Request ==="
+echo "=== Test: Failed GitHub API Request (gh command) ==="
 export MOCK_CURL_RESPONSE='[{"tag_name": "v1.4", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
 if ./process_releases.sh > process_out3.txt 2>&1; then
@@ -229,6 +221,17 @@ if ./process_releases.sh > process_out3.txt 2>&1; then
 else
     cat process_out3.txt
     grep -q "API rate limit exceeded" process_out3.txt
+fi
+
+echo "=== Test: Failed GitHub API Request (curl HTTP error) ==="
+export MOCK_CURL_FAIL=1
+rm -f "$GITHUB_OUTPUT"
+if ./process_releases.sh > process_out4.txt 2>&1; then
+    echo "FAILED: process_releases.sh should have failed due to curl HTTP error"
+    exit 1
+else
+    cat process_out4.txt
+    grep -q "HTTP error" process_out4.txt
 fi
 
 echo "All tests passed successfully!"
