@@ -1,3 +1,6 @@
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
 EAPI=8
 
 # Upstream changed their download host from arran4.sdf.org to
@@ -20,7 +23,8 @@ fi
 MY_DEB_ARCHIVE="which_browser-0.2.6+44-linux.deb"
 
 # The following SRC_URI is currently broken (returns HTTP 404).
-SRC_URI="https://which-browser-site.pages.dev/downloads/v0.2.6/which_browser-0.2.6+44-linux.deb"
+BASE_URL="https://which-browser-site.pages.dev/downloads/v0.2.6"
+SRC_URI="${BASE_URL}/${MY_DEB_ARCHIVE}"
 LICENSE="All-rights-reserved"
 SLOT="0"
 KEYWORDS="~amd64"
@@ -37,17 +41,19 @@ inherit unpacker xdg
 QA_PREBUILT="usr/share/which_browser/*"
 
 pkg_nofetch() {
-	einfo "The upstream download URL for Which Browser is currently unavailable."
-	einfo "The GitHub repository is private and the Cloudflare Pages host does not"
-	einfo "serve the required assets. This package requires public artifact hosting"
-	einfo "to be configured upstream before it can be installed automatically."
-	einfo "Please place ${MY_DEB_ARCHIVE} into your DISTDIR manually."
+	einfo "Download URL is currently unavailable."
+	einfo "The upstream repo is private and the host lacks files"
+	einfo "serve the assets. This requires public artifact hosting"
+	einfo "to be set up before it can be installed automatically."
+	einfo "Please place \${MY_DEB_ARCHIVE} into DISTDIR manually."
 }
 
 src_prepare() {
 	default
 	chmod +w usr/share/which_browser/lib/libtray_manager_plugin.so || die
-	patchelf --replace-needed libappindicator3.so.1 libayatana-appindicator3.so.1 usr/share/which_browser/lib/libtray_manager_plugin.so || die
+	patchelf --replace-needed libappindicator3.so.1 \
+		libayatana-appindicator3.so.1 \
+		usr/share/which_browser/lib/libtray_manager_plugin.so || die
 }
 
 src_unpack() {
@@ -62,16 +68,18 @@ src_install() {
 	fperms 0755 /usr/share/which_browser/which_browser
 
 	# Create a symlink in /usr/bin for easy access
-	dosym /usr/share/which_browser/which_browser /usr/bin/which_browser
+	dosym ../share/which_browser/which_browser /usr/bin/which_browser
 
 	# Ensure the desktop file has the correct permissions
 	if [[ -f "${D}/usr/share/applications/which_browser.desktop" ]]; then
 		fperms 0644 /usr/share/applications/which_browser.desktop
-		sed -i -e '/^Version=/d' "${D}/usr/share/applications/which_browser.desktop" || die
+		sed -i -e '/^Version=/d' \
+		"${D}/usr/share/applications/which_browser.desktop" || die
 	fi
 
 	# Ensure the icon file has the correct permissions
-	if [[ -f "${D}/usr/share/icons/hicolor/256x256/apps/which_browser.png" ]]; then
+	if [[ -f "${D}/usr/share/icons/hicolor/256x256/apps/which_browser.png" ]]
+	then
 		fperms 0644 /usr/share/icons/hicolor/256x256/apps/which_browser.png
 	fi
 }
@@ -79,7 +87,7 @@ src_install() {
 pkg_postinst() {
 	xdg_pkg_postinst
 	einfo "Which Browser? has been installed."
-	einfo "Please set Which Browser? as the default HTTP and HTTPS handler."
+	einfo "Please set it as the default HTTP and HTTPS handler."
 }
 
 pkg_postrm() {

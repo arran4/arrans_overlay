@@ -67,7 +67,10 @@ def check_pr_exists(tag: str) -> bool:
         sys.exit(1)
 
 def generate_ebuild(work_dir: Path, base_version: str, build_suffix: str, version: str, deb_archive: str, base_url: str):
-    ebuild_content = f"""EAPI=8
+    ebuild_content = f"""# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+EAPI=8
 
 # Upstream changed their download host from arran4.sdf.org to
 # https://which-browser-site.pages.dev, update SRC_URI accordingly.
@@ -104,7 +107,9 @@ QA_PREBUILT="usr/share/which_browser/*"
 src_prepare() {{
 \tdefault
 \tchmod +w usr/share/which_browser/lib/libtray_manager_plugin.so || die
-\tpatchelf --replace-needed libappindicator3.so.1 libayatana-appindicator3.so.1 usr/share/which_browser/lib/libtray_manager_plugin.so || die
+\tpatchelf --replace-needed libappindicator3.so.1 \
+		libayatana-appindicator3.so.1 \
+		usr/share/which_browser/lib/libtray_manager_plugin.so || die
 }}
 
 src_unpack() {{
@@ -119,7 +124,7 @@ src_install() {{
 \tfperms 0755 /usr/share/which_browser/which_browser
 
 \t# Create a symlink in /usr/bin for easy access
-\tdosym /usr/share/which_browser/which_browser /usr/bin/which_browser
+\tdosym ../share/which_browser/which_browser /usr/bin/which_browser
 
 \t# Ensure the desktop file has the correct permissions
 \tif [[ -f "${{D}}/usr/share/applications/which_browser.desktop" ]]; then
@@ -136,7 +141,7 @@ src_install() {{
 pkg_postinst() {{
 \txdg_pkg_postinst
 \teinfo "Which Browser? has been installed."
-\teinfo "Please set Which Browser? as the default HTTP and HTTPS handler."
+\teinfo "Please set it as the default HTTP and HTTPS handler."
 }}
 
 pkg_postrm() {{

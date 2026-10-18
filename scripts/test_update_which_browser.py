@@ -52,6 +52,8 @@ class TestUpdateWhichBrowser(unittest.TestCase):
     @patch("update_which_browser.get_github_releases")
     @patch("update_which_browser.generate_ebuild")
     def test_main_success_validation(self, mock_generate, mock_get_releases, mock_check_ebuild, mock_check_pr, mock_validate):
+        import os
+        os.environ.pop("GITHUB_OUTPUT", None)
         mock_get_releases.return_value = [
             {"tag_name": "v0.2.22+162", "assets": [{"name": "which_browser-0.2.22+162-linux.deb"}]}
         ]
@@ -75,6 +77,8 @@ class TestUpdateWhichBrowser(unittest.TestCase):
     @patch("update_which_browser.get_github_releases")
     @patch("update_which_browser.generate_ebuild")
     def test_main_failed_validation(self, mock_generate, mock_get_releases, mock_check_ebuild, mock_check_pr, mock_validate):
+        import os
+        os.environ.pop("GITHUB_OUTPUT", None)
         mock_get_releases.return_value = [
             {"tag_name": "v0.2.22+162", "assets": [{"name": "which_browser-0.2.22+162-linux.deb"}]}
         ]
