@@ -8,6 +8,8 @@ on:
       - '.github/scripts/test_determine_packages.py'
       - '.github/scripts/test_caelestia_update_workflow.py'
       - 'scripts/workflow_m3shapes_pin_test.sh'
+      - 'scripts/restore_manifests.sh'
+      - 'scripts/test_manifest_restore.sh'
   pull_request:
     paths:
       - '.github/workflows/**'
@@ -15,6 +17,8 @@ on:
       - '.github/scripts/test_determine_packages.py'
       - '.github/scripts/test_caelestia_update_workflow.py'
       - 'scripts/workflow_m3shapes_pin_test.sh'
+      - 'scripts/restore_manifests.sh'
+      - 'scripts/test_manifest_restore.sh'
 
 jobs:
   actionlint:
