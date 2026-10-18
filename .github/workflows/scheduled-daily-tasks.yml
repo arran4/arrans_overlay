@@ -77,11 +77,15 @@ jobs:
           set -euo pipefail
           rm -rf /tmp/manifest-snapshot
           mkdir -p /tmp/manifest-snapshot
+          manifest_list=$(mktemp)
+          trap 'rm -f -- "$manifest_list"' EXIT
+          # An incomplete enumeration must fail before any dedupe can run.
+          find . -type f -name Manifest -print0 > "$manifest_list"
           while IFS= read -r -d '' manifest; do
             relative=${manifest#./}
             mkdir -p "/tmp/manifest-snapshot/$(dirname "$relative")"
             cp -p -- "$manifest" "/tmp/manifest-snapshot/$relative"
-          done < <(find . -type f -name Manifest -print0)
+          done < "$manifest_list"
 
       - name: Remove duplicate ebuilds
         id: dedupe
