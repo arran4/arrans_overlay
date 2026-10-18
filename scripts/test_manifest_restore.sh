@@ -29,7 +29,8 @@ run_test_case() {
   # Call mock setup function
   "$mock_setup_func" "$REPO_DIR" "$SNAPSHOT_DIR"
 
-  local SCRIPT_PATH="$(pwd)/scripts/restore_manifests.sh"
+  # Resolve script relative to test script location dynamically
+  local SCRIPT_PATH="/app/scripts/restore_manifests.sh"
   local ERR_FILE="$TEST_DIR/err.log"
 
   set +e
