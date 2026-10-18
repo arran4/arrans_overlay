@@ -38,4 +38,6 @@ jobs:
       - name: Test Caelestia updater safeguards
         run: python3 .github/scripts/test_caelestia_update_workflow.py
       - name: Test workflow M3Shapes pin extractor
-        run: ./scripts/workflow_m3shapes_pin_test.sh
+        run: |
+          ./scripts/workflow_m3shapes_pin_test.sh
+          bash scripts/test_workflow_kgithub_notify.sh

@@ -39,13 +39,13 @@ if [[ "$1" == "pr" && "$2" == "list" ]]; then
         shift
     done
 
-    if [[ "$head_branch" == "update-kgithub-notify-v1.0" || "$head_branch" == "update-kgithub-notify-1.0.0" ]]; then
+    if [[ "$head_branch" == "update-kgithub-notify-v1.0.0" || "$head_branch" == "update-kgithub-notify-1.0" ]]; then
         echo '[{"number": 100, "state": "OPEN"}]'
-    elif [[ "$head_branch" == "update-kgithub-notify-v1.1_alpha1" || "$head_branch" == "update-kgithub-notify-1.1.0_alpha1" ]]; then
+    elif [[ "$head_branch" == "update-kgithub-notify-v1.1.0_alpha1" || "$head_branch" == "update-kgithub-notify-1.1_alpha1" ]]; then
         echo '[{"number": 101, "state": "CLOSED"}]'
-    elif [[ "$head_branch" == "update-kgithub-notify-v1.2" || "$head_branch" == "update-kgithub-notify-1.2.0" ]]; then
+    elif [[ "$head_branch" == "update-kgithub-notify-v1.2.0" || "$head_branch" == "update-kgithub-notify-1.2" ]]; then
         echo '[{"number": 102, "state": "MERGED"}]'
-    elif [[ "$head_branch" == "update-kgithub-notify-v1.4" || "$head_branch" == "update-kgithub-notify-1.4.0" ]]; then
+    elif [[ "$head_branch" == "update-kgithub-notify-v1.4.0" || "$head_branch" == "update-kgithub-notify-1.4" ]]; then
         echo "API rate limit exceeded" >&2
         return 1 2>/dev/null || bash -c "exit 1"
     else
@@ -175,33 +175,33 @@ AUTH_SCRIPT
 chmod +x enforce_auth.sh
 
 echo "=== Test: Open PR (should skip) ==="
-export MOCK_CURL_RESPONSE='[{"tag_name": "v1.0.0", "type": "object"}]'
+export MOCK_CURL_RESPONSE='[{"tag_name": "v1.0", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
 ./process_releases.sh > process_out.txt 2>&1 || true
 cat process_out.txt
-grep "PR #100 for 1.0.0 already exists (State: OPEN)" process_out.txt
+grep -q "PR #100 for 1.0 already exists (State: OPEN)" process_out.txt
 
 echo "=== Test: Closed PR (should skip) ==="
-export MOCK_CURL_RESPONSE='[{"tag_name": "v1.1.0_alpha1", "type": "object"}]'
+export MOCK_CURL_RESPONSE='[{"tag_name": "v1.1_alpha1", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
 ./process_releases.sh > process_out.txt 2>&1 || true
 cat process_out.txt
-grep "PR #101 for 1.1.0_alpha1 is closed-unmerged." process_out.txt
+grep -q "PR #101 for 1.1_alpha1 is closed-unmerged." process_out.txt
 
 echo "=== Test: Merged PR (should skip) ==="
-export MOCK_CURL_RESPONSE='[{"tag_name": "v1.2.0", "type": "object"}]'
+export MOCK_CURL_RESPONSE='[{"tag_name": "v1.2", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
 ./process_releases.sh > process_out.txt 2>&1 || true
 cat process_out.txt
-grep "PR #102 for 1.2.0 already exists (State: MERGED)" process_out.txt
+grep -q "PR #102 for 1.2 already exists (State: MERGED)" process_out.txt
 
 echo "=== Test: New PR (should generate) ==="
-export MOCK_CURL_RESPONSE='[{"tag_name": "v1.3.0", "type": "object"}]'
+export MOCK_CURL_RESPONSE='[{"tag_name": "v1.3", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
 ./process_releases.sh > process_out.txt 2>&1 || true
 cat process_out.txt
-if ! grep -q "generated_tag=v1.3" "$GITHUB_OUTPUT"; then
-    echo "FAILED: generated_tag=v1.3 not found in GITHUB_OUTPUT"
+if ! grep -xq "generated_tag=v1.3" "$GITHUB_OUTPUT"; then
+    echo "FAILED: exact generated_tag=v1.3 not found in GITHUB_OUTPUT"
     bash -c "exit 1"
 fi
 
@@ -216,7 +216,7 @@ fi
 echo "No-op successful."
 
 echo "=== Test: New update missing secrets ==="
-export MOCK_CURL_RESPONSE='[{"tag_name": "v1.5.0", "type": "object"}]'
+export MOCK_CURL_RESPONSE='[{"tag_name": "v1.5", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
 export auth_type="none"
 sed -i 's/${{ steps.auth.outputs.auth_type }}/'"$auth_type"'/g' enforce_auth.sh
@@ -226,7 +226,7 @@ if ./enforce_auth.sh > auth_out.txt 2>&1; then
     bash -c "exit 1"
 else
     cat auth_out.txt
-    grep "Missing explicit credentials to create PR" auth_out.txt
+    grep -q "Missing explicit credentials to create PR" auth_out.txt
 fi
 
 echo "=== Test: Credential selection provided ==="
@@ -241,18 +241,18 @@ fi
 AUTH_SCRIPT2
 chmod +x enforce_auth.sh
 sed -i 's/${{ steps.auth.outputs.auth_type }}/'"$auth_type"'/g' enforce_auth.sh
-./enforce_auth.sh > auth_out2.txt 2>&1 || true
+./enforce_auth.sh > auth_out2.txt 2>&1
 echo "Enforce Auth passed with auth_type=app"
 
 echo "=== Test: Failed GitHub API Request ==="
-export MOCK_CURL_RESPONSE='[{"tag_name": "v1.4.0", "type": "object"}]'
+export MOCK_CURL_RESPONSE='[{"tag_name": "v1.4", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
 if ./process_releases.sh > process_out3.txt 2>&1; then
     echo "FAILED: process_releases.sh should have failed due to API rate limit"
     bash -c "exit 1"
 else
     cat process_out3.txt
-    grep "API rate limit exceeded" process_out3.txt
+    grep -q "API rate limit exceeded" process_out3.txt
 fi
 
 echo "All tests passed successfully!"

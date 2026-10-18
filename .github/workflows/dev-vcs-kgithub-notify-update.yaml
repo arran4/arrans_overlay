@@ -71,6 +71,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         id: process_releases
         run: |
+          set -euo pipefail
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p "$ebuild_dir"
           declare -A releaseTypes=()
@@ -180,6 +181,7 @@ jobs:
       - name: Enforce Authentication for PR Creation
         if: steps.process_releases.outputs.generated_tag
         run: |
+          set -euo pipefail
           if [[ "${{ steps.auth.outputs.auth_type }}" == "none" ]]; then
             echo "::error::Missing explicit credentials to create PR. Please configure a GitHub App or PAT."
             bash -c "exit 1"
