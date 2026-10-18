@@ -2,6 +2,7 @@ name: dev-vcs/kgithub-notify update
 
 permissions:
   contents: write
+  pull-requests: read
 
 on:
   schedule:
@@ -12,7 +13,7 @@ on:
       - '.github/workflows/dev-vcs-kgithub-notify-update.yaml'
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -62,13 +63,13 @@ jobs:
             echo "Using PAT_TOKEN for authentication."
           else
             echo "::error::Authentication missing. To create PRs that trigger CI, configure either a GitHub App (secrets.APP_ID & secrets.APP_PRIVATE_KEY) or a PAT (secrets.PAT_TOKEN). GITHUB_TOKEN is insufficient as it prevents subsequent CI checks."
-            bash -c "exit 1"
+            echo "auth_type=none" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Generate App Token
         if: steps.auth.outputs.auth_type == 'app'
         id: app_token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -106,10 +107,12 @@ jobs:
                 echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
                 continue
             fi
-            branch_name="update-${{ env.epn }}-${tag}"
-            pr_exists=$(gh pr list --head "$branch_name" --state all --json number --jq 'length')
-            if [ "$pr_exists" -gt 0 ]; then
-                echo "PR for $tag already exists or existed. Skipping."
+            branch_name_tag="update-${{ env.epn }}-${tag}"
+            branch_name_ver="update-${{ env.epn }}-${version}"
+            pr_exists_tag=$(gh pr list --head "$branch_name_tag" --state all --json number --jq 'length')
+            pr_exists_ver=$(gh pr list --head "$branch_name_ver" --state all --json number --jq 'length')
+            if [ "$pr_exists_tag" -gt 0 ] || [ "$pr_exists_ver" -gt 0 ]; then
+                echo "PR for $version already exists or existed. Skipping."
                 continue
             fi
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
@@ -159,9 +162,17 @@ jobs:
             fi
           done
 
+      - name: Enforce Authentication for PR Creation
+        if: steps.process_releases.outputs.generated_tag
+        run: |
+          if [[ "${{ steps.auth.outputs.auth_type }}" == "none" ]]; then
+            echo "::error::Missing explicit credentials to create PR. Please configure a GitHub App or PAT."
+            bash -c "exit 1"
+          fi
+
       - name: Create Pull Request
         if: steps.process_releases.outputs.generated_tag
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ steps.auth.outputs.auth_type == 'app' && steps.app_token.outputs.token || secrets.PAT_TOKEN }}
           commit-message: "Add ebuilds for new ${{ env.epn }} releases tag ${{ steps.process_releases.outputs.generated_tag }}"
