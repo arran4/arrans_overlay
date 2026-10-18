@@ -1,7 +1,7 @@
 name: dev-vcs/kgithub-notify update
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: read
 
 on:
@@ -62,7 +62,7 @@ jobs:
             echo "auth_type=pat" >> "$GITHUB_OUTPUT"
             echo "Using PAT_TOKEN for authentication."
           else
-            echo "::error::Authentication missing. To create PRs that trigger CI, configure either a GitHub App (secrets.APP_ID & secrets.APP_PRIVATE_KEY) or a PAT (secrets.PAT_TOKEN). GITHUB_TOKEN is insufficient as it prevents subsequent CI checks."
+            echo "::notice::Authentication missing. To create PRs that trigger CI, configure either a GitHub App (secrets.APP_ID & secrets.APP_PRIVATE_KEY) or a PAT (secrets.PAT_TOKEN)."
             echo "auth_type=none" >> "$GITHUB_OUTPUT"
           fi
 
@@ -73,6 +73,10 @@ jobs:
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
 
       - name: Process each release
         env:
@@ -109,10 +113,16 @@ jobs:
             fi
             branch_name_tag="update-${{ env.epn }}-${tag}"
             branch_name_ver="update-${{ env.epn }}-${version}"
-            pr_exists_tag=$(gh pr list --head "$branch_name_tag" --state all --json number --jq 'length')
-            pr_exists_ver=$(gh pr list --head "$branch_name_ver" --state all --json number --jq 'length')
-            if [ "$pr_exists_tag" -gt 0 ] || [ "$pr_exists_ver" -gt 0 ]; then
-                echo "PR for $version already exists or existed. Skipping."
+
+            # Check PRs for this tag
+            pr_tag_state=$(gh pr list --head "$branch_name_tag" --state all --json state --jq '.[0].state')
+            pr_ver_state=$(gh pr list --head "$branch_name_ver" --state all --json state --jq '.[0].state')
+
+            if [[ "$pr_tag_state" == "CLOSED" ]] || [[ "$pr_ver_state" == "CLOSED" ]]; then
+                echo "PR for $version is closed-unmerged. Update is intentionally suppressed pending manual reopening or branch deletion. Skipping."
+                continue
+            elif [[ -n "$pr_tag_state" ]] || [[ -n "$pr_ver_state" ]]; then
+                echo "PR for $version already exists. Skipping."
                 continue
             fi
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
