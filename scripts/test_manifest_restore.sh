@@ -3,6 +3,8 @@ set -euo pipefail
 
 echo "Running isolated determinist regression tests for Manifest restoration mechanism"
 
+RESTORE_SCRIPT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/restore_manifests.sh"
+
 # Setup testing utility functions
 run_test_case() {
   local test_name="$1"
@@ -29,14 +31,12 @@ run_test_case() {
   # Call mock setup function
   "$mock_setup_func" "$REPO_DIR" "$SNAPSHOT_DIR"
 
-  # Resolve script relative to test script location dynamically
-  local SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/restore_manifests.sh"
   local ERR_FILE="$TEST_DIR/err.log"
 
   set +e
   (
     cd "$REPO_DIR"
-    bash "$SCRIPT_PATH" "$SNAPSHOT_DIR" "$pass_dedupe_failed"
+    bash "$RESTORE_SCRIPT" "$SNAPSHOT_DIR" "$pass_dedupe_failed"
   ) 2> "$ERR_FILE"
   local EXIT_CODE=$?
   set -e
@@ -206,7 +206,7 @@ echo "modified" > "$REPO_DIR/app-misc/pkg/Manifest"
 set +e
 (
   cd "$REPO_DIR"
-  bash /app/scripts/restore_manifests.sh "$SNAPSHOT_DIR" "false"
+  bash "$RESTORE_SCRIPT" "$SNAPSHOT_DIR" "false"
 ) 2> "$TEST_DIR/err.log"
 EXIT_CODE=$?
 set -e
