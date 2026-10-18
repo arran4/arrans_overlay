@@ -66,18 +66,6 @@ jobs:
             echo "auth_type=none" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Generate App Token
-        if: steps.auth.outputs.auth_type == 'app'
-        id: app_token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
-          permission-contents: write
-          permission-pull-requests: write
-
       - name: Process each release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -115,14 +103,19 @@ jobs:
             branch_name_ver="update-${{ env.epn }}-${version}"
 
             # Check PRs for this tag
-            pr_tag_state=$(gh pr list --head "$branch_name_tag" --state all --json state --jq '.[0].state')
-            pr_ver_state=$(gh pr list --head "$branch_name_ver" --state all --json state --jq '.[0].state')
+            pr_info=$(gh pr list --head "$branch_name_tag" --state all --json state,number | jq '.[0] // empty')
+            if [ -z "$pr_info" ]; then
+                pr_info=$(gh pr list --head "$branch_name_ver" --state all --json state,number | jq '.[0] // empty')
+            fi
 
-            if [[ "$pr_tag_state" == "CLOSED" ]] || [[ "$pr_ver_state" == "CLOSED" ]]; then
-                echo "PR for $version is closed-unmerged. Update is intentionally suppressed pending manual reopening or branch deletion. Skipping."
-                continue
-            elif [[ -n "$pr_tag_state" ]] || [[ -n "$pr_ver_state" ]]; then
-                echo "PR for $version already exists. Skipping."
+            if [ -n "$pr_info" ]; then
+                pr_state=$(echo "$pr_info" | jq -r '.state // empty')
+                pr_number=$(echo "$pr_info" | jq -r '.number // empty')
+                if [[ "$pr_state" == "CLOSED" ]]; then
+                    echo "PR #$pr_number for $version is closed-unmerged. Update is suppressed until explicit reviewable intervention (e.g., reopen the PR). Skipping."
+                else
+                    echo "PR #$pr_number for $version already exists (State: $pr_state). Skipping."
+                fi
                 continue
             fi
             ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
@@ -171,6 +164,18 @@ jobs:
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
+
+      - name: Generate App Token
+        if: steps.process_releases.outputs.generated_tag && steps.auth.outputs.auth_type == 'app'
+        id: app_token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
 
       - name: Enforce Authentication for PR Creation
         if: steps.process_releases.outputs.generated_tag
