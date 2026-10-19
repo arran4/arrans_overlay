@@ -70,51 +70,44 @@ chmod +x bin/g2
 export PATH="$WF_TEST_DIR/bin:$PATH"
 
 cat << 'EXTRACTOR' > extract_wf.py
-import sys
-import os
-import re
-
+import sys, os, re
 with open(os.path.join(os.environ['OLDPWD'], '.github/workflows/dev-vcs-kgithub-notify-update.yaml'), 'r') as f:
     lines = f.readlines()
-
 def extract_run_block(step_id_or_name):
     block = []
     in_block = False
+    in_run = False
     for line in lines:
         if step_id_or_name in line:
             in_block = True
             continue
         if in_block:
-            if line.startswith("        run: |"):
-                pass
-            elif line.startswith("          ") and not "if: steps" in line:
-                block.append(line[10:])
-            elif "if: steps" in line:
-                pass
-            elif line.strip() == "":
-                block.append("\n")
+            if line.startswith('        run: |'):
+                in_run = True
+                continue
+            if in_run:
+                if line.startswith('          '):
+                    block.append(line[10:])
+                elif line.strip() == '':
+                    block.append(chr(10))
+                else:
+                    break
             else:
-                in_block = False
-
-    out = "".join(block).strip()
+                if not line.startswith('        ') and not line.strip() == '':
+                    break
+    out = ''.join(block).strip()
     if not out:
-        print(f"FAILED to extract step: {step_id_or_name}")
         sys.exit(1)
     return out
 
-process_script = extract_run_block("id: process_releases")
-enforce_script = extract_run_block("name: Enforce Authentication for PR Creation")
-
-process_script = re.sub(r'\$\{\{\s*env\.([A-Za-z0-9_]+)\s*\}\}', r'${\1}', process_script)
-process_script = re.sub(r'\$\{\{\s*secrets\.GITHUB_TOKEN\s*\}\}', r'dummy', process_script)
-
-enforce_script = re.sub(r'\$\{\{\s*steps\.auth\.outputs\.auth_type\s*\}\}', r'$auth_type', enforce_script)
+process_script = extract_run_block('id: process_releases')
+enforce_script = extract_run_block('name: Enforce Authentication for PR Creation')
 
 with open('process_releases.sh', 'w') as f:
-    f.write("#!/bin/bash\n" + process_script + "\n")
+    f.write('#!/bin/bash' + chr(10) + process_script + chr(10))
 
 with open('enforce_auth.sh', 'w') as f:
-    f.write("#!/bin/bash\n" + enforce_script + "\n")
+    f.write('#!/bin/bash' + chr(10) + enforce_script + chr(10))
 EXTRACTOR
 
 python3 extract_wf.py
@@ -124,6 +117,7 @@ echo "=== Test: Open PR (should skip) ==="
 export MOCK_CURL_FAIL=0
 export MOCK_CURL_RESPONSE='[{"tag_name": "v1.0", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
+export GH_TOKEN="dummy"
 ./process_releases.sh > process_out.txt 2>&1
 cat process_out.txt
 grep -q "PR #100 for 1.0 already exists (State: OPEN)" process_out.txt
@@ -135,6 +129,7 @@ fi
 echo "=== Test: Closed PR (should skip) ==="
 export MOCK_CURL_RESPONSE='[{"tag_name": "v1.1_alpha1", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
+export GH_TOKEN="dummy"
 ./process_releases.sh > process_out.txt 2>&1
 cat process_out.txt
 grep -q "PR #101 for 1.1_alpha1 is closed-unmerged." process_out.txt
@@ -146,6 +141,7 @@ fi
 echo "=== Test: Merged PR (should skip) ==="
 export MOCK_CURL_RESPONSE='[{"tag_name": "v1.2", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
+export GH_TOKEN="dummy"
 ./process_releases.sh > process_out.txt 2>&1
 cat process_out.txt
 grep -q "PR #102 for 1.2 already exists (State: MERGED)" process_out.txt
@@ -157,6 +153,7 @@ fi
 echo "=== Test: New PR (should generate) ==="
 export MOCK_CURL_RESPONSE='[{"tag_name": "v1.3", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
+export GH_TOKEN="dummy"
 ./process_releases.sh > process_out.txt 2>&1
 cat process_out.txt
 if ! grep -xq "generated_tag=v1.3" "$GITHUB_OUTPUT"; then
@@ -167,6 +164,7 @@ fi
 echo "=== Test: No-op missing secrets ==="
 export MOCK_CURL_RESPONSE='[]'
 rm -f "$GITHUB_OUTPUT"
+export GH_TOKEN="dummy"
 ./process_releases.sh > process_out2.txt 2>&1
 if [ -f "$GITHUB_OUTPUT" ] && grep -q "generated_tag" "$GITHUB_OUTPUT"; then
     echo "Generated tag unexpectedly"
@@ -177,7 +175,7 @@ echo "No-op successful."
 echo "=== Test: New update missing secrets ==="
 export MOCK_CURL_RESPONSE='[{"tag_name": "v1.5", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
-export auth_type="none"
+export AUTH_TYPE="none"
 ./process_releases.sh > /dev/null 2>&1
 # We assert that generated_tag was set before testing missing auth
 if ! grep -xq "generated_tag=v1.5" "$GITHUB_OUTPUT"; then
@@ -196,21 +194,21 @@ else
 fi
 
 echo "=== Test: Credential selection provided (app) ==="
-export auth_type="app"
+export AUTH_TYPE="app"
 if ! ./enforce_auth.sh > auth_out2.txt 2>&1; then
-    echo "FAILED: enforce_auth.sh failed when auth_type=app"
+    echo "FAILED: enforce_auth.sh failed when AUTH_TYPE=app"
     cat auth_out2.txt
     exit 1
 fi
-echo "Enforce Auth passed with auth_type=app"
+echo "Enforce Auth passed with AUTH_TYPE=app"
 
 echo "=== Test: Credential selection provided (pat) ==="
-export auth_type="pat"
+export AUTH_TYPE="pat"
 if ! ./enforce_auth.sh > auth_out3.txt 2>&1; then
-    echo "FAILED: enforce_auth.sh failed when auth_type=pat"
+    echo "FAILED: enforce_auth.sh failed when AUTH_TYPE=pat"
     exit 1
 fi
-echo "Enforce Auth passed with auth_type=pat"
+echo "Enforce Auth passed with AUTH_TYPE=pat"
 
 echo "=== Test: Failed GitHub API Request (gh command) ==="
 export MOCK_CURL_RESPONSE='[{"tag_name": "v1.4", "type": "object"}]'

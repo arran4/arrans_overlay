@@ -72,10 +72,10 @@ jobs:
         id: process_releases
         run: |
           set -euo pipefail
-          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          ebuild_dir="./${ecn}/${epn}"
           mkdir -p "$ebuild_dir"
           declare -A releaseTypes=()
-          tags=$(curl -fsS  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          tags=$(curl -fsS  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${GH_TOKEN}" https://api.github.com/repos/${github_owner}/${github_repo}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
           # shellcheck disable=SC2086
           for tag in $tags; do
             version="${tag#v}"
@@ -100,8 +100,8 @@ jobs:
                 echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
                 continue
             fi
-            branch_name_tag="update-${{ env.epn }}-${tag}"
-            branch_name_ver="update-${{ env.epn }}-${version}"
+            branch_name_tag="update-${epn}-${tag}"
+            branch_name_ver="update-${epn}-${version}"
 
             # Check PRs for this tag
             pr_info=$(gh pr list --head "$branch_name_tag" --state all --json state,number | jq '.[0] // empty')
@@ -119,8 +119,8 @@ jobs:
                 fi
                 continue
             fi
-            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-            if ! ls "${ebuild_dir}/${{ env.epn }}-${version}"*.ebuild 1> /dev/null 2>&1; then
+            ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
+            if ! ls "${ebuild_dir}/${epn}-${version}"*.ebuild 1> /dev/null 2>&1; then
 
               # shellcheck disable=SC2016
               {
@@ -131,13 +131,13 @@ jobs:
                 echo 'QTMIN=6.6.2'
                 echo 'ECM_TEST="true"'
                 echo 'inherit ecm'
-                echo "DESCRIPTION=\"${{ env.description }}\""
-                echo "HOMEPAGE=\"${{ env.homepage }}\""
-                echo 'SRC_URI="https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
+                echo "DESCRIPTION=\"${description}\""
+                echo "HOMEPAGE=\"${homepage}\""
+                echo 'SRC_URI="https://github.com/${github_owner}/${github_repo}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
                 echo ''
                 echo 'LICENSE="BSD"'
                 echo 'SLOT="0"'
-                echo 'KEYWORDS="${{ env.keywords }}"'
+                echo 'KEYWORDS="${keywords}"'
                 echo ''
                 echo 'RDEPEND="'
                 echo '	>=dev-qt/qtbase-${QTMIN}:6[gui,network,widgets,dbus]'
@@ -161,7 +161,7 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/archive/refs/tags/${tag}.tar.gz" "${{ env.epn }}-${version}.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${github_owner}/${github_repo}/archive/refs/tags/${tag}.tar.gz" "${epn}-${version}.tar.gz" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
@@ -180,11 +180,13 @@ jobs:
 
       - name: Enforce Authentication for PR Creation
         if: steps.process_releases.outputs.generated_tag
+        env:
+          AUTH_TYPE: ${{ steps.auth.outputs.auth_type }}
         run: |
           set -euo pipefail
-          if [[ "${{ steps.auth.outputs.auth_type }}" == "none" ]]; then
+          if [[ "${AUTH_TYPE}" == "none" ]]; then
             echo "::error::Missing explicit credentials to create PR. Please configure a GitHub App or PAT."
-            bash -c "exit 1"
+            exit 1
           fi
 
       - name: Create Pull Request
@@ -192,9 +194,9 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ steps.auth.outputs.auth_type == 'app' && steps.app_token.outputs.token || secrets.PAT_TOKEN }}
-          commit-message: "Add ebuilds for new ${{ env.epn }} releases tag ${{ steps.process_releases.outputs.generated_tag }}"
-          title: "Update ${{ env.epn }} to ${{ steps.process_releases.outputs.generated_tag }}"
-          body: "This PR updates ${{ env.epn }} to the latest release ${{ steps.process_releases.outputs.generated_tag }}."
-          branch: "update-${{ env.epn }}-${{ steps.process_releases.outputs.generated_tag }}"
+          commit-message: "Add ebuilds for new ${epn} releases tag ${{ steps.process_releases.outputs.generated_tag }}"
+          title: "Update ${epn} to ${{ steps.process_releases.outputs.generated_tag }}"
+          body: "This PR updates ${epn} to the latest release ${{ steps.process_releases.outputs.generated_tag }}."
+          branch: "update-${epn}-${{ steps.process_releases.outputs.generated_tag }}"
           base: main
           labels: "automated pr"
