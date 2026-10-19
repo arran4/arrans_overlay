@@ -194,9 +194,9 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ steps.auth.outputs.auth_type == 'app' && steps.app_token.outputs.token || secrets.PAT_TOKEN }}
-          commit-message: "Add ebuilds for new ${epn} releases tag ${{ steps.process_releases.outputs.generated_tag }}"
-          title: "Update ${epn} to ${{ steps.process_releases.outputs.generated_tag }}"
-          body: "This PR updates ${epn} to the latest release ${{ steps.process_releases.outputs.generated_tag }}."
-          branch: "update-${epn}-${{ steps.process_releases.outputs.generated_tag }}"
+          commit-message: "Add ebuilds for new ${{ env.epn }} releases tag ${{ steps.process_releases.outputs.generated_tag }}"
+          title: "Update ${{ env.epn }} to ${{ steps.process_releases.outputs.generated_tag }}"
+          body: "This PR updates ${{ env.epn }} to the latest release ${{ steps.process_releases.outputs.generated_tag }}."
+          branch: "update-${{ env.epn }}-${{ steps.process_releases.outputs.generated_tag }}"
           base: main
           labels: "automated pr"

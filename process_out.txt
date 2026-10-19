@@ -1,0 +1,53 @@
++ set -euo pipefail
++ ebuild_dir=./dev-vcs/kgithub-notify
++ mkdir -p ./dev-vcs/kgithub-notify
++ releaseTypes=()
++ declare -A releaseTypes
+++ curl -fsS --header 'Accept: application/vnd.github+json' --header 'Authorization: Bearer dummy' https://api.github.com/repos/arran4/kgithub-notify/releases
+++ jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name'
++ tags=v1.0.0
++ for tag in $tags
++ version=1.0.0
++ '[' 1.0.0 = v1.0.0 ']'
++ originalVersion=1.0.0
++ echo 1.0.0
++ grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'
+1.0.0
+++ echo 1.0.0
+++ sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p'
++ releaseType=
++ [[ ! -v releaseTypes[release] ]]
++ [[ -v releaseTypes[release] ]]
++ releaseTypes[${releaseType:=release}]=1.0.0
++ branch_name_tag=update-kgithub-notify-v1.0.0
++ branch_name_ver=update-kgithub-notify-1.0.0
+++ gh pr list --head update-kgithub-notify-v1.0.0 --state all --json state,number
+++ jq '.[0] // empty'
++ pr_info='{
+  "number": 100,
+  "state": "OPEN"
+}'
++ '[' -z '{
+  "number": 100,
+  "state": "OPEN"
+}' ']'
++ '[' -n '{
+  "number": 100,
+  "state": "OPEN"
+}' ']'
+++ echo '{
+  "number": 100,
+  "state": "OPEN"
+}'
+++ jq -r '.state // empty'
++ pr_state=OPEN
+++ echo '{
+  "number": 100,
+  "state": "OPEN"
+}'
+++ jq -r '.number // empty'
++ pr_number=100
++ [[ OPEN == \C\L\O\S\E\D ]]
++ echo 'PR #100 for 1.0.0 already exists (State: OPEN). Skipping.'
+PR #100 for 1.0.0 already exists (State: OPEN). Skipping.
++ continue

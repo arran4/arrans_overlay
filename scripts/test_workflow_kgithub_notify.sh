@@ -23,8 +23,13 @@ mkdir -p bin
 cat << 'MOCK_CURL' > bin/curl
 #!/bin/bash
 if [[ "$MOCK_CURL_FAIL" == "1" ]]; then
-    echo "HTTP error" >&2
-    exit 1
+    if [[ "$*" == *"-f"* ]] || [[ "$*" == *"--fail"* ]]; then
+        echo "curl: (22) The requested URL returned error: 403" >&2
+        exit 22
+    else
+        echo '{"message": "API rate limit exceeded for..."}'
+        exit 0
+    fi
 fi
 if [[ "$*" == *"releases"* ]]; then
     echo "$MOCK_CURL_RESPONSE"
@@ -43,13 +48,13 @@ if [[ "$1" == "pr" && "$2" == "list" ]]; then
         shift
     done
 
-    if [[ "$head_branch" == "update-kgithub-notify-v1.0" || "$head_branch" == "update-kgithub-notify-1.0" ]]; then
+    if [[ "$head_branch" == "update-kgithub-notify-v1.0.0" || "$head_branch" == "update-kgithub-notify-1.0.0" ]]; then
         echo '[{"number": 100, "state": "OPEN"}]'
-    elif [[ "$head_branch" == "update-kgithub-notify-v1.1_alpha1" || "$head_branch" == "update-kgithub-notify-1.1_alpha1" ]]; then
+    elif [[ "$head_branch" == "update-kgithub-notify-v1.1.0_alpha1" || "$head_branch" == "update-kgithub-notify-1.1.0_alpha1" ]]; then
         echo '[{"number": 101, "state": "CLOSED"}]'
-    elif [[ "$head_branch" == "update-kgithub-notify-v1.2" || "$head_branch" == "update-kgithub-notify-1.2" ]]; then
+    elif [[ "$head_branch" == "update-kgithub-notify-v1.2.0" || "$head_branch" == "update-kgithub-notify-1.2.0" ]]; then
         echo '[{"number": 102, "state": "MERGED"}]'
-    elif [[ "$head_branch" == "update-kgithub-notify-v1.4" || "$head_branch" == "update-kgithub-notify-1.4" ]]; then
+    elif [[ "$head_branch" == "update-kgithub-notify-v1.4.0" || "$head_branch" == "update-kgithub-notify-1.4.0" ]]; then
         echo "API rate limit exceeded" >&2
         exit 1
     else
@@ -73,39 +78,36 @@ cat << 'EXTRACTOR' > extract_wf.py
 import sys, os, re
 with open(os.path.join(os.environ['OLDPWD'], '.github/workflows/dev-vcs-kgithub-notify-update.yaml'), 'r') as f:
     lines = f.readlines()
-def extract_run_block(step_id_or_name):
-    block = []
-    in_block = False
+def extract_run(name):
+    out = []
+    in_step = False
     in_run = False
     for line in lines:
-        if step_id_or_name in line:
-            in_block = True
+        if name in line:
+            in_step = True
             continue
-        if in_block:
+        if in_step:
             if line.startswith('        run: |'):
                 in_run = True
                 continue
             if in_run:
                 if line.startswith('          '):
-                    block.append(line[10:])
+                    out.append(line[10:])
                 elif line.strip() == '':
-                    block.append(chr(10))
+                    out.append(chr(10))
                 else:
                     break
             else:
                 if not line.startswith('        ') and not line.strip() == '':
                     break
-    out = ''.join(block).strip()
-    if not out:
-        sys.exit(1)
-    return out
+    res = ''.join(out).strip()
+    return res
 
-process_script = extract_run_block('id: process_releases')
-enforce_script = extract_run_block('name: Enforce Authentication for PR Creation')
-
+process_script = extract_run('id: process_releases')
 with open('process_releases.sh', 'w') as f:
     f.write('#!/bin/bash' + chr(10) + process_script + chr(10))
 
+enforce_script = extract_run('name: Enforce Authentication for PR Creation')
 with open('enforce_auth.sh', 'w') as f:
     f.write('#!/bin/bash' + chr(10) + enforce_script + chr(10))
 EXTRACTOR
@@ -115,57 +117,82 @@ chmod +x process_releases.sh enforce_auth.sh
 
 echo "=== Test: Open PR (should skip) ==="
 export MOCK_CURL_FAIL=0
-export MOCK_CURL_RESPONSE='[{"tag_name": "v1.0", "type": "object"}]'
+export MOCK_CURL_RESPONSE='[{"tag_name": "v1.0.0", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
 export GH_TOKEN="dummy"
-./process_releases.sh > process_out.txt 2>&1
+if ! ./process_releases.sh > process_out.txt 2>&1; then
+    echo "FAILED: process_releases.sh exited non-zero unexpectedly"
+    cat process_out.txt
+    exit 1
+fi
 cat process_out.txt
-grep -q "PR #100 for 1.0 already exists (State: OPEN)" process_out.txt
+if ! grep -q "PR #100 for 1.0.0 already exists (State: OPEN)" process_out.txt; then
+    echo "FAILED: Did not find skip message in output"
+    exit 1
+fi
 if [ -f "$GITHUB_OUTPUT" ] && grep -q "generated_tag" "$GITHUB_OUTPUT"; then
     echo "FAILED: generated tag unexpectedly for OPEN PR"
     exit 1
 fi
 
 echo "=== Test: Closed PR (should skip) ==="
-export MOCK_CURL_RESPONSE='[{"tag_name": "v1.1_alpha1", "type": "object"}]'
+export MOCK_CURL_RESPONSE='[{"tag_name": "v1.1.0_alpha1", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
-export GH_TOKEN="dummy"
-./process_releases.sh > process_out.txt 2>&1
+if ! ./process_releases.sh > process_out.txt 2>&1; then
+    echo "FAILED: process_releases.sh exited non-zero unexpectedly"
+    cat process_out.txt
+    exit 1
+fi
 cat process_out.txt
-grep -q "PR #101 for 1.1_alpha1 is closed-unmerged." process_out.txt
+if ! grep -q "PR #101 for 1.1.0_alpha1 is closed-unmerged." process_out.txt; then
+    echo "FAILED: Did not find skip message for CLOSED PR"
+    exit 1
+fi
 if [ -f "$GITHUB_OUTPUT" ] && grep -q "generated_tag" "$GITHUB_OUTPUT"; then
     echo "FAILED: generated tag unexpectedly for CLOSED PR"
     exit 1
 fi
 
 echo "=== Test: Merged PR (should skip) ==="
-export MOCK_CURL_RESPONSE='[{"tag_name": "v1.2", "type": "object"}]'
+export MOCK_CURL_RESPONSE='[{"tag_name": "v1.2.0", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
-export GH_TOKEN="dummy"
-./process_releases.sh > process_out.txt 2>&1
+if ! ./process_releases.sh > process_out.txt 2>&1; then
+    echo "FAILED: process_releases.sh exited non-zero unexpectedly"
+    cat process_out.txt
+    exit 1
+fi
 cat process_out.txt
-grep -q "PR #102 for 1.2 already exists (State: MERGED)" process_out.txt
+if ! grep -q "PR #102 for 1.2.0 already exists (State: MERGED)" process_out.txt; then
+    echo "FAILED: Did not find skip message for MERGED PR"
+    exit 1
+fi
 if [ -f "$GITHUB_OUTPUT" ] && grep -q "generated_tag" "$GITHUB_OUTPUT"; then
     echo "FAILED: generated tag unexpectedly for MERGED PR"
     exit 1
 fi
 
 echo "=== Test: New PR (should generate) ==="
-export MOCK_CURL_RESPONSE='[{"tag_name": "v1.3", "type": "object"}]'
+export MOCK_CURL_RESPONSE='[{"tag_name": "v1.3.0", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
-export GH_TOKEN="dummy"
-./process_releases.sh > process_out.txt 2>&1
+if ! ./process_releases.sh > process_out.txt 2>&1; then
+    echo "FAILED: process_releases.sh exited non-zero unexpectedly"
+    cat process_out.txt
+    exit 1
+fi
 cat process_out.txt
-if ! grep -xq "generated_tag=v1.3" "$GITHUB_OUTPUT"; then
-    echo "FAILED: exact generated_tag=v1.3 not found in GITHUB_OUTPUT"
+if ! grep -xq "generated_tag=v1.3.0" "$GITHUB_OUTPUT"; then
+    echo "FAILED: exact generated_tag=v1.3.0 not found in GITHUB_OUTPUT"
     exit 1
 fi
 
 echo "=== Test: No-op missing secrets ==="
 export MOCK_CURL_RESPONSE='[]'
 rm -f "$GITHUB_OUTPUT"
-export GH_TOKEN="dummy"
-./process_releases.sh > process_out2.txt 2>&1
+if ! ./process_releases.sh > process_out2.txt 2>&1; then
+    echo "FAILED: process_releases.sh exited non-zero unexpectedly"
+    cat process_out2.txt
+    exit 1
+fi
 if [ -f "$GITHUB_OUTPUT" ] && grep -q "generated_tag" "$GITHUB_OUTPUT"; then
     echo "Generated tag unexpectedly"
     exit 1
@@ -173,13 +200,16 @@ fi
 echo "No-op successful."
 
 echo "=== Test: New update missing secrets ==="
-export MOCK_CURL_RESPONSE='[{"tag_name": "v1.5", "type": "object"}]'
+export MOCK_CURL_RESPONSE='[{"tag_name": "v1.5.0", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
 export AUTH_TYPE="none"
-./process_releases.sh > /dev/null 2>&1
-# We assert that generated_tag was set before testing missing auth
-if ! grep -xq "generated_tag=v1.5" "$GITHUB_OUTPUT"; then
-    echo "FAILED: expected generated_tag=v1.5 not found"
+if ! ./process_releases.sh > process_out3.txt 2>&1; then
+    echo "FAILED: process_releases.sh exited non-zero unexpectedly"
+    cat process_out3.txt
+    exit 1
+fi
+if ! grep -xq "generated_tag=v1.5.0" "$GITHUB_OUTPUT"; then
+    echo "FAILED: expected generated_tag=v1.5.0 not found"
     exit 1
 fi
 
@@ -189,8 +219,11 @@ if ./enforce_auth.sh > auth_out.txt 2>&1; then
 else
     # Mask ::error:: so it doesn't trigger GH Actions annotations
     sed -i 's/^::/Mock-::/' auth_out.txt
-    cat auth_out.txt
-    grep -q "Missing explicit credentials to create PR" auth_out.txt
+    if ! grep -q "Missing explicit credentials to create PR" auth_out.txt; then
+        cat auth_out.txt
+        echo "FAILED: Did not find explicit credentials error"
+        exit 1
+    fi
 fi
 
 echo "=== Test: Credential selection provided (app) ==="
@@ -211,14 +244,17 @@ fi
 echo "Enforce Auth passed with AUTH_TYPE=pat"
 
 echo "=== Test: Failed GitHub API Request (gh command) ==="
-export MOCK_CURL_RESPONSE='[{"tag_name": "v1.4", "type": "object"}]'
+export MOCK_CURL_RESPONSE='[{"tag_name": "v1.4.0", "type": "object"}]'
 rm -f "$GITHUB_OUTPUT"
 if ./process_releases.sh > process_out3.txt 2>&1; then
     echo "FAILED: process_releases.sh should have failed due to API rate limit"
     exit 1
 else
-    cat process_out3.txt
-    grep -q "API rate limit exceeded" process_out3.txt
+    if ! grep -q "API rate limit exceeded" process_out3.txt; then
+        echo "FAILED: API rate limit message not found"
+        cat process_out3.txt
+        exit 1
+    fi
 fi
 
 echo "=== Test: Failed GitHub API Request (curl HTTP error) ==="
@@ -228,8 +264,11 @@ if ./process_releases.sh > process_out4.txt 2>&1; then
     echo "FAILED: process_releases.sh should have failed due to curl HTTP error"
     exit 1
 else
-    cat process_out4.txt
-    grep -q "HTTP error" process_out4.txt
+    if ! grep -q "curl: (22)" process_out4.txt; then
+        echo "FAILED: Curl error not found in output"
+        cat process_out4.txt
+        exit 1
+    fi
 fi
 
 echo "All tests passed successfully!"
