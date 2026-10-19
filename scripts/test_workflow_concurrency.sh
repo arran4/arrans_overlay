@@ -1,10 +1,15 @@
 #!/bin/bash
 set -euo pipefail
 
-MODE="${1:-all}"
+MODE="${1:-manual}"
 WORKFLOWS=$(find .github/workflows -type f -name "*.yaml" -o -name "*.yml" | sort)
 ERRORS=0
 GENERATED_ERRORS=0
+
+if [ "$MODE" != "manual" ] && [ "$MODE" != "strict" ]; then
+    echo "Invalid mode '$MODE'. Use 'manual' or 'strict'."
+    exit 1
+fi
 
 for WORKFLOW in $WORKFLOWS; do
     IS_GENERATED=0
