@@ -185,6 +185,48 @@ if ! grep -xq "generated_tag=v1.3.0" "$GITHUB_OUTPUT"; then
     exit 1
 fi
 
+EBUILD_PATH="${ecn}/${epn}/${epn}-1.3.0.ebuild"
+if [ ! -f "$EBUILD_PATH" ]; then
+    echo "FAILED: ebuild file not generated at $EBUILD_PATH"
+    exit 1
+fi
+
+if grep -q "\${github_owner}" "$EBUILD_PATH"; then
+    echo "FAILED: ebuild contains literal \${github_owner}"
+    exit 1
+fi
+
+if grep -q "\${github_repo}" "$EBUILD_PATH"; then
+    echo "FAILED: ebuild contains literal \${github_repo}"
+    exit 1
+fi
+
+if grep -q "\${keywords}" "$EBUILD_PATH"; then
+    echo "FAILED: ebuild contains literal \${keywords}"
+    exit 1
+fi
+
+if ! grep -q 'SRC_URI="https://github.com/arran4/kgithub-notify/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"' "$EBUILD_PATH"; then
+    echo "FAILED: ebuild missing exact expected SRC_URI"
+    exit 1
+fi
+
+if ! grep -q 'KEYWORDS="~amd64 ~x86"' "$EBUILD_PATH"; then
+    echo "FAILED: ebuild missing exact expected KEYWORDS"
+    exit 1
+fi
+
+if ! grep -q 'DESCRIPTION="A sleek GitHub notification system tray application"' "$EBUILD_PATH"; then
+    echo "FAILED: ebuild missing exact expected DESCRIPTION"
+    exit 1
+fi
+
+if ! grep -q 'HOMEPAGE="https://github.com/arran4/kgithub-notify"' "$EBUILD_PATH"; then
+    echo "FAILED: ebuild missing exact expected HOMEPAGE"
+    exit 1
+fi
+
+
 echo "=== Test: No-op missing secrets ==="
 export MOCK_CURL_RESPONSE='[]'
 rm -f "$GITHUB_OUTPUT"

@@ -1,8 +1,12 @@
 name: dev-vcs/kgithub-notify update
 
 permissions:
+<<<<<<< HEAD
   contents: read
   pull-requests: read
+=======
+  contents: write
+>>>>>>> origin/main
 
 on:
   schedule:
@@ -13,7 +17,11 @@ on:
       - '.github/workflows/dev-vcs-kgithub-notify-update.yaml'
 
 concurrency:
+<<<<<<< HEAD
   group: ${{ github.workflow }}-${{ github.ref }}
+=======
+  group: ci-${{ github.ref }}
+>>>>>>> origin/main
   cancel-in-progress: false
 
 env:
@@ -131,13 +139,13 @@ jobs:
                 echo 'QTMIN=6.6.2'
                 echo 'ECM_TEST="true"'
                 echo 'inherit ecm'
-                echo "DESCRIPTION=\"${description}\""
-                echo "HOMEPAGE=\"${homepage}\""
-                echo 'SRC_URI="https://github.com/${github_owner}/${github_repo}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
+                printf 'DESCRIPTION="%s"\n' "$description"
+                printf 'HOMEPAGE="%s"\n' "$homepage"
+                printf 'SRC_URI="https://github.com/%s/%s/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"\n' "$github_owner" "$github_repo"
                 echo ''
                 echo 'LICENSE="BSD"'
                 echo 'SLOT="0"'
-                echo 'KEYWORDS="${keywords}"'
+                printf 'KEYWORDS="%s"\n' "$keywords"
                 echo ''
                 echo 'RDEPEND="'
                 echo '	>=dev-qt/qtbase-${QTMIN}:6[gui,network,widgets,dbus]'
@@ -166,6 +174,7 @@ jobs:
             fi
           done
 
+<<<<<<< HEAD
       - name: Generate App Token
         if: steps.process_releases.outputs.generated_tag && steps.auth.outputs.auth_type == 'app'
         id: app_token
@@ -194,6 +203,13 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ steps.auth.outputs.auth_type == 'app' && steps.app_token.outputs.token || secrets.PAT_TOKEN }}
+=======
+      - name: Create Pull Request
+        if: steps.process_releases.outputs.generated_tag
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+>>>>>>> origin/main
           commit-message: "Add ebuilds for new ${{ env.epn }} releases tag ${{ steps.process_releases.outputs.generated_tag }}"
           title: "Update ${{ env.epn }} to ${{ steps.process_releases.outputs.generated_tag }}"
           body: "This PR updates ${{ env.epn }} to the latest release ${{ steps.process_releases.outputs.generated_tag }}."

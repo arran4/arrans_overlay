@@ -77,22 +77,66 @@ jobs:
           set -euo pipefail
           rm -rf /tmp/manifest-snapshot
           mkdir -p /tmp/manifest-snapshot
+<<<<<<< HEAD
+=======
+          manifest_list=$(mktemp)
+          trap 'rm -f -- "$manifest_list"' EXIT
+          # An incomplete enumeration must fail before any dedupe can run.
+          find . -type f -name Manifest -print0 > "$manifest_list"
+>>>>>>> origin/main
           while IFS= read -r -d '' manifest; do
             relative=${manifest#./}
             mkdir -p "/tmp/manifest-snapshot/$(dirname "$relative")"
             cp -p -- "$manifest" "/tmp/manifest-snapshot/$relative"
+<<<<<<< HEAD
           done < <(find . -type f -name Manifest -print0)
+=======
+          done < "$manifest_list"
+>>>>>>> origin/main
 
       - name: Remove duplicate ebuilds
         id: dedupe
         if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
+<<<<<<< HEAD
         continue-on-error: true
         run: g2 ebuild deduplicate .
+=======
+        shell: bash
+        run: |
+          echo "=== PRE-DEDUPE DIAGNOSTICS ==="
+          echo "pwd: $(pwd)"
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          ls -la .git || echo "No .git dir"
+          git -C "$GITHUB_WORKSPACE" rev-parse --show-toplevel || echo "rev-parse failed"
+          git status || echo "git status failed"
+          echo "==============================="
+
+          set +e
+          g2 ebuild deduplicate .
+          DEDUPE_EXIT=$?
+          set -e
+
+          echo "=== POST-DEDUPE DIAGNOSTICS ==="
+          echo "pwd: $(pwd)"
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          ls -la .git || echo "No .git dir"
+          git -C "$GITHUB_WORKSPACE" rev-parse --show-toplevel || echo "rev-parse failed"
+          git status || echo "git status failed"
+          echo "==============================="
+
+          if [ "$DEDUPE_EXIT" -ne 0 ]; then
+             echo "dedupe_failed=true" >> $GITHUB_OUTPUT
+          else
+             echo "dedupe_failed=false" >> $GITHUB_OUTPUT
+          fi
+          # We don't fail here so restoration runs
+>>>>>>> origin/main
 
       - name: Restore manifests after dedupe
         if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
         shell: bash
         run: |
+<<<<<<< HEAD
           set -euo pipefail
           while IFS= read -r -d '' manifest; do
             relative=${manifest#/tmp/manifest-snapshot/}
@@ -105,6 +149,9 @@ jobs:
             git diff -- '**/Manifest' >&2
             exit 1
           fi
+=======
+          bash scripts/restore_manifests.sh /tmp/manifest-snapshot "${{ steps.dedupe.outputs.dedupe_failed }}"
+>>>>>>> origin/main
 
       # Repository-wide `g2 manifest clean .` is intentionally disabled while
       # g2#483 / PR #540 is pending. Use the package-scoped manual

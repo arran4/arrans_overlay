@@ -8,7 +8,12 @@ on:
       - '.github/scripts/test_determine_packages.py'
       - '.github/scripts/test_caelestia_update_workflow.py'
       - 'scripts/workflow_m3shapes_pin_test.sh'
+<<<<<<< HEAD
       - 'scripts/test_workflow_kgithub_notify.sh'
+=======
+      - 'scripts/restore_manifests.sh'
+      - 'scripts/test_manifest_restore.sh'
+>>>>>>> origin/main
   pull_request:
     paths:
       - '.github/workflows/**'
@@ -16,13 +21,22 @@ on:
       - '.github/scripts/test_determine_packages.py'
       - '.github/scripts/test_caelestia_update_workflow.py'
       - 'scripts/workflow_m3shapes_pin_test.sh'
+<<<<<<< HEAD
       - 'scripts/test_workflow_kgithub_notify.sh'
+=======
+      - 'scripts/restore_manifests.sh'
+      - 'scripts/test_manifest_restore.sh'
+>>>>>>> origin/main
 
 jobs:
   actionlint:
     runs-on: ubuntu-latest
     steps:
+<<<<<<< HEAD
       - uses: actions/checkout@v5
+=======
+      - uses: actions/checkout@v4
+>>>>>>> origin/main
       - name: Download actionlint
         id: get_actionlint
         run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
@@ -32,12 +46,22 @@ jobs:
   test-scripts:
     runs-on: ubuntu-latest
     steps:
+<<<<<<< HEAD
       - uses: actions/checkout@v5
+=======
+      - uses: actions/checkout@v4
+>>>>>>> origin/main
       - name: Test package matrix helper
         run: python3 .github/scripts/test_determine_packages.py
       - name: Test Caelestia updater safeguards
         run: python3 .github/scripts/test_caelestia_update_workflow.py
       - name: Test workflow M3Shapes pin extractor
+<<<<<<< HEAD
         run: |
           ./scripts/workflow_m3shapes_pin_test.sh
           bash scripts/test_workflow_kgithub_notify.sh
+=======
+        run: ./scripts/workflow_m3shapes_pin_test.sh
+      - name: Test Manifest restoration logic
+        run: ./scripts/test_manifest_restore.sh
+>>>>>>> origin/main

@@ -1,2 +1,0 @@
-#!/bin/bash
-echo '[{"tag_name": "v1.0.0", "type": "object"}]'
