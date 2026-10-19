@@ -11,6 +11,7 @@ on:
       - 'scripts/restore_manifests.sh'
       - 'scripts/test_manifest_restore.sh'
       - 'scripts/test_workflow_concurrency.sh'
+      - 'scripts/test_workflow_concurrency_fixtures.sh'
   pull_request:
     paths:
       - '.github/workflows/**'
@@ -21,6 +22,7 @@ on:
       - 'scripts/restore_manifests.sh'
       - 'scripts/test_manifest_restore.sh'
       - 'scripts/test_workflow_concurrency.sh'
+      - 'scripts/test_workflow_concurrency_fixtures.sh'
 
 jobs:
   actionlint:
@@ -39,56 +41,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test package matrix helper
         run: python3 .github/scripts/test_determine_packages.py
-      - name: Test workflow concurrency groups (fixtures)
-        run: |
-          mkdir -p /tmp/fixtures
-          # Handwritten good
-          cat << 'FIXTURE' > /tmp/fixtures/good.yaml
-          concurrency:
-            group: ${{ github.workflow }}-${{ github.ref }}
-          FIXTURE
-          # Handwritten bad
-          cat << 'FIXTURE' > /tmp/fixtures/bad_manual.yaml
-          concurrency:
-            group: ci-${{ github.ref }}
-          FIXTURE
-          # Generated bad
-          cat << 'FIXTURE' > /tmp/fixtures/bad_generated.yaml
-          # Generated using: arrans_overlay_workflow_builder
-          concurrency:
-            group: ci-${{ github.ref }}
-          FIXTURE
-
-          echo "Testing good manual (should exit 0)"
-          # Backup current workflows
-          mv .github/workflows /tmp/workflows_backup
-          mkdir -p .github/workflows
-          cp /tmp/fixtures/good.yaml .github/workflows/
-          ./scripts/test_workflow_concurrency.sh manual
-
-          echo "Testing bad manual (should exit 1)"
-          cp /tmp/fixtures/bad_manual.yaml .github/workflows/
-          if ./scripts/test_workflow_concurrency.sh manual; then
-            echo "Failed: bad manual should exit 1"
-            eval "e""xit 1"
-          fi
-
-          echo "Testing generated warning in manual mode (should exit 0)"
-          rm .github/workflows/bad_manual.yaml
-          cp /tmp/fixtures/bad_generated.yaml .github/workflows/
-          ./scripts/test_workflow_concurrency.sh manual
-
-          echo "Testing generated bad in strict mode (should exit 1)"
-          if ./scripts/test_workflow_concurrency.sh strict; then
-            echo "Failed: strict mode should exit 1 on bad generated file"
-            eval "e""xit 1"
-          fi
-
-          # Restore workflows
-          rm -rf .github/workflows
-          mv /tmp/workflows_backup .github/workflows
-          echo "Fixture tests passed."
-
+      - name: Test workflow concurrency groups (manual only)
+        run: ./scripts/test_workflow_concurrency_fixtures.sh
       - name: Test workflow concurrency groups (manual only)
         run: ./scripts/test_workflow_concurrency.sh manual
       - name: Test Caelestia updater safeguards

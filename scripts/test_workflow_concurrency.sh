@@ -2,7 +2,8 @@
 set -euo pipefail
 
 MODE="${1:-manual}"
-WORKFLOWS=$(find .github/workflows -type f -name "*.yaml" -o -name "*.yml" | sort)
+WORKFLOW_DIR="${2:-.github/workflows}"
+WORKFLOWS=$(find "$WORKFLOW_DIR" -type f -name "*.yaml" -o -name "*.yml" | sort)
 ERRORS=0
 GENERATED_ERRORS=0
 
