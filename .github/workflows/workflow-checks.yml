@@ -10,8 +10,11 @@ on:
       - 'scripts/workflow_m3shapes_pin_test.sh'
       - 'scripts/restore_manifests.sh'
       - 'scripts/test_manifest_restore.sh'
+
+
       - 'scripts/test_workflow_concurrency.sh'
       - 'scripts/test_workflow_concurrency_fixtures.sh'
+
   pull_request:
     paths:
       - '.github/workflows/**'
@@ -21,8 +24,11 @@ on:
       - 'scripts/workflow_m3shapes_pin_test.sh'
       - 'scripts/restore_manifests.sh'
       - 'scripts/test_manifest_restore.sh'
+
+
       - 'scripts/test_workflow_concurrency.sh'
       - 'scripts/test_workflow_concurrency_fixtures.sh'
+
 
 jobs:
   actionlint:
