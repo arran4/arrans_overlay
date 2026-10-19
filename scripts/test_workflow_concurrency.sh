@@ -19,7 +19,7 @@ for WORKFLOW in $WORKFLOWS; do
     fi
 
     # Check for verbatim group: ci-${{ github.ref }}
-    if grep -q -E "group: ci-\\\$\{\{ github\.ref \}\}$|group: ci-\\\$\{\{ github\.ref \}\}\r$" "$WORKFLOW"; then
+    if grep -q -E "group: ci-\\\$\{\{ github\.ref \}\}\$|group: ci-\\\$\{\{ github\.ref \}\}\r\$" "$WORKFLOW"; then
         if [ "$IS_GENERATED" -eq 1 ]; then
             GENERATED_ERRORS=$((GENERATED_ERRORS + 1))
             if [ "$MODE" = "strict" ]; then
@@ -27,12 +27,8 @@ for WORKFLOW in $WORKFLOWS; do
                 ERRORS=$((ERRORS + 1))
             fi
         else
-            if [[ "$WORKFLOW" == *"dev-vcs-kgithub-notify-update.yaml" ]]; then
-                echo "Warning: $WORKFLOW uses overly broad concurrency group (Fix expected in PR #965)"
-            else
-                echo "Error (Manual): $WORKFLOW uses overly broad concurrency group"
-                ERRORS=$((ERRORS + 1))
-            fi
+            echo "Error (Manual): $WORKFLOW uses overly broad concurrency group"
+            ERRORS=$((ERRORS + 1))
         fi
     fi
 done
