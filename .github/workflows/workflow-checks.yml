@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test package matrix helper
         run: python3 .github/scripts/test_determine_packages.py
-      - name: Test workflow concurrency groups (manual only)
+      - name: Test workflow concurrency fixture cases
         run: ./scripts/test_workflow_concurrency_fixtures.sh
       - name: Test workflow concurrency groups (manual only)
         run: ./scripts/test_workflow_concurrency.sh manual
