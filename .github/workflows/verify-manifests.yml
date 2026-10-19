@@ -11,22 +11,16 @@ on:
       - '.github/workflows/verify-manifests.yml'
       - 'scripts/verify_manifest.py'
       - 'scripts/test_verify_manifest.py'
-<<<<<<< HEAD
-=======
       - 'scripts/restore_manifests.sh'
       - 'scripts/test_manifest_restore.sh'
->>>>>>> origin/main
   pull_request:
     paths:
       - '**/Manifest'
       - '.github/workflows/verify-manifests.yml'
       - 'scripts/verify_manifest.py'
       - 'scripts/test_verify_manifest.py'
-<<<<<<< HEAD
-=======
       - 'scripts/restore_manifests.sh'
       - 'scripts/test_manifest_restore.sh'
->>>>>>> origin/main
 
 jobs:
   verify-manifests:

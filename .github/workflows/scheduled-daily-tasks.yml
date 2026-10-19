@@ -77,30 +77,19 @@ jobs:
           set -euo pipefail
           rm -rf /tmp/manifest-snapshot
           mkdir -p /tmp/manifest-snapshot
-<<<<<<< HEAD
-=======
           manifest_list=$(mktemp)
           trap 'rm -f -- "$manifest_list"' EXIT
           # An incomplete enumeration must fail before any dedupe can run.
           find . -type f -name Manifest -print0 > "$manifest_list"
->>>>>>> origin/main
           while IFS= read -r -d '' manifest; do
             relative=${manifest#./}
             mkdir -p "/tmp/manifest-snapshot/$(dirname "$relative")"
             cp -p -- "$manifest" "/tmp/manifest-snapshot/$relative"
-<<<<<<< HEAD
-          done < <(find . -type f -name Manifest -print0)
-=======
           done < "$manifest_list"
->>>>>>> origin/main
 
       - name: Remove duplicate ebuilds
         id: dedupe
         if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
-<<<<<<< HEAD
-        continue-on-error: true
-        run: g2 ebuild deduplicate .
-=======
         shell: bash
         run: |
           echo "=== PRE-DEDUPE DIAGNOSTICS ==="
@@ -130,28 +119,12 @@ jobs:
              echo "dedupe_failed=false" >> $GITHUB_OUTPUT
           fi
           # We don't fail here so restoration runs
->>>>>>> origin/main
 
       - name: Restore manifests after dedupe
         if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
         shell: bash
         run: |
-<<<<<<< HEAD
-          set -euo pipefail
-          while IFS= read -r -d '' manifest; do
-            relative=${manifest#/tmp/manifest-snapshot/}
-            mkdir -p "$(dirname "$relative")"
-            cp -p -- "$manifest" "$relative"
-          done < <(find /tmp/manifest-snapshot -type f -name Manifest -print0)
-
-          if ! git diff --quiet -- '**/Manifest'; then
-            echo "Refusing to continue: dedupe left Manifest changes after restoration." >&2
-            git diff -- '**/Manifest' >&2
-            exit 1
-          fi
-=======
           bash scripts/restore_manifests.sh /tmp/manifest-snapshot "${{ steps.dedupe.outputs.dedupe_failed }}"
->>>>>>> origin/main
 
       # Repository-wide `g2 manifest clean .` is intentionally disabled while
       # g2#483 / PR #540 is pending. Use the package-scoped manual
