@@ -15,7 +15,7 @@ concurrency:
 FIXTURE
 
 # Handwritten bad
-cat << 'FIXTURE' > "$TMP_DIR/.github/workflows/bad_manual.yaml"
+cat << 'FIXTURE' > "$TMP_DIR/.github/workflows/dev-vcs-kgithub-notify-update.yaml"
 concurrency:
   group: ci-${{ github.ref }}
 FIXTURE
@@ -29,13 +29,13 @@ FIXTURE
 
 echo "--- Testing good manual (should exit 0)"
 # Run on just the good fixture (temporarily move bad ones)
-mv "$TMP_DIR/.github/workflows/bad_manual.yaml" "$TMP_DIR/bad_manual.yaml"
+mv "$TMP_DIR/.github/workflows/dev-vcs-kgithub-notify-update.yaml" "$TMP_DIR/dev-vcs-kgithub-notify-update.yaml"
 mv "$TMP_DIR/.github/workflows/bad_generated.yaml" "$TMP_DIR/bad_generated.yaml"
 set +e
 output=$(./scripts/test_workflow_concurrency.sh manual "$TMP_DIR/.github/workflows")
 exit_code=$?
 set -e
-mv "$TMP_DIR/bad_manual.yaml" "$TMP_DIR/.github/workflows/bad_manual.yaml"
+mv "$TMP_DIR/dev-vcs-kgithub-notify-update.yaml" "$TMP_DIR/.github/workflows/dev-vcs-kgithub-notify-update.yaml"
 mv "$TMP_DIR/bad_generated.yaml" "$TMP_DIR/.github/workflows/bad_generated.yaml"
 if [ $exit_code -ne 0 ]; then
     echo "Output was: $output"
@@ -57,7 +57,7 @@ if [ $exit_code -ne 1 ]; then
     echo "Failed: bad manual should exit exactly 1. Actual: $exit_code"
     exit 1
 fi
-if ! echo "$output" | grep -q "Error (Manual): $TMP_DIR/.github/workflows/bad_manual.yaml uses overly broad concurrency group"; then
+if ! echo "$output" | grep -q "Error (Manual): $TMP_DIR/.github/workflows/dev-vcs-kgithub-notify-update.yaml uses overly broad concurrency group"; then
     echo "Failed: Did not output correct diagnostic for bad manual."
     echo "Output was: $output"
     exit 1
@@ -65,7 +65,7 @@ fi
 
 echo "--- Testing generated warning in manual mode (should exit 0)"
 # Remove the manual bad file so it should pass now
-rm "$TMP_DIR/.github/workflows/bad_manual.yaml"
+rm "$TMP_DIR/.github/workflows/dev-vcs-kgithub-notify-update.yaml"
 set +e
 output=$(./scripts/test_workflow_concurrency.sh manual "$TMP_DIR/.github/workflows")
 exit_code=$?
