@@ -190,6 +190,7 @@ jobs:
           fi
 
       - name: Create Pull Request
+        id: create_pr
         if: steps.process_releases.outputs.generated_tag
         uses: peter-evans/create-pull-request@v8
         with:
@@ -200,3 +201,26 @@ jobs:
           branch: "update-${{ env.epn }}-${{ steps.process_releases.outputs.generated_tag }}"
           base: main
           labels: "automated pr"
+
+      - name: Verify Generated PR
+        if: steps.process_releases.outputs.generated_tag
+        env:
+          PR_NUMBER: ${{ steps.create_pr.outputs.pull-request-number }}
+          PR_URL: ${{ steps.create_pr.outputs.pull-request-url }}
+          PR_OPERATION: ${{ steps.create_pr.outputs.pull-request-operation }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$PR_NUMBER" =~ ^[1-9][0-9]*$ || "$PR_URL" != "https://github.com/${GITHUB_REPOSITORY}/pull/${PR_NUMBER}" ]]; then
+            echo "::error::An update was generated, but create-pull-request did not return a valid PR number and URL."
+            exit 1
+          fi
+          case "$PR_OPERATION" in
+            created|updated)
+              echo "Confirmed $PR_OPERATION PR #$PR_NUMBER: $PR_URL"
+              ;;
+            *)
+              echo "::error::Expected PR creation/update, got operation: $PR_OPERATION"
+              exit 1
+              ;;
+          esac

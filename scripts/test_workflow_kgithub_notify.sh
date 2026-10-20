@@ -110,10 +110,14 @@ with open('process_releases.sh', 'w') as f:
 enforce_script = extract_run('name: Enforce Authentication for PR Creation')
 with open('enforce_auth.sh', 'w') as f:
     f.write('#!/bin/bash' + chr(10) + enforce_script + chr(10))
+
+verify_script = extract_run('name: Verify Generated PR')
+with open('verify_pr.sh', 'w') as f:
+    f.write('#!/bin/bash' + chr(10) + verify_script + chr(10))
 EXTRACTOR
 
 python3 extract_wf.py
-chmod +x process_releases.sh enforce_auth.sh
+chmod +x process_releases.sh enforce_auth.sh verify_pr.sh
 
 echo "=== Test: Open PR (should skip) ==="
 export MOCK_CURL_FAIL=0
@@ -284,6 +288,32 @@ if ! ./enforce_auth.sh > auth_out3.txt 2>&1; then
     exit 1
 fi
 echo "Enforce Auth passed with AUTH_TYPE=pat"
+
+echo "=== Test: PR creation postcondition ==="
+export GITHUB_REPOSITORY=arran4/arrans_overlay
+export PR_NUMBER=123
+export PR_URL=https://github.com/arran4/arrans_overlay/pull/123
+for operation in created updated; do
+    PR_OPERATION="$operation" ./verify_pr.sh > verify_out.txt 2>&1 || {
+        cat verify_out.txt
+        echo "FAILED: $operation should confirm a valid PR"
+        exit 1
+    }
+done
+for operation in none closed; do
+    if PR_OPERATION="$operation" ./verify_pr.sh > verify_out.txt 2>&1; then
+        echo "FAILED: $operation must not count as an update PR"
+        exit 1
+    fi
+done
+if PR_NUMBER='' PR_OPERATION=created ./verify_pr.sh > verify_out.txt 2>&1; then
+    echo "FAILED: missing PR number must fail"
+    exit 1
+fi
+if PR_URL='' PR_OPERATION=created ./verify_pr.sh > verify_out.txt 2>&1; then
+    echo "FAILED: missing PR URL must fail"
+    exit 1
+fi
 
 echo "=== Test: Failed GitHub API Request (gh command) ==="
 export MOCK_CURL_RESPONSE='[{"tag_name": "v1.4.0", "type": "object"}]'
