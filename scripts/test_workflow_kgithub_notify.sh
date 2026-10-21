@@ -389,4 +389,40 @@ else
     fi
 fi
 
+echo "=== Test: PR commits are limited to generated package files ==="
+python3 - "$OLDPWD/.github/workflows/dev-vcs-kgithub-notify-update.yaml" <<'PY'
+from pathlib import Path
+import sys
+
+text = Path(sys.argv[1]).read_text()
+action = text.split("\n      - name: Create Pull Request\n", 1)[1]
+action = action.split("\n      - name:", 1)[0]
+expected = (
+    "          add-paths: |\n"
+    "            dev-vcs/kgithub-notify/*.ebuild\n"
+    "            dev-vcs/kgithub-notify/Manifest\n"
+)
+if expected not in action:
+    raise SystemExit("Create Pull Request must stage only package ebuilds and Manifest")
+PY
+
+staging_dir="$WF_TEST_DIR/staging-scope"
+mkdir -p "$staging_dir/dev-vcs/kgithub-notify" "$staging_dir/unrelated"
+touch "$staging_dir/dev-vcs/kgithub-notify/kgithub-notify-1.2.3.ebuild"
+touch "$staging_dir/dev-vcs/kgithub-notify/Manifest"
+touch "$staging_dir/dev-vcs/kgithub-notify/debug.tmp"
+touch "$staging_dir/unrelated/debug.txt"
+(
+    cd "$staging_dir"
+    git init -q
+    git add -- 'dev-vcs/kgithub-notify/*.ebuild' 'dev-vcs/kgithub-notify/Manifest'
+    actual="$(git diff --cached --name-only | LC_ALL=C sort)"
+    expected="$(printf '%s\n' 'dev-vcs/kgithub-notify/Manifest' \
+      'dev-vcs/kgithub-notify/kgithub-notify-1.2.3.ebuild' | LC_ALL=C sort)"
+    if [[ "$actual" != "$expected" ]]; then
+        printf 'FAILED: unexpected staged files:\n%s\n' "$actual"
+        exit 1
+    fi
+)
+
 echo "All tests passed successfully!"

@@ -207,6 +207,9 @@ jobs:
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ steps.auth.outputs.auth_type == 'app' && steps.app_token.outputs.token || secrets.PAT_TOKEN }}
+          add-paths: |
+            dev-vcs/kgithub-notify/*.ebuild
+            dev-vcs/kgithub-notify/Manifest
           commit-message: "Add ebuilds for new ${{ env.epn }} releases tag ${{ steps.process_releases.outputs.generated_tag }}"
           title: "Update ${{ env.epn }} to ${{ steps.process_releases.outputs.generated_tag }}"
           body: "This PR updates ${{ env.epn }} to the latest release ${{ steps.process_releases.outputs.generated_tag }}."
