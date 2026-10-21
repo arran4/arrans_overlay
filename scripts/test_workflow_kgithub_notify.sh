@@ -107,6 +107,10 @@ process_script = extract_run('id: process_releases')
 with open('process_releases.sh', 'w') as f:
     f.write('#!/bin/bash' + chr(10) + process_script + chr(10))
 
+auth_script = extract_run('name: Verify Authentication Setup')
+with open('auth_setup.sh', 'w') as f:
+    f.write('#!/bin/bash' + chr(10) + auth_script + chr(10))
+
 enforce_script = extract_run('name: Enforce Authentication for PR Creation')
 with open('enforce_auth.sh', 'w') as f:
     f.write('#!/bin/bash' + chr(10) + enforce_script + chr(10))
@@ -117,7 +121,7 @@ with open('verify_pr.sh', 'w') as f:
 EXTRACTOR
 
 python3 extract_wf.py
-chmod +x process_releases.sh enforce_auth.sh verify_pr.sh
+chmod +x process_releases.sh auth_setup.sh enforce_auth.sh verify_pr.sh
 
 echo "=== Test: Open PR (should skip) ==="
 export MOCK_CURL_FAIL=0
@@ -244,6 +248,48 @@ if [ -f "$GITHUB_OUTPUT" ] && grep -q "generated_tag" "$GITHUB_OUTPUT"; then
     exit 1
 fi
 echo "No-op successful."
+
+echo "=== Test: Fail closed on invalid GitHub release responses ==="
+for response in '{"message":"API rate limit exceeded"}' '[{"name":"missing tag_name"}]' 'null'; do
+    export MOCK_CURL_RESPONSE="$response"
+    rm -f "$GITHUB_OUTPUT"
+    if ./process_releases.sh > api_shape_out.txt 2>&1; then
+        echo "FAILED: malformed API response was incorrectly accepted as no updates: $response"
+        exit 1
+    fi
+    if [ -f "$GITHUB_OUTPUT" ] && grep -q '^generated_tag=' "$GITHUB_OUTPUT"; then
+        echo "FAILED: malformed API response generated an update"
+        exit 1
+    fi
+done
+
+echo "=== Test: Authentication selection from production Bash ==="
+assert_auth_route() {
+    local expected="$1" app_id="$2" private_key="$3" pat="$4"
+    local output="$WF_TEST_DIR/auth-selection-output"
+    rm -f "$output"
+    if ! APP_ID="$app_id" APP_PRIVATE_KEY="$private_key" PAT_TOKEN="$pat" \
+         GITHUB_OUTPUT="$output" ./auth_setup.sh > auth_selection_out.txt 2>&1; then
+        echo "FAILED: auth selector exited nonzero"
+        exit 1
+    fi
+    if [ "$(wc -l < "$output")" -ne 1 ] || ! grep -qx "auth_type=$expected" "$output"; then
+        echo "FAILED: expected auth_type=$expected"
+        exit 1
+    fi
+    if grep -Eq 'mock-private-key|mock-pat-token' auth_selection_out.txt; then
+        echo "FAILED: authentication secrets appeared in logs"
+        exit 1
+    fi
+}
+assert_auth_route none '' '' ''
+assert_auth_route app 123 mock-private-key ''
+assert_auth_route app 123 mock-private-key mock-pat-token
+assert_auth_route pat '' '' mock-pat-token
+assert_auth_route pat 123 '' mock-pat-token
+assert_auth_route pat '' mock-private-key mock-pat-token
+assert_auth_route none 123 '' ''
+assert_auth_route none '' mock-private-key ''
 
 echo "=== Test: New update missing secrets ==="
 export MOCK_CURL_RESPONSE='[{"tag_name": "v1.5.0", "type": "object"}]'

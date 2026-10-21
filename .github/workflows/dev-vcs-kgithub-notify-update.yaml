@@ -75,7 +75,19 @@ jobs:
           ebuild_dir="./${ecn}/${epn}"
           mkdir -p "$ebuild_dir"
           declare -A releaseTypes=()
-          tags=$(curl -fsS  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${GH_TOKEN}" https://api.github.com/repos/${github_owner}/${github_repo}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          # An API error envelope can be valid JSON and even HTTP 200.
+          # Do not interpret it (or a malformed release) as an empty list.
+          tags=$(
+            curl -fsS \
+              --header "Accept: application/vnd.github+json" \
+              --header "Authorization: Bearer ${GH_TOKEN}" \
+              "https://api.github.com/repos/${github_owner}/${github_repo}/releases" |
+              jq -r '
+                if type != "array" then error("GitHub releases response must be an array")
+                else .[] | if type == "object" and (.tag_name | type) == "string"
+                  then .tag_name else error("GitHub release missing string tag_name") end
+                end'
+          )
           # shellcheck disable=SC2086
           for tag in $tags; do
             version="${tag#v}"
