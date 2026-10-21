@@ -69,6 +69,13 @@ chmod +x bin/gh
 cat << 'MOCK_G2' > bin/g2
 #!/bin/bash
 echo "g2 $*"
+if [[ "${1:-}" == "manifest" && "${2:-}" == "upsert-from-url" ]]; then
+    if [[ "${MOCK_G2_SKIP_WRITE:-0}" == "1" ]]; then
+        exit 0
+    fi
+    mkdir -p "$(dirname "$5")"
+    printf 'DIST %s 1 BLAKE2B mock SHA512 mock\n' "$4" >> "$5"
+fi
 MOCK_G2
 chmod +x bin/g2
 
@@ -198,6 +205,30 @@ if [ ! -f "$EBUILD_PATH" ]; then
     echo "FAILED: ebuild file not generated at $EBUILD_PATH"
     exit 1
 fi
+MANIFEST_PATH="${ecn}/${epn}/Manifest"
+if ! grep -Fq 'DIST kgithub-notify-1.3.0.tar.gz ' "$MANIFEST_PATH"; then
+    echo "FAILED: generated ebuild lacks matching Manifest DIST entry"
+    exit 1
+fi
+
+echo "=== Test: A successful g2 call without a DIST entry must fail ==="
+export MOCK_CURL_RESPONSE='[{"tag_name":"v1.6.0"}]'
+export MOCK_G2_SKIP_WRITE=1
+rm -f "$GITHUB_OUTPUT"
+if ./process_releases.sh > missing_dist_out.txt 2>&1; then
+    echo "FAILED: g2 no-write success must not pass release generation"
+    exit 1
+fi
+if ! grep -q 'Manifest lacks DIST kgithub-notify-1.6.0.tar.gz' missing_dist_out.txt; then
+    echo "FAILED: missing expected Manifest validation error"
+    cat missing_dist_out.txt
+    exit 1
+fi
+if [ -f "$GITHUB_OUTPUT" ] && grep -q '^generated_tag=' "$GITHUB_OUTPUT"; then
+    echo "FAILED: generated_tag was emitted without a matching DIST entry"
+    exit 1
+fi
+unset MOCK_G2_SKIP_WRITE
 
 if grep -q "\${github_owner}" "$EBUILD_PATH"; then
     echo "FAILED: ebuild contains literal \${github_owner}"
