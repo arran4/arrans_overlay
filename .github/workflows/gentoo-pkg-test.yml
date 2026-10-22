@@ -225,10 +225,13 @@ jobs:
           fi
 
           mkdir -p /etc/portage/package.accept_keywords
-          printf "%s ~amd64\n" "$PKG" > /etc/portage/package.accept_keywords/ci
-          if [[ "$PKG" == *"kmagmux-9999"* ]]; then
-            printf "%s **\n" "=net-misc/kmagmux-9999" >> /etc/portage/package.accept_keywords/ci
+          # VCS ebuilds have no KEYWORDS. Unmask only the exact target under test;
+          # ordinary releases keep their existing unstable-keyword allowance.
+          target_keywords="~amd64"
+          if [[ "$PKG" =~ -9999(-r[0-9]+)?(::[[:alnum:]_.-]+)?$ ]]; then
+            target_keywords="**"
           fi
+          printf "%s %s\n" "$PKG" "$target_keywords" > /etc/portage/package.accept_keywords/ci
           if [[ "$PKG" == *"kmagmux"* ]]; then
             mkdir -p /etc/portage/package.use
             printf "%s\n" \
