@@ -11,6 +11,8 @@ on:
       - 'scripts/test_workflow_kgithub_notify.sh'
       - 'scripts/restore_manifests.sh'
       - 'scripts/test_manifest_restore.sh'
+      - 'scripts/test_workflow_concurrency.sh'
+      - 'scripts/test_workflow_concurrency_fixtures.sh'
   pull_request:
     paths:
       - '.github/workflows/**'
@@ -21,6 +23,8 @@ on:
       - 'scripts/test_workflow_kgithub_notify.sh'
       - 'scripts/restore_manifests.sh'
       - 'scripts/test_manifest_restore.sh'
+      - 'scripts/test_workflow_concurrency.sh'
+      - 'scripts/test_workflow_concurrency_fixtures.sh'
 
 jobs:
   actionlint:
@@ -39,6 +43,10 @@ jobs:
       - uses: actions/checkout@v5
       - name: Test package matrix helper
         run: python3 .github/scripts/test_determine_packages.py
+      - name: Test workflow concurrency fixture cases
+        run: ./scripts/test_workflow_concurrency_fixtures.sh
+      - name: Test workflow concurrency groups (manual only)
+        run: ./scripts/test_workflow_concurrency.sh manual
       - name: Test Caelestia updater safeguards
         run: python3 .github/scripts/test_caelestia_update_workflow.py
       - name: Test workflow M3Shapes pin extractor
