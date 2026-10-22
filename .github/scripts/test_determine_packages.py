@@ -200,50 +200,9 @@ assert 'printf "%s %s\\n" "$PKG" "$target_keywords"' in workflow
 assert 'printf "%s ~amd64\\n" "$PKG"' not in workflow
 assert 'if [[ "$PKG" == *"kmagmux-9999"* ]]; then' not in workflow
 
-# Execute the actual Bash version matcher embedded in the workflow, guarding
-# against accidental broad keyword exemptions and retaining revision support.
-live_keyword_rule = re.search(r'^          if \[\[ "\$PKG" =~ (.+?) \]\]; then
-assert '("dev-lang/perl", "5.44")' in workflow
-assert '("dev-libs/wayland", "1.26")' in workflow
-assert '=dev-libs/wayland-1.25.0 ~amd64' in workflow
-assert '<dev-libs/wayland-1.25.0' in workflow
-assert "> /etc/portage/package.mask/ci-stage3-compat" in workflow
-assert "--autounmask-keep-masks=y" in package_emerge_options
-assert "CI_GRAPH_PREREQUISITES=(dev-util/vulkan-headers)" in workflow
-assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow
-assert "*/* ~amd64" not in workflow
-assert "=net-misc/kmagmux-9999" not in workflow
-assert "dev-qt/qtbase icu test" in workflow
-assert "dev-qt/qt5compat icu" in workflow
-assert 'echo "=dev-util/wayland-scanner-1.25.0 ~amd64" >> /etc/portage/package.accept_keywords/ci' in workflow
-assert "CI_GRAPH_PREREQUISITES+=('=dev-util/wayland-scanner-1.25.0' '=dev-cpp/glaze-7.0.2::hyproverlay')" in workflow
-assert 'echo ">=dev-util/wayland-scanner-1.26.0" >> /etc/portage/package.unmask/ci' not in workflow
-assert "CI_GRAPH_PREREQUISITES+=('~dev-lang/flutter-bin-3.47.2')" in workflow
-assert '${PKG} == "=dev-lang/flutter-"*' in workflow
-
-# Regression coverage: Flutter source targets receive extended timeout and
-# share the 'flutter' cache lineage, while virtual/flutter and binary flutter
-# preserve appropriate standard defaults.
-flutter_entries = run_helper([
-    "dev-lang/flutter/flutter-3.47.2-r1.ebuild",
-    "virtual/flutter/flutter-3.47.2.ebuild",
-    "dev-lang/flutter-bin/flutter-bin-3.47.2-r1.ebuild",
-])
-flutter_source = next(item for item in flutter_entries if item["package"] == "=dev-lang/flutter-3.47.2-r1")
-assert flutter_source["cache_lineage"] == "flutter"
-assert flutter_source["step_timeout"] == 350
-assert flutter_source["source_target"] is True
-
-virtual_flutter = next(item for item in flutter_entries if item["package"] == "=virtual/flutter-3.47.2")
-assert virtual_flutter["cache_lineage"] == "flutter"
-assert "step_timeout" not in virtual_flutter
-
-flutter_bin = next(item for item in flutter_entries if item["package"] == "=dev-lang/flutter-bin-3.47.2-r1")
-assert flutter_bin["cache_lineage"] == f"generic-{flutter_bin['cache_id']}"
-assert "step_timeout" not in flutter_bin
-
-print("determine_packages tests passed")
-, workflow, re.MULTILINE)
+# Execute the Bash version matcher embedded in the workflow: exact live
+# versions and their revisions are allowed; releases and lookalikes are not.
+live_keyword_rule = re.search(r'^          if \[\[ "\$PKG" =~ (.+?) \]\]; then$', workflow, re.MULTILINE)
 assert live_keyword_rule is not None
 live_keyword_pattern = live_keyword_rule.group(1)
 for atom, expected_keyword in (
@@ -273,7 +232,7 @@ assert "--autounmask-keep-masks=y" in package_emerge_options
 assert "CI_GRAPH_PREREQUISITES=(dev-util/vulkan-headers)" in workflow
 assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow
 assert "*/* ~amd64" not in workflow
-assert "=net-misc/kmagmux-9999" in workflow
+assert "=net-misc/kmagmux-9999" not in workflow
 assert "dev-qt/qtbase icu test" in workflow
 assert "dev-qt/qt5compat icu" in workflow
 assert 'echo "=dev-util/wayland-scanner-1.25.0 ~amd64" >> /etc/portage/package.accept_keywords/ci' in workflow
