@@ -505,21 +505,14 @@ inherit cargo desktop xdg
 
 DESCRIPTION="MSN-Messenger-style desktop client for Matrix"
 HOMEPAGE="https://github.com/DMJC/msm"
-
-if [[ ${PV} == 9999 ]]; then
-	inherit git-r3
-	EGIT_REPO_URI="https://github.com/DMJC/msm.git"
-else
-	SRC_URI="https://github.com/DMJC/msm/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"
-	KEYWORDS="~amd64"
-fi
-
-SRC_URI+=" ${CARGO_CRATE_URIS}"
+SRC_URI="https://github.com/DMJC/msm/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
+	${CARGO_CRATE_URIS}"
 
 LICENSE="GPL-3+"
 # Dependent crate licenses
 LICENSE+=" Apache-2.0 BSD MIT"
 SLOT="0"
+KEYWORDS="~amd64"
 
 DEPEND="
 	x11-libs/gtk+:3

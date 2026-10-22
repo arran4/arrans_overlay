@@ -506,13 +506,13 @@ inherit cargo desktop git-r3 xdg
 DESCRIPTION="MSN-Messenger-style desktop client for Matrix"
 HOMEPAGE="https://github.com/DMJC/msm"
 EGIT_REPO_URI="https://github.com/DMJC/msm.git"
-
 SRC_URI="${CARGO_CRATE_URIS}"
 
 LICENSE="GPL-3+"
 # Dependent crate licenses
 LICENSE+=" Apache-2.0 BSD MIT"
 SLOT="0"
+KEYWORDS="~amd64"
 
 DEPEND="
 	x11-libs/gtk+:3
