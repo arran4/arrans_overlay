@@ -83,7 +83,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: arran4/g2-action@v1.2
+      - uses: arran4/g2-action@98d19f25b72b1ef0b3e8222ce80c4fefc5bd5276 # v1.3
         with:
           source-ref: 2bf0c70cf80b89851e7cc93feb5d5ebc3314a59f
       - name: Run g2 lint on changed packages
