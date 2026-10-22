@@ -505,7 +505,8 @@ inherit cargo desktop xdg
 
 DESCRIPTION="MSN-Messenger-style desktop client for Matrix"
 HOMEPAGE="https://github.com/DMJC/msm"
-SRC_URI="https://github.com/DMJC/msm/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
+SRC_URI="https://github.com/DMJC/msm/archive/refs/tags/v${PV}.tar.gz
+	-> ${P}.tar.gz
 	${CARGO_CRATE_URIS}"
 
 LICENSE="GPL-3+"
@@ -531,5 +532,7 @@ src_configure() {
 src_install() {
 	cargo_src_install
 	domenu data/com.matrixmessenger.Msm.desktop
-	doicon -s scalable data/icons/hicolor/scalable/apps/com.matrixmessenger.Msm.svg
+	local icon_path="data/icons/hicolor/scalable/apps"
+	icon_path+="/com.matrixmessenger.Msm.svg"
+	newicon -s scalable "${icon_path}" com.matrixmessenger.Msm.svg
 }

@@ -33,5 +33,7 @@ src_unpack() {
 src_install() {
 	cargo_src_install
 	domenu data/com.matrixmessenger.Msm.desktop
-	doicon -s scalable data/icons/hicolor/scalable/apps/com.matrixmessenger.Msm.svg
+	local icon_path="data/icons/hicolor/scalable/apps"
+	icon_path+="/com.matrixmessenger.Msm.svg"
+	newicon -s scalable "${icon_path}" com.matrixmessenger.Msm.svg
 }
