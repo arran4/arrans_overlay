@@ -524,6 +524,10 @@ BDEPEND="
 	virtual/pkgconfig
 "
 
+src_configure() {
+	cargo_src_configure
+}
+
 src_install() {
 	cargo_src_install
 	domenu data/com.matrixmessenger.Msm.desktop
