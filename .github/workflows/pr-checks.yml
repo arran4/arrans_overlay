@@ -87,7 +87,9 @@ jobs:
       - name: Run g2 lint on changed packages
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            BASE="origin/${{ github.base_ref }}"
+            # Use the base SHA from this event rather than moving origin/main.
+            # Otherwise unrelated commits on main can fail this PR's lint.
+            BASE="${{ github.event.pull_request.base.sha }}"
             HEAD="HEAD"
           else
             BASE="${{ github.event.before }}"
@@ -98,7 +100,7 @@ jobs:
           fi
 
           echo "Comparing $BASE to $HEAD"
-          CHANGED_FILES=$(git diff --name-only $BASE $HEAD || true)
+          CHANGED_FILES=$(git diff --name-only "$BASE" "$HEAD")
 
           # Extract unique package directories (e.g., category/package)
           DIRS=$(echo "$CHANGED_FILES" | grep -E "^[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+/" | cut -d/ -f1,2 | sort -u | tr '\n' ' ' || true)
