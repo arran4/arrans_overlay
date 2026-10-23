@@ -52,6 +52,16 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      # checkout's safe.directory setting is made for the runner's temporary HOME;
+      # the Gentoo container steps run under a different HOME and UID.
+      - name: Trust checked-out workspace for container Git
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse --is-inside-work-tree)" = true
+          test "$(realpath "$(git rev-parse --show-toplevel)")" = "$(realpath "$GITHUB_WORKSPACE")"
+
       - name: Install g2
         uses: arran4/g2-action@v1.2
         with:
