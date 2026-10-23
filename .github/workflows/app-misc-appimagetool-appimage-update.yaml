@@ -12,7 +12,7 @@ on:
       - '.github/workflows/app-misc-appimagetool-appimage-update.yaml'
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:

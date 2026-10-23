@@ -1,7 +1,8 @@
 name: dev-vcs/kgithub-notify update
 
 permissions:
-  contents: write
+  contents: read
+  pull-requests: read
 
 on:
   schedule:
@@ -12,7 +13,7 @@ on:
       - '.github/workflows/dev-vcs-kgithub-notify-update.yaml'
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -30,7 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          ref: main
 
       - name: Install g2
         uses: arran4/g2-action@v1.2
@@ -45,13 +48,46 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y wget jq coreutils
 
+      - name: Verify Authentication Setup
+        id: auth
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+            echo "auth_type=app" >> "$GITHUB_OUTPUT"
+            echo "Using GitHub App for authentication."
+          elif [[ -n "$PAT_TOKEN" ]]; then
+            echo "auth_type=pat" >> "$GITHUB_OUTPUT"
+            echo "Using PAT_TOKEN for authentication."
+          else
+            echo "::notice::Authentication missing. To create PRs that trigger CI, configure either a GitHub App (secrets.APP_ID & secrets.APP_PRIVATE_KEY) or a PAT (secrets.PAT_TOKEN)."
+            echo "auth_type=none" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Process each release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         id: process_releases
         run: |
-          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          set -euo pipefail
+          ebuild_dir="./${ecn}/${epn}"
           mkdir -p "$ebuild_dir"
           declare -A releaseTypes=()
-          tags=$(curl -s  --header "Accept: application/vnd.github+json" --header "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" https://api.github.com/repos/${{ env.github_owner }}/${{ env.github_repo }}/releases | jq -r '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          # An API error envelope can be valid JSON and even HTTP 200.
+          # Do not interpret it (or a malformed release) as an empty list.
+          tags=$(
+            curl -fsS \
+              --header "Accept: application/vnd.github+json" \
+              --header "Authorization: Bearer ${GH_TOKEN}" \
+              "https://api.github.com/repos/${github_owner}/${github_repo}/releases" |
+              jq -r '
+                if type != "array" then error("GitHub releases response must be an array")
+                else .[] | if type == "object" and (.tag_name | type) == "string"
+                  then .tag_name else error("GitHub release missing string tag_name") end
+                end'
+          )
           # shellcheck disable=SC2086
           for tag in $tags; do
             version="${tag#v}"
@@ -76,8 +112,27 @@ jobs:
                 echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
                 continue
             fi
-            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-            if ! ls "${ebuild_dir}/${{ env.epn }}-${version}"*.ebuild 1> /dev/null 2>&1; then
+            branch_name_tag="update-${epn}-${tag}"
+            branch_name_ver="update-${epn}-${version}"
+
+            # Check PRs for this tag
+            pr_info=$(gh pr list --head "$branch_name_tag" --state all --json state,number | jq '.[0] // empty')
+            if [ -z "$pr_info" ]; then
+                pr_info=$(gh pr list --head "$branch_name_ver" --state all --json state,number | jq '.[0] // empty')
+            fi
+
+            if [ -n "$pr_info" ]; then
+                pr_state=$(echo "$pr_info" | jq -r '.state // empty')
+                pr_number=$(echo "$pr_info" | jq -r '.number // empty')
+                if [[ "$pr_state" == "CLOSED" ]]; then
+                    echo "PR #$pr_number for $version is closed-unmerged. Update is suppressed until explicit reviewable intervention (e.g., reopen the PR). Skipping."
+                else
+                    echo "PR #$pr_number for $version already exists (State: $pr_state). Skipping."
+                fi
+                continue
+            fi
+            ebuild_file="${ebuild_dir}/${epn}-${version}.ebuild"
+            if ! ls "${ebuild_dir}/${epn}-${version}"*.ebuild 1> /dev/null 2>&1; then
 
               # shellcheck disable=SC2016
               {
@@ -88,13 +143,13 @@ jobs:
                 echo 'QTMIN=6.6.2'
                 echo 'ECM_TEST="true"'
                 echo 'inherit ecm'
-                echo "DESCRIPTION=\"${{ env.description }}\""
-                echo "HOMEPAGE=\"${{ env.homepage }}\""
-                echo 'SRC_URI="https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
+                printf 'DESCRIPTION="%s"\n' "$description"
+                printf 'HOMEPAGE="%s"\n' "$homepage"
+                printf 'SRC_URI="https://github.com/%s/%s/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"\n' "$github_owner" "$github_repo"
                 echo ''
                 echo 'LICENSE="BSD"'
                 echo 'SLOT="0"'
-                echo 'KEYWORDS="${{ env.keywords }}"'
+                printf 'KEYWORDS="%s"\n' "$keywords"
                 echo ''
                 echo 'RDEPEND="'
                 echo '	>=dev-qt/qtbase-${QTMIN}:6[gui,network,widgets,dbus]'
@@ -118,19 +173,75 @@ jobs:
 
               # Manifest generation
 
-              g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/archive/refs/tags/${tag}.tar.gz" "${{ env.epn }}-${version}.tar.gz" "${ebuild_dir}/Manifest"
+              g2 manifest upsert-from-url "https://github.com/${github_owner}/${github_repo}/archive/refs/tags/${tag}.tar.gz" "${epn}-${version}.tar.gz" "${ebuild_dir}/Manifest"
+              distfile="${epn}-${version}.tar.gz"
+              if [[ ! -f "${ebuild_dir}/Manifest" ]] ||
+                 ! grep -Fq "DIST ${distfile} " "${ebuild_dir}/Manifest"; then
+                echo "::error::g2 returned success but the Manifest lacks DIST ${distfile}"
+                exit 1
+              fi
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi
           done
 
-      - name: Create Pull Request
-        if: steps.process_releases.outputs.generated_tag
-        uses: peter-evans/create-pull-request@v6
+      - name: Generate App Token
+        if: steps.process_releases.outputs.generated_tag && steps.auth.outputs.auth_type == 'app'
+        id: app_token
+        uses: actions/create-github-app-token@v3
         with:
-          token: ${{ secrets.PAT_TOKEN }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Enforce Authentication for PR Creation
+        if: steps.process_releases.outputs.generated_tag
+        env:
+          AUTH_TYPE: ${{ steps.auth.outputs.auth_type }}
+        run: |
+          set -euo pipefail
+          if [[ "${AUTH_TYPE}" == "none" ]]; then
+            echo "::error::Missing explicit credentials to create PR. Please configure a GitHub App or PAT."
+            exit 1
+          fi
+
+      - name: Create Pull Request
+        id: create_pr
+        if: steps.process_releases.outputs.generated_tag
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ steps.auth.outputs.auth_type == 'app' && steps.app_token.outputs.token || secrets.PAT_TOKEN }}
+          add-paths: |
+            dev-vcs/kgithub-notify/*.ebuild
+            dev-vcs/kgithub-notify/Manifest
           commit-message: "Add ebuilds for new ${{ env.epn }} releases tag ${{ steps.process_releases.outputs.generated_tag }}"
           title: "Update ${{ env.epn }} to ${{ steps.process_releases.outputs.generated_tag }}"
           body: "This PR updates ${{ env.epn }} to the latest release ${{ steps.process_releases.outputs.generated_tag }}."
           branch: "update-${{ env.epn }}-${{ steps.process_releases.outputs.generated_tag }}"
           base: main
           labels: "automated pr"
+
+      - name: Verify Generated PR
+        if: steps.process_releases.outputs.generated_tag
+        env:
+          PR_NUMBER: ${{ steps.create_pr.outputs.pull-request-number }}
+          PR_URL: ${{ steps.create_pr.outputs.pull-request-url }}
+          PR_OPERATION: ${{ steps.create_pr.outputs.pull-request-operation }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$PR_NUMBER" =~ ^[1-9][0-9]*$ || "$PR_URL" != "https://github.com/${GITHUB_REPOSITORY}/pull/${PR_NUMBER}" ]]; then
+            echo "::error::An update was generated, but create-pull-request did not return a valid PR number and URL."
+            exit 1
+          fi
+          case "$PR_OPERATION" in
+            created|updated)
+              echo "Confirmed $PR_OPERATION PR #$PR_NUMBER: $PR_URL"
+              ;;
+            *)
+              echo "::error::Expected PR creation/update, got operation: $PR_OPERATION"
+              exit 1
+              ;;
+          esac
