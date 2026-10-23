@@ -87,10 +87,10 @@ jobs:
       - name: Run g2 lint on changed packages
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            # Use the base SHA from this event rather than moving origin/main.
-            # Otherwise unrelated commits on main can fail this PR's lint.
+            # Compare the PR commits, not the synthetic merge checkout:
+            # the latter also contains unrelated changes on main.
             BASE="${{ github.event.pull_request.base.sha }}"
-            HEAD="HEAD"
+            HEAD="${{ github.event.pull_request.head.sha }}"
           else
             BASE="${{ github.event.before }}"
             HEAD="${{ github.sha }}"
