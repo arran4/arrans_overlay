@@ -174,6 +174,22 @@ setup_git_bare() {
 
 # --- Execute Tests ---
 
+setup_root_manifest() {
+  local repo="$1"
+  local snap="$2"
+  mkdir -p "$repo/app-misc/pkg" "$snap/app-misc/pkg"
+  echo "ebuild" > "$repo/app-misc/pkg/pkg-1.ebuild"
+  echo "package" > "$repo/app-misc/pkg/Manifest"
+  echo "package" > "$snap/app-misc/pkg/Manifest"
+  echo "changed by dedupe" > "$repo/Manifest"
+  echo "original root manifest" > "$snap/Manifest"
+}
+
+assert_root_manifest_restored() {
+  cmp -s "$1/Manifest" "$2/Manifest"
+}
+
+run_test_case "root Manifest is not a package and bytes are restored" setup_root_manifest 0 "" false assert_root_manifest_restored
 run_test_case "unchanged success" setup_no_change 0 ""
 run_test_case "changed bytes restored exactly" setup_modified_bytes_restored 0 "" false assert_bytes_restored
 run_test_case "added Manifest rejected" setup_added_manifest 1 "dedupe added new Manifest file: app-misc/pkg/Manifest"
