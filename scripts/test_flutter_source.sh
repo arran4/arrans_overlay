@@ -96,7 +96,9 @@ flutter_source_atom=${FLUTTER_SOURCE_ATOM:-=dev-lang/${default_flutter_pf}}
 engine_source_atom=${FLUTTER_ENGINE_SOURCE_ATOM:-=dev-libs/${default_engine_pf}}
 flutter_virtual_atom=${FLUTTER_VIRTUAL_ATOM:-=virtual/${default_virtual_pf}}
 flutter_bin_atom=${FLUTTER_BIN_ATOM:-=dev-lang/${default_bin_pf}}
-dart_virtual_atom=${DART_VIRTUAL_ATOM:-=virtual/dart-3.13.3-r1}
+# Use the newest satisfiable provider rather than a virtual for an ebuild
+# that scheduled deduplication is deliberately allowed to remove.
+dart_virtual_atom=${DART_VIRTUAL_ATOM:-virtual/dart}
 
 flutter_source_pf=${flutter_source_atom#=dev-lang/}
 flutter_source_pvr=${flutter_source_pf#flutter-}
