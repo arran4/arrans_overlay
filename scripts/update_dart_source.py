@@ -177,46 +177,11 @@ def check_pr_exists(branch_name: str) -> bool:
         sys.exit(1)
 
 def create_virtual_dart(version: str, work_root):
-    virtual_dir = work_root / "virtual" / "dart"
-    virtual_dir.mkdir(parents=True, exist_ok=True)
-    ebuild_path = virtual_dir / f"dart-{version}.ebuild"
-    if ebuild_path.exists():
-        logging.info(f"Virtual {ebuild_path.name} already exists. Leaving it intact.")
-        return
+    # Resolve only providers actually packaged at this exact SDK version.
+    # A newer virtual must not claim an older binary is compatible.
+    from maintain_virtuals import ensure_virtual
+    return ensure_virtual(work_root, "dart", version)
 
-    existing_virtuals = list(virtual_dir.glob("*.ebuild"))
-    if not existing_virtuals:
-        content = f"""# Copyright 2026 Gentoo Authors
-# Distributed under the terms of the GNU General Public License v2
-
-EAPI=8
-
-DESCRIPTION="Virtual for the Dart SDK"
-
-SLOT="0"
-KEYWORDS="~amd64"
-
-RDEPEND="|| (
-\t~dev-lang/dart-{version}
-\t~dev-lang/dart-bin-{version}
-)"
-"""
-        ebuild_path.write_text(content)
-        logging.info(f"Created {ebuild_path} from scratch")
-        return
-
-    # Check if we ACTUALLY need a new virtual.
-    # The requirement: "if the existing virtual constraints still correctly represent the available providers, leave the virtual untouched;"
-    # "an older binary provider must not satisfy a newer versioned virtual merely to keep the OR dependency resolvable unless that compatibility is explicitly valid by package contract."
-    # Since virtuals mirror the EXACT version in Gentoo typically, we don't automatically generate one if we don't know the exact bin version is available,
-    # OR we strictly mirror it. The issue states: "Do not invent compatibility by weakening the binary dependency."
-    # So we MUST NOT use `>=dev-lang/foo-bin-old_version`.
-    # It says "if the old binary provider cannot truthfully satisfy the new virtual version, do not claim that it can; leave the virtual untouched when appropriate, or defer the virtual change until provider constraints can be represented truthfully."
-    # Therefore, we just DO NOT CREATE a new virtual version automatically during a source bump unless instructed.
-    # A user can install =dev-lang/dart-X.Y.Z directly.
-    logging.info("Source advanced, but binary provider might not have. Deferring virtual package update to prevent breaking binary providers.")
-    return
-    return ebuild_path
 
 def create_dart_ebuild(version: str, work_root):
     # Find existing ebuild to copy from
@@ -371,9 +336,6 @@ def main() -> int:
         if not args.dry_run:
             run_cmd(["git", "checkout", "-b", branch_name])
 
-        # Create virtual ebuild
-        create_virtual_dart(version, work_root)
-
         # Create main ebuild
         previous_ebuild, new_ebuild_path = create_dart_ebuild(version, work_root)
         previous_version = previous_ebuild.name.removeprefix("dart-").removesuffix(".ebuild")
@@ -429,6 +391,10 @@ def main() -> int:
         except subprocess.CalledProcessError:
             logging.error("verify_manifest.py failed. Failing.")
             sys.exit(1)
+
+        # The source ebuild now exists: publish an exact-version virtual with
+        # only providers present in this tree (source and/or binary).
+        create_virtual_dart(version, work_root)
 
         commit_and_push(
             branch_name,
