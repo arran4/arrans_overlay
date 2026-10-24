@@ -22,6 +22,19 @@ on:
         type: boolean
   pull_request:
     paths:
+      # Dart/Flutter SDK packaging, including ebuilds, Manifests and files/.
+      - 'dev-libs/flutter-engine/**'
+      - 'dev-lang/flutter/**'
+      - 'dev-lang/dart/**'
+      - 'dev-lang/dart-bin/**'
+      - 'virtual/dart/**'
+      - 'virtual/flutter/**'
+      # The generators, update orchestration and their regression tests.
+      - 'scripts/generate_flutter_ebuild.py'
+      - 'scripts/update_dart_source.py'
+      - 'scripts/source_update_utils.py'
+      - '.github/workflows/dev-libs-flutter-engine-source-test.yaml'
+      - '.github/workflows/dev-lang-flutter-source-update.yaml'
       - 'scripts/generate_flutter_engine_ebuild.py'
       - 'scripts/check_flutter_engine_dart_pins.py'
       - 'scripts/test_generate_flutter_engine_ebuild.py'
