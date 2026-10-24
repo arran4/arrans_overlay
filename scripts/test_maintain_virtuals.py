@@ -35,6 +35,22 @@ class VirtualProviderTest(unittest.TestCase):
         self.assertIn("~arm64", newer.read_text())
         self.assertNotIn("dart-bin", old.read_text())
 
+    def test_cleanup_prunes_stale_same_version_revision(self):
+        self.provider("dart", "3.13.7")
+        original = virtuals.ensure_virtual(self.root, "dart", "3.13.7")
+        self.provider("dart-bin", "3.13.7")
+        revised = virtuals.ensure_virtual(self.root, "dart", "3.13.7")
+        self.provider("flutter-bin", "3.47.7")
+        virtuals.prepare(self.root)
+        virtuals.cleanup(self.root)
+        self.assertFalse(original.exists())
+        self.assertTrue(revised.exists())
+        virtuals.cleanup(self.root)
+        self.assertEqual(
+            [p.name for p in (self.root / "virtual/dart").glob("*.ebuild")],
+            ["dart-3.13.7-r1.ebuild"],
+        )
+
     def test_dedupe_orphan_retired_when_newer_viable_provider_exists(self):
         old = self.provider("dart", "3.13.3")
         self.provider("dart-bin", "3.13.7")
