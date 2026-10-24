@@ -239,7 +239,7 @@ def commit_and_push(branch_name: str, old_version: str, version: str, ref: str, 
         f"**Authoritative Source:** https://storage.googleapis.com/dart-archive/channels/stable/release/{version}/VERSION\n"
         f"**Authoritative Revision:** {ref}\n"
         f"**Host-Dart compatibility/prerequisite:** Independent Dart stable update; no Flutter prerequisite.\n"
-        f"**Virtual-provider decision:** Existing virtual constraints were left untouched unless a truthful matching provider exists.\n"
+        f"**Virtual-provider decision:** Exact-version virtual is generated using only packaged, matching source/binary providers; compatibility is never invented.\n"
         f"**Manifest Generation:** Completed successfully.\n"
         f"**Dependency review result:** Needs human review.\n"
         f"**Version-qualified non-patch FILESDIR carry-forward:** {carried_summary}\n"
