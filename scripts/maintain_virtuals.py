@@ -166,15 +166,21 @@ def cleanup(root: Path):
                 continue
             # A source-only or binary-only surviving version must not keep an
             # obsolete alternative in the active virtual revision.
-            revised = ensure_virtual(root, package, version)
-            if revised:
+            ensure_virtual(root, package, version)
+            expected = virtual_content(root, package, version)
+            obsolete = [
+                path for path in matching_ebuilds(
+                    root, f"virtual/{package}", version
+                ) if path.read_text() != expected
+            ]
+            if obsolete:
                 consumers = pinned_virtual_consumers(root, package, version)
                 if consumers:
                     raise ValueError(
                         f"cannot revise pinned virtual/{package}-{version}: "
                         + ", ".join(consumers)
                     )
-                for path in paths:
+                for path in obsolete:
                     path.unlink()
         for path in directory.glob("*.ebuild"):
             parsed = parsed_version(path.name, package)
