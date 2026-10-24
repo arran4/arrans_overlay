@@ -75,6 +75,12 @@ jobs:
           location = $(pwd)
           INNER_EOF
 
+      # Bring virtuals forward before pruning providers; do not invent version
+      # compatibility for a source or binary SDK that has not been packaged.
+      - name: Prepare exact-version Dart and Flutter virtuals
+        if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
+        run: python3 scripts/maintain_virtuals.py prepare .
+
       # Temporary safety guard while https://github.com/arran4/g2/issues/483
       # / https://github.com/arran4/g2/pull/540 is unresolved. DeduplicateEbuilds
       # can currently invoke an unsafe Manifest cleanup internally. Preserve the
@@ -135,6 +141,14 @@ jobs:
         shell: bash
         run: |
           bash scripts/restore_manifests.sh /tmp/manifest-snapshot "${{ steps.dedupe.outputs.dedupe_failed }}"
+
+      - name: Reconcile virtuals and prune stale distfile entries
+        if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/maintain_virtuals.py cleanup .
+          python3 scripts/prune_dedup_manifests.py .
 
       # Repository-wide `g2 manifest clean .` is intentionally disabled while
       # g2#483 / PR #540 is pending. Use the package-scoped manual
