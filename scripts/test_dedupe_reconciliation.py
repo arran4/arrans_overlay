@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from maintain_virtuals import prepare, cleanup, available_providers
+from maintain_virtuals import prepare, cleanup, available_providers, all_versions
 from prune_dedup_manifests import prune_package
 from verify_manifest import extract_uris, parse_ebuild_variables
 
@@ -43,13 +43,15 @@ class ScheduledDedupeIntegrationTest(unittest.TestCase):
             cleanup(sandbox)
             self.assertTrue(available_providers(sandbox, "dart", "3.13.7"))
             self.assertTrue(available_providers(sandbox, "flutter", "3.47.7"))
+            newest_flutter = all_versions(sandbox, "flutter")[-1]
+            self.assertTrue(available_providers(sandbox, "flutter", newest_flutter))
             self.assertFalse((sandbox / "virtual/dart/dart-3.13.3-r1.ebuild").exists())
             old_flutter = list((sandbox / "virtual/flutter").glob("flutter-3.47.2*.ebuild"))
             self.assertEqual(len(old_flutter), 1)
             self.assertIn("~dev-lang/flutter-3.47.2", old_flutter[0].read_text())
             self.assertNotIn("~dev-lang/flutter-bin-3.47.2", old_flutter[0].read_text())
             self.assertTrue((sandbox / "virtual/dart/dart-3.13.7.ebuild").is_file())
-            self.assertTrue((sandbox / "virtual/flutter/flutter-3.47.7.ebuild").is_file())
+            self.assertTrue((sandbox / "virtual/flutter" / f"flutter-{newest_flutter}.ebuild").is_file())
 
             for package in removed_packages:
                 directory = sandbox / package
