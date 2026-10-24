@@ -742,9 +742,46 @@ def dependency_identity(
     raise ValueError(f"unsupported DEPS type {dep_type!r} at {destination}")
 
 
-def validate_reviewed_exclusion(destination: str, dependency: object) -> str:
-    """Fail unless an exclusion has the exact reviewed identity."""
-    review = REVIEWED_EXCLUSIONS.get(destination)
+def reviewed_exclusions_for_dart_revision(
+    dart_revision: str,
+) -> dict[str, tuple[DependencyIdentity, str]]:
+    """Bind only the excluded Dart SDK prebuilts to the validated release pin.
+
+    Other reviewed identities must remain exact and independently reviewed.
+    Never mutate module-level reviews: different releases may be generated in
+    the same interpreter.
+    """
+    if not re.fullmatch(r"[0-9a-f]{40}", dart_revision):
+        raise ValueError("invalid pinned Dart revision")
+    reviews = REVIEWED_EXCLUSIONS.copy()
+    for destination in (
+        "engine/src/flutter/prebuilts/linux-arm64/dart-sdk",
+        "engine/src/flutter/prebuilts/linux-x64/dart-sdk",
+    ):
+        identity, reason = reviews[destination]
+        if identity.dep_type != "cipd" or len(identity.packages) != 1:
+            raise ValueError(
+                f"unexpected reviewed Dart SDK identity at {destination}"
+            )
+        package, _previous_version = identity.packages[0]
+        reviews[destination] = (
+            cipd_identity(
+                package, f"git_revision:{dart_revision}", identity.condition
+            ),
+            reason,
+        )
+    return reviews
+
+
+def validate_reviewed_exclusion(
+    destination: str,
+    dependency: object,
+    reviews: dict[str, tuple[DependencyIdentity, str]] | None = None,
+) -> str:
+    """Fail unless an exclusion has the exact selected-release identity."""
+    if reviews is None:
+        reviews = REVIEWED_EXCLUSIONS
+    review = reviews.get(destination)
     if review is None:
         raise ValueError(f"unreviewed DEPS exclusion at {destination}")
     expected, reason = review
@@ -883,6 +920,7 @@ def render(deps_path: Path) -> str:
             "expected "
             f"{DART_REVISION!r}, got {variables.get('dart_revision')!r}"
         )
+    reviewed_exclusions = reviewed_exclusions_for_dart_revision(DART_REVISION)
     git_sources: list[GitSource] = []
     active_reviews: set[str] = set()
 
@@ -893,7 +931,9 @@ def render(deps_path: Path) -> str:
             else "git"
         )
         if dep_type == "cipd":
-            validate_reviewed_exclusion(destination, dependency)
+            validate_reviewed_exclusion(
+                destination, dependency, reviewed_exclusions
+            )
             active_reviews.add(destination)
             devtools_dest = (
                 "engine/src/flutter/third_party/dart/third_party/devtools"
@@ -912,8 +952,10 @@ def render(deps_path: Path) -> str:
                     )
                 )
         elif dep_type == "git":
-            if destination in REVIEWED_EXCLUSIONS:
-                validate_reviewed_exclusion(destination, dependency)
+            if destination in reviewed_exclusions:
+                validate_reviewed_exclusion(
+                    destination, dependency, reviewed_exclusions
+                )
                 active_reviews.add(destination)
                 if destination == "engine/src/flutter/third_party/vulkan-deps":
                     for ident, repo, rev, dest in VULKAN_DEPS_SUBPACKAGES:
@@ -940,7 +982,7 @@ def render(deps_path: Path) -> str:
                 f"unsupported DEPS type {dep_type!r} at {destination}"
             )
 
-    stale_reviews = sorted(set(REVIEWED_EXCLUSIONS) - active_reviews)
+    stale_reviews = sorted(set(reviewed_exclusions) - active_reviews)
     if stale_reviews:
         raise ValueError(
             "DEPS exclusion audit is out of date; "

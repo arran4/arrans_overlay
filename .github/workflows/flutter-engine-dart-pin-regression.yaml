@@ -1,0 +1,95 @@
+name: Flutter Engine Dart Pin Regression
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      flutter_version:
+        description: Flutter stable release to audit
+        required: true
+        default: '3.47.7'
+        type: string
+      expected_dart_revision:
+        description: Optional expected 40-character Dart Git SHA
+        required: false
+        type: string
+      full_render:
+        description: Also require full target Engine DEPS render to succeed
+        required: true
+        default: true
+        type: boolean
+  pull_request:
+    paths:
+      # Dart/Flutter SDK packaging, including ebuilds, Manifests and files/.
+      - 'dev-libs/flutter-engine/**'
+      - 'dev-lang/flutter/**'
+      - 'dev-lang/flutter-bin/**'
+      - 'dev-lang/dart/**'
+      - 'dev-lang/dart-bin/**'
+      - 'virtual/dart/**'
+      - 'virtual/flutter/**'
+      # The generators, update orchestration and their regression tests.
+      - 'scripts/generate_flutter_ebuild.py'
+      - 'scripts/update_dart_source.py'
+      - 'scripts/source_update_utils.py'
+      - '.github/workflows/dev-libs-flutter-engine-source-test.yaml'
+      - '.github/workflows/dev-lang-flutter-source-update.yaml'
+      - 'scripts/generate_flutter_engine_ebuild.py'
+      - 'scripts/check_flutter_engine_dart_pins.py'
+      - 'scripts/test_generate_flutter_engine_ebuild.py'
+      - 'scripts/update_flutter_source.py'
+      - '.github/workflows/flutter-engine-dart-pin-regression.yaml'
+
+concurrency:
+  group: flutter-engine-dart-pin-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-target-dart-pins:
+    name: Validate upstream Dart pin and isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Verify real DEPS pins and consecutive renders
+        env:
+          FLUTTER_VERSION: ${{ inputs.flutter_version || '3.47.7' }}
+          EXPECTED_DART_REVISION: ${{ inputs.expected_dart_revision || '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          arguments=(--version "$FLUTTER_VERSION")
+          if [[ -n "$EXPECTED_DART_REVISION" ]]; then
+            arguments+=(--expected-dart-revision "$EXPECTED_DART_REVISION")
+          fi
+          python3 scripts/check_flutter_engine_dart_pins.py "${arguments[@]}"
+
+  full-release-render-audit:
+    name: Strict full upstream DEPS render (opt-in)
+    if: github.event_name == 'workflow_dispatch' && inputs.full_render == true
+    needs: validate-target-dart-pins
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Render complete selected Engine DEPS, fail on unreviewed changes
+        env:
+          FLUTTER_VERSION: ${{ inputs.flutter_version || '3.47.7' }}
+          EXPECTED_DART_REVISION: ${{ inputs.expected_dart_revision || '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          arguments=(--version "$FLUTTER_VERSION" --full-render)
+          if [[ -n "$EXPECTED_DART_REVISION" ]]; then
+            arguments+=(--expected-dart-revision "$EXPECTED_DART_REVISION")
+          fi
+          python3 scripts/check_flutter_engine_dart_pins.py "${arguments[@]}"
