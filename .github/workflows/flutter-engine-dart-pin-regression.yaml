@@ -25,6 +25,7 @@ on:
       # Dart/Flutter SDK packaging, including ebuilds, Manifests and files/.
       - 'dev-libs/flutter-engine/**'
       - 'dev-lang/flutter/**'
+      - 'dev-lang/flutter-bin/**'
       - 'dev-lang/dart/**'
       - 'dev-lang/dart-bin/**'
       - 'virtual/dart/**'
