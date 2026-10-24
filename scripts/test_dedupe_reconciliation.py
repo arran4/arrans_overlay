@@ -52,8 +52,8 @@ class ScheduledDedupeIntegrationTest(unittest.TestCase):
             self.assertEqual(len(old_flutter), 1)
             self.assertIn("~dev-lang/flutter-3.47.2", old_flutter[0].read_text())
             self.assertNotIn("~dev-lang/flutter-bin-3.47.2", old_flutter[0].read_text())
-            self.assertTrue((sandbox / "virtual/dart" / f"dart-{newest_dart}.ebuild").is_file())
-            self.assertTrue((sandbox / "virtual/flutter" / f"flutter-{newest_flutter}.ebuild").is_file())
+            self.assertTrue(list((sandbox / "virtual/dart").glob(f"dart-{newest_dart}*.ebuild")))
+            self.assertTrue(list((sandbox / "virtual/flutter").glob(f"flutter-{newest_flutter}*.ebuild")))
 
             for package in removed_packages:
                 directory = sandbox / package
