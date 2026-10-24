@@ -94,6 +94,8 @@ jobs:
                 "${ebuild_name}-${version}.amd64.tar.xz" \
                 "${ebuild_dir}/Manifest"
             fi
+            # Refresh exact provider choices even when the ebuild already exists.
+            python3 scripts/maintain_virtuals.py ensure . flutter "${version}"
             break
           done
 
@@ -101,7 +103,7 @@ jobs:
         if: steps.process_releases.conclusion == 'success'
         run: |
           ebuild_dir="./${ebuild_category}/${ebuild_name}"
-          git add "${ebuild_dir}"
+          git add "${ebuild_dir}" "virtual/flutter"
           git commit -m "Add ebuilds for new ${ebuild_name} releases" &&
           git pull --rebase &&
           git push || true
