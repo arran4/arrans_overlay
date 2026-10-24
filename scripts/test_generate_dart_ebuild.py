@@ -7,12 +7,16 @@ from unittest import mock
 
 
 GENERATOR = Path(__file__).with_name("generate_dart_ebuild.py")
-EBUILD = (
-    Path(__file__).parents[1]
-    / "dev-lang"
-    / "dart"
-    / "dart-3.13.3-r3.ebuild"
+# Select the currently maintained source ebuild, not a cleanup-prone -rN.
+from maintain_virtuals import parsed_version, version_key
+
+_dart_dir = Path(__file__).parents[1] / "dev-lang" / "dart"
+EBUILD = max(
+    _dart_dir.glob("dart-*.ebuild"),
+    key=lambda path: (*version_key(parsed_version(path.name, "dart")[0]),
+                      parsed_version(path.name, "dart")[1]),
 )
+
 SPEC = importlib.util.spec_from_file_location("dart_ebuild_generator", GENERATOR)
 assert SPEC is not None and SPEC.loader is not None
 generator = importlib.util.module_from_spec(SPEC)

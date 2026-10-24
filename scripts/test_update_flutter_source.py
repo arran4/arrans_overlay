@@ -132,7 +132,7 @@ class FlutterUpdaterTest(unittest.TestCase):
     def make_repo(self, root):
         for directory, filename in (("dev-libs/flutter-engine", "flutter-engine-3.13.3.ebuild"), ("dev-lang/flutter", "flutter-3.13.3.ebuild"), ("virtual/flutter", "flutter-3.13.3.ebuild"), ("dev-lang/dart", "dart-3.13.3.ebuild")):
             path = root / directory; path.mkdir(parents=True, exist_ok=True)
-            (path / filename).write_text('EAPI=8\nSRC_URI="https://example.invalid/a.tar.xz"\n')
+            (path / filename).write_text('EAPI=8\nKEYWORDS="~amd64"\nSRC_URI="https://example.invalid/a.tar.xz"\n')
         subprocess.run(["git", "init", "-q"], cwd=root, check=True); subprocess.run(["git", "add", "."], cwd=root, check=True)
         subprocess.run(["git", "-c", "commit.gpgsign=false", "-c", "user.email=t@example", "-c", "user.name=t", "commit", "-qm", "base"], cwd=root, check=True)
 

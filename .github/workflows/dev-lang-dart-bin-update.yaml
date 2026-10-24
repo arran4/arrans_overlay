@@ -18,6 +18,8 @@ on:
     - cron: '20 0 * * *'
   workflow_dispatch:
   push:
+    branches:
+      - main
     paths:
       - '.github/workflows/dev-lang-dart-bin-update.yaml'
 
@@ -120,13 +122,15 @@ jobs:
               g2 manifest upsert-from-url "https://storage.googleapis.com/dart-archive/channels/stable/release/${version}/sdk/dartsdk-linux-riscv64-release.zip" "${ebuild_name}-${version}.riscv.zip" "${ebuild_dir}/Manifest"
 
             fi
+            # Refresh exact provider choices even when the ebuild already exists.
+            python3 scripts/maintain_virtuals.py ensure . dart "${version}"
             break
           done
 
       - name: Commit and push changes
         run: |
           ebuild_dir="./${ebuild_category}/${ebuild_name}"
-          git add "./${ebuild_dir}"
+          git add "./${ebuild_dir}" "virtual/dart"
           git commit -m "Add ebuilds for new ${ebuild_name} releases" && 
           git pull --rebase &&
           git push || true
