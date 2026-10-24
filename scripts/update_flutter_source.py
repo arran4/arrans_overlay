@@ -387,7 +387,7 @@ def commit_and_push(branch_name: str, old_version: str, version: str, auth_hash:
         f"**Flutter Engine revision:** {engine_rev}\n"
         f"**Pinned Dart revision:** {dart_rev}\n"
         f"**Host Dart constraint:** {compat_msg}\n"
-        f"**Virtual-provider decision:** Existing virtual constraints were left untouched unless a truthful matching provider exists.\n"
+        f"**Virtual-provider decision:** Exact-version virtual is generated using only packaged, matching source/binary providers; compatibility is never invented.\n"
         f"**Material Fonts revision:** {fonts_rev}\n"
         f"**Gradle Wrapper revision:** {gradle_rev}\n"
         f"**Manifest Generation:** Completed successfully.\n"
