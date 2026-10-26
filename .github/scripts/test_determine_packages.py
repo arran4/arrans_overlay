@@ -194,7 +194,35 @@ assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$PKG\")" not in workflow
 assert '"$PACKAGE" "$SOURCE_TARGET"' in workflow
 assert "binary_excludes" not in workflow
 assert 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' in workflow
-assert 'printf "%s ~amd64\\n" "$PKG"' in workflow
+assert 'target_keywords="~amd64"' in workflow
+assert 'target_keywords="**"' in workflow
+assert 'printf "%s %s\\n" "$PKG" "$target_keywords"' in workflow
+assert 'printf "%s ~amd64\\n" "$PKG"' not in workflow
+assert 'if [[ "$PKG" == *"kmagmux-9999"* ]]; then' not in workflow
+
+# Execute the Bash version matcher embedded in the workflow: exact live
+# versions and their revisions are allowed; releases and lookalikes are not.
+live_keyword_rule = re.search(r'^          if \[\[ "\$PKG" =~ (.+?) \]\]; then$', workflow, re.MULTILINE)
+assert live_keyword_rule is not None
+live_keyword_pattern = live_keyword_rule.group(1)
+for atom, expected_keyword in (
+    ("=net-im/msm-9999", "**"),
+    ("=net-misc/kmagmux-9999", "**"),
+    ("=net-im/msm-9999-r1", "**"),
+    ("=net-im/msm-9999::arrans-overlay", "**"),
+    ("=net-im/msm-0.1.0", "~amd64"),
+    ("=net-im/msm-19999", "~amd64"),
+    ("=net-im/msm-9999-extra", "~amd64"),
+):
+    output = subprocess.run(
+        [
+            "bash", "-c",
+            f'if [[ "$1" =~ {live_keyword_pattern} ]]; then printf "**"; else printf "~amd64"; fi',
+            "--", atom,
+        ],
+        check=True, text=True, capture_output=True,
+    ).stdout
+    assert output == expected_keyword, (atom, output, expected_keyword)
 assert '("dev-lang/perl", "5.44")' in workflow
 assert '("dev-libs/wayland", "1.26")' in workflow
 assert '=dev-libs/wayland-1.25.0 ~amd64' in workflow
@@ -204,7 +232,7 @@ assert "--autounmask-keep-masks=y" in package_emerge_options
 assert "CI_GRAPH_PREREQUISITES=(dev-util/vulkan-headers)" in workflow
 assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow
 assert "*/* ~amd64" not in workflow
-assert "=net-misc/kmagmux-9999" in workflow
+assert "=net-misc/kmagmux-9999" not in workflow
 assert "dev-qt/qtbase icu test" in workflow
 assert "dev-qt/qt5compat icu" in workflow
 assert 'echo "=dev-util/wayland-scanner-1.25.0 ~amd64" >> /etc/portage/package.accept_keywords/ci' in workflow
