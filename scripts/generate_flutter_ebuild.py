@@ -3,8 +3,9 @@
 
 Flutter tools require a fixed graph of pub packages to build
 flutter_tools.snapshot and operate offline without contacting pub.dev.
-This generator synchronizes the declared pub dependencies and artifacts
-with the Flutter 3.47.2 ebuild.
+This generator synchronizes the declared pub dependencies and artifacts.
+Release updates receive one validated ``--release-spec`` shared with the
+Engine generator.
 """
 
 from __future__ import annotations
@@ -17,6 +18,9 @@ import sys
 import urllib.request
 import json
 import logging
+
+sys.path.insert(0, str(Path(__file__).parent))
+from flutter_release_spec import FlutterReleaseSpec
 
 FLUTTER_VERSION = "3.47.2"
 FLUTTER_ENGINE_REV = "a804b261645ef8c13eb3d5c44a5c2fb0340c5539"
@@ -215,11 +219,19 @@ PUB_DEPENDENCIES: dict[str, str] = {
 }
 
 
-def render_pub_deps(deps: dict[str, str]) -> str:
+def render_pub_deps(
+	deps: dict[str, str], release: FlutterReleaseSpec | None = None,
+) -> str:
+	fonts_revision = (
+		release.material_fonts_revision if release else MATERIAL_FONTS_REV
+	)
+	gradle_revision = (
+		release.gradle_wrapper_revision if release else GRADLE_WRAPPER_REV
+	)
 	lines: list[str] = [
 		BEGIN,
-		f'FLUTTER_FONTS_REV="{MATERIAL_FONTS_REV}"',
-		f'FLUTTER_GRADLE_REV="{GRADLE_WRAPPER_REV}"',
+		f'FLUTTER_FONTS_REV="{fonts_revision}"',
+		f'FLUTTER_GRADLE_REV="{gradle_revision}"',
 		'FLUTTER_GCS="https://storage.googleapis.com/flutter_infra_release"',
 		'PUB_URI="https://pub.dev/api/archives"',
 		'SRC_URI="',
@@ -229,11 +241,11 @@ def render_pub_deps(deps: dict[str, str]) -> str:
 	lines.append(
 		"\t${FLUTTER_GCS}/flutter/fonts/${FLUTTER_FONTS_REV}/fonts.zip"
 	)
-	lines.append(f"\t\t-> flutter-material-fonts-{MATERIAL_FONTS_REV[:8]}.zip")
+	lines.append(f"\t\t-> flutter-material-fonts-{fonts_revision[:8]}.zip")
 	lines.append(
 		"\t${FLUTTER_GCS}/gradle-wrapper/${FLUTTER_GRADLE_REV}/gradle-wrapper.tgz"
 	)
-	lines.append(f"\t\t-> flutter-gradle-wrapper-{GRADLE_WRAPPER_REV[:8]}.tgz")
+	lines.append(f"\t\t-> flutter-gradle-wrapper-{gradle_revision[:8]}.tgz")
 
 	for pkg, ver in sorted(deps.items()):
 		lines.append(f"\t${{PUB_URI}}/{pkg}-{ver}.tar.gz")
@@ -250,7 +262,75 @@ def render_pub_deps(deps: dict[str, str]) -> str:
 	return "\n".join(lines)
 
 
-def update_ebuild(ebuild_path: Path, generated: str, check: bool) -> int:
+def replace_exactly_once(
+	text: str, pattern: str, replacement: str, label: str,
+) -> str:
+	updated, count = re.subn(pattern, replacement, text, flags=re.MULTILINE)
+	if count != 1:
+		raise ValueError(f"expected one {label} in Flutter ebuild, found {count}")
+	return updated
+
+
+def apply_release_identity(text: str, release: FlutterReleaseSpec) -> str:
+	"""Synchronize release-owned fields outside the pub dependency block."""
+	text = replace_exactly_once(
+		text, r'^FLUTTER_GIT_COMMIT="[^"]*"$',
+		f'FLUTTER_GIT_COMMIT="{release.framework_revision}"',
+		"framework revision",
+	)
+	text = replace_exactly_once(
+		text, r'^FLUTTER_ENGINE_REV="[^"]*"$',
+		f'FLUTTER_ENGINE_REV="{release.engine_revision}"',
+		"Engine revision",
+	)
+	for name, value in (
+		("FLUTTER_DART_SDK_VERSION", release.dart_sdk_version),
+		("FLUTTER_RELEASE_DATE", release.release_date),
+	):
+		pattern = rf'^{name}="[^"]*"$'
+		if re.search(pattern, text, re.MULTILINE):
+			text = replace_exactly_once(
+				text, pattern, f'{name}="{value}"', name,
+			)
+		else:
+			text = replace_exactly_once(
+				text,
+				r'^(FLUTTER_ENGINE_REV="[^"]*"$)',
+				rf'\1\n{name}="{value}"',
+				"Engine revision insertion point",
+			)
+	text = replace_exactly_once(
+		text, r'^\t~dev-libs/flutter-engine-[^\s]+$',
+		f'\t~dev-libs/flutter-engine-{release.version}',
+		"Flutter Engine dependency atom",
+	)
+	text = replace_exactly_once(
+		text, r'^\t\t"frameworkCommitDate": ".*",$',
+		'\t\t"frameworkCommitDate": "${FLUTTER_RELEASE_DATE}",',
+		"framework release date",
+	)
+	for key in ("engineCommitDate", "engineBuildDate"):
+		text = replace_exactly_once(
+			text, rf'^\t\t"{key}": ".*",$',
+			f'\t\t"{key}": "${{FLUTTER_RELEASE_DATE}}",', key,
+		)
+	text = replace_exactly_once(
+		text, r'^\t\t"dartSdkVersion": ".*",$',
+		'\t\t"dartSdkVersion": "${FLUTTER_DART_SDK_VERSION}",',
+		"Dart SDK version",
+	)
+	return text
+
+
+def update_ebuild(
+	ebuild_path: Path, generated: str, check: bool,
+	release: FlutterReleaseSpec | None = None,
+) -> int:
+	if release and ebuild_path.name != f"flutter-{release.version}.ebuild":
+		raise ValueError(
+			f"release {release.version} must update "
+			f"flutter-{release.version}.ebuild, not {ebuild_path.name}"
+		)
 	existing = ebuild_path.read_text()
 	pattern = re.compile(
 		rf"^{re.escape(BEGIN)}$.*?^{re.escape(END)}$",
@@ -261,11 +341,14 @@ def update_ebuild(ebuild_path: Path, generated: str, check: bool) -> int:
 		raise ValueError(
 			f"expected one generated block in {ebuild_path}, found {count}"
 		)
+	if release is not None:
+		replacement = apply_release_identity(replacement, release)
 	if replacement == existing:
 		return 0
 	if check:
 		print(
-			f"{ebuild_path} is not synchronized with Flutter {FLUTTER_VERSION} pub dependencies",
+			f"{ebuild_path} is not synchronized with Flutter "
+			f"{release.version if release else FLUTTER_VERSION}",
 			file=sys.stderr,
 		)
 		return 1
@@ -283,9 +366,24 @@ def main() -> int:
 	parser.add_argument("--material-fonts-revision", type=str, help="Target Material fonts revision")
 	parser.add_argument("--gradle-wrapper-revision", type=str, help="Target Gradle wrapper revision")
 	parser.add_argument("--ebuild", type=Path, help="Path to ebuild to modify")
+	parser.add_argument(
+		"--release-spec", type=Path,
+		help="Validated Flutter release JSON shared with the Engine generator",
+	)
 	args = parser.parse_args()
+	release = FlutterReleaseSpec.read(args.release_spec) if args.release_spec else None
+	if release and any((
+		args.version, args.engine_revision, args.material_fonts_revision,
+		args.gradle_wrapper_revision,
+	)):
+		parser.error("--release-spec cannot be combined with release identity flags")
 
-	if args.version:
+	if release:
+		FLUTTER_VERSION = release.version
+		FLUTTER_ENGINE_REV = release.engine_revision
+		MATERIAL_FONTS_REV = release.material_fonts_revision
+		GRADLE_WRAPPER_REV = release.gradle_wrapper_revision
+	elif args.version:
 		FLUTTER_VERSION = args.version
 	if args.engine_revision:
 		FLUTTER_ENGINE_REV = args.engine_revision
@@ -296,7 +394,7 @@ def main() -> int:
 
 	if args.ebuild:
 		EBUILD = args.ebuild
-	elif args.version:
+	elif args.version or release:
 		EBUILD = (
 			Path(__file__).parents[1]
 			/ "dev-lang"
@@ -306,12 +404,14 @@ def main() -> int:
 
 	# On check mode, if no arguments are passed, we check against the static dictionary
 	# If version is passed, fetch real dependencies to check or generate.
-	if args.version or not args.check:
+	if release or args.version or not args.check:
 		deps = fetch_pub_deps(FLUTTER_VERSION)
 	else:
 		deps = PUB_DEPENDENCIES
 
-	return update_ebuild(EBUILD, render_pub_deps(deps), args.check)
+	return update_ebuild(
+		EBUILD, render_pub_deps(deps, release), args.check, release,
+	)
 
 
 if __name__ == "__main__":

@@ -5,14 +5,21 @@ permissions:
 
 on:
   workflow_dispatch:
+    inputs:
+      flutter_version:
+        description: Flutter Engine source release to build
+        required: false
+        type: string
   pull_request:
     paths:
       - 'dev-libs/flutter-engine/**'
       - 'scripts/generate_flutter_engine_ebuild.py'
+      - 'scripts/flutter_release_spec.py'
       - 'scripts/source_update_utils.py'
       - 'scripts/update_flutter_source.py'
       - 'scripts/test_flutter_engine_source.sh'
       - 'scripts/test_generate_flutter_engine_ebuild.py'
+      - 'scripts/test_flutter_release_pipeline.py'
       - '.github/workflows/dev-libs-flutter-engine-source-test.yaml'
 
 concurrency:
@@ -62,4 +69,5 @@ jobs:
         env:
           FLUTTER_ENGINE_DISTDIR: /var/cache/distfiles
           FLUTTER_ENGINE_BINPKGS: /var/cache/binpkgs
+          FLUTTER_ENGINE_SOURCE_ATOM: ${{ inputs.flutter_version && format('=dev-libs/flutter-engine-{0}', inputs.flutter_version) || '' }}
         run: scripts/test_flutter_engine_source.sh

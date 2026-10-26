@@ -5,15 +5,22 @@ permissions:
 
 on:
   workflow_dispatch:
+    inputs:
+      flutter_version:
+        description: Flutter source release to build
+        required: false
+        type: string
   pull_request:
     paths:
       - 'dev-lang/flutter/**'
       - 'virtual/flutter/**'
       - 'dev-lang/flutter-bin/**'
       - 'scripts/generate_flutter_ebuild.py'
+      - 'scripts/flutter_release_spec.py'
       - 'scripts/source_update_utils.py'
       - 'scripts/update_flutter_source.py'
       - 'scripts/test_generate_flutter_ebuild.py'
+      - 'scripts/test_flutter_release_pipeline.py'
       - 'scripts/test_flutter_source.sh'
       - '.github/workflows/dev-lang-flutter-source-test.yaml'
 
@@ -66,4 +73,7 @@ jobs:
         env:
           FLUTTER_DISTDIR: /var/cache/distfiles
           FLUTTER_BINPKGS: /var/cache/binpkgs
+          FLUTTER_SOURCE_ATOM: ${{ inputs.flutter_version && format('=dev-lang/flutter-{0}', inputs.flutter_version) || '' }}
+          FLUTTER_ENGINE_SOURCE_ATOM: ${{ inputs.flutter_version && format('=dev-libs/flutter-engine-{0}', inputs.flutter_version) || '' }}
+          FLUTTER_VIRTUAL_ATOM: ${{ inputs.flutter_version && format('=virtual/flutter-{0}', inputs.flutter_version) || '' }}
         run: scripts/test_flutter_source.sh

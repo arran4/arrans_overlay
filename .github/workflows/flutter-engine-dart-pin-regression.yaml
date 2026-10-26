@@ -9,7 +9,6 @@ on:
       flutter_version:
         description: Flutter stable release to audit
         required: true
-        default: '3.47.7'
         type: string
       expected_dart_revision:
         description: Optional expected 40-character Dart Git SHA
@@ -32,6 +31,7 @@ on:
       - 'virtual/flutter/**'
       # The generators, update orchestration and their regression tests.
       - 'scripts/generate_flutter_ebuild.py'
+      - 'scripts/flutter_release_spec.py'
       - 'scripts/update_dart_source.py'
       - 'scripts/source_update_utils.py'
       - '.github/workflows/dev-libs-flutter-engine-source-test.yaml'
@@ -39,6 +39,7 @@ on:
       - 'scripts/generate_flutter_engine_ebuild.py'
       - 'scripts/check_flutter_engine_dart_pins.py'
       - 'scripts/test_generate_flutter_engine_ebuild.py'
+      - 'scripts/test_flutter_release_pipeline.py'
       - 'scripts/update_flutter_source.py'
       - '.github/workflows/flutter-engine-dart-pin-regression.yaml'
 
@@ -47,8 +48,65 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  select-release:
+    name: Select actual Flutter release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.select.outputs.version }}
+      ebuild: ${{ steps.select.outputs.ebuild }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - id: select
+        env:
+          REQUESTED_VERSION: ${{ inputs.flutter_version }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "$REQUESTED_VERSION" ]]; then
+            version="$REQUESTED_VERSION"
+            candidate="dev-lang/flutter/flutter-${version}.ebuild"
+            if [[ -f "$candidate" ]]; then
+              ebuild="$candidate"
+            else
+              ebuild=""
+            fi
+          else
+            mapfile -t changed < <(
+              git diff --name-only "$BASE_SHA" "$GITHUB_SHA" -- \
+                'dev-lang/flutter/flutter-*.ebuild' |
+                sed -nE 's#^dev-lang/flutter/flutter-([0-9]+\.[0-9]+\.[0-9]+)\.ebuild$#\1#p'
+            )
+            if (( ${#changed[@]} == 1 )); then
+              version="${changed[0]}"
+              ebuild="dev-lang/flutter/flutter-${version}.ebuild"
+            elif (( ${#changed[@]} > 1 )); then
+              echo "multiple Flutter source releases changed; dispatch with flutter_version" >&2
+              exit 1
+            else
+              version="$({
+                for path in dev-lang/flutter/flutter-*.ebuild; do
+                  candidate="${path#dev-lang/flutter/flutter-}"
+                  candidate="${candidate%.ebuild}"
+                  [[ -f "dev-libs/flutter-engine/flutter-engine-${candidate}.ebuild" ]] &&
+                    printf '%s\n' "${candidate%-r[0-9]*}"
+                done
+              } | sort -V | tail -n1)"
+              [[ -n "$version" ]] || {
+                echo "no matching Flutter/Engine source release exists" >&2
+                exit 1
+              }
+              ebuild=""
+            fi
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "ebuild=$ebuild" >> "$GITHUB_OUTPUT"
+
   validate-target-dart-pins:
     name: Validate upstream Dart pin and isolation
+    needs: select-release
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -59,12 +117,16 @@ jobs:
 
       - name: Verify real DEPS pins and consecutive renders
         env:
-          FLUTTER_VERSION: ${{ inputs.flutter_version || '3.47.7' }}
+          FLUTTER_VERSION: ${{ needs.select-release.outputs.version }}
+          FLUTTER_EBUILD: ${{ needs.select-release.outputs.ebuild }}
           EXPECTED_DART_REVISION: ${{ inputs.expected_dart_revision || '' }}
         shell: bash
         run: |
           set -euo pipefail
           arguments=(--version "$FLUTTER_VERSION")
+          if [[ -n "$FLUTTER_EBUILD" ]]; then
+            arguments+=(--ebuild "$FLUTTER_EBUILD")
+          fi
           if [[ -n "$EXPECTED_DART_REVISION" ]]; then
             arguments+=(--expected-dart-revision "$EXPECTED_DART_REVISION")
           fi
@@ -73,7 +135,7 @@ jobs:
   full-release-render-audit:
     name: Strict full upstream DEPS render (opt-in)
     if: github.event_name == 'workflow_dispatch' && inputs.full_render == true
-    needs: validate-target-dart-pins
+    needs: [select-release, validate-target-dart-pins]
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -83,7 +145,7 @@ jobs:
           python-version: '3.13'
       - name: Render complete selected Engine DEPS, fail on unreviewed changes
         env:
-          FLUTTER_VERSION: ${{ inputs.flutter_version || '3.47.7' }}
+          FLUTTER_VERSION: ${{ needs.select-release.outputs.version }}
           EXPECTED_DART_REVISION: ${{ inputs.expected_dart_revision || '' }}
         shell: bash
         run: |

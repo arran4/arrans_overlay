@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Regenerate the pinned Flutter Engine DEPS source graph in the ebuild.
 
-To update Flutter Engine, change FLUTTER_VERSION, FLUTTER_ENGINE_REV,
-and review every DEPS identity before regenerating. The exact reviewed
-exclusions intentionally prevent this script from pretending an unreviewed
-version bump is automatic.
+The release updater passes one validated ``--release-spec`` to this generator
+and the Flutter generator. The exact reviewed exclusions intentionally prevent
+this script from pretending an unreviewed version bump is automatic.
 
 Conditions are evaluated for the only supported source build: Linux/amd64 host,
 using the system compiler, GN, Ninja, and C library.
@@ -19,6 +18,9 @@ import re
 import sys
 import tempfile
 import urllib.request
+
+sys.path.insert(0, str(Path(__file__).parent))
+from flutter_release_spec import FlutterReleaseSpec
 
 
 FLUTTER_VERSION = "3.47.2"
@@ -1082,7 +1084,30 @@ def obtain_deps(
     return deps_path, temporary
 
 
-def update_ebuild(generated: str, check: bool) -> int:
+def apply_release_identity(text: str, release: FlutterReleaseSpec) -> str:
+    """Synchronize Engine source identity outside the generated DEPS block."""
+    replacement, count = re.subn(
+        r'^FLUTTER_ENGINE_REV="[^"]*"$',
+        f'FLUTTER_ENGINE_REV="{release.engine_revision}"',
+        text,
+        flags=re.MULTILINE,
+    )
+    if count != 1:
+        raise ValueError(
+            "expected one Flutter Engine revision outside generated DEPS, "
+            f"found {count}"
+        )
+    return replacement
+
+
+def update_ebuild(
+    generated: str, check: bool, release: FlutterReleaseSpec | None = None,
+) -> int:
+    if release and EBUILD.name != f"flutter-engine-{release.version}.ebuild":
+        raise ValueError(
+            f"release {release.version} must update "
+            f"flutter-engine-{release.version}.ebuild, not {EBUILD.name}"
+        )
     existing = EBUILD.read_text()
     pattern = re.compile(
         rf"^{re.escape(BEGIN)}$.*?^{re.escape(END)}$",
@@ -1093,11 +1118,14 @@ def update_ebuild(generated: str, check: bool) -> int:
         raise ValueError(
             f"expected one generated block in {EBUILD}, found {count}"
         )
+    if release is not None:
+        replacement = apply_release_identity(replacement, release)
     if replacement == existing:
         return 0
     if check:
         print(
-            f"{EBUILD} is not synchronized with Flutter {FLUTTER_VERSION} DEPS",
+            f"{EBUILD} is not synchronized with Flutter "
+            f"{release.version if release else FLUTTER_VERSION} DEPS",
             file=sys.stderr,
         )
         return 1
@@ -1119,16 +1147,35 @@ def main() -> int:
         "--dart-revision", type=str, help="Target Dart SDK revision for Engine"
     )
     parser.add_argument("--ebuild", type=Path, help="Path to ebuild to modify")
+    parser.add_argument(
+        "--release-spec", type=Path,
+        help="Validated Flutter release JSON shared with the Flutter generator",
+    )
     args = parser.parse_args()
 
-    if args.version:
+    release = (
+        FlutterReleaseSpec.read(args.release_spec)
+        if args.release_spec else None
+    )
+    if release and any((
+        args.version, args.engine_revision, args.dart_revision,
+    )):
+        parser.error(
+            "--release-spec cannot be combined with release identity flags"
+        )
+
+    if release:
+        FLUTTER_VERSION = release.version
+        FLUTTER_ENGINE_REV = release.engine_revision
+        DART_REVISION = release.dart_revision
+    elif args.version:
         FLUTTER_VERSION = args.version
     if args.engine_revision:
         FLUTTER_ENGINE_REV = args.engine_revision
     if args.dart_revision:
         DART_REVISION = args.dart_revision
 
-    if args.version or args.engine_revision:
+    if release or args.version or args.engine_revision:
         DEPS_URL = (
             f"https://raw.githubusercontent.com/flutter/flutter/"
             f"{FLUTTER_ENGINE_REV}/DEPS"
@@ -1136,7 +1183,7 @@ def main() -> int:
 
     if args.ebuild:
         EBUILD = args.ebuild
-    elif args.version:
+    elif args.version or release:
         EBUILD = (
             Path(__file__).parents[1]
             / "dev-libs"
@@ -1149,7 +1196,7 @@ def main() -> int:
         if not EBUILD.exists():
             print(render(deps_path))
             return 0
-        return update_ebuild(render(deps_path), args.check)
+        return update_ebuild(render(deps_path), args.check, release)
     finally:
         if temporary is not None:
             temporary.cleanup()
