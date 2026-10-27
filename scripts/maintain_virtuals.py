@@ -149,8 +149,12 @@ def cleanup(root: Path):
         newest_live = max(live_versions, key=version_key) if live_versions else None
         if not newest_live:
             raise ValueError(f"no viable providers for virtual/{package}")
+        # g2 may remove an older virtual ebuild even while a matching
+        # source provider survives (e.g. Flutter 3.47.2 after deduping its
+        # binary package). Reconcile every surviving provider version, not
+        # only virtual versions which g2 happened to retain.
         ensure_virtual(root, package, newest_live)
-        for version in sorted(existing_versions, key=version_key):
+        for version in sorted(existing_versions | live_versions, key=version_key):
             paths = matching_ebuilds(root, f"virtual/{package}", version)
             if version not in live_versions:
                 if version_key(version) >= version_key(newest_live):
