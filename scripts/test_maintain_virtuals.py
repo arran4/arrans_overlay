@@ -82,6 +82,45 @@ class VirtualProviderTest(unittest.TestCase):
         self.assertFalse(old_virtual.exists())
         self.assertTrue(src.exists())
 
+    def test_cleanup_recreates_virtual_deleted_with_old_binary(self):
+        # g2 can delete the virtual alongside an old binary even though
+        # the source ebuild for that exact Flutter version still exists.
+        self.provider("dart-bin", "3.13.7")
+        source = self.provider("flutter", "3.47.2")
+        old_bin = self.provider("flutter-bin", "3.47.2")
+        self.provider("flutter-bin", "3.47.8")
+        virtuals.prepare(self.root)
+        old_virtual = virtuals.ensure_virtual(self.root, "flutter", "3.47.2")
+        self.assertIn("~dev-lang/flutter-bin-3.47.2", old_virtual.read_text())
+
+        old_bin.unlink()
+        old_virtual.unlink()  # g2 also considers the older virtual redundant
+        virtuals.cleanup(self.root)
+
+        restored = self.root / "virtual/flutter/flutter-3.47.2.ebuild"
+        self.assertTrue(source.exists())
+        self.assertTrue(restored.exists())
+        self.assertIn("~dev-lang/flutter-3.47.2", restored.read_text())
+        self.assertNotIn("~dev-lang/flutter-bin-3.47.2", restored.read_text())
+        newest = self.root / "virtual/flutter/flutter-3.47.8.ebuild"
+        self.assertIn("~dev-lang/flutter-bin-3.47.8", newest.read_text())
+
+        # A second cleanup should neither discard the older viable
+        # virtual again nor produce unnecessary revisions.
+        before = {
+            path.name: path.read_text()
+            for path in (self.root / "virtual/flutter").glob("*.ebuild")
+        }
+        virtuals.cleanup(self.root)
+        after = {
+            path.name: path.read_text()
+            for path in (self.root / "virtual/flutter").glob("*.ebuild")
+        }
+        self.assertEqual(before, after)
+        self.assertEqual(
+            set(after), {"flutter-3.47.2.ebuild", "flutter-3.47.8.ebuild"}
+        )
+
     def test_no_real_provider_rejected(self):
         with self.assertRaisesRegex(ValueError, "no real provider"):
             virtuals.ensure_virtual(self.root, "dart", "3.13.7")
