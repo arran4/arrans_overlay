@@ -283,7 +283,11 @@ def apply_release_identity(text: str, release: FlutterReleaseSpec) -> str:
 		f'FLUTTER_ENGINE_REV="{release.engine_revision}"',
 		"Engine revision",
 	)
+	fw_commit_date = release.framework_commit_date or release.release_date
+	eng_commit_date = release.engine_commit_date or release.release_date
 	for name, value in (
+		("FLUTTER_FRAMEWORK_COMMIT_DATE", fw_commit_date),
+		("FLUTTER_ENGINE_COMMIT_DATE", eng_commit_date),
 		("FLUTTER_DART_SDK_VERSION", release.dart_sdk_version),
 		("FLUTTER_RELEASE_DATE", release.release_date),
 	):
@@ -297,27 +301,62 @@ def apply_release_identity(text: str, release: FlutterReleaseSpec) -> str:
 				text,
 				r'^(FLUTTER_ENGINE_REV="[^"]*"$)',
 				rf'\1\n{name}="{value}"',
-				"Engine revision insertion point",
+				f"{name} insertion point",
 			)
 	text = replace_exactly_once(
 		text, r'^\t~dev-libs/flutter-engine-[^\s]+$',
-		f'\t~dev-libs/flutter-engine-{release.version}',
+		f'\t~dev-libs/flutter-engine-{release.base_version}',
 		"Flutter Engine dependency atom",
 	)
+	if 'local build_date' not in text:
+		text = replace_exactly_once(
+			text,
+			r'(\tcat <<-EOF > "\$\{cache_dir\}/flutter\.version\.json")',
+			r'\tlocal build_date="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"\n\tlocal build_time_ms="$(date +%s000)"\n\n\1',
+			"build timestamp variables",
+		)
 	text = replace_exactly_once(
 		text, r'^\t\t"frameworkCommitDate": ".*",$',
-		'\t\t"frameworkCommitDate": "${FLUTTER_RELEASE_DATE}",',
-		"framework release date",
+		'\t\t"frameworkCommitDate": "${FLUTTER_FRAMEWORK_COMMIT_DATE}",',
+		"framework commit date",
 	)
-	for key in ("engineCommitDate", "engineBuildDate"):
-		text = replace_exactly_once(
-			text, rf'^\t\t"{key}": ".*",$',
-			f'\t\t"{key}": "${{FLUTTER_RELEASE_DATE}}",', key,
-		)
+	text = replace_exactly_once(
+		text, r'^\t\t"engineCommitDate": ".*",$',
+		'\t\t"engineCommitDate": "${FLUTTER_ENGINE_COMMIT_DATE}",',
+		"engine commit date",
+	)
+	text = replace_exactly_once(
+		text, r'^\t\t"engineBuildDate": ".*",$',
+		'\t\t"engineBuildDate": "${build_date}",',
+		"engine build date",
+	)
+	# Remove stale/fabricated engineContentHash from flutter.version.json
+	text = re.sub(
+		r'^\t\t"engineContentHash": ".*",\n', '', text, flags=re.MULTILINE
+	)
 	text = replace_exactly_once(
 		text, r'^\t\t"dartSdkVersion": ".*",$',
 		'\t\t"dartSdkVersion": "${FLUTTER_DART_SDK_VERSION}",',
 		"Dart SDK version",
+	)
+	# Remove stale/fabricated metadata in engine_stamp.json
+	text = replace_exactly_once(
+		text, r'^\t\t"build_date": ".*",?$',
+		'\t\t"build_date": "${build_date}",',
+		"engine_stamp build date",
+	)
+	text = replace_exactly_once(
+		text, r'^\t\t"build_time_ms": .*,?$',
+		'\t\t"build_time_ms": ${build_time_ms},',
+		"engine_stamp build time ms",
+	)
+	text = re.sub(
+		r'^\t\t"content_hash": ".*",?\n', '', text, flags=re.MULTILINE
+	)
+	text = replace_exactly_once(
+		text, r'^\t\t"git_revision_date": ".*",?$',
+		'\t\t"git_revision_date": "${FLUTTER_ENGINE_COMMIT_DATE}"',
+		"engine_stamp git_revision_date",
 	)
 	return text
 
@@ -326,11 +365,13 @@ def update_ebuild(
 	ebuild_path: Path, generated: str, check: bool,
 	release: FlutterReleaseSpec | None = None,
 ) -> int:
-	if release and ebuild_path.name != f"flutter-{release.version}.ebuild":
-		raise ValueError(
-			f"release {release.version} must update "
-			f"flutter-{release.version}.ebuild, not {ebuild_path.name}"
-		)
+	if release:
+		expected = rf"flutter-{re.escape(release.base_version)}(?:-r\d+)?\.ebuild"
+		if not re.fullmatch(expected, ebuild_path.name):
+			raise ValueError(
+				f"release {release.version} must update an ebuild for "
+				f"{release.base_version}, not {ebuild_path.name}"
+			)
 	existing = ebuild_path.read_text()
 	pattern = re.compile(
 		rf"^{re.escape(BEGIN)}$.*?^{re.escape(END)}$",

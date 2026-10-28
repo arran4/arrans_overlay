@@ -10,7 +10,8 @@ import re
 
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
-VERSION = re.compile(r"\d+\.\d+\.\d+\Z")
+VERSION = re.compile(r"\d+\.\d+\.\d+(-r\d+)?\Z")
+BASE_VERSION = re.compile(r"\d+\.\d+\.\d+\Z")
 
 
 @dataclass(frozen=True)
@@ -26,11 +27,17 @@ class FlutterReleaseSpec:
     gradle_wrapper_revision: str
     release_date: str
     host_dart_constraint: str
+    framework_commit_date: str = ""
+    engine_commit_date: str = ""
+
+    @property
+    def base_version(self) -> str:
+        return self.version.split("-r")[0]
 
     def validate(self) -> None:
         if not VERSION.fullmatch(self.version):
             raise ValueError(f"invalid Flutter version: {self.version!r}")
-        if not VERSION.fullmatch(self.dart_sdk_version):
+        if not BASE_VERSION.fullmatch(self.dart_sdk_version):
             raise ValueError(
                 f"invalid Flutter Dart SDK version: {self.dart_sdk_version!r}"
             )
@@ -48,7 +55,12 @@ class FlutterReleaseSpec:
 
     @classmethod
     def from_dict(cls, source: dict[str, object]) -> "FlutterReleaseSpec":
-        fields = {field: source.get(field) for field in cls.__dataclass_fields__}
+        fields = {}
+        for field in cls.__dataclass_fields__:
+            val = source.get(field)
+            if val is None and field in ("framework_commit_date", "engine_commit_date"):
+                val = ""
+            fields[field] = val
         if any(not isinstance(value, str) for value in fields.values()):
             raise ValueError("release spec is missing a required string field")
         result = cls(**fields)  # type: ignore[arg-type]

@@ -66,10 +66,13 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -n "$REQUESTED_VERSION" ]]; then
-            version="$REQUESTED_VERSION"
-            candidate="dev-lang/flutter/flutter-${version}.ebuild"
+            base_version="${REQUESTED_VERSION%-r*}"
+            version="$base_version"
+            candidate="dev-lang/flutter/flutter-${REQUESTED_VERSION}.ebuild"
             if [[ -f "$candidate" ]]; then
               ebuild="$candidate"
+            elif [[ -f "dev-lang/flutter/flutter-${base_version}.ebuild" ]]; then
+              ebuild="dev-lang/flutter/flutter-${base_version}.ebuild"
             else
               ebuild=""
             fi
@@ -77,11 +80,12 @@ jobs:
             mapfile -t changed < <(
               git diff --name-only "$BASE_SHA" "$GITHUB_SHA" -- \
                 'dev-lang/flutter/flutter-*.ebuild' |
-                sed -nE 's#^dev-lang/flutter/flutter-([0-9]+\.[0-9]+\.[0-9]+)\.ebuild$#\1#p'
+                sed -nE 's#^dev-lang/flutter/flutter-([0-9]+\.[0-9]+\.[0-9]+(-r[0-9]+)?)\.ebuild$#\1#p'
             )
             if (( ${#changed[@]} == 1 )); then
-              version="${changed[0]}"
-              ebuild="dev-lang/flutter/flutter-${version}.ebuild"
+              full_ver="${changed[0]}"
+              version="${full_ver%-r*}"
+              ebuild="dev-lang/flutter/flutter-${full_ver}.ebuild"
             elif (( ${#changed[@]} > 1 )); then
               echo "multiple Flutter source releases changed; dispatch with flutter_version" >&2
               exit 1
@@ -90,8 +94,10 @@ jobs:
                 for path in dev-lang/flutter/flutter-*.ebuild; do
                   candidate="${path#dev-lang/flutter/flutter-}"
                   candidate="${candidate%.ebuild}"
-                  [[ -f "dev-libs/flutter-engine/flutter-engine-${candidate}.ebuild" ]] &&
-                    printf '%s\n' "${candidate%-r[0-9]*}"
+                  base_candidate="${candidate%-r[0-9]*}"
+                  for engine_path in dev-libs/flutter-engine/flutter-engine-${base_candidate}*.ebuild; do
+                    [[ -f "$engine_path" ]] && printf '%s\n' "$base_candidate"
+                  done
                 done
               } | sort -V | tail -n1)"
               [[ -n "$version" ]] || {

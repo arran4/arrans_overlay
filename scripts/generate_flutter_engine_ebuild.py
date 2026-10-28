@@ -1103,11 +1103,14 @@ def apply_release_identity(text: str, release: FlutterReleaseSpec) -> str:
 def update_ebuild(
     generated: str, check: bool, release: FlutterReleaseSpec | None = None,
 ) -> int:
-    if release and EBUILD.name != f"flutter-engine-{release.version}.ebuild":
-        raise ValueError(
-            f"release {release.version} must update "
-            f"flutter-engine-{release.version}.ebuild, not {EBUILD.name}"
-        )
+    if release:
+        ver = re.escape(release.base_version)
+        expected = rf"flutter-engine-{ver}(?:-r\d+)?\.ebuild"
+        if not re.fullmatch(expected, EBUILD.name):
+            raise ValueError(
+                f"release {release.version} must update an ebuild for "
+                f"{release.base_version}, not {EBUILD.name}"
+            )
     existing = EBUILD.read_text()
     pattern = re.compile(
         rf"^{re.escape(BEGIN)}$.*?^{re.escape(END)}$",

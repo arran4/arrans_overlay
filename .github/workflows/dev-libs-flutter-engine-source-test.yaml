@@ -69,5 +69,5 @@ jobs:
         env:
           FLUTTER_ENGINE_DISTDIR: /var/cache/distfiles
           FLUTTER_ENGINE_BINPKGS: /var/cache/binpkgs
-          FLUTTER_ENGINE_SOURCE_ATOM: ${{ inputs.flutter_version && format('=dev-libs/flutter-engine-{0}', inputs.flutter_version) || '' }}
+          FLUTTER_ENGINE_SOURCE_ATOM: ${{ inputs.flutter_version && format('=dev-libs/flutter-engine-{0}*', inputs.flutter_version) || '' }}
         run: scripts/test_flutter_engine_source.sh

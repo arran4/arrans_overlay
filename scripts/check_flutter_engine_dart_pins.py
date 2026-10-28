@@ -141,17 +141,36 @@ def validate_generated_ebuilds(
         flutter_text, "FLUTTER_DART_SDK_VERSION",
     ) != dart_sdk_version:
         raise ValueError("Flutter ebuild has a stale Dart SDK version")
-    if f"\t~dev-libs/flutter-engine-{version}" not in flutter_text:
+    base_version = version.split("-r")[0]
+    if f"\t~dev-libs/flutter-engine-{base_version}" not in flutter_text:
         raise ValueError("Flutter ebuild has a stale Flutter Engine dependency")
     if '"dartSdkVersion": "${FLUTTER_DART_SDK_VERSION}"' not in flutter_text:
         raise ValueError("Flutter ebuild does not use the generated Dart SDK version")
+    if '"frameworkCommitDate": "${FLUTTER_FRAMEWORK_COMMIT_DATE}"' not in flutter_text:
+        raise ValueError("Flutter ebuild does not use FLUTTER_FRAMEWORK_COMMIT_DATE")
+    if '"engineCommitDate": "${FLUTTER_ENGINE_COMMIT_DATE}"' not in flutter_text:
+        raise ValueError("Flutter ebuild does not use FLUTTER_ENGINE_COMMIT_DATE")
+    if '"engineContentHash"' in flutter_text:
+        raise ValueError("Flutter ebuild retains fabricated engineContentHash")
 
-    engine_ebuild = (
-        flutter_ebuild.parents[2] / "dev-libs" / "flutter-engine"
-        / f"flutter-engine-{version}.ebuild"
-    )
-    if not engine_ebuild.exists():
-        raise ValueError(f"missing matching Flutter Engine ebuild: {engine_ebuild}")
+    engine_dir = flutter_ebuild.parents[2] / "dev-libs" / "flutter-engine"
+    candidates = []
+    for candidate in engine_dir.glob(f"flutter-engine-{base_version}*.ebuild"):
+        m = re.fullmatch(rf"flutter-engine-({re.escape(base_version)}(?:-r\d+)?)\.ebuild", candidate.name)
+        if m:
+            candidates.append(candidate)
+    if not candidates:
+        raise ValueError(f"missing matching Flutter Engine ebuild in {engine_dir} for {base_version}")
+
+    def sort_key(p: Path):
+        m = re.match(r"^flutter-engine-(.*)\.ebuild$", p.name)
+        if m:
+            match = re.match(r"^(\d+(?:\.\d+)*)(?:-r(\d+))?$", m.group(1))
+            if match:
+                return ([int(x) for x in match.group(1).split(".")], int(match.group(2)) if match.group(2) else 0)
+        return ([0], 0)
+
+    engine_ebuild = sorted(candidates, key=sort_key)[-1]
     engine_text = engine_ebuild.read_text()
     if ebuild_assignment(engine_text, "FLUTTER_ENGINE_REV") != engine_revision:
         raise ValueError("Flutter Engine ebuild has a stale Engine revision")
@@ -239,14 +258,15 @@ def main() -> int:
     try:
         version = args.version
         if args.ebuild:
-            match = re.fullmatch(r"flutter-(\d+\.\d+\.\d+)\.ebuild",
+            match = re.fullmatch(r"flutter-(\d+\.\d+\.\d+(?:-r\d+)?)\.ebuild",
                                  args.ebuild.name)
             if not match:
                 raise ValueError(f"invalid Flutter ebuild name: {args.ebuild}")
             ebuild_version = match.group(1)
-            if version and version != ebuild_version:
+            ebuild_base_version = ebuild_version.split("-r")[0]
+            if version and version.split("-r")[0] != ebuild_base_version:
                 raise ValueError("--version disagrees with --ebuild")
-            version = ebuild_version
+            version = ebuild_base_version
         if not version:
             raise ValueError("provide --version or --ebuild")
         release_ref = stable_release(version)
