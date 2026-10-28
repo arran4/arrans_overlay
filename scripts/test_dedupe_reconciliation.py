@@ -44,7 +44,13 @@ class ScheduledDedupeIntegrationTest(unittest.TestCase):
             cleanup(sandbox)
             newest_dart = all_versions(sandbox, "dart")[-1]
             self.assertTrue(available_providers(sandbox, "dart", newest_dart))
-            self.assertTrue(available_providers(sandbox, "flutter", "3.47.7"))
+            # Reconcile every version actually present in the checkout.
+            # A successful daily dedupe may already have removed 3.47.7.
+            for version in all_versions(sandbox, "flutter"):
+                self.assertTrue(available_providers(sandbox, "flutter", version))
+                self.assertTrue(list(
+                    (sandbox / "virtual/flutter").glob(f"flutter-{version}*.ebuild")
+                ))
             newest_flutter = all_versions(sandbox, "flutter")[-1]
             self.assertTrue(available_providers(sandbox, "flutter", newest_flutter))
             self.assertFalse((sandbox / "virtual/dart/dart-3.13.3-r1.ebuild").exists())
