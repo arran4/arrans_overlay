@@ -1,4 +1,4 @@
-"""Regression for the exact Dart/Flutter removal pattern of daily PR #975."""
+"""Regression for Dart/Flutter packaging before and after daily deduplication."""
 import shutil
 import tempfile
 import unittest
@@ -36,12 +36,14 @@ class ScheduledDedupeIntegrationTest(unittest.TestCase):
                 dirname = package.rsplit("/", 1)[-1]
                 for version in versions:
                     old = sandbox / package / f"{dirname}-{version}.ebuild"
-                    self.assertTrue(old.is_file(), f"missing fixture {old}")
-                    old.unlink()
+                    # Versions in the historical #975 cleanup are optional:
+                    # the next checkout may already contain the cleaned state.
+                    old.unlink(missing_ok=True)
                 removed_packages.add(package)
 
             cleanup(sandbox)
-            self.assertTrue(available_providers(sandbox, "dart", "3.13.7"))
+            newest_dart = all_versions(sandbox, "dart")[-1]
+            self.assertTrue(available_providers(sandbox, "dart", newest_dart))
             self.assertTrue(available_providers(sandbox, "flutter", "3.47.7"))
             newest_flutter = all_versions(sandbox, "flutter")[-1]
             self.assertTrue(available_providers(sandbox, "flutter", newest_flutter))
@@ -50,12 +52,13 @@ class ScheduledDedupeIntegrationTest(unittest.TestCase):
             self.assertEqual(len(old_flutter), 1)
             self.assertIn("~dev-lang/flutter-3.47.2", old_flutter[0].read_text())
             self.assertNotIn("~dev-lang/flutter-bin-3.47.2", old_flutter[0].read_text())
-            self.assertTrue((sandbox / "virtual/dart/dart-3.13.7.ebuild").is_file())
-            self.assertTrue((sandbox / "virtual/flutter" / f"flutter-{newest_flutter}.ebuild").is_file())
+            self.assertTrue(list((sandbox / "virtual/dart").glob(f"dart-{newest_dart}*.ebuild")))
+            self.assertTrue(list((sandbox / "virtual/flutter").glob(f"flutter-{newest_flutter}*.ebuild")))
 
             for package in removed_packages:
                 directory = sandbox / package
-                self.assertTrue(prune_package(directory))
+                # An already-cleaned Manifest is a valid starting fixture.
+                prune_package(directory)
                 recorded = {
                     line.split()[1] for line in (directory / "Manifest").read_text().splitlines()
                     if line.startswith("DIST ")
@@ -66,6 +69,7 @@ class ScheduledDedupeIntegrationTest(unittest.TestCase):
                     variables = parse_ebuild_variables(path.name, content)
                     referenced.update(name for _, name in extract_uris(content, variables))
                 self.assertEqual(recorded, referenced, package)
+                self.assertFalse(prune_package(directory), f"non-idempotent {package}")
 
 
 if __name__ == "__main__":
