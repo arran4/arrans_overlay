@@ -149,6 +149,8 @@ assert 'compgen -G "${flutter_bin_dir}/flutter-bin-${flutter_version}-r[0-9]*.eb
 assert 'CI_GRAPH_PREREQUISITES+=("~dev-lang/flutter-bin-${flutter_version}")' in workflow
 assert "VIRTUAL_FLUTTER_SOURCE_ONLY=true" in workflow
 assert "EMERGE_MODE+=(--pretend)" in workflow
+assert "--autounmask-only=y --backtrack=50" in workflow
+assert "--autounmask-write=y --autounmask-continue=y" in workflow
 assert "~dev-lang/flutter-bin-3.47.2" not in workflow
 package_emerge_options = package_emerge.group("options")
 for option in (
