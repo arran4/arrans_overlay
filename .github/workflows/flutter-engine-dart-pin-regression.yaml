@@ -95,7 +95,7 @@ jobs:
                   candidate="${path#dev-lang/flutter/flutter-}"
                   candidate="${candidate%.ebuild}"
                   base_candidate="${candidate%-r[0-9]*}"
-                  for engine_path in dev-libs/flutter-engine/flutter-engine-${base_candidate}*.ebuild; do
+                  for engine_path in "dev-libs/flutter-engine/flutter-engine-${base_candidate}"*.ebuild; do
                     [[ -f "$engine_path" ]] && printf '%s\n' "$base_candidate"
                   done
                 done
