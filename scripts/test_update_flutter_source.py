@@ -6,10 +6,25 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+sys.path.insert(0, str(Path(__file__).parent))
+
 import update_flutter_source as updater
 
 
 class FlutterUpdaterTest(unittest.TestCase):
+    def release_spec(self, version="3.14.0"):
+        return updater.FlutterReleaseSpec(
+            version=version,
+            framework_revision="a" * 40,
+            engine_revision="b" * 40,
+            dart_revision="c" * 40,
+            dart_sdk_version="3.13.7",
+            material_fonts_revision="d" * 40,
+            gradle_wrapper_revision="e" * 40,
+            release_date="2026-10-23T19:02:25.384067Z",
+            host_dart_constraint="^3.11.0-0",
+        )
+
     def releases(self, payload, version=None):
         response = MagicMock(); response.read.return_value = json.dumps(payload).encode()
         with patch.object(updater.urllib.request, "urlopen") as open_url:
@@ -41,10 +56,10 @@ class FlutterUpdaterTest(unittest.TestCase):
             with self.assertRaises(SystemExit): updater.main()
 
     def test_open_pr_is_idempotent_and_stranded_branch_is_recovery_state(self):
-        release = {"version": "3.14.0", "hash": "r", "channel": "stable"}
-        with patch.object(updater, "get_flutter_release", return_value=release), patch.object(updater, "ebuild_exists", return_value=False), patch.object(updater, "check_branch_exists", return_value=False), patch.object(updater, "check_pr_exists", return_value=True), patch.object(sys, "argv", ["updater", "--dry-run"]):
+        release = {"version": "3.14.0", "hash": "a" * 40, "channel": "stable"}
+        with patch.object(updater, "get_flutter_release", return_value=release), patch.object(updater, "build_release_spec", return_value=self.release_spec()), patch.object(updater, "ebuild_exists", return_value=False), patch.object(updater, "check_branch_exists", return_value=False), patch.object(updater, "check_pr_exists", return_value=True), patch.object(sys, "argv", ["updater", "--dry-run"]):
             self.assertEqual(updater.main(), 0)
-        with patch.object(updater, "get_flutter_release", return_value=release), patch.object(updater, "ebuild_exists", return_value=False), patch.object(updater, "check_branch_exists", return_value=True), patch.object(updater, "check_pr_exists", return_value=False), patch.object(sys, "argv", ["updater", "--dry-run"]):
+        with patch.object(updater, "get_flutter_release", return_value=release), patch.object(updater, "build_release_spec", return_value=self.release_spec()), patch.object(updater, "ebuild_exists", return_value=False), patch.object(updater, "check_branch_exists", return_value=True), patch.object(updater, "check_pr_exists", return_value=False), patch.object(sys, "argv", ["updater", "--dry-run"]):
             with self.assertRaises(SystemExit): updater.main()
 
     def test_dart_constraint_evaluator(self):
@@ -152,9 +167,8 @@ class FlutterUpdaterTest(unittest.TestCase):
                 if "verify_manifest.py" in joined:
                     for directory in map(Path, cmd[2:]): (directory / "Manifest").write_text("DIST fixture 1 BLAKE2B dead SHA512 beef\n"); generated.append(directory / "Manifest")
                 return subprocess.CompletedProcess(cmd, 0, "")
-            release = {"version": "3.24.4", "hash": "release", "channel": "stable"}
-            with patch.object(updater, "REPO_ROOT", root), patch.object(updater, "get_flutter_release", return_value=release), patch.object(updater, "check_branch_exists", return_value=False), patch.object(updater, "check_pr_exists", return_value=False), patch.object(updater, "check_superseding_release", return_value=False), patch.object(updater, "get_flutter_internal_version", side_effect=["engine", "fonts", "gradle"]), patch.object(updater, "check_dart_compatibility", return_value="^3.11.0-0"), patch.object(updater.urllib.request, "urlopen") as urlopen, patch.object(updater, "run_cmd", side_effect=command), patch.object(sys, "argv", ["updater", "--dry-run"]):
-                response = MagicMock(); response.read.return_value = b"'dart_revision': 'deadbeef'"; urlopen.return_value.__enter__.return_value = response
+            release = {"version": "3.24.4", "hash": "a" * 40, "channel": "stable"}
+            with patch.object(updater, "REPO_ROOT", root), patch.object(updater, "get_flutter_release", return_value=release), patch.object(updater, "build_release_spec", return_value=self.release_spec("3.24.4")), patch.object(updater, "check_branch_exists", return_value=False), patch.object(updater, "check_pr_exists", return_value=False), patch.object(updater, "check_superseding_release", return_value=False), patch.object(updater, "run_cmd", side_effect=command), patch.object(sys, "argv", ["updater", "--dry-run"]):
                 self.assertEqual(updater.main(), 0)
             self.assertGreaterEqual(len(generated), 4); self.assertEqual(subprocess.check_output(["git", "status", "--porcelain=v1"], cwd=root), status)
             self.assertEqual((staged).read_text(), "staged\n"); self.assertEqual(unstaged.read_text(), "after\n"); self.assertEqual(untracked.read_text(), "untracked\n")

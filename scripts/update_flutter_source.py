@@ -21,10 +21,14 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
+# Allow both direct execution and test imports from the repository root.
+sys.path.insert(0, str(Path(__file__).parent))
+
 from source_update_utils import (
     carry_forward_versioned_files,
     inherit_previous_patch_files,
 )
+from flutter_release_spec import FlutterReleaseSpec, SHA
 
 def parse_gentoo_version(version: str):
     import re
@@ -41,9 +45,6 @@ def compare_versions(v1: str, v2: str) -> int:
     if p1[1] < p2[1]: return -1
     return 0
 
-
-# Adjust path so we can import the generator module if needed
-sys.path.insert(0, str(Path(__file__).parent))
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
@@ -98,6 +99,124 @@ def get_flutter_internal_version(ref: str, file_path: str) -> str:
         # Some files like material_fonts.version have the format: flutter_infra_release/flutter/fonts/{rev}/fonts.zip
         # We need to extract the hash
         return content
+
+
+def checked_sha(value: str, label: str) -> str:
+    if not SHA.fullmatch(value):
+        raise ValueError(f"invalid {label}: {value!r}")
+    return value
+
+
+def get_deps_dart_revision(ref: str, label: str) -> str:
+    url = f"https://raw.githubusercontent.com/flutter/flutter/{ref}/DEPS"
+    logging.info("Fetching %s", url)
+    with urllib.request.urlopen(url) as response:
+        content = response.read().decode("utf-8")
+    match = re.search(r"'dart_revision':\s*'([0-9a-fA-F]+)'", content)
+    if not match:
+        raise ValueError(f"Could not find dart_revision in {label} DEPS")
+    return checked_sha(match.group(1).lower(), f"{label} Dart revision")
+
+
+def get_commit_timestamp(repo: str, commit_sha: str) -> str:
+    """Fetch the ISO commit timestamp for a Git commit in repo."""
+    try:
+        proc = subprocess.run(
+            ["git", "show", "-s", "--format=%cI", commit_sha],
+            capture_output=True, text=True, check=False,
+        )
+        if proc.returncode == 0 and proc.stdout.strip():
+            return proc.stdout.strip()
+    except Exception:
+        pass
+
+    try:
+        proc = subprocess.run(
+            ["gh", "api", f"repos/{repo}/commits/{commit_sha}", "--jq", ".commit.committer.date"],
+            capture_output=True, text=True, check=False,
+        )
+        if proc.returncode == 0 and proc.stdout.strip():
+            return proc.stdout.strip()
+    except Exception:
+        pass
+
+    url = f"https://api.github.com/repos/{repo}/commits/{commit_sha}"
+    req = urllib.request.Request(url, headers={"User-Agent": "arrans_overlay_updater"})
+    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if token:
+        req.add_header("Authorization", f"Bearer {token}")
+    try:
+        with urllib.request.urlopen(req) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            date = data.get("commit", {}).get("committer", {}).get("date")
+            if date:
+                return date
+    except Exception as exc:
+        logging.warning("Could not fetch commit timestamp for %s/%s: %s", repo, commit_sha, exc)
+
+    return ""
+
+
+def build_release_spec(release: dict) -> FlutterReleaseSpec:
+    """Read and cross-check every upstream identity used by source ebuilds."""
+    version = release.get("version")
+    framework_revision = release.get("hash")
+    dart_sdk_version = release.get("dart_sdk_version")
+    release_date = release.get("release_date")
+    if not all(isinstance(item, str) for item in (
+        version, framework_revision, dart_sdk_version, release_date,
+    )):
+        raise ValueError("Flutter stable release metadata is incomplete")
+    framework_revision = checked_sha(framework_revision, "Flutter release hash")
+    engine_revision = checked_sha(
+        get_flutter_internal_version(framework_revision, "engine.version"),
+        "Flutter Engine revision",
+    )
+    dart_revision = get_deps_dart_revision(framework_revision, "Flutter")
+    engine_dart_revision = get_deps_dart_revision(engine_revision, "Engine")
+    if dart_revision != engine_dart_revision:
+        raise ValueError(
+            "Flutter and Engine DEPS pin different Dart revisions: "
+            f"{dart_revision} != {engine_dart_revision}"
+        )
+    fonts_revision = checked_sha(
+        extract_hash_from_url_like(
+            get_flutter_internal_version(framework_revision,
+                                         "material_fonts.version")
+        ),
+        "Material fonts revision",
+    )
+    gradle_revision = checked_sha(
+        extract_hash_from_url_like(
+            get_flutter_internal_version(framework_revision,
+                                         "gradle_wrapper.version")
+        ),
+        "Gradle wrapper revision",
+    )
+    framework_commit_date = (
+        get_commit_timestamp("flutter/flutter", framework_revision)
+        or release_date
+    )
+    engine_commit_date = (
+        get_commit_timestamp("flutter/flutter", engine_revision)
+        or get_commit_timestamp("flutter/engine", engine_revision)
+        or release_date
+    )
+    result = FlutterReleaseSpec(
+        version=version,
+        framework_revision=framework_revision,
+        engine_revision=engine_revision,
+        dart_revision=dart_revision,
+        dart_sdk_version=dart_sdk_version,
+        material_fonts_revision=fonts_revision,
+        gradle_wrapper_revision=gradle_revision,
+        release_date=release_date,
+        host_dart_constraint=check_dart_compatibility(framework_revision),
+        framework_commit_date=framework_commit_date,
+        engine_commit_date=engine_commit_date,
+    )
+    result.validate()
+    return result
 
 def extract_hash_from_url_like(content: str) -> str:
     # E.g. flutter_infra_release/flutter/fonts/3012db47f3130e62f7cc0beabff968a33cbec8d8/fonts.zip
@@ -327,15 +446,18 @@ def create_virtual_flutter(version: str, work_root):
     # Resolve only providers actually packaged at this exact SDK version.
     # A newer virtual must not claim an older binary is compatible.
     from maintain_virtuals import ensure_virtual
-    return ensure_virtual(work_root, "flutter", version)
+    base_version = version.split("-r")[0]
+    return ensure_virtual(work_root, "flutter", base_version)
 
 
-def create_ebuild_copy(package: str, version: str, work_root):
+def create_ebuild_copy(package: str, version: str, work_root, refresh: bool = False):
     pkg_dir = work_root / package
     basename = package.split('/')[-1]
     existing_ebuilds = list(pkg_dir.glob(f"{basename}-*.ebuild"))
     if not existing_ebuilds:
         raise FileNotFoundError(f"No existing ebuild found in {package} to copy from")
+
+    base_version = version.split("-r")[0]
 
     def sort_key(ebuild_path):
         import re
@@ -344,41 +466,50 @@ def create_ebuild_copy(package: str, version: str, work_root):
             return parse_gentoo_version(m.group(1))
         return ([0], 0)
 
-    existing_ebuild = sorted(existing_ebuilds, key=sort_key)[-1]
+    if refresh:
+        same_version = []
+        for p in existing_ebuilds:
+            m = re.match(r'^' + basename + r'-(.*)\.ebuild$', p.name)
+            if m and parse_gentoo_version(m.group(1))[0] == parse_gentoo_version(base_version)[0]:
+                same_version.append(p)
+        if same_version:
+            target_ebuild = sorted(same_version, key=sort_key)[-1]
+            candidates = [p for p in existing_ebuilds if p not in same_version]
+            if not candidates:
+                raise FileNotFoundError(
+                    f"No previous ebuild found in {package} before {version}"
+                )
+            existing_ebuild = sorted(candidates, key=sort_key)[-1]
+            logging.info("Refreshing existing %s", target_ebuild.name)
+            return existing_ebuild, target_ebuild
+
     new_ebuild_path = pkg_dir / f"{basename}-{version}.ebuild"
+    candidates = [path for path in existing_ebuilds if path != new_ebuild_path]
+    if new_ebuild_path.exists() and refresh:
+        if not candidates:
+            raise FileNotFoundError(
+                f"No previous ebuild found in {package} before {version}"
+            )
+        existing_ebuild = sorted(candidates, key=sort_key)[-1]
+        logging.info("Refreshing existing %s", new_ebuild_path.name)
+        return existing_ebuild, new_ebuild_path
+    existing_ebuild = sorted(existing_ebuilds, key=sort_key)[-1]
     shutil.copy2(existing_ebuild, new_ebuild_path)
     logging.info(f"Copied {existing_ebuild.name} to {new_ebuild_path.name}")
     return existing_ebuild, new_ebuild_path
 
-def commit_and_push(branch_name: str, old_version: str, version: str, auth_hash: str, engine_rev: str, dart_rev: str, fonts_rev: str, gradle_rev: str, compat_msg: str, dry_run: bool, carried_files: list[str] | None = None, inherited_patches: list[str] | None = None):
-    if dry_run:
-        logging.info("Dry run: Skipping git add, commit, branch checkout, push, and PR creation.")
-        return
-
-    run_cmd(["git", "add", "dev-libs/flutter-engine", "dev-lang/flutter", "virtual/flutter"])
-    res = run_cmd(["git", "status", "--porcelain"], capture_output=True)
-    if not res.stdout.strip():
-        logging.info("No changes to commit.")
-        return
-
-    commit_msg = (
-        f"dev-lang/flutter: bump to {version} (source)\n\n"
-        f"Automated coordinated source package update."
-    )
-    run_cmd(["git", "commit", "-m", commit_msg])
-
-    try:
-        run_cmd(["git", "push", "origin", branch_name])
-    except subprocess.CalledProcessError:
-        logging.error("Failed to push branch.")
-        raise
-
+def release_pr_body(
+    old_version: str, version: str, auth_hash: str, engine_rev: str,
+    dart_rev: str, fonts_rev: str, gradle_rev: str, compat_msg: str,
+    carried_files: list[str] | None = None,
+    inherited_patches: list[str] | None = None,
+) -> str:
+    """Return the canonical, refreshable PR description."""
     carried_files = carried_files or []
     carried_summary = ", ".join(f"`{path}`" for path in carried_files) or "None"
     inherited_patches = inherited_patches or []
     patch_summary = ", ".join(f"`{path}`" for path in inherited_patches) or "None"
-
-    body = (
+    return (
         f"Automated coordinated source package update for Flutter {version}.\n\n"
         f"**Old Packaged Version:** {old_version}\n"
         f"**New Upstream Version:** {version}\n"
@@ -399,26 +530,156 @@ def commit_and_push(branch_name: str, old_version: str, version: str, auth_hash:
         f"Related to #939\n"
     )
 
-    try:
-        run_cmd([
-            "gh", "pr", "create",
-            "--title", f"dev-lang/flutter: bump to {version} (source)",
-            "--body", body,
-            "--head", branch_name,
-            "--base", "main"
-        ])
-        logging.info("PR created successfully.")
-        close_superseding_releases("flutter-source", version)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        logging.error("Failed to create PR using gh CLI.")
-        raise
 
-def main() -> int:
+def commit_and_push(branch_name: str, old_version: str, version: str, auth_hash: str, engine_rev: str, dart_rev: str, fonts_rev: str, gradle_rev: str, compat_msg: str, dry_run: bool, carried_files: list[str] | None = None, inherited_patches: list[str] | None = None, refresh: bool = False, synced_files: list[str] | None = None) -> bool:
+    if dry_run:
+        logging.info("Dry run: Skipping git add, commit, branch checkout, push, and PR creation.")
+        return False
+
+    paths_to_add = ["dev-libs/flutter-engine", "dev-lang/flutter", "virtual/flutter"]
+    if synced_files:
+        paths_to_add.extend(synced_files)
+    run_cmd(["git", "add", *paths_to_add])
+    res = run_cmd(["git", "status", "--porcelain"], capture_output=True)
+    has_changes = bool(res.stdout.strip())
+    if not has_changes and not refresh:
+        logging.info("No changes to commit.")
+        return False
+
+    if has_changes:
+        commit_msg = (
+            f"dev-lang/flutter: bump to {version} (source)\n\n"
+            f"Automated coordinated source package update."
+        )
+        run_cmd(["git", "commit", "-m", commit_msg])
+        try:
+            run_cmd(["git", "push", "origin", branch_name])
+        except subprocess.CalledProcessError:
+            logging.error("Failed to push branch.")
+            raise
+    else:
+        logging.info("Refresh found no file changes; rescheduling validation.")
+
+    body = release_pr_body(
+        old_version, version, auth_hash, engine_rev, dart_rev, fonts_rev,
+        gradle_rev, compat_msg, carried_files, inherited_patches,
+    )
+
+    try:
+        if refresh:
+            run_cmd([
+                "gh", "pr", "edit", branch_name,
+                "--title", f"dev-lang/flutter: bump to {version} (source)",
+                "--body", body,
+            ])
+            logging.info("PR refreshed successfully.")
+        else:
+            run_cmd([
+                "gh", "pr", "create",
+                "--title", f"dev-lang/flutter: bump to {version} (source)",
+                "--body", body,
+                "--head", branch_name,
+                "--base", "main"
+            ])
+            logging.info("PR created successfully.")
+            close_superseding_releases("flutter-source", version)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        logging.error("Failed to create or refresh PR using gh CLI.")
+        raise
+    return True
+
+
+def workflow_declares_input(workflow_path: Path, input_name: str) -> bool:
+    if not workflow_path.exists():
+        return False
+    content = workflow_path.read_text(encoding="utf-8")
+    in_dispatch = False
+    in_inputs = False
+    for line in content.splitlines():
+        trimmed = line.strip()
+        if trimmed == "workflow_dispatch:":
+            in_dispatch = True
+        elif in_dispatch and trimmed.startswith("inputs:"):
+            in_inputs = True
+        elif in_inputs:
+            if re.match(r"^[a-zA-Z0-9_-]+:", line) and not line.startswith(" "):
+                break
+            if trimmed.startswith(f"{input_name}:"):
+                return True
+    return False
+
+
+def ensure_branch_compatibility(repo_root: Path, tool_dir: Path) -> list[str]:
+    """Ensure the target branch has compatible workflows and generator scripts."""
+    synchronized = []
+    workflows_to_sync = [
+        "dev-lang-flutter-source-test.yaml",
+        "dev-libs-flutter-engine-source-test.yaml",
+        "flutter-engine-dart-pin-regression.yaml",
+    ]
+    scripts_to_sync = [
+        "flutter_release_spec.py",
+        "check_flutter_engine_dart_pins.py",
+        "generate_flutter_ebuild.py",
+        "generate_flutter_engine_ebuild.py",
+        "source_update_utils.py",
+        "test_flutter_release_pipeline.py",
+    ]
+    for wf in workflows_to_sync:
+        src = tool_dir / "workflows" / wf
+        dst = repo_root / ".github" / "workflows" / wf
+        if src.exists():
+            if not dst.exists() or dst.read_bytes() != src.read_bytes():
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                synchronized.append(str(dst.relative_to(repo_root)))
+    for sc in scripts_to_sync:
+        src = tool_dir / sc
+        dst = repo_root / "scripts" / sc
+        if src.exists():
+            if not dst.exists() or dst.read_bytes() != src.read_bytes():
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                synchronized.append(str(dst.relative_to(repo_root)))
+    return synchronized
+
+
+def trigger_release_validation(branch_name: str, version: str, repo_root: Path = REPO_ROOT) -> None:
+    """Dispatch read-only validation workflows on the reviewed PR branch."""
+    base_version = version.split("-r")[0]
+    workflows = (
+        ("flutter-engine-dart-pin-regression.yaml", "flutter_version", [
+            "-f", f"flutter_version={base_version}", "-f", "full_render=true",
+        ]),
+        ("dev-libs-flutter-engine-source-test.yaml", "flutter_version", [
+            "-f", f"flutter_version={base_version}",
+        ]),
+        ("dev-lang-flutter-source-test.yaml", "flutter_version", [
+            "-f", f"flutter_version={base_version}",
+        ]),
+    )
+    for workflow, req_input, inputs in workflows:
+        wf_path = repo_root / ".github" / "workflows" / workflow
+        if not workflow_declares_input(wf_path, req_input):
+            logging.warning(
+                "Workflow %s does not declare input %s on %s; dispatching without extra inputs",
+                workflow, req_input, branch_name,
+            )
+            run_cmd(["gh", "workflow", "run", workflow, "--ref", branch_name])
+        else:
+            run_cmd(["gh", "workflow", "run", workflow, "--ref", branch_name,
+                     *inputs])
+
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="Do not push or create PR")
     parser.add_argument("--ref", type=str, help="Force a specific upstream git ref/hash")
     parser.add_argument("--version", type=str, help="Force a specific Flutter version to update to")
-    args = parser.parse_args()
+    parser.add_argument(
+        "--refresh", action="store_true",
+        help="Regenerate and validate the existing automated PR for this version",
+    )
+    args = parser.parse_args(argv)
 
     try:
         if args.version:
@@ -441,8 +702,25 @@ def main() -> int:
         else:
             ref = auth_hash
 
+        release_spec = build_release_spec(release_obj)
+        if release_spec.framework_revision != ref:
+            raise ValueError("release spec does not match the selected Flutter ref")
+        version = release_spec.version
+
         orig_root = REPO_ROOT
         work_root = orig_root
+
+        tools_dir = Path(tempfile.mkdtemp(prefix="flutter_updater_tools_"))
+        atexit.register(lambda: shutil.rmtree(tools_dir, ignore_errors=True))
+        for script_file in (orig_root / "scripts").glob("*.py"):
+            shutil.copy2(script_file, tools_dir)
+        wf_dir = tools_dir / "workflows"
+        wf_dir.mkdir(parents=True, exist_ok=True)
+        for wf_file in (orig_root / ".github" / "workflows").glob("*.yaml"):
+            shutil.copy2(wf_file, wf_dir)
+        for wf_file in (orig_root / ".github" / "workflows").glob("*.yml"):
+            shutil.copy2(wf_file, wf_dir)
+        sys.path.insert(0, str(tools_dir))
 
         if args.dry_run:
             tmpdir = tempfile.mkdtemp(prefix="flutter_update_dry_run_")
@@ -467,47 +745,40 @@ def main() -> int:
 
         logging.info(f"Target Flutter version: {version}")
 
-        if ebuild_exists("dev-lang/flutter", version):
-            logging.info(f"Flutter {version} is already packaged. Exiting.")
-            return 0
-
         branch_name = f"auto-update-flutter-source-{version}"
 
         branch_exists = check_branch_exists(branch_name)
         pr_exists = check_pr_exists(branch_name)
-        if pr_exists:
+        if pr_exists and not args.refresh:
             logging.info(f"Open PR for {branch_name} already exists. Exiting (dedup).")
             return 0
+        if args.refresh and not pr_exists:
+            logging.error(
+                "--refresh only operates on an existing open automated PR; "
+                "refusing to modify %s", branch_name,
+            )
+            return 1
         if branch_exists and not pr_exists:
             logging.error(f"Remote branch {branch_name} exists but no open PR is found.")
             logging.error("This indicates a previous run failed between pushing the branch and creating the PR.")
             logging.error("Please manually recover the PR using `gh pr create` or delete the stranded branch.")
             sys.exit(1)
 
+        if ebuild_exists("dev-lang/flutter", version) and not args.refresh:
+            logging.info(f"Flutter {version} is already packaged. Exiting.")
+            return 0
+
         if check_superseding_release("flutter-source", version):
             return 0
 
-        # Fetch internal versions using ref
-        engine_rev = get_flutter_internal_version(ref, "engine.version")
-
-        # Dart revision is inside DEPS using ref
-        deps_url = f"https://raw.githubusercontent.com/flutter/flutter/{ref}/DEPS"
-        logging.info(f"Fetching {deps_url}")
-        with urllib.request.urlopen(deps_url) as response:
-            deps_content = response.read().decode("utf-8")
-            match = re.search(r"'dart_revision':\s*'([0-9a-fA-F]+)'", deps_content)
-            if not match:
-                raise ValueError("Could not find dart_revision in DEPS")
-            dart_rev = match.group(1)
-
-        fonts_content = get_flutter_internal_version(ref, "material_fonts.version")
-        fonts_rev = extract_hash_from_url_like(fonts_content)
-        gradle_content = get_flutter_internal_version(ref, "gradle_wrapper.version")
-        gradle_rev = extract_hash_from_url_like(gradle_content)
+        engine_rev = release_spec.engine_revision
+        dart_rev = release_spec.dart_revision
+        fonts_rev = release_spec.material_fonts_revision
+        gradle_rev = release_spec.gradle_wrapper_revision
 
         logging.info(f"Engine: {engine_rev}, Dart: {dart_rev}, Fonts: {fonts_rev}, Gradle: {gradle_rev}")
 
-        required_dart_range = check_dart_compatibility(ref)
+        required_dart_range = release_spec.host_dart_constraint
         compat_msg = f"Requires Dart host SDK range: {required_dart_range} (Engine pinned to: {dart_rev})"
 
         if required_dart_range != "0.0.0":
@@ -532,12 +803,23 @@ def main() -> int:
                 logging.error("Must resolve Dart %s before Flutter %s: %s", req_base, version, state)
                 sys.exit(1)
 
-        if not args.dry_run:
+        synced_files = []
+        if not args.dry_run and args.refresh:
+            run_cmd(["git", "fetch", "origin", branch_name])
+            run_cmd(["git", "checkout", "-B", branch_name,
+                     f"origin/{branch_name}"])
+            synced_files = ensure_branch_compatibility(orig_root, tools_dir)
+        elif not args.dry_run:
             run_cmd(["git", "checkout", "-b", branch_name])
+            synced_files = ensure_branch_compatibility(orig_root, tools_dir)
 
         # Create ebuilds
-        previous_engine_ebuild, engine_ebuild = create_ebuild_copy("dev-libs/flutter-engine", version, work_root)
-        previous_flutter_ebuild, flutter_ebuild = create_ebuild_copy("dev-lang/flutter", version, work_root)
+        previous_engine_ebuild, engine_ebuild = create_ebuild_copy(
+            "dev-libs/flutter-engine", version, work_root, args.refresh,
+        )
+        previous_flutter_ebuild, flutter_ebuild = create_ebuild_copy(
+            "dev-lang/flutter", version, work_root, args.refresh,
+        )
         previous_version = previous_flutter_ebuild.name.removeprefix("flutter-").removesuffix(".ebuild")
         inherited_patches = inherit_previous_patch_files(
             previous_engine_ebuild,
@@ -578,44 +860,39 @@ def main() -> int:
 
         # Update Engine DEPS
         logging.info("Running generate_flutter_engine_ebuild.py to update DEPS")
-        engine_gen_cmd = [
-            sys.executable, str(orig_root / "scripts" / "generate_flutter_engine_ebuild.py"),
-            "--version", version,
-            "--engine-revision", engine_rev,
-            "--dart-revision", dart_rev,
-            "--ebuild", str(engine_ebuild)
-        ]
-        try:
-            run_cmd(engine_gen_cmd)
-        except subprocess.CalledProcessError as e:
-            logging.error(f"Engine Generator failed. Error: {e}")
-            raise
+        with tempfile.TemporaryDirectory(prefix="flutter-release-spec-") as tmp:
+            spec_path = Path(tmp) / "release.json"
+            release_spec.write(spec_path)
+            engine_gen_cmd = [
+                sys.executable,
+                str(tools_dir / "generate_flutter_engine_ebuild.py"),
+                "--release-spec", str(spec_path), "--ebuild", str(engine_ebuild),
+            ]
+            try:
+                run_cmd(engine_gen_cmd)
+            except subprocess.CalledProcessError as e:
+                logging.error(f"Engine Generator failed. Error: {e}")
+                raise
+            run_cmd(engine_gen_cmd + ["--check"])
 
-        run_cmd(engine_gen_cmd + ["--check"])
-
-        # Update Flutter PUB DEPS
-        logging.info("Running generate_flutter_ebuild.py to update PUB DEPS")
-        flutter_gen_cmd = [
-            sys.executable, str(orig_root / "scripts" / "generate_flutter_ebuild.py"),
-            "--ebuild", str(flutter_ebuild),
-            "--version", version,
-            "--engine-revision", engine_rev,
-            "--material-fonts-revision", fonts_rev,
-            "--gradle-wrapper-revision", gradle_rev
-        ]
-        try:
-            run_cmd(flutter_gen_cmd)
-        except subprocess.CalledProcessError as e:
-            logging.error(f"Flutter Generator failed. Error: {e}")
-            raise
-
-        run_cmd(flutter_gen_cmd + ["--check"])
+            logging.info("Running generate_flutter_ebuild.py to update PUB DEPS")
+            flutter_gen_cmd = [
+                sys.executable,
+                str(tools_dir / "generate_flutter_ebuild.py"),
+                "--release-spec", str(spec_path), "--ebuild", str(flutter_ebuild),
+            ]
+            try:
+                run_cmd(flutter_gen_cmd)
+            except subprocess.CalledProcessError as e:
+                logging.error(f"Flutter Generator failed. Error: {e}")
+                raise
+            run_cmd(flutter_gen_cmd + ["--check"])
 
         try:
             logging.info("Updating manifests via verify_manifest.py")
             verify_manifest_cmd = [
                 sys.executable,
-                str(orig_root / "scripts" / "verify_manifest.py"),
+                str(tools_dir / "verify_manifest.py"),
                 str(work_root / "dev-libs" / "flutter-engine"),
                 str(work_root / "dev-lang" / "flutter"),
             ]
@@ -628,7 +905,7 @@ def main() -> int:
         # only providers present in this tree (source and/or binary).
         create_virtual_flutter(version, work_root)
 
-        commit_and_push(
+        pr_updated = commit_and_push(
             branch_name,
             previous_version,
             version,
@@ -641,7 +918,11 @@ def main() -> int:
             args.dry_run,
             carried_files,
             inherited_patches,
+            args.refresh,
+            synced_files,
         )
+        if pr_updated:
+            trigger_release_validation(branch_name, version, orig_root)
 
     except Exception as e:
         logging.error(f"Update failed: {e}")

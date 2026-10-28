@@ -28,6 +28,7 @@ BASE_DART_REVISION = "60a57cd42d64dc03e9f07aa60a2e250755c1ef28"
 # Known regression case, not a substitute for checking upstream release data.
 KNOWN_RELEASE_PINS = {
     "3.47.7": "04bcd1036cdc799ac6564988f159ee454d42c822",
+    "3.47.8": "416e33b0ffaef062a60ec966bb8c82ed2b83f128",
 }
 DART_PREBUILTS = (
     "engine/src/flutter/prebuilts/linux-arm64/dart-sdk",
@@ -115,6 +116,68 @@ def validate_target_prebuilts(deps_path: Path, dart_revision: str) -> None:
                 )
 
 
+def ebuild_assignment(text: str, name: str) -> str:
+    match = re.search(rf'^{re.escape(name)}="([^"]+)"$', text, re.MULTILINE)
+    if not match:
+        raise ValueError(f"missing {name} assignment")
+    return match.group(1)
+
+
+def validate_generated_ebuilds(
+    flutter_ebuild: Path,
+    version: str,
+    framework_revision: str,
+    engine_revision: str,
+    dart_revision: str,
+    dart_sdk_version: str,
+) -> None:
+    """Check generated fields that are intentionally outside DEPS/pub blocks."""
+    flutter_text = flutter_ebuild.read_text()
+    if ebuild_assignment(flutter_text, "FLUTTER_GIT_COMMIT") != framework_revision:
+        raise ValueError("Flutter ebuild has a stale framework revision")
+    if ebuild_assignment(flutter_text, "FLUTTER_ENGINE_REV") != engine_revision:
+        raise ValueError("Flutter ebuild has a stale Engine revision")
+    if ebuild_assignment(
+        flutter_text, "FLUTTER_DART_SDK_VERSION",
+    ) != dart_sdk_version:
+        raise ValueError("Flutter ebuild has a stale Dart SDK version")
+    base_version = version.split("-r")[0]
+    if f"\t~dev-libs/flutter-engine-{base_version}" not in flutter_text:
+        raise ValueError("Flutter ebuild has a stale Flutter Engine dependency")
+    if '"dartSdkVersion": "${FLUTTER_DART_SDK_VERSION}"' not in flutter_text:
+        raise ValueError("Flutter ebuild does not use the generated Dart SDK version")
+    if '"frameworkCommitDate": "${FLUTTER_FRAMEWORK_COMMIT_DATE}"' not in flutter_text:
+        raise ValueError("Flutter ebuild does not use FLUTTER_FRAMEWORK_COMMIT_DATE")
+    if '"engineCommitDate": "${FLUTTER_ENGINE_COMMIT_DATE}"' not in flutter_text:
+        raise ValueError("Flutter ebuild does not use FLUTTER_ENGINE_COMMIT_DATE")
+    if '"engineContentHash"' in flutter_text:
+        raise ValueError("Flutter ebuild retains fabricated engineContentHash")
+
+    engine_dir = flutter_ebuild.parents[2] / "dev-libs" / "flutter-engine"
+    candidates = []
+    for candidate in engine_dir.glob(f"flutter-engine-{base_version}*.ebuild"):
+        m = re.fullmatch(rf"flutter-engine-({re.escape(base_version)}(?:-r\d+)?)\.ebuild", candidate.name)
+        if m:
+            candidates.append(candidate)
+    if not candidates:
+        raise ValueError(f"missing matching Flutter Engine ebuild in {engine_dir} for {base_version}")
+
+    def sort_key(p: Path):
+        m = re.match(r"^flutter-engine-(.*)\.ebuild$", p.name)
+        if m:
+            match = re.match(r"^(\d+(?:\.\d+)*)(?:-r(\d+))?$", m.group(1))
+            if match:
+                return ([int(x) for x in match.group(1).split(".")], int(match.group(2)) if match.group(2) else 0)
+        return ([0], 0)
+
+    engine_ebuild = sorted(candidates, key=sort_key)[-1]
+    engine_text = engine_ebuild.read_text()
+    if ebuild_assignment(engine_text, "FLUTTER_ENGINE_REV") != engine_revision:
+        raise ValueError("Flutter Engine ebuild has a stale Engine revision")
+    if f'SDK_REV="{dart_revision}"' not in engine_text:
+        raise ValueError("Flutter Engine ebuild has a stale Dart source revision")
+
+
 @contextmanager
 def selected_generator_pin(pin: str):
     original = generator.DART_REVISION
@@ -177,8 +240,11 @@ def report(message: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--version", default="3.47.7",
-        help="Upstream Flutter stable version (default: regression 3.47.7)"
+        "--version", help="Upstream Flutter stable version"
+    )
+    parser.add_argument(
+        "--ebuild", type=Path,
+        help="Flutter ebuild whose release version and generated identities to audit",
     )
     parser.add_argument(
         "--expected-dart-revision",
@@ -190,7 +256,20 @@ def main() -> int:
     )
     args = parser.parse_args()
     try:
-        release_ref = stable_release(args.version)
+        version = args.version
+        if args.ebuild:
+            match = re.fullmatch(r"flutter-(\d+\.\d+\.\d+(?:-r\d+)?)\.ebuild",
+                                 args.ebuild.name)
+            if not match:
+                raise ValueError(f"invalid Flutter ebuild name: {args.ebuild}")
+            ebuild_version = match.group(1)
+            ebuild_base_version = ebuild_version.split("-r")[0]
+            if version and version.split("-r")[0] != ebuild_base_version:
+                raise ValueError("--version disagrees with --ebuild")
+            version = ebuild_base_version
+        if not version:
+            raise ValueError("provide --version or --ebuild")
+        release_ref = stable_release(version)
         base_text = read_url(
             f"{FLUTTER_RAW}/{BASE_ENGINE_REVISION}/DEPS"
         )
@@ -226,10 +305,10 @@ def main() -> int:
                 generator.load_deps(paths["engine"]),
                 dart_pin, "Flutter Engine"
             )
-            known = KNOWN_RELEASE_PINS.get(args.version)
+            known = KNOWN_RELEASE_PINS.get(version)
             if known and dart_pin != known:
                 raise ValueError(
-                    f"regression release {args.version} Dart pin changed "
+                    f"regression release {version} Dart pin changed "
                     f"from {known} to {dart_pin}"
                 )
             if args.expected_dart_revision and (
@@ -244,8 +323,20 @@ def main() -> int:
 
             validate_target_prebuilts(paths["engine"], dart_pin)
             check_sequential_renders(paths["baseline"], dart_pin)
+            if args.ebuild:
+                metadata = json.loads(read_url(RELEASES_URL))
+                release = next(
+                    item for item in metadata["releases"]
+                    if item.get("version") == version
+                    and item.get("channel") == "stable"
+                    and item.get("hash") == release_ref
+                )
+                validate_generated_ebuilds(
+                    args.ebuild, version, release_ref, target_engine_ref,
+                    dart_pin, str(release["dart_sdk_version"]),
+                )
             report(
-                f"PASS: Flutter {args.version} (release {release_ref}, "
+                f"PASS: Flutter {version} (release {release_ref}, "
                 f"Engine {target_engine_ref}) pins Dart {dart_pin}; "
                 "both real upstream prebuilt exclusions match. "
                 "Old/new/old rendering is isolated and fail-closed."
