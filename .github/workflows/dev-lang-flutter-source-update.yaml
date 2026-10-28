@@ -22,12 +22,20 @@ on:
         description: 'Explicit stable upstream ref/hash (optional)'
         required: false
         type: string
+      refresh:
+        description: 'Refresh the existing automated PR for this exact version'
+        required: false
+        default: false
+        type: boolean
   push:
     branches:
       - main
     paths:
       - '.github/workflows/dev-lang-flutter-source-update.yaml'
       - 'scripts/update_flutter_source.py'
+      - 'scripts/flutter_release_spec.py'
+      - 'scripts/generate_flutter_ebuild.py'
+      - 'scripts/generate_flutter_engine_ebuild.py'
 
 jobs:
   check-and-update:
@@ -49,12 +57,22 @@ jobs:
       - name: Run Flutter Source Updater
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REQUESTED_VERSION: ${{ inputs.version }}
+          REQUESTED_REF: ${{ inputs.ref }}
+          REQUEST_REFRESH: ${{ inputs.refresh }}
         run: |
-          ARGS=""
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            ARGS="$ARGS --version ${{ github.event.inputs.version }}"
+          set -euo pipefail
+          args=()
+          if [ -n "$REQUESTED_VERSION" ]; then
+            args+=(--version "$REQUESTED_VERSION")
           fi
-          if [ -n "${{ github.event.inputs.ref }}" ]; then
-            ARGS="$ARGS --ref ${{ github.event.inputs.ref }}"
+          if [ -n "$REQUESTED_REF" ]; then
+            args+=(--ref "$REQUESTED_REF")
           fi
-          python3 scripts/update_flutter_source.py $ARGS
+          if [ "$REQUEST_REFRESH" = "true" ]; then
+            args+=(--refresh)
+          fi
+          # GitHub does not recursively trigger pull_request workflows for a
+          # PR created with GITHUB_TOKEN. The updater therefore dispatches
+          # read-only validation workflows on the newly-created PR branch.
+          python3 scripts/update_flutter_source.py "${args[@]}"
