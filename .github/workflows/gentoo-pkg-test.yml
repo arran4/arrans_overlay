@@ -323,6 +323,17 @@ jobs:
             # --usepkg-exclude, while the emerge target remains the exact CPV.
             TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$CP")
           fi
+          if [ "$VIRTUAL_FLUTTER_SOURCE_ONLY" = true ]; then
+            # In --pretend mode Portage reports required keyword changes but
+            # cannot apply them before exiting. First perform a config-only
+            # autounmask pass in this disposable stage3, without building any
+            # source package. The second pass then verifies real resolution.
+            emerge -v \
+              --autounmask=y --autounmask-keep-masks=y \
+              --autounmask-write=y --autounmask-continue=y \
+              --autounmask-only=y --backtrack=50 \
+              "${CI_GRAPH_PREREQUISITES[@]}" "$PKG"
+          fi
           # Resolve and install in one operation so autounmask-continue can
           # apply all proposed changes to this graph without an expensive
           # second calculation. Prefer compatible binaries for dependencies
