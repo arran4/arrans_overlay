@@ -141,8 +141,15 @@ assert "--useoldpkg-atoms" not in workflow
 assert "--ignore-world" not in workflow
 assert "--onlydeps" not in workflow
 assert "\n            etc-update " not in workflow
-package_emerge = re.search(r"if ! emerge -v \\\n(?P<options>.*?)\"\$PKG\"; then", workflow, re.DOTALL)
+package_emerge = re.search(r'if ! emerge -v "\$\{EMERGE_MODE\[@\]\}" \\\n(?P<options>.*?)"\$PKG"; then', workflow, re.DOTALL)
 assert package_emerge is not None
+assert 'flutter_pvr=${PKG#=virtual/flutter-}' in workflow
+assert 'flutter_version=${flutter_pvr%-r[0-9]*}' in workflow
+assert 'compgen -G "${flutter_bin_dir}/flutter-bin-${flutter_version}-r[0-9]*.ebuild"' in workflow
+assert 'CI_GRAPH_PREREQUISITES+=("~dev-lang/flutter-bin-${flutter_version}")' in workflow
+assert "VIRTUAL_FLUTTER_SOURCE_ONLY=true" in workflow
+assert "EMERGE_MODE+=(--pretend)" in workflow
+assert "~dev-lang/flutter-bin-3.47.2" not in workflow
 package_emerge_options = package_emerge.group("options")
 for option in (
     "--usepkg",
