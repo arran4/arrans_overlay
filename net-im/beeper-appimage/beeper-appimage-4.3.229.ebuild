@@ -1,3 +1,6 @@
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
 # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/net-im-beeper-appimage-update.yaml
 EAPI=8
 DESCRIPTION="Unified chat client bridging multiple networks"
