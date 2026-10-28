@@ -99,10 +99,26 @@ flutter_bin_atom=${FLUTTER_BIN_ATOM:-=dev-lang/${default_bin_pf}}
 dart_virtual_atom=${DART_VIRTUAL_ATOM:-=virtual/dart-3.13.3-r1}
 
 flutter_source_pf=${flutter_source_atom#=dev-lang/}
+flutter_source_prefix=${flutter_source_pf%\*}
+flutter_ebuild_path=$(find "${repo_root}/dev-lang/flutter" -maxdepth 1 -type f -name "${flutter_source_prefix}*.ebuild" | sort -V | tail -n1)
+if [[ -z ${flutter_ebuild_path} || ! -f ${flutter_ebuild_path} ]]; then
+	echo "Could not find ebuild matching ${flutter_source_atom}" >&2
+	exit 1
+fi
+flutter_source_pf=$(basename "${flutter_ebuild_path}" .ebuild)
 flutter_source_pvr=${flutter_source_pf#flutter-}
 flutter_version=${flutter_source_pvr%-r[0-9]*}
-flutter_virtual_pvr=${flutter_virtual_atom#=virtual/flutter-}
-flutter_virtual_version=${flutter_virtual_pvr%-r[0-9]*}
+
+flutter_virtual_pf=${flutter_virtual_atom#=virtual/}
+flutter_virtual_prefix=${flutter_virtual_pf%\*}
+flutter_virtual_ebuild_path=$(find "${repo_root}/virtual/flutter" -maxdepth 1 -type f -name "${flutter_virtual_prefix}*.ebuild" | sort -V | tail -n1)
+if [[ -n ${flutter_virtual_ebuild_path} && -f ${flutter_virtual_ebuild_path} ]]; then
+	flutter_virtual_pf=$(basename "${flutter_virtual_ebuild_path}" .ebuild)
+	flutter_virtual_pvr=${flutter_virtual_pf#flutter-}
+	flutter_virtual_version=${flutter_virtual_pvr%-r[0-9]*}
+else
+	flutter_virtual_version=""
+fi
 test_flutter_virtual=true
 if [[ ${flutter_virtual_version} != "${flutter_version}" ]]; then
 	test_flutter_virtual=false
@@ -110,7 +126,12 @@ if [[ ${flutter_virtual_version} != "${flutter_version}" ]]; then
 fi
 
 engine_source_pf=${engine_source_atom#=dev-libs/}
-engine_ebuild_path="${repo_root}/dev-libs/flutter-engine/${engine_source_pf}.ebuild"
+engine_source_prefix=${engine_source_pf%\*}
+engine_ebuild_path=$(find "${repo_root}/dev-libs/flutter-engine" -maxdepth 1 -type f -name "${engine_source_prefix}*.ebuild" | sort -V | tail -n1)
+if [[ -z ${engine_ebuild_path} || ! -f ${engine_ebuild_path} ]]; then
+	echo "Could not find ebuild matching ${engine_source_atom}" >&2
+	exit 1
+fi
 expected_engine_rev=$(sed -n 's/^FLUTTER_ENGINE_REV="\([^"]*\)"/\1/p' "${engine_ebuild_path}")
 if [[ -z ${expected_engine_rev} ]]; then
 	echo "Could not read FLUTTER_ENGINE_REV from ${engine_ebuild_path}" >&2
