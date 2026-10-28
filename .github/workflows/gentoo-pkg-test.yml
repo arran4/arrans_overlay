@@ -313,8 +313,6 @@ jobs:
               echo "No matching Flutter binary for ${flutter_version}; checking source-only dependency resolution"
             fi
           fi
-            fi
-          fi
           TARGET_BINARY_OPTIONS=()
           EMERGE_MODE=()
           if [ "$VIRTUAL_FLUTTER_SOURCE_ONLY" = true ]; then
