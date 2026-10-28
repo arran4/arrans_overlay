@@ -11,8 +11,12 @@ inherit multiprocessing
 DESCRIPTION="Flutter SDK - cross-platform UI framework (built from source)"
 HOMEPAGE="https://flutter.dev/ https://github.com/flutter/flutter"
 
-FLUTTER_GIT_COMMIT="d3b14c876900e553bc736ca19295fc09e3853e8e"
-FLUTTER_ENGINE_REV="a804b261645ef8c13eb3d5c44a5c2fb0340c5539"
+FLUTTER_GIT_COMMIT="737ba8f885dc774b53b442759999a312c9461e4e"
+FLUTTER_ENGINE_REV="cf636b1dfb818dd6a3ff16e390e93b1a036969c8"
+FLUTTER_RELEASE_DATE="2026-10-23T19:02:25.384067Z"
+FLUTTER_DART_SDK_VERSION="3.13.7"
+FLUTTER_ENGINE_COMMIT_DATE="2026-10-23T02:13:38Z"
+FLUTTER_FRAMEWORK_COMMIT_DATE="2026-10-23T04:37:31Z"
 
 # BEGIN GENERATED FLUTTER PUB DEPS
 FLUTTER_FONTS_REV="3012db47f3130e62f7cc0beabff968a33cbec8d8"
@@ -137,7 +141,7 @@ IUSE=""
 
 RDEPEND="
 	!dev-lang/flutter-bin
-	~dev-libs/flutter-engine-3.47.2
+	~dev-libs/flutter-engine-3.47.8
 	virtual/dart
 	app-arch/tar
 	app-arch/unzip
@@ -216,18 +220,20 @@ src_prepare() {
 	printf '%s:\n' "${FLUTTER_GIT_COMMIT}" \
 		> "${cache_dir}/flutter_tools.stamp" || die
 
+	local build_date="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+	local build_time_ms="$(date +%s000)"
+
 	cat <<-EOF > "${cache_dir}/flutter.version.json" || die
 	{
 		"frameworkVersion": "${PV}",
 		"channel": "stable",
 		"repositoryUrl": "https://github.com/flutter/flutter.git",
 		"frameworkRevision": "${FLUTTER_GIT_COMMIT}",
-		"frameworkCommitDate": "2026-02-12 14:14:02 -0800",
+		"frameworkCommitDate": "${FLUTTER_FRAMEWORK_COMMIT_DATE}",
 		"engineRevision": "${FLUTTER_ENGINE_REV}",
-		"engineCommitDate": "2026-08-26 11:46:13.000Z",
-		"engineContentHash": "${FLUTTER_ENGINE_REV}",
-		"engineBuildDate": "2026-08-26 11:46:13.000",
-		"dartSdkVersion": "3.13.3",
+		"engineCommitDate": "${FLUTTER_ENGINE_COMMIT_DATE}",
+		"engineBuildDate": "${build_date}",
+		"dartSdkVersion": "${FLUTTER_DART_SDK_VERSION}",
 		"devToolsVersion": "2.60.0",
 		"flutterVersion": "${PV}"
 	}
@@ -235,11 +241,10 @@ src_prepare() {
 
 	cat <<-EOF > "${cache_dir}/engine_stamp.json" || die
 	{
-		"build_date": "2026-08-26T11:46:13",
-		"build_time_ms": 1787744773000,
+		"build_date": "${build_date}",
+		"build_time_ms": ${build_time_ms},
 		"git_revision": "${FLUTTER_ENGINE_REV}",
-		"git_revision_date": "2026-08-26 11:46:13-07:00",
-		"content_hash": "${FLUTTER_ENGINE_REV}"
+		"git_revision_date": "${FLUTTER_ENGINE_COMMIT_DATE}"
 	}
 	EOF
 

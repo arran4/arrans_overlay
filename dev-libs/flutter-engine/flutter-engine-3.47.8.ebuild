@@ -12,7 +12,7 @@ inherit multiprocessing ninja-utils python-any-r1 toolchain-funcs
 DESCRIPTION="The runtime engine for Flutter applications"
 HOMEPAGE="https://flutter.dev/ https://github.com/flutter/flutter"
 
-FLUTTER_ENGINE_REV="a804b261645ef8c13eb3d5c44a5c2fb0340c5539"
+FLUTTER_ENGINE_REV="cf636b1dfb818dd6a3ff16e390e93b1a036969c8"
 
 # BEGIN GENERATED FLUTTER ENGINE DEPS
 ABSEIL_CPP_REV="564023aa53767b5f60b3a556f0a025b7b7e8241e"
