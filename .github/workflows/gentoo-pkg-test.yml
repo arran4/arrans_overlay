@@ -294,20 +294,32 @@ jobs:
             # to locate wayland.xml during protocol binding generation.
             CI_GRAPH_PREREQUISITES+=('=dev-util/wayland-scanner-1.25.0' '=dev-cpp/glaze-7.0.2::hyproverlay')
           fi
-          if [[ "$PKG" == *"virtual/flutter"* ]]; then
-            # Satisfy virtual/flutter with the matching prebuilt binary SDK in generic
-            # package testing when available. Full source build and source provider
-            # satisfaction are verified by dev-lang/flutter Source Integration.
-            FLUTTER_VIRTUAL_VER="${PKG#=virtual/flutter-}"
-            FLUTTER_VIRTUAL_VER="${FLUTTER_VIRTUAL_VER%::*}"
-            FLUTTER_VIRTUAL_VER="${FLUTTER_VIRTUAL_VER%-r[0-9]*}"
-            OVERLAY_DIR="${OVERLAY_DIR:-/var/db/repos/arrans-overlay}"
-            if [[ -f "${OVERLAY_DIR}/dev-lang/flutter-bin/flutter-bin-${FLUTTER_VIRTUAL_VER}.ebuild" ]] || \
-               compgen -G "${OVERLAY_DIR}/dev-lang/flutter-bin/flutter-bin-${FLUTTER_VIRTUAL_VER}-r*.ebuild" >/dev/null; then
-              CI_GRAPH_PREREQUISITES+=("~dev-lang/flutter-bin-${FLUTTER_VIRTUAL_VER}")
+          VIRTUAL_FLUTTER_SOURCE_ONLY=false
+          if [[ "$PKG" == "=virtual/flutter-"* ]]; then
+            # Prefer the matching binary SDK when it exists, without pinning
+            # a version already removed by scheduled deduplication. The source
+            # package and binary SDK may legitimately be on different releases.
+            flutter_pvr=${PKG#=virtual/flutter-}
+            flutter_pvr=${flutter_pvr%::*}
+            flutter_version=${flutter_pvr%-r[0-9]*}
+            flutter_bin_dir="${OVERLAY_DIR:-/var/db/repos/arrans-overlay}/dev-lang/flutter-bin"
+            if [[ -f "${flutter_bin_dir}/flutter-bin-${flutter_version}.ebuild" ]] ||
+               compgen -G "${flutter_bin_dir}/flutter-bin-${flutter_version}-r[0-9]*.ebuild" >/dev/null; then
+              CI_GRAPH_PREREQUISITES+=("~dev-lang/flutter-bin-${flutter_version}")
+            else
+              # A source-only virtual still needs to resolve, but compiling
+              # Flutter is handled by dev-lang/flutter Source Integration.
+              VIRTUAL_FLUTTER_SOURCE_ONLY=true
+              echo "No matching Flutter binary for ${flutter_version}; checking source-only dependency resolution"
+            fi
+          fi
             fi
           fi
           TARGET_BINARY_OPTIONS=()
+          EMERGE_MODE=()
+          if [ "$VIRTUAL_FLUTTER_SOURCE_ONLY" = true ]; then
+            EMERGE_MODE+=(--pretend)
+          fi
           if [ "$SOURCE_TARGET" = "true" ]; then
             # A cached binary for this CP may predate the checked-out ebuild.
             # Portage accepts package/slot atoms (not exact-version atoms) for
@@ -321,7 +333,7 @@ jobs:
           # incompatible binpkgs. Extra backtracking helps Portage reject a
           # stale binary whose recorded dependency subslots conflict with
           # the installed graph and select a compatible source build.
-          if ! emerge -v \
+          if ! emerge -v "${EMERGE_MODE[@]}" \
             --usepkg --getbinpkg --binpkg-changed-deps=y \
             --autounmask=y --autounmask-keep-masks=y \
             --autounmask-write=y --autounmask-continue=y \
@@ -329,7 +341,7 @@ jobs:
             "${TARGET_BINARY_OPTIONS[@]}" \
             "${CI_GRAPH_PREREQUISITES[@]}" "$PKG"; then
             echo "First emerge attempt exited. Retrying emerge to pick up any autounmask changes..."
-            if ! emerge -v \
+            if ! emerge -v "${EMERGE_MODE[@]}" \
               --usepkg --getbinpkg --binpkg-changed-deps=y \
               --autounmask=y --autounmask-keep-masks=y \
               --autounmask-write=y --autounmask-continue=y \
