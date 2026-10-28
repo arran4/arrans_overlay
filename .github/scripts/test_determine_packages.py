@@ -245,7 +245,8 @@ assert "dev-qt/qt5compat icu" in workflow
 assert 'echo "=dev-util/wayland-scanner-1.25.0 ~amd64" >> /etc/portage/package.accept_keywords/ci' in workflow
 assert "CI_GRAPH_PREREQUISITES+=('=dev-util/wayland-scanner-1.25.0' '=dev-cpp/glaze-7.0.2::hyproverlay')" in workflow
 assert 'echo ">=dev-util/wayland-scanner-1.26.0" >> /etc/portage/package.unmask/ci' not in workflow
-assert "CI_GRAPH_PREREQUISITES+=('~dev-lang/flutter-bin-3.47.2')" in workflow
+# A retained source-only virtual must not require a deduped-away binary SDK.
+assert "CI_GRAPH_PREREQUISITES+=(\"~dev-lang/flutter-bin-${flutter_version}\")" in workflow
 assert '${PKG} == "=dev-lang/flutter-"*' in workflow
 
 # Regression coverage: Flutter source targets receive extended timeout and
