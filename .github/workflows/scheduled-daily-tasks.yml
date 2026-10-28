@@ -81,6 +81,23 @@ jobs:
         if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
         run: python3 scripts/maintain_virtuals.py prepare .
 
+      # g2 treats older virtual SDK ebuilds as duplicate versions and may
+      # delete the only copy before reconciliation can bump its -rN revision.
+      # Save the published bytes so a changed provider list results in a new
+      # revision rather than a different ebuild under the same filename.
+      - name: Snapshot managed SDK virtual ebuilds
+        if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_dir=$(mktemp -d "${RUNNER_TEMP:-/tmp}/sdk-virtuals.XXXXXX")
+          echo "SDK_VIRTUAL_SNAPSHOT=$snapshot_dir" >> "$GITHUB_ENV"
+          for package in dart flutter; do
+            mkdir -p "$snapshot_dir/$package"
+            find "virtual/$package" -maxdepth 1 -type f -name '*.ebuild' \
+              -exec cp -p -t "$snapshot_dir/$package" -- {} +
+          done
+
       # Temporary safety guard while https://github.com/arran4/g2/issues/483
       # / https://github.com/arran4/g2/pull/540 is unresolved. DeduplicateEbuilds
       # can currently invoke an unsafe Manifest cleanup internally. Preserve the
@@ -141,6 +158,21 @@ jobs:
         shell: bash
         run: |
           bash scripts/restore_manifests.sh /tmp/manifest-snapshot "${{ steps.dedupe.outputs.dedupe_failed }}"
+
+      # Restore the pre-dedup virtual ebuilds before cleanup. The reconciler
+      # then writes a -rN revision when its RDEPEND alternatives change and
+      # retires the outdated revision in the same transaction.
+      - name: Restore managed SDK virtual ebuilds
+        if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${SDK_VIRTUAL_SNAPSHOT:?missing pre-dedup virtual snapshot}"
+          for package in dart flutter; do
+            test -d "$SDK_VIRTUAL_SNAPSHOT/$package"
+            find "$SDK_VIRTUAL_SNAPSHOT/$package" -maxdepth 1 -type f -name '*.ebuild' \
+              -exec cp -p -t "virtual/$package" -- {} +
+          done
 
       - name: Reconcile virtuals and prune stale distfile entries
         if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
