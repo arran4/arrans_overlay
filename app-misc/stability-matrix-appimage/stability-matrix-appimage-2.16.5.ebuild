@@ -1,3 +1,6 @@
+# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
 # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-stability-matrix-appimage-update.yaml
 EAPI=8
 DESCRIPTION="Multi-Platform Package Manager for Stable Diffusion"
