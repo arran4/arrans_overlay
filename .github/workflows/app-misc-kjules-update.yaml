@@ -62,46 +62,64 @@ jobs:
               continue;
             fi
             ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
-            if [ ! -f "$ebuild_file" ]; then
+            if [ ! -f "$ebuild_file" ] && \
+               ! compgen -G "${ebuild_dir}/${ebuild_name}-${version}-r[0-9]*.ebuild" > /dev/null; then
               # Create ebuild script
               {
                 echo '# Copyright 2026 Gentoo Authors'
                 echo '# Distributed under the terms of the GNU General Public License v2'
                 echo ''
-                echo "# Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/app-misc-kjules-update.yaml"
-                echo "EAPI=8"
-                echo ""
-                echo "inherit xdg ecm"
-                echo ""
+                echo '# Generated via:'
+                echo '# .github/workflows/app-misc-kjules-update.yaml'
+                echo 'EAPI=8'
+                echo ''
+                echo 'ECM_TEST="forceoptional"'
+                echo 'inherit xdg ecm'
+                echo ''
                 echo "DESCRIPTION=\"$description\""
                 echo "HOMEPAGE=\"$homepage\""
-                echo 'SRC_URI="https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"'
-                echo ""
+                echo 'SRC_URI="'
+                echo '	https://github.com/${{env.github_owner}}/${{env.github_repo}}/archive/refs/tags/v${PV}.tar.gz'
+                echo '		-> ${P}.tar.gz'
+                echo '"'
+                echo ''
                 echo 'LICENSE="MIT"'
-                echo "SLOT=\"0\""
-                echo 'IUSE="debug"'
+                echo 'SLOT="0"'
                 echo 'KEYWORDS="~amd64"'
-                echo ""
+                echo 'IUSE="debug"'
+                echo ''
                 echo 'DEPEND="'
-                echo '	dev-qt/qtbase:6'
-                echo '	dev-qt/qtdeclarative:6'
+                echo '	dev-qt/qtbase:6[gui,network,widgets]'
+                echo '	kde-frameworks/karchive:6'
+                echo '	kde-frameworks/kconfig:6'
                 echo '	kde-frameworks/kcoreaddons:6'
+                echo '	kde-frameworks/kdbusaddons:6'
+                echo '	kde-frameworks/kglobalaccel:6'
                 echo '	kde-frameworks/ki18n:6'
+                echo '	kde-frameworks/knotifications:6'
+                echo '	kde-frameworks/kwallet:6'
+                echo '	kde-frameworks/kwidgetsaddons:6'
+                echo '	kde-frameworks/kwindowsystem:6'
                 echo '	kde-frameworks/kxmlgui:6'
+                echo '	test? ('
+                echo '		kde-frameworks/kcolorscheme:6'
+                echo '		kde-frameworks/kconfigwidgets:6'
+                echo '		kde-frameworks/kguiaddons:6'
+                echo '	)'
                 echo '"'
                 echo 'RDEPEND="${DEPEND}"'
-                echo ""
-                echo "src_prepare() {"
-                echo "	ecm_src_prepare"
-                echo "	sed -i -e 's/KDE_INSTALL_KXMLGUI6DIR/KDE_INSTALL_KXMLGUIDIR/g' CMakeLists.txt || die"
-                echo "}"
-                echo ""
-                echo "src_configure() {"
-                echo "	local mycmakeargs=("
-                echo "		-DBUILD_TESTING=OFF"
-                echo "	)"
-                echo "	ecm_src_configure"
-                echo "}"
+                echo ''
+                echo 'src_prepare() {'
+                echo '	ecm_src_prepare'
+                echo "	sed -i -e \\"
+                echo "		's/KDE_INSTALL_KXMLGUI6DIR/KDE_INSTALL_KXMLGUIDIR/g' \\"
+                echo '		CMakeLists.txt || die'
+                echo '	cmake_comment_add_subdirectory bench'
+                echo '}'
+                echo ''
+                echo 'src_configure() {'
+                echo '	ecm_src_configure'
+                echo '}'
               } > $ebuild_file
 
               # Generate the manifest for the new ebuild
