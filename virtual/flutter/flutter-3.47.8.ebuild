@@ -9,5 +9,6 @@ SLOT="0"
 KEYWORDS="~amd64"
 
 RDEPEND="|| (
+	~dev-lang/flutter-3.47.8
 	~dev-lang/flutter-bin-3.47.8
 )"

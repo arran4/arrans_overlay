@@ -248,8 +248,59 @@ assert 'echo "=dev-util/wayland-scanner-1.25.0 ~amd64" >> /etc/portage/package.a
 assert "CI_GRAPH_PREREQUISITES+=('=dev-util/wayland-scanner-1.25.0' '=dev-cpp/glaze-7.0.2::hyproverlay')" in workflow
 assert 'echo ">=dev-util/wayland-scanner-1.26.0" >> /etc/portage/package.unmask/ci' not in workflow
 # A retained source-only virtual must not require a deduped-away binary SDK.
+assert "CI_GRAPH_PREREQUISITES+=('~dev-lang/flutter-bin-3.47.2')" not in workflow
 assert "CI_GRAPH_PREREQUISITES+=(\"~dev-lang/flutter-bin-${flutter_version}\")" in workflow
 assert '${PKG} == "=dev-lang/flutter-"*' in workflow
+
+# Extract and test the embedded virtual/flutter binary provider selector
+flutter_virtual_block_match = re.search(
+    r'(          VIRTUAL_FLUTTER_SOURCE_ONLY=false\n'
+    r'          if \[\[ "\$PKG" == "=virtual/flutter-"\* \]\]; then\n'
+    r'.*?\n'
+    r'          fi)',
+    workflow,
+    re.DOTALL,
+)
+assert flutter_virtual_block_match is not None
+flutter_virtual_block = flutter_virtual_block_match.group(1)
+
+def evaluate_virtual_flutter_prereq(pkg_atom, overlay_dir):
+    script = f"""
+    PKG="{pkg_atom}"
+    OVERLAY_DIR="{overlay_dir}"
+    CI_GRAPH_PREREQUISITES=()
+{flutter_virtual_block}
+    echo -n "${{CI_GRAPH_PREREQUISITES[*]}}:${{VIRTUAL_FLUTTER_SOURCE_ONLY}}"
+    """
+    res = subprocess.run(["bash", "-c", script], check=True, text=True, capture_output=True)
+    last_line = res.stdout.strip().splitlines()[-1]
+    prereq, _, source_only = last_line.partition(":")
+    return prereq, (source_only == "true")
+
+# Coverage for 3.47.2, 3.47.8, and variations
+assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.47.2", ".") == ("~dev-lang/flutter-bin-3.47.2", False)
+assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.47.2-r1", ".") == ("~dev-lang/flutter-bin-3.47.2", False)
+assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.47.8", ".") == ("~dev-lang/flutter-bin-3.47.8", False)
+assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.47.8-r1", ".") == ("~dev-lang/flutter-bin-3.47.8", False)
+assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.47.8-r2::arrans-overlay", ".") == ("~dev-lang/flutter-bin-3.47.8", False)
+# Boundary and non-matching tests
+assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.47.80", ".") == ("", True)
+assert evaluate_virtual_flutter_prereq("=dev-lang/flutter-3.47.8", ".") == ("", False)
+
+# Coverage for future versions (with and without matching binary provider)
+import tempfile
+from pathlib import Path
+with tempfile.TemporaryDirectory() as tmp_dir:
+    bin_dir = Path(tmp_dir) / "dev-lang" / "flutter-bin"
+    bin_dir.mkdir(parents=True)
+    (bin_dir / "flutter-bin-3.50.0.ebuild").touch()
+    (bin_dir / "flutter-bin-4.0.0-r1.ebuild").touch()
+    # Future version with unrevisioned binary provider
+    assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.50.0", tmp_dir) == ("~dev-lang/flutter-bin-3.50.0", False)
+    # Future version with revisioned binary provider
+    assert evaluate_virtual_flutter_prereq("=virtual/flutter-4.0.0", tmp_dir) == ("~dev-lang/flutter-bin-4.0.0", False)
+    # Future version without binary provider does not invent compatibility and marks source-only pretend
+    assert evaluate_virtual_flutter_prereq("=virtual/flutter-4.1.0", tmp_dir) == ("", True)
 
 # Regression coverage: Flutter source targets receive extended timeout and
 # share the 'flutter' cache lineage, while virtual/flutter and binary flutter
