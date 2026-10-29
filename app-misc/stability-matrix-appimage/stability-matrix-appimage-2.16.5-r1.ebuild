@@ -23,12 +23,15 @@ SLOT="0"
 KEYWORDS="~amd64"
 RESTRICT="strip"
 
-RDEPEND="elibc_glibc? ( sys-libs/glibc )"
+RDEPEND="
+	elibc_glibc? ( sys-libs/glibc )
+	sys-devel/gcc
+"
 BDEPEND="app-arch/unzip"
 
 pkg_pretend() {
 	if ! use elibc_glibc; then
-		die "This prebuilt binary requires glibc and is not supported on non-glibc profiles."
+		die "Requires glibc; non-glibc profiles are unsupported."
 	fi
 }
 

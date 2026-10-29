@@ -77,7 +77,7 @@ jobs:
           EOF
           fi
           gen_output=$(./scripts/generate_retained_ebuild.sh beeper-appimage "$ebuild_dir" "$version" \
-            "$appimage_extension" "${{ env.beeper_appimage_installed_name }}")
+            "$appimage_extension" "${{ env.beeper_appimage_installed_name }}" "$appimage_url")
           echo "$gen_output"
           if echo "$gen_output" | grep -q "^GENERATED:"; then
             g2 manifest upsert-from-url "$appimage_url" "${{ env.epn }}-${version}.${appimage_extension}" "${ebuild_dir}/Manifest"

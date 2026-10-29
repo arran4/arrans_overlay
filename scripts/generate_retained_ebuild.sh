@@ -15,7 +15,7 @@ Usage: generate_retained_ebuild.sh <package> <ebuild_dir> <version> [args...]
 Packages:
   kjules                     <ebuild_dir> <version>
   stability-matrix-appimage  <ebuild_dir> <version> [archived_name] [installed_name]
-  beeper-appimage            <ebuild_dir> <version> [extension] [installed_name]
+  beeper-appimage            <ebuild_dir> <version> [extension] [installed_name] [source_url]
 EOF
   exit 1
 }
@@ -153,12 +153,15 @@ SLOT="0"
 KEYWORDS="${keywords}"
 RESTRICT="strip"
 
-RDEPEND="elibc_glibc? ( sys-libs/glibc )"
+RDEPEND="
+	elibc_glibc? ( sys-libs/glibc )
+	sys-devel/gcc
+"
 BDEPEND="app-arch/unzip"
 
 pkg_pretend() {
 	if ! use elibc_glibc; then
-		die "This prebuilt binary requires glibc and is not supported on non-glibc profiles."
+		die "Requires glibc; non-glibc profiles are unsupported."
 	fi
 }
 
@@ -222,6 +225,7 @@ EOF
 
     appimage_extension="${1:-${appimage_extension:-AppImage}}"
     installed_name="${2:-${beeper_appimage_installed_name:-beeper.AppImage}}"
+    source_url="${3:-${BEEPER_APPIMAGE_URL:-https://beeper-desktop.download.beeper.com/builds/Beeper-${version}-x86_64.${appimage_extension}}}"
     description="${DESCRIPTION:-Beeper universal chat app}"
     homepage="${HOMEPAGE:-https://www.beeper.com/}"
     keywords="${KEYWORDS:-~amd64}"
@@ -235,9 +239,8 @@ EOF
 EAPI=8
 DESCRIPTION="${description}"
 HOMEPAGE="${homepage}"
-MY_URI="https://beeper-desktop.download.beeper.com/builds"
 SRC_URI="
-	\${MY_URI}/Beeper-\${PV}-x86_64.${appimage_extension} ->
+	${source_url} ->
 		\${P}.${appimage_extension}
 "
 S="\${WORKDIR}"
