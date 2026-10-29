@@ -75,80 +75,12 @@ jobs:
                 echo "Already have a newier ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
                 continue
             fi
-            ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild"
-            if [ ! -f "$ebuild_file" ] && \
-               ! compgen -G "${ebuild_dir}/${{ env.epn }}-${version}-r[0-9]*.ebuild" > /dev/null; then
-
-              {
-                echo '# Copyright 2026 Gentoo Authors'
-                echo '# Distributed under the terms of the GNU General Public License v2'
-                echo ''
-                echo '# Generated via:'
-                echo '# .github/workflows/${{ env.workflow_filename }}'
-                echo 'EAPI=8'
-                echo ''
-                echo 'inherit desktop xdg-utils'
-                echo ''
-                echo "DESCRIPTION=\"${{ env.description }}\""
-                echo "HOMEPAGE=\"${{ env.homepage }}\""
-                echo 'MY_URI="https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/v${PV}"'
-                echo 'SRC_URI="'
-                echo '	amd64? ('
-                echo '		${MY_URI}/StabilityMatrix-linux-x64.zip ->'
-                echo '			${P}-StabilityMatrix-linux-x64.zip'
-                echo '	)'
-                echo '"'
-                echo 'S="${WORKDIR}"'
-                echo ''
-                echo 'LICENSE="MIT"'
-                echo 'SLOT="0"'
-                echo 'KEYWORDS="${{ env.keywords }}"'
-                echo 'RESTRICT="strip"'
-                echo ''
-                echo 'RDEPEND="sys-libs/zlib"'
-                echo 'BDEPEND="app-arch/unzip"'
-                echo ''
-                echo 'src_unpack() {'
-                echo '	if use amd64; then'
-                echo "		unpack \"\${P}-StabilityMatrix-linux-x64.zip\" \\"
-                echo '			|| die "Cannot unpack archive file"'
-                echo '	fi'
-                if [ "${{ env.StabilityMatrix_appimage_archived_name_amd64 }}" != "${{ env.StabilityMatrix_appimage_installed_name }}" ]; then
-                  echo '	if use amd64; then'
-                  echo "		mv \"${{ env.StabilityMatrix_appimage_archived_name_amd64 }}\" \"${{ env.StabilityMatrix_appimage_installed_name }}\"  || die \"Cannot move archived file\""
-                  echo '	fi'
-                fi
-                echo "	chmod a+x \"${{ env.StabilityMatrix_appimage_installed_name }}\" || die \"Cannot chmod archive file\""
-                echo "	\"./${{ env.StabilityMatrix_appimage_installed_name }}\" \\"
-                echo "		--appimage-extract \"${{ env.StabilityMatrix_desktop_file }}\" \\"
-                echo '		|| die "Failed to extract .desktop from appimage"'
-                echo "	\"./${{ env.StabilityMatrix_appimage_installed_name }}\" --appimage-extract \"*.png\" \\"
-                echo '		|| die "Failed to extract root icons from app image"'
-                echo '}'
-                echo ''
-                echo 'src_prepare() {'
-                echo "	sed -i \\"
-                echo "		's:^Exec=.*:Exec=/opt/bin/${{ env.StabilityMatrix_appimage_installed_name }}:' \\"
-                echo "		'squashfs-root/${{ env.StabilityMatrix_desktop_file }}' || die"
-                echo '	eapply_user'
-                echo '}'
-                echo ''
-                echo 'src_install() {'
-                echo '	exeinto /opt/bin'
-                echo '	doexe "${{ env.StabilityMatrix_appimage_installed_name }}" || die "Failed to install AppImage"'
-                echo '	domenu "squashfs-root/${{ env.StabilityMatrix_desktop_file }}"'
-                echo '	insinto /usr/share/pixmaps'
-                echo '	doins squashfs-root/*.png || die "Failed to install icons"'
-                echo '}'
-                echo ""
-                echo "pkg_postinst() {"
-                echo "  xdg_desktop_database_update"
-                echo "}"
-                echo ""
-              } > $ebuild_file
-
+            gen_output=$(./scripts/generate_retained_ebuild.sh stability-matrix-appimage "$ebuild_dir" "$version" \
+              "${{ env.StabilityMatrix_appimage_archived_name_amd64 }}" \
+              "${{ env.StabilityMatrix_appimage_installed_name }}")
+            echo "$gen_output"
+            if echo "$gen_output" | grep -q "^GENERATED:"; then
               # Manifest generation
-
               g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/StabilityMatrix-linux-x64.zip" "${{ env.epn }}-${version}-StabilityMatrix-linux-x64.zip" "${ebuild_dir}/Manifest"
               echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
             fi

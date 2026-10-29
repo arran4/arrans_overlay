@@ -23,8 +23,14 @@ SLOT="0"
 KEYWORDS="~amd64"
 RESTRICT="strip"
 
-RDEPEND="sys-libs/zlib"
+RDEPEND="elibc_glibc? ( sys-libs/glibc )"
 BDEPEND="app-arch/unzip"
+
+pkg_pretend() {
+	if ! use elibc_glibc; then
+		die "This prebuilt binary requires glibc and is not supported on non-glibc profiles."
+	fi
+}
 
 src_unpack() {
 	if use amd64; then

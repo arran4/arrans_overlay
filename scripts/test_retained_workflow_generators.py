@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+GENERATOR_SCRIPT = REPO_ROOT / "scripts" / "generate_retained_ebuild.sh"
 
 
 class RetainedWorkflowGeneratorsTest(unittest.TestCase):
@@ -13,213 +14,179 @@ class RetainedWorkflowGeneratorsTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.tmp_path = Path(self.tmp.name)
+        self.assertTrue(GENERATOR_SCRIPT.exists(), f"Missing production generator: {GENERATOR_SCRIPT}")
+        self.assertTrue(os.access(GENERATOR_SCRIPT, os.X_OK), f"Generator not executable: {GENERATOR_SCRIPT}")
 
-    def test_kjules_generator_revision_handling_and_contents(self):
-        workflow_path = REPO_ROOT / ".github/workflows/app-misc-kjules-update.yaml"
-        self.assertTrue(workflow_path.exists())
-        workflow_content = workflow_path.read_text()
+    def run_generator(self, *args, env=None):
+        cmd = [str(GENERATOR_SCRIPT), *args]
+        run_env = os.environ.copy()
+        if env:
+            run_env.update(env)
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=run_env)
+        return res
 
-        # Verify compgen guard against existing -rN ebuilds
-        self.assertIn("compgen -G \"${ebuild_dir}/${ebuild_name}-${version}-r[0-9]*.ebuild\"", workflow_content)
+    def test_workflow_files_call_production_generator(self):
+        """Verify workflow YAMLs invoke the shared production generator rather than inline recipes."""
+        for wf_name in (
+            "app-misc-kjules-update.yaml",
+            "app-misc-stability-matrix-appimage-update.yaml",
+            "net-im-beeper-appimage-update.yaml",
+        ):
+            wf_path = REPO_ROOT / ".github" / "workflows" / wf_name
+            self.assertTrue(wf_path.exists(), f"Workflow not found: {wf_path}")
+            content = wf_path.read_text()
+            self.assertIn(
+                "./scripts/generate_retained_ebuild.sh",
+                content,
+                f"Workflow {wf_name} does not call scripts/generate_retained_ebuild.sh",
+            )
 
-        # Extract the generator snippet inside the loop
-        script = f"""
-set -eu
-ebuild_dir="{self.tmp_path}"
-ebuild_name="kjules"
-version="0.0.86"
-tag="v0.0.86"
-description="kjules KDE application"
-homepage="https://github.com/arran4/kjules"
-github_owner="arran4"
-github_repo="kjules"
+    def test_kjules_generator_production_execution(self):
+        """Test kjules production generator execution, valid recipe, idempotence, and revision awareness."""
+        pkg_dir = self.tmp_path / "kjules"
+        version = "0.0.86"
+        ebuild_file = pkg_dir / f"kjules-{version}.ebuild"
 
-ebuild_file="${{ebuild_dir}}/${{ebuild_name}}-${{version}}.ebuild"
-if [ ! -f "$ebuild_file" ] && \\
-   ! compgen -G "${{ebuild_dir}}/${{ebuild_name}}-${{version}}-r[0-9]*.ebuild" > /dev/null; then
-  {{
-    echo '# Copyright 2026 Gentoo Authors'
-    echo '# Distributed under the terms of the GNU General Public License v2'
-    echo ''
-    echo '# Generated via:'
-    echo '# .github/workflows/app-misc-kjules-update.yaml'
-    echo 'EAPI=8'
-    echo ''
-    echo 'ECM_TEST="forceoptional"'
-    echo 'inherit xdg ecm'
-    echo ''
-    echo "DESCRIPTION=\\"$description\\""
-    echo "HOMEPAGE=\\"$homepage\\""
-    echo 'SRC_URI="'
-    echo '	https://github.com/${{github_owner}}/${{github_repo}}/archive/refs/tags/v${{PV}}.tar.gz'
-    echo '		-> ${{P}}.tar.gz'
-    echo '"'
-    echo ''
-    echo 'LICENSE="MIT"'
-    echo 'SLOT="0"'
-    echo 'KEYWORDS="~amd64"'
-    echo 'IUSE="debug"'
-    echo ''
-    echo 'DEPEND="'
-    echo '	dev-qt/qtbase:6[gui,network,widgets]'
-    echo '	kde-frameworks/karchive:6'
-    echo '	kde-frameworks/kconfig:6'
-    echo '	kde-frameworks/kcoreaddons:6'
-    echo '	kde-frameworks/kdbusaddons:6'
-    echo '	kde-frameworks/kglobalaccel:6'
-    echo '	kde-frameworks/ki18n:6'
-    echo '	kde-frameworks/knotifications:6'
-    echo '	kde-frameworks/kwallet:6'
-    echo '	kde-frameworks/kwidgetsaddons:6'
-    echo '	kde-frameworks/kwindowsystem:6'
-    echo '	kde-frameworks/kxmlgui:6'
-    echo '	test? ('
-    echo '		kde-frameworks/kcolorscheme:6'
-    echo '		kde-frameworks/kconfigwidgets:6'
-    echo '		kde-frameworks/kguiaddons:6'
-    echo '	)'
-    echo '"'
-    echo 'RDEPEND="${{DEPEND}}"'
-    echo ''
-    echo 'src_prepare() {{'
-    echo '	ecm_src_prepare'
-    echo "	sed -i -e \\"
-    echo "		's/KDE_INSTALL_KXMLGUI6DIR/KDE_INSTALL_KXMLGUIDIR/g' \\"
-    echo '		CMakeLists.txt || die'
-    echo '	cmake_comment_add_subdirectory bench'
-    echo '}}'
-    echo ''
-    echo 'src_configure() {{'
-    echo '	ecm_src_configure'
-    echo '}}'
-  }} > "$ebuild_file"
-fi
-"""
-        # First run creates kjules-0.0.86.ebuild
-        subprocess.run(["bash", "-c", script], check=True)
-        ebuild_file = self.tmp_path / "kjules-0.0.86.ebuild"
+        # 1. Initial generation
+        res = self.run_generator("kjules", str(pkg_dir), version)
+        self.assertEqual(res.returncode, 0, f"Generator failed: {res.stderr}")
+        self.assertIn("GENERATED:", res.stdout)
         self.assertTrue(ebuild_file.exists())
+
         content = ebuild_file.read_text()
-        self.assertIn("Copyright 2026 Gentoo Authors", content)
-        self.assertNotIn('S="${WORKDIR}/${P}"', content)
-        self.assertIn("kde-frameworks/kwallet:6", content)
-        self.assertIn("kde-frameworks/knotifications:6", content)
-        self.assertIn("kde-frameworks/kdbusaddons:6", content)
-        self.assertIn("kde-frameworks/kwindowsystem:6", content)
+        self.assertIn("EAPI=8", content)
         self.assertIn('ECM_TEST="forceoptional"', content)
+        self.assertIn("inherit xdg ecm", content)
+        self.assertIn("dev-qt/qtbase:6[gui,network,widgets]", content)
+        self.assertIn("kde-frameworks/karchive:6", content)
+        self.assertIn("kde-frameworks/kconfig:6", content)
+        self.assertIn("kde-frameworks/kcoreaddons:6", content)
+        self.assertIn("kde-frameworks/kdbusaddons:6", content)
+        self.assertIn("kde-frameworks/kglobalaccel:6", content)
+        self.assertIn("kde-frameworks/ki18n:6", content)
+        self.assertIn("kde-frameworks/knotifications:6", content)
+        self.assertIn("kde-frameworks/kwallet:6", content)
+        self.assertIn("kde-frameworks/kwidgetsaddons:6", content)
+        self.assertIn("kde-frameworks/kwindowsystem:6", content)
+        self.assertIn("kde-frameworks/kxmlgui:6", content)
 
-        # Repeated run does not modify the file
-        mtime_before = ebuild_file.stat().st_mtime_ns
-        subprocess.run(["bash", "-c", script], check=True)
-        self.assertEqual(ebuild_file.stat().st_mtime_ns, mtime_before)
+        # 2. Repeated execution is idempotent
+        res_repeat = self.run_generator("kjules", str(pkg_dir), version)
+        self.assertEqual(res_repeat.returncode, 0)
+        self.assertIn("SKIPPED:", res_repeat.stdout)
 
-        # If bumped to -r1, it must NOT recreate 0.0.86.ebuild
-        ebuild_file.unlink()
-        r1_file = self.tmp_path / "kjules-0.0.86-r1.ebuild"
-        r1_file.write_text(content)
-        subprocess.run(["bash", "-c", script], check=True)
-        self.assertFalse(ebuild_file.exists())
-        self.assertTrue(r1_file.exists())
+        # 3. Revision awareness: existing -r1 ebuild blocks unrevisioned recreation
+        rev_dir = self.tmp_path / "kjules-rev"
+        rev_dir.mkdir(parents=True)
+        (rev_dir / f"kjules-{version}-r1.ebuild").write_text("# existing revision")
 
-    def test_stability_matrix_generator_mv_guard_and_variables(self):
-        workflow_path = REPO_ROOT / ".github/workflows/app-misc-stability-matrix-appimage-update.yaml"
-        self.assertTrue(workflow_path.exists())
-        workflow_content = workflow_path.read_text()
+        res_rev = self.run_generator("kjules", str(rev_dir), version)
+        self.assertEqual(res_rev.returncode, 0)
+        self.assertIn("SKIPPED:", res_rev.stdout)
+        self.assertFalse((rev_dir / f"kjules-{version}.ebuild").exists())
 
-        self.assertIn("compgen -G \"${ebuild_dir}/${{ env.epn }}-${version}-r[0-9]*.ebuild\"", workflow_content)
-        self.assertIn('BDEPEND="app-arch/unzip"', workflow_content)
-        self.assertIn('v${PV}', workflow_content)
+    def test_stability_matrix_generator_production_execution(self):
+        """Test stability-matrix production generator, glibc handling, rename guard, and revision awareness."""
+        pkg_dir = self.tmp_path / "stability-matrix"
+        version = "2.16.5"
+        ebuild_file = pkg_dir / f"stability-matrix-appimage-{version}.ebuild"
 
-        # Test generation with matching names (no redundant mv)
-        def run_gen(archived_name, installed_name):
-            dir_path = tempfile.mkdtemp(dir=self.tmp_path)
-            script = f"""
-set -eu
-ebuild_dir="{dir_path}"
-epn="stability-matrix-appimage"
-version="2.16.5"
-workflow_filename="app-misc-stability-matrix-appimage-update.yaml"
-description="Multi-Platform Package Manager for Stable Diffusion"
-homepage="https://lykos.ai"
-github_owner="LykosAI"
-github_repo="StabilityMatrix"
-keywords="~amd64"
-StabilityMatrix_desktop_file="zone.lykos.stabilitymatrix.desktop"
-StabilityMatrix_appimage_installed_name="{installed_name}"
-StabilityMatrix_appimage_archived_name_amd64="{archived_name}"
+        # 1. Same-name scenario: archived == installed -> NO redundant rename
+        res = self.run_generator(
+            "stability-matrix-appimage",
+            str(pkg_dir),
+            version,
+            "StabilityMatrix.AppImage",
+            "StabilityMatrix.AppImage",
+        )
+        self.assertEqual(res.returncode, 0, f"Generator failed: {res.stderr}")
+        self.assertIn("GENERATED:", res.stdout)
+        self.assertTrue(ebuild_file.exists())
 
-ebuild_file="${{ebuild_dir}}/${{epn}}-${{version}}.ebuild"
-if [ ! -f "$ebuild_file" ] && \\
-   ! compgen -G "${{ebuild_dir}}/${{epn}}-${{version}}-r[0-9]*.ebuild" > /dev/null; then
-  {{
-    echo '# Copyright 2026 Gentoo Authors'
-    echo '# Distributed under the terms of the GNU General Public License v2'
-    echo ''
-    echo '# Generated via:'
-    echo '# .github/workflows/'"${{workflow_filename}}"
-    echo 'EAPI=8'
-    echo ''
-    echo 'inherit desktop xdg-utils'
-    echo ''
-    echo "DESCRIPTION=\\"${{description}}\\""
-    echo "HOMEPAGE=\\"${{homepage}}\\""
-    echo 'MY_URI="https://github.com/'"${{github_owner}}/${{github_repo}}"'/releases/download/v${{PV}}"'
-    echo 'SRC_URI="'
-    echo '	amd64? ('
-    echo '		${{MY_URI}}/StabilityMatrix-linux-x64.zip ->'
-    echo '			${{P}}-StabilityMatrix-linux-x64.zip'
-    echo '	)'
-    echo '"'
-    echo 'S="${{WORKDIR}}"'
-    echo ''
-    echo 'LICENSE="MIT"'
-    echo 'SLOT="0"'
-    echo 'KEYWORDS="'"${{keywords}}"'"'
-    echo 'RESTRICT="strip"'
-    echo ''
-    echo 'RDEPEND="sys-libs/zlib"'
-    echo 'BDEPEND="app-arch/unzip"'
-    echo ''
-    echo 'src_unpack() {{'
-    echo '	if use amd64; then'
-    echo "		unpack \\\"\\${{P}}-StabilityMatrix-linux-x64.zip\\\" \\\\"
-    echo '			|| die "Cannot unpack archive file"'
-    echo '	fi'
-    if [ "${{StabilityMatrix_appimage_archived_name_amd64}}" != "${{StabilityMatrix_appimage_installed_name}}" ]; then
-      echo '	if use amd64; then'
-      echo "		mv \\\"${{StabilityMatrix_appimage_archived_name_amd64}}\\\" \\\"${{StabilityMatrix_appimage_installed_name}}\\\"  || die \\\"Cannot move archived file\\\""
-      echo '	fi'
-    fi
-    echo "	chmod a+x \\\"${{StabilityMatrix_appimage_installed_name}}\\\" || die \\\"Cannot chmod archive file\\\""
-    echo "	\\\"./${{StabilityMatrix_appimage_installed_name}}\\\" \\\\"
-    echo "		--appimage-extract \\\"${{StabilityMatrix_desktop_file}}\\\" \\\\"
-    echo '		|| die "Failed to extract .desktop from appimage"'
-    echo "	\\\"./${{StabilityMatrix_appimage_installed_name}}\\\" --appimage-extract \\\"*.png\\\" \\\\"
-    echo '		|| die "Failed to extract root icons from app image"'
-    echo '}}'
-  }} > "$ebuild_file"
-fi
-"""
-            subprocess.run(["bash", "-c", script], check=True)
-            return (Path(dir_path) / f"stability-matrix-appimage-2.16.5.ebuild").read_text()
+        content = ebuild_file.read_text()
+        self.assertIn("EAPI=8", content)
+        self.assertIn('RDEPEND="elibc_glibc? ( sys-libs/glibc )"', content)
+        self.assertIn('BDEPEND="app-arch/unzip"', content)
+        self.assertIn("pkg_pretend()", content)
+        self.assertIn("! use elibc_glibc", content)
+        self.assertIn("v${PV}", content)
+        # Production rename guard assertion: same-name MUST NOT emit mv
+        self.assertNotIn('mv "StabilityMatrix.AppImage" "StabilityMatrix.AppImage"', content)
 
-        # When names match, no mv should be present
-        content_same = run_gen("StabilityMatrix.AppImage", "StabilityMatrix.AppImage")
-        self.assertNotIn("mv ", content_same)
-        self.assertIn('BDEPEND="app-arch/unzip"', content_same)
-        self.assertIn("v${PV}", content_same)
+        # 2. Repeated execution is idempotent
+        res_repeat = self.run_generator(
+            "stability-matrix-appimage",
+            str(pkg_dir),
+            version,
+            "StabilityMatrix.AppImage",
+            "StabilityMatrix.AppImage",
+        )
+        self.assertEqual(res_repeat.returncode, 0)
+        self.assertIn("SKIPPED:", res_repeat.stdout)
 
-        # When names differ, mv must be present
-        content_diff = run_gen("Archived.AppImage", "Installed.AppImage")
-        self.assertIn('mv "Archived.AppImage" "Installed.AppImage"', content_diff)
+        # 3. Different-name scenario: archived != installed -> MUST emit mv
+        diff_dir = self.tmp_path / "stability-matrix-diff"
+        res_diff = self.run_generator(
+            "stability-matrix-appimage",
+            str(diff_dir),
+            version,
+            "StabilityMatrix-linux-x64.AppImage",
+            "StabilityMatrix.AppImage",
+        )
+        self.assertEqual(res_diff.returncode, 0)
+        diff_ebuild = diff_dir / f"stability-matrix-appimage-{version}.ebuild"
+        self.assertTrue(diff_ebuild.exists())
+        diff_content = diff_ebuild.read_text()
+        self.assertIn('mv "StabilityMatrix-linux-x64.AppImage" "StabilityMatrix.AppImage"', diff_content)
 
-    def test_beeper_generator_revision_awareness(self):
-        workflow_path = REPO_ROOT / ".github/workflows/net-im-beeper-appimage-update.yaml"
-        self.assertTrue(workflow_path.exists())
-        workflow_content = workflow_path.read_text()
+        # 4. Revision awareness: existing -r1 ebuild blocks recreation
+        rev_dir = self.tmp_path / "stability-matrix-rev"
+        rev_dir.mkdir(parents=True)
+        (rev_dir / f"stability-matrix-appimage-{version}-r1.ebuild").write_text("# existing revision")
 
-        self.assertIn("compgen -G \"${ebuild_dir}/${{ env.epn }}-${version}-r[0-9]*.ebuild\"", workflow_content)
-        self.assertIn("Copyright 2026 Gentoo Authors", workflow_content)
+        res_rev = self.run_generator(
+            "stability-matrix-appimage",
+            str(rev_dir),
+            version,
+            "StabilityMatrix.AppImage",
+            "StabilityMatrix.AppImage",
+        )
+        self.assertEqual(res_rev.returncode, 0)
+        self.assertIn("SKIPPED:", res_rev.stdout)
+        self.assertFalse((rev_dir / f"stability-matrix-appimage-{version}.ebuild").exists())
+
+    def test_beeper_generator_production_execution(self):
+        """Test beeper production generator execution, valid recipe, idempotence, and revision awareness."""
+        pkg_dir = self.tmp_path / "beeper"
+        version = "4.3.229"
+        ebuild_file = pkg_dir / f"beeper-appimage-{version}.ebuild"
+
+        # 1. Initial generation
+        res = self.run_generator("beeper-appimage", str(pkg_dir), version, "AppImage", "beeper.AppImage")
+        self.assertEqual(res.returncode, 0, f"Generator failed: {res.stderr}")
+        self.assertIn("GENERATED:", res.stdout)
+        self.assertTrue(ebuild_file.exists())
+
+        content = ebuild_file.read_text()
+        self.assertIn("EAPI=8", content)
+        self.assertIn('DESCRIPTION="Beeper universal chat app"', content)
+        self.assertIn("Beeper-${PV}-x86_64.AppImage", content)
+        self.assertIn('newexe "${P}.AppImage" "beeper.AppImage"', content)
+
+        # 2. Repeated execution is idempotent
+        res_repeat = self.run_generator("beeper-appimage", str(pkg_dir), version, "AppImage", "beeper.AppImage")
+        self.assertEqual(res_repeat.returncode, 0)
+        self.assertIn("SKIPPED:", res_repeat.stdout)
+
+        # 3. Revision awareness: existing -r1 ebuild blocks unrevisioned recreation
+        rev_dir = self.tmp_path / "beeper-rev"
+        rev_dir.mkdir(parents=True)
+        (rev_dir / f"beeper-appimage-{version}-r1.ebuild").write_text("# existing revision")
+
+        res_rev = self.run_generator("beeper-appimage", str(rev_dir), version, "AppImage", "beeper.AppImage")
+        self.assertEqual(res_rev.returncode, 0)
+        self.assertIn("SKIPPED:", res_rev.stdout)
+        self.assertFalse((rev_dir / f"beeper-appimage-{version}.ebuild").exists())
 
 
 if __name__ == "__main__":
