@@ -177,7 +177,7 @@ if [ ! -f "$ebuild_file" ] && \\
     echo 'KEYWORDS="'"${{keywords}}"'"'
     echo 'RESTRICT="strip"'
     echo ''
-    echo 'RDEPEND="sys-libs/glibc virtual/zlib"'
+    echo 'RDEPEND="sys-libs/zlib"'
     echo 'BDEPEND="app-arch/unzip"'
     echo ''
     echo 'src_unpack() {{'

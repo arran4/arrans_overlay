@@ -23,7 +23,7 @@ SLOT="0"
 KEYWORDS="~amd64"
 RESTRICT="strip"
 
-RDEPEND="sys-libs/glibc virtual/zlib"
+RDEPEND="sys-libs/zlib"
 BDEPEND="app-arch/unzip"
 
 src_unpack() {
