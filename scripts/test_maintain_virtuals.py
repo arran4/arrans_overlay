@@ -121,6 +121,38 @@ class VirtualProviderTest(unittest.TestCase):
             set(after), {"flutter-3.47.2.ebuild", "flutter-3.47.8.ebuild"}
         )
 
+    def test_dedupe_snapshot_preserves_revision_history(self):
+        self.provider("dart-bin", "3.13.7")
+        self.provider("flutter", "3.47.2")
+        old_bin = self.provider("flutter-bin", "3.47.2")
+        self.provider("flutter-bin", "3.47.8")
+        virtuals.prepare(self.root)
+        old_virtual = virtuals.ensure_virtual(self.root, "flutter", "3.47.2")
+        original_bytes = old_virtual.read_bytes()
+        self.assertIn(b"~dev-lang/flutter-bin-3.47.2", original_bytes)
+
+        # Actual scheduled sequence: g2 deletes the older virtual, but the
+        # workflow snapshots and restores its previous published contents
+        # before running virtual reconciliation.
+        old_bin.unlink()
+        old_virtual.unlink()
+        old_virtual.write_bytes(original_bytes)
+        virtuals.cleanup(self.root)
+
+        revised = self.root / "virtual/flutter/flutter-3.47.2-r1.ebuild"
+        self.assertTrue(revised.exists())
+        self.assertFalse(old_virtual.exists())
+        self.assertIn("~dev-lang/flutter-3.47.2", revised.read_text())
+        self.assertNotIn("~dev-lang/flutter-bin-3.47.2", revised.read_text())
+        self.assertTrue(
+            (self.root / "virtual/flutter/flutter-3.47.8.ebuild").exists()
+        )
+        virtuals.cleanup(self.root)
+        self.assertEqual(
+            sorted(p.name for p in (self.root / "virtual/flutter").glob("*.ebuild")),
+            ["flutter-3.47.2-r1.ebuild", "flutter-3.47.8.ebuild"],
+        )
+
     def test_no_real_provider_rejected(self):
         with self.assertRaisesRegex(ValueError, "no real provider"):
             virtuals.ensure_virtual(self.root, "dart", "3.13.7")
