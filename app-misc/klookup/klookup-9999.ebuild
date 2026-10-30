@@ -20,7 +20,7 @@ BDEPEND="
 	virtual/pkgconfig
 "
 DEPEND="
-	dev-qt/qtbase:6[dbus,gui,network,wayland,widgets]
+	dev-qt/qtbase:6[dbus,gui,network,widgets]
 	dev-qt/qtdeclarative:6
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/kconfig:6
