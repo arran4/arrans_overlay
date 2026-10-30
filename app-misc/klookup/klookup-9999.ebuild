@@ -1,15 +1,15 @@
-# Copyright 2024-2025 Arran Ubels
+# Copyright 2024-2026 Arran Ubels
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
 
 inherit cmake git-r3
 
-DESCRIPTION="KDE Plasma 6 lookup tool with extensible search providers and KRunner integration"
+DESCRIPTION="KDE Plasma 6 lookup tool with search providers"
 HOMEPAGE="https://github.com/arran4/klookup"
 EGIT_REPO_URI="https://github.com/arran4/klookup.git"
 
-LICENSE="GPL-3"
+LICENSE="GPL-3+ BSD-2 CC-BY-SA-4.0 CC0-1.0"
 SLOT="0"
 KEYWORDS=""
 IUSE="test"
@@ -20,7 +20,7 @@ BDEPEND="
 	virtual/pkgconfig
 "
 DEPEND="
-	dev-qt/qtbase:6[dbus,gui,network,widgets]
+	dev-qt/qtbase:6[dbus,gui,network,wayland,widgets]
 	dev-qt/qtdeclarative:6
 	kde-frameworks/kcoreaddons:6
 	kde-frameworks/kconfig:6
