@@ -24,8 +24,23 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21.x'
+
       - name: Update klookup
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 scripts/update_klookup_source.py
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update app-misc/klookup to latest release"
+          title: "Update app-misc/klookup"
+          body: "Automated update of app-misc/klookup via GitHub Actions"
+          branch: "automated/update-klookup"
+          delete-branch: true
