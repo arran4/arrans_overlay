@@ -1,0 +1,10 @@
+[Unit]
+Description=On-demand /boot mount from /etc/fstab
+Documentation=man:systemd.automount(5) man:fstab(5)
+
+[Automount]
+Where=/boot
+TimeoutIdleSec=30s
+
+[Install]
+WantedBy=local-fs.target
