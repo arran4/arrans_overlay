@@ -7,7 +7,8 @@ import os
 def get_latest_release():
     url = "https://api.github.com/repos/arran4/klookup/releases"
     try:
-        with urllib.request.urlopen(url) as response:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
             if response.status == 200:
                 data = json.loads(response.read().decode())
                 if data and isinstance(data, list):
