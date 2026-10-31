@@ -13,6 +13,8 @@ on:
       - 'scripts/test_manifest_restore.sh'
       - 'scripts/test_workflow_concurrency.sh'
       - 'scripts/test_workflow_concurrency_fixtures.sh'
+      - 'scripts/update_klookup_source.py'
+      - 'scripts/test_update_klookup_source.py'
   pull_request:
     paths:
       - '.github/workflows/**'
@@ -25,6 +27,8 @@ on:
       - 'scripts/test_manifest_restore.sh'
       - 'scripts/test_workflow_concurrency.sh'
       - 'scripts/test_workflow_concurrency_fixtures.sh'
+      - 'scripts/update_klookup_source.py'
+      - 'scripts/test_update_klookup_source.py'
 
 jobs:
   actionlint:
@@ -53,5 +57,7 @@ jobs:
         run: |
           ./scripts/workflow_m3shapes_pin_test.sh
           bash scripts/test_workflow_kgithub_notify.sh
+      - name: Test KLookup source updater
+        run: python3 -m unittest discover -s scripts -p 'test_update_klookup_source.py'
       - name: Test Manifest restoration logic
         run: ./scripts/test_manifest_restore.sh
