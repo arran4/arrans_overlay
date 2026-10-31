@@ -276,6 +276,7 @@ jobs:
                       print("<dev-libs/wayland-1.25.0")
                       print(">=dev-util/wayland-scanner-1.26")
           ' > /etc/portage/package.mask/ci-stage3-compat
+          echo "dev-qt/qttools" >> /etc/portage/package.mask/ci-stage3-compat
 
           FAILED_PACKAGES=""
           echo "Running pkgcheck on $PKG"
@@ -314,7 +315,6 @@ jobs:
             fi
           fi
           TARGET_BINARY_OPTIONS=()
-          TARGET_BINARY_OPTIONS+=(--usepkg-exclude "dev-qt/qttools")
           EMERGE_MODE=()
           if [ "$VIRTUAL_FLUTTER_SOURCE_ONLY" = true ]; then
             EMERGE_MODE+=(--pretend)
