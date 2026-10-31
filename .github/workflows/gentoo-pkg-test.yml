@@ -329,11 +329,12 @@ jobs:
             # together (qtbase REQUIRED_USE: wayland? ( opengl )). Preseed
             # those known-compatible flags before autounmask can write USE
             # changes inferred from incompatible binary packages.
-            cat > /etc/portage/package.use/ci-klookup-qt <<'QTEOF'
-dev-qt/qtbase opengl wayland icu
-dev-qt/qt5compat icu
-kde-frameworks/kwindowsystem wayland
-QTEOF
+            mkdir -p /etc/portage/package.use
+            printf "%s\n" \
+              "dev-qt/qtbase opengl wayland icu" \
+              "dev-qt/qt5compat icu" \
+              "kde-frameworks/kwindowsystem wayland" \
+              > /etc/portage/package.use/ci-klookup-qt
             # Explicit binpkg-respect-use=y makes Portage reject mismatching
             # binpkgs and disables USE autounmasking for this invocation. It
             # can still build the required dependencies from source.
