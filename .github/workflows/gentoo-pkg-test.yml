@@ -324,6 +324,30 @@ jobs:
             # --usepkg-exclude, while the emerge target remains the exact CPV.
             TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$CP")
           fi
+          if [[ "$CP" == "app-misc/klookup" ]]; then
+            # The Qt 6 / KF6 dependency graph requires Qt Wayland and OpenGL
+            # together (qtbase REQUIRED_USE: wayland? ( opengl )). Preseed
+            # those known-compatible flags before autounmask can write USE
+            # changes inferred from incompatible binary packages.
+            mkdir -p /etc/portage/package.use
+            printf "%s\n" \
+              "dev-qt/qtbase opengl wayland icu" \
+              "dev-qt/qt5compat icu" \
+              "kde-frameworks/kwindowsystem wayland" \
+              > /etc/portage/package.use/ci-klookup-qt
+            # Explicit binpkg-respect-use=y makes Portage reject mismatching
+            # binpkgs and disables USE autounmasking for this invocation. It
+            # can still build the required dependencies from source.
+            # Do not exclude all qttools versions, and do not mask Qt.
+            TARGET_BINARY_OPTIONS+=(--binpkg-respect-use=y)
+            # Source-only *before* any autounmask writes: compare this result
+            # with binpkg-enabled emerge rather than inspecting a mutated
+            # configuration after the first failed attempt.
+            echo "KLookup CI preflight: source-only Qt dependency graph"
+            emerge -pv --usepkg=n --getbinpkg=n --autounmask=y \
+              --autounmask-use=n --backtrack=50 \
+              "${CI_GRAPH_PREREQUISITES[@]}" "$PKG" || true
+          fi
           if [ "$VIRTUAL_FLUTTER_SOURCE_ONLY" = true ]; then
             # In --pretend mode Portage reports required keyword changes but
             # cannot apply them before exiting. First perform a config-only
@@ -349,6 +373,19 @@ jobs:
             --backtrack=50 \
             "${TARGET_BINARY_OPTIONS[@]}" \
             "${CI_GRAPH_PREREQUISITES[@]}" "$PKG"; then
+            if [[ "$CP" == "app-misc/klookup" ]]; then
+              echo "KLookup CI diagnostic: actual Qt package.use entries"
+              for usefile in /etc/portage/package.use/*; do
+                if [[ -f "$usefile" ]]; then
+                  echo "--- $usefile"
+                  grep -E '^[[:space:]]*(dev-qt|kde-frameworks)/' "$usefile" || true
+                fi
+              done
+              echo "KLookup CI diagnostic: source-only pretend dependency resolution"
+              emerge -pv --usepkg=n --getbinpkg=n --autounmask=y \
+                --autounmask-use=n --backtrack=50 \
+                "${CI_GRAPH_PREREQUISITES[@]}" "$PKG" || true
+            fi
             echo "First emerge attempt exited. Retrying emerge to pick up any autounmask changes..."
             if ! emerge -v "${EMERGE_MODE[@]}" \
               --usepkg --getbinpkg --binpkg-changed-deps=y \
