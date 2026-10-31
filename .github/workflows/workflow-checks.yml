@@ -35,7 +35,10 @@ jobs:
         id: get_actionlint
         run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
       - name: Check workflow files
-        run: ./actionlint -color -ignore 'action is too old' -ignore 'SC2016' -ignore 'SC2028' -ignore 'SC2034' -ignore 'SC2086' -ignore 'SC2196' -ignore 'SC2015' -ignore 'SC2001' -ignore 'SC2129' -ignore 'SC2181'
+        # GitHub supports concurrency.queue (May 2026), but rhysd/actionlint
+        # currently rejects it: https://github.com/rhysd/actionlint/issues/657
+        # Remove this narrow exception once actionlint supports the key.
+        run: ./actionlint -color -ignore 'unexpected key "queue" for "concurrency" section' -ignore 'action is too old' -ignore 'SC2016' -ignore 'SC2028' -ignore 'SC2034' -ignore 'SC2086' -ignore 'SC2196' -ignore 'SC2015' -ignore 'SC2001' -ignore 'SC2129' -ignore 'SC2181'
 
   test-scripts:
     runs-on: ubuntu-latest
