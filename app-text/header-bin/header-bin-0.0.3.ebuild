@@ -3,17 +3,20 @@
 
 EAPI=8
 
-DESCRIPTION="Go CLI and library for extracting, validating, editing and visualizing website metadata"
+DESCRIPTION="Go CLI and library for extracting website metadata"
 HOMEPAGE="https://github.com/arran4/header"
+
+BASE_URL="https://github.com/arran4/header/releases/download/v\${PV}"
+
 SRC_URI="
 	amd64? (
-		https://github.com/arran4/header/releases/download/v${PV}/header_${PV}_linux_amd64.tar.gz -> ${P}-header_${PV}_linux_amd64.tar.gz
+		\${BASE_URL}/header_\${PV}_linux_amd64.tar.gz -> \${P}-header_\${PV}_linux_amd64.tar.gz
 	)
 	arm64? (
-		https://github.com/arran4/header/releases/download/v${PV}/header_${PV}_linux_arm64.tar.gz -> ${P}-header_${PV}_linux_arm64.tar.gz
+		\${BASE_URL}/header_\${PV}_linux_arm64.tar.gz -> \${P}-header_\${PV}_linux_arm64.tar.gz
 	)
 	x86? (
-		https://github.com/arran4/header/releases/download/v${PV}/header_${PV}_linux_386.tar.gz -> ${P}-header_${PV}_linux_386.tar.gz
+		\${BASE_URL}/header_\${PV}_linux_386.tar.gz -> \${P}-header_\${PV}_linux_386.tar.gz
 	)
 "
 
