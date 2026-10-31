@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-10-30 03:15:07.810720053 +0000 UTC m=+0.007303948
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-10-30 11:55:05.754126386 +0000 UTC m=+0.024522767
 
 name: www-misc/header-bin update
 
@@ -31,8 +31,9 @@ env:
   header_release_name_x86: 'header_${version}_linux_386.tar.gz'
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow_ref }}
   cancel-in-progress: false
+  queue: max
 
 jobs:
   check-and-create-ebuild:
