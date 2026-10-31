@@ -24,10 +24,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21.x'
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
 
       - name: Update klookup
         env:

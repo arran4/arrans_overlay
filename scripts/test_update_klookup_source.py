@@ -1,118 +1,104 @@
-import unittest
-from unittest.mock import patch, Mock
 import json
-import urllib.error
 import os
+from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+from unittest.mock import MagicMock, patch
 
-# Import the module to be tested
-import update_klookup_source
+import update_klookup_source as updater
 
-class TestUpdateKlookupSource(unittest.TestCase):
+LIVE_FIXTURE = '''EAPI=8
+inherit cmake git-r3
+DESCRIPTION="KDE Plasma 6 lookup tool with search providers"
+HOMEPAGE="https://github.com/arran4/klookup"
+EGIT_REPO_URI="https://github.com/arran4/klookup.git"
+KEYWORDS=""
+DEPEND="dev-qt/qtbase:6[dbus,gui,network,widgets]"
+'''
 
-    @patch('update_klookup_source.urllib.request.urlopen')
-    def test_get_latest_release_no_releases(self, mock_urlopen):
-        # Mock an empty list response (no releases)
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.read.return_value = json.dumps([]).encode('utf-8')
-        mock_response.__enter__ = Mock(return_value=mock_response)
-        mock_response.__exit__ = Mock(return_value=None)
-        mock_urlopen.return_value = mock_response
 
-        release = update_klookup_source.get_latest_release()
-        self.assertIsNone(release)
+class TestUpdater(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.original_cwd = os.getcwd()
+        os.chdir(self.tempdir.name)
+        updater.PACKAGE_DIR.mkdir(parents=True)
+        updater.LIVE_EBUILD.write_text(LIVE_FIXTURE)
 
-    @patch('update_klookup_source.urllib.request.urlopen')
-    def test_get_latest_release_valid_release(self, mock_urlopen):
-        # Mock a valid release response
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.read.return_value = json.dumps([{"tag_name": "v1.0.0"}]).encode('utf-8')
-        mock_response.__enter__ = Mock(return_value=mock_response)
-        mock_response.__exit__ = Mock(return_value=None)
-        mock_urlopen.return_value = mock_response
-
-        release = update_klookup_source.get_latest_release()
-        self.assertEqual(release, "1.0.0")
+    def tearDown(self):
+        os.chdir(self.original_cwd)
+        self.tempdir.cleanup()
 
     @patch('update_klookup_source.urllib.request.urlopen')
-    def test_get_latest_release_http_error(self, mock_urlopen):
-        # Mock an HTTP error
-        mock_urlopen.side_effect = urllib.error.HTTPError(
-            "url", 404, "Not Found", {}, None
-        )
+    def test_no_releases(self, urlopen):
+        response = MagicMock()
+        response.read.return_value = b'[]'
+        urlopen.return_value.__enter__.return_value = response
+        self.assertEqual(updater.get_releases(), [])
+        with patch.object(updater, 'get_releases', return_value=[]), \
+             patch('update_klookup_source.subprocess.run') as run:
+            updater.main()
+        run.assert_not_called()
 
-        release = update_klookup_source.get_latest_release()
-        self.assertIsNone(release)
-
-    @patch('update_klookup_source.urllib.request.urlopen')
-    def test_get_latest_release_invalid_json(self, mock_urlopen):
-        # Mock an invalid JSON response
-        mock_response = Mock()
-        mock_response.status = 200
-        mock_response.read.return_value = b"invalid json"
-        mock_response.__enter__ = Mock(return_value=mock_response)
-        mock_response.__exit__ = Mock(return_value=None)
-        mock_urlopen.return_value = mock_response
-
-        release = update_klookup_source.get_latest_release()
-        self.assertIsNone(release)
-
-    @patch('update_klookup_source.os.makedirs')
-    def test_generate_ebuild(self, mock_makedirs):
-        version = "1.0.0"
-        ebuild_path = f"app-misc/klookup/klookup-{version}.ebuild"
-
-        # Test creation of ebuild
-        with patch("builtins.open", unittest.mock.mock_open()) as mock_file:
-            generated_path = update_klookup_source.generate_ebuild(version)
-            self.assertEqual(generated_path, ebuild_path)
-            mock_file.assert_called_with(ebuild_path, "w")
-            handle = mock_file()
-            # Assert some expected content is written
-            written_data = "".join(call.args[0] for call in handle.write.call_args_list)
-            self.assertIn('DESCRIPTION="KDE Plasma 6 lookup tool with search providers"', written_data)
-            self.assertIn('SRC_URI="https://github.com/arran4/klookup/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"', written_data)
-            self.assertNotIn('git-r3', written_data)
-
-    @patch('update_klookup_source.os.path.exists')
-    def test_version_exists(self, mock_exists):
-        mock_exists.return_value = True
-        self.assertTrue(update_klookup_source.version_exists("1.0.0"))
-        mock_exists.assert_called_with("app-misc/klookup/klookup-1.0.0.ebuild")
+    def test_filters_drafts_prereleases_bad_tags_and_duplicates(self):
+        releases = [
+            {'tag_name': 'v1.0.0', 'draft': True},
+            {'tag_name': 'v2.0.0', 'prerelease': True},
+            {'tag_name': '../escape'},
+            {'tag_name': 'v1.0.0'},
+            {'tag_name': '1.0.0'},
+            {'tag_name': 'v1.0.0-rc1'},
+            {'tag_name': 'v1.2.0'},
+        ]
+        self.assertEqual(list(updater.eligible_releases(releases)),
+                         [('v1.0.0', '1.0.0'), ('v1.2.0', '1.2.0')])
 
     @patch('update_klookup_source.subprocess.run')
-    def test_update_manifest_and_cache(self, mock_run):
-        update_klookup_source.update_manifest_and_cache("1.0.0")
-        self.assertEqual(mock_run.call_count, 2)
+    @patch.object(updater, 'get_releases', return_value=[{'tag_name': 'v1.0.0'}])
+    def test_generates_source_ebuild_manifest_and_cache(self, get_releases, run):
+        updater.main()
+        generated = (updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').read_text()
+        self.assertIn('inherit cmake\n', generated)
+        self.assertNotIn('git-r3', generated)
+        self.assertIn('SRC_URI="https://github.com/arran4/klookup/archive/refs/tags/v1.0.0.tar.gz -> ${P}.tar.gz"', generated)
+        self.assertIn('S="${WORKDIR}/klookup-${PV}"', generated)
+        self.assertIn('KEYWORDS="~amd64"', generated)
+        self.assertIn('dev-qt/qtbase:6[dbus,gui,network,widgets]', generated)
+        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_args_list[0].args[0],
+                         ['g2', 'manifest', 'upsert-from-url',
+                          'https://github.com/arran4/klookup/archive/refs/tags/v1.0.0.tar.gz',
+                          'klookup-1.0.0.tar.gz', 'app-misc/klookup/Manifest'])
+        self.assertEqual(run.call_args_list[1].args[0],
+                         ['g2', 'cache', 'generate', 'app-misc/klookup'])
+        self.assertTrue(all(call.kwargs['check'] for call in run.call_args_list))
+        run.reset_mock()
+        updater.main()
+        run.assert_not_called()
+
+    @patch('update_klookup_source.subprocess.run')
+    @patch.object(updater, 'get_releases', return_value=[{'tag_name': '1.0.0'}, {'tag_name': 'v1.1.0'}])
+    def test_existing_does_not_hide_newer_and_unprefixed_tags(self, get_releases, run):
+        (updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').write_text('existing')
+        updater.main()
+        self.assertEqual((updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').read_text(), 'existing')
+        self.assertTrue((updater.PACKAGE_DIR / 'klookup-1.1.0.ebuild').is_file())
+        self.assertIn('refs/tags/v1.1.0.tar.gz', (updater.PACKAGE_DIR / 'klookup-1.1.0.ebuild').read_text())
+        self.assertEqual(run.call_count, 2)
+
+    @patch('update_klookup_source.subprocess.run', side_effect=subprocess.CalledProcessError(1, 'g2'))
+    @patch.object(updater, 'get_releases', return_value=[{'tag_name': 'v1.0.0'}])
+    def test_manifest_failure_prevents_pr(self, get_releases, run):
+        with self.assertRaises(subprocess.CalledProcessError):
+            updater.main()
+        self.assertEqual(run.call_count, 1)
+
+    @patch('update_klookup_source.urllib.request.urlopen', side_effect=OSError('offline'))
+    def test_api_failure_is_not_silent(self, urlopen):
+        with self.assertRaises(OSError):
+            updater.get_releases()
+
 
 if __name__ == '__main__':
     unittest.main()
-
-    @patch('update_klookup_source.os.makedirs')
-    def test_generate_ebuild(self, mock_makedirs):
-        version = "1.0.0"
-        ebuild_path = f"app-misc/klookup/klookup-{version}.ebuild"
-
-        # Test creation of ebuild
-        with patch("builtins.open", unittest.mock.mock_open()) as mock_file:
-            generated_path = update_klookup_source.generate_ebuild(version)
-            self.assertEqual(generated_path, ebuild_path)
-            mock_file.assert_called_with(ebuild_path, "w")
-            handle = mock_file()
-            # Assert some expected content is written
-            written_data = "".join(call.args[0] for call in handle.write.call_args_list)
-            self.assertIn('DESCRIPTION="KDE Plasma 6 lookup tool with search providers"', written_data)
-            self.assertIn('SRC_URI="https://github.com/arran4/klookup/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz"', written_data)
-            self.assertNotIn('git-r3', written_data)
-
-    @patch('update_klookup_source.os.path.exists')
-    def test_version_exists(self, mock_exists):
-        mock_exists.return_value = True
-        self.assertTrue(update_klookup_source.version_exists("1.0.0"))
-        mock_exists.assert_called_with("app-misc/klookup/klookup-1.0.0.ebuild")
-
-    @patch('update_klookup_source.subprocess.run')
-    def test_update_manifest_and_cache(self, mock_run):
-        update_klookup_source.update_manifest_and_cache("1.0.0")
-        self.assertEqual(mock_run.call_count, 2)

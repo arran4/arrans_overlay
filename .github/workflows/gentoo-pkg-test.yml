@@ -276,7 +276,6 @@ jobs:
                       print("<dev-libs/wayland-1.25.0")
                       print(">=dev-util/wayland-scanner-1.26")
           ' > /etc/portage/package.mask/ci-stage3-compat
-          echo "dev-qt/qttools" >> /etc/portage/package.mask/ci-stage3-compat
 
           FAILED_PACKAGES=""
           echo "Running pkgcheck on $PKG"
@@ -350,6 +349,18 @@ jobs:
             --backtrack=50 \
             "${TARGET_BINARY_OPTIONS[@]}" \
             "${CI_GRAPH_PREREQUISITES[@]}" "$PKG"; then
+            if [[ "$CP" == "app-misc/klookup" ]]; then
+              echo "KLookup CI diagnostic: actual Qt package.use entries"
+              for usefile in /etc/portage/package.use/*; do
+                if [[ -f "$usefile" ]]; then
+                  echo "--- $usefile"
+                  grep -E '^[[:space:]]*(dev-qt|kde-frameworks)/' "$usefile" || true
+                fi
+              done
+              echo "KLookup CI diagnostic: source-only pretend dependency resolution"
+              emerge -pv --usepkg=n --getbinpkg=n --autounmask=y --backtrack=50 \
+                "${CI_GRAPH_PREREQUISITES[@]}" "$PKG" || true
+            fi
             echo "First emerge attempt exited. Retrying emerge to pick up any autounmask changes..."
             if ! emerge -v "${EMERGE_MODE[@]}" \
               --usepkg --getbinpkg --binpkg-changed-deps=y \
