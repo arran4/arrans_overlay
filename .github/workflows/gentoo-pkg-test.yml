@@ -324,6 +324,12 @@ jobs:
             # --usepkg-exclude, while the emerge target remains the exact CPV.
             TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$CP")
           fi
+          if [[ "$PKG" == *"klookup"* ]]; then
+            # The dev-qt/qttools binpkg demands qtbase[-opengl] through kwindowsystem,
+            # which conflicts with the CI's required dev-qt/qtbase[opengl]. Force source
+            # compilation of qttools to ensure it compiles against the local qtbase.
+            TARGET_BINARY_OPTIONS+=(--usepkg-exclude dev-qt/qttools)
+          fi
           if [ "$VIRTUAL_FLUTTER_SOURCE_ONLY" = true ]; then
             # In --pretend mode Portage reports required keyword changes but
             # cannot apply them before exiting. First perform a config-only
