@@ -1,6 +1,6 @@
 # Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-10-30 03:15:07.810720053 +0000 UTC m=+0.007303948
 
-name: www-misc/header-bin update
+name: app-text/header-bin update
 
 permissions:
   contents: write
@@ -11,17 +11,17 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/www-misc-header-bin-update.yaml'
+      - '.github/workflows/app-text-header-bin-update.yaml'
 
 env:
-  ecn: www-misc
+  ecn: app-text
   epn: header-bin
   description: "Go CLI and library for extracting, validating, editing and visualizing website metadata"
   homepage: "https://github.com/arran4/header"
   github_owner: arran4
   github_repo: header
   keywords: ~amd64 ~arm64 ~x86
-  workflow_filename: www-misc-header-bin-update.yaml
+  workflow_filename: app-text-header-bin-update.yaml
   header_binary_installed_name: 'header'
   header_binary_archived_name_amd64: 'header'
   header_release_name_amd64: 'header_${version}_linux_amd64.tar.gz'
@@ -47,7 +47,7 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
       - name: Install g2
-        uses: arran4/g2-action@v1.2
+        uses: arran4/g2-action@v1.3
 
       - name: Process each release
         id: process_releases
@@ -212,15 +212,15 @@ jobs:
                 emit_metadata_field "DESCRIPTION" "$DESCRIPTION"
                 emit_metadata_field "HOMEPAGE" "$HOMEPAGE"
                 src_uri_val=""
-                src_uri_val+=" amd64? (  "
+                src_uri_val+=" amd64? ( \n"
                 src_uri_val+=" https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/header_${version}_linux_amd64.tar.gz "
-                src_uri_val+=" -> \${P}-header_\${PV}_linux_amd64.tar.gz  )  "
-                src_uri_val+=" arm64? (  "
+                src_uri_val+=" -> \${P}-header_\${PV}_linux_amd64.tar.gz \n ) \n"
+                src_uri_val+=" arm64? ( \n"
                 src_uri_val+=" https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/header_${version}_linux_arm64.tar.gz "
-                src_uri_val+=" -> \${P}-header_\${PV}_linux_arm64.tar.gz  )  "
-                src_uri_val+=" x86? (  "
+                src_uri_val+=" -> \${P}-header_\${PV}_linux_arm64.tar.gz \n ) \n"
+                src_uri_val+=" x86? ( \n"
                 src_uri_val+=" https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/header_${version}_linux_386.tar.gz "
-                src_uri_val+=" -> \${P}-header_\${PV}_linux_386.tar.gz  )  "
+                src_uri_val+=" -> \${P}-header_\${PV}_linux_386.tar.gz \n ) \n"
                 emit_metadata_field "SRC_URI" "$src_uri_val"
                 emit_metadata_field "LICENSE" "$LICENSE"
                 echo 'SLOT="0"'
@@ -307,10 +307,10 @@ jobs:
 
       - name: Lint output
         if: steps.process_releases.outputs.generated_tag
-        uses: arran4/g2-action@v1.2
+        uses: arran4/g2-action@v1.3
         with:
           mode: 'run'
-          action: 'lint -disable-rule PG0802 . ${{ env.ecn }}/${{ env.epn }}'
+          action: 'lint -disable-rule Md5CacheMissing,UnstableOnly,PG0802 . ${{ env.ecn }}/${{ env.epn }}'
 
       - name: Commit and push changes
         run: |
