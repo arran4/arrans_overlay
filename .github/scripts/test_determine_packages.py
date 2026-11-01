@@ -238,6 +238,9 @@ assert '("dev-libs/wayland", "1.26")' in workflow
 # retain the protective mask. Also keep required USE consistent.
 assert 'if cp == "dev-libs/wayland" and "app-misc/klookup-" in os.environ.get("PKG", ""):' in workflow
 assert '"app-text/xmlto text"' in workflow
+# QtTools built without OpenGL encodes qtbase[-opengl] and cannot be used
+# with Qt Wayland. Set the compatible flag before resolving binpkg choices.
+assert '"dev-qt/qttools opengl"' in workflow
 assert 'TARGET_BINARY_OPTIONS+=(--binpkg-respect-use=y)' in workflow
 import hashlib
 from pathlib import Path
