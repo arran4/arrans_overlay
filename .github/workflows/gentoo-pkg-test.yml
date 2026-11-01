@@ -333,10 +333,14 @@ jobs:
             # together (qtbase REQUIRED_USE: wayland? ( opengl )). Preseed
             # those known-compatible flags before autounmask can write USE
             # changes inferred from incompatible binary packages.
+            # qttools[widgets] links against qtbase[opengl=], so QtTools must
+            # match qtbase's OpenGL flag. Its binhost build with -opengl
+            # cannot be used for this Wayland graph; Portage may source-build it.
             # Source-built xdg-utils also requires xmlto[text].
             mkdir -p /etc/portage/package.use
             printf "%s\n" \
               "dev-qt/qtbase opengl wayland icu" \
+              "dev-qt/qttools opengl" \
               "dev-qt/qt5compat icu" \
               "kde-frameworks/kwindowsystem wayland" \
               "app-text/xmlto text" \
