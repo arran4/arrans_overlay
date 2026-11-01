@@ -32,5 +32,6 @@ DEPEND="
 	kde-frameworks/kwallet:6
 	kde-frameworks/kwidgetsaddons:6
 	kde-frameworks/kxmlgui:6
+	sys-libs/zlib
 "
 RDEPEND="${DEPEND}"
