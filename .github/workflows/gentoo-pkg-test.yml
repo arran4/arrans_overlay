@@ -268,6 +268,10 @@ jobs:
           for cp, boundary in (("dev-lang/perl", "5.44"), ("dev-libs/wayland", "1.26")):
               if cp == "dev-lang/perl" and "caelestia-shell" in os.environ.get("PKG", ""):
                   continue
+              # Scanner 1.26 blocks the older stage3 Wayland library; allow a
+              # matching Wayland upgrade for the KLookup CI job only.
+              if cp == "dev-libs/wayland" and "app-misc/klookup-" in os.environ.get("PKG", ""):
+                  continue
               matches = vardb.match(cp)
               if not matches or vercmp(catpkgsplit(matches[-1])[2], boundary) < 0:
                   if cp == "dev-lang/perl":
@@ -329,11 +333,13 @@ jobs:
             # together (qtbase REQUIRED_USE: wayland? ( opengl )). Preseed
             # those known-compatible flags before autounmask can write USE
             # changes inferred from incompatible binary packages.
+            # Source-built xdg-utils also requires xmlto[text].
             mkdir -p /etc/portage/package.use
             printf "%s\n" \
               "dev-qt/qtbase opengl wayland icu" \
               "dev-qt/qt5compat icu" \
-              "kde-frameworks/kwindowsystem wayland" \
+              "kde-frameworks/kwindowsystem wayland" 
+              "app-text/xmlto text" \\
               > /etc/portage/package.use/ci-klookup-qt
             # Explicit binpkg-respect-use=y makes Portage reject mismatching
             # binpkgs and disables USE autounmasking for this invocation. It
