@@ -18,7 +18,7 @@ else
 	KEYWORDS="~amd64"
 fi
 
-LICENSE="GPL-3+"
+LICENSE="GPL-3+ BSD-2 CC-BY-SA-4.0 CC0-1.0 MIT"
 SLOT="0"
 
 DEPEND="
