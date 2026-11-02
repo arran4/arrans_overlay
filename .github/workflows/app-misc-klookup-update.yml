@@ -1,0 +1,100 @@
+# Maintained by hand: KLookup's multiline Qt/KF6 CMake dependencies require
+# explicit review. The generic source-workflow generator cannot safely infer them.
+name: app-misc/klookup source releases
+
+on:
+  schedule:
+    - cron: '20 19 1 * *' # Day 2 at 05:20 AEST / 06:20 AEDT
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/app-misc-klookup-update.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-maintenance
+  cancel-in-progress: false
+
+jobs:
+  update-ebuild:
+    name: Check upstream stable releases and open an ebuild PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install g2 Manifest tooling
+        uses: arran4/g2-action@v1.2
+
+      - name: Find latest published stable release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Only published, non-draft, non-prerelease GitHub releases qualify.
+          # Do not turn a mere remote git tag into a trusted package release.
+          gh api --paginate repos/arran4/klookup/releases \
+            --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' \
+            > /tmp/klookup-releases
+          latest="$(grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' /tmp/klookup-releases | sort -V | tail -n 1 || true)"
+          if [[ -z "$latest" ]]; then
+            echo "::notice::No published stable KLookup release found; no ebuild will be modified"
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$latest" >> "$GITHUB_OUTPUT"
+          echo "version=${latest#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare source ebuild and verified Manifest
+        if: ${{ steps.release.outputs.found == 'true' }}
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_dir=app-misc/klookup
+          versioned_ebuild="$package_dir/klookup-${VERSION}.ebuild"
+          # A versioned build uses the same reviewed dependencies and CMake
+          # instructions as the live ebuild. No generator may scrape them.
+          cp "$package_dir/klookup-9999.ebuild" "$versioned_ebuild"
+          g2 manifest upsert-from-url \
+            "https://github.com/arran4/klookup/archive/refs/tags/${TAG}.tar.gz" \
+            "klookup-${VERSION}.tar.gz" "$package_dir/Manifest"
+          # Keep only the latest *stable* version; never remove the live ebuild
+          # or any prerelease grade, in line with the overlay retention policy.
+          for file in "$package_dir"/klookup-*.ebuild; do
+            [[ -f "$file" ]] || continue
+            [[ "$file" == "$versioned_ebuild" || "$file" == "$package_dir/klookup-9999.ebuild" ]] && continue
+            if [[ "$file" =~ /klookup-[0-9]+\.[0-9]+\.[0-9]+\.ebuild$ ]]; then
+              rm -- "$file"
+            fi
+          done
+
+      - name: Open a focused maintenance PR
+        if: ${{ steps.release.outputs.found == 'true' }}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/klookup-source-releases
+          delete-branch: true
+          commit-message: 'chore(app-misc/klookup): track latest published stable release'
+          title: 'chore(app-misc/klookup): update published stable source ebuild'
+          body: |
+            Automated source ebuild update from the latest published KLookup stable release.
+            The GitHub release, source archive, and Manifest checksums are verified when generated.
+            Review Gentoo build dependencies, the pkgcheck/Portage CI, and the install path before merging.
+            This is **not** an automatic merge.
+          add-paths: |
+            app-misc/klookup/
