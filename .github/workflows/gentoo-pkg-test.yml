@@ -329,6 +329,16 @@ jobs:
             TARGET_BINARY_OPTIONS+=(--usepkg-exclude "$CP")
           fi
           if [[ "$CP" == "app-misc/klookup" ]]; then
+            # The restored distfiles cache is owned by the GitHub runner, but
+            # git-r3 fetches as the unprivileged portage user. Restoring a
+            # cached git3-src checkout with the runner's ownership prevents
+            # Git from updating FETCH_HEAD. Fix only KLookup's cached clone.
+            # This also covers the initial fetch when git3-src is absent.
+            install -d -o portage -g portage -m 0755 /var/cache/distfiles/git3-src
+            klookup_git_cache=/var/cache/distfiles/git3-src/arran4_klookup.git
+            if [[ -d "$klookup_git_cache" ]]; then
+              chown -R portage:portage "$klookup_git_cache"
+            fi
             # The Qt 6 / KF6 dependency graph requires Qt Wayland and OpenGL
             # together (qtbase REQUIRED_USE: wayland? ( opengl )). Preseed
             # those known-compatible flags before autounmask can write USE
