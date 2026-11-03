@@ -241,6 +241,11 @@ assert '"app-text/xmlto text"' in workflow
 # QtTools built without OpenGL encodes qtbase[-opengl] and cannot be used
 # with Qt Wayland. Set the compatible flag before resolving binpkg choices.
 assert '"dev-qt/qttools opengl"' in workflow
+# A restored git3-src clone must be writable by git-r3's portage user.
+# Restrict ownership changes to KLookup, not the entire distfiles cache.
+assert 'install -d -o portage -g portage -m 0755 /var/cache/distfiles/git3-src' in workflow
+assert 'klookup_git_cache=/var/cache/distfiles/git3-src/arran4_klookup.git' in workflow
+assert 'chown -R portage:portage "$klookup_git_cache"' in workflow
 assert 'TARGET_BINARY_OPTIONS+=(--binpkg-respect-use=y)' in workflow
 import hashlib
 from pathlib import Path
