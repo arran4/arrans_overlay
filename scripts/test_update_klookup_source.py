@@ -8,7 +8,10 @@ from unittest.mock import MagicMock, patch
 
 import update_klookup_source as updater
 
-LIVE_FIXTURE = '''EAPI=8
+LIVE_FIXTURE = '''# Copyright 2026 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+EAPI=8
 inherit cmake git-r3
 DESCRIPTION="KDE Plasma 6 lookup tool with search providers"
 HOMEPAGE="https://github.com/arran4/klookup"
