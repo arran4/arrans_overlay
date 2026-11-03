@@ -65,7 +65,8 @@ class TestUpdateWhichBrowser(unittest.TestCase):
         from contextlib import redirect_stdout
         f = io.StringIO()
         with redirect_stdout(f):
-            update_which_browser.main()
+            with patch.object(sys, 'argv', ['update_which_browser.py']):
+                update_which_browser.main()
 
         output = f.getvalue()
         self.assertIn("generated_version=0.2.22.162", output)
@@ -90,7 +91,10 @@ class TestUpdateWhichBrowser(unittest.TestCase):
         from contextlib import redirect_stdout
         f = io.StringIO()
         with redirect_stdout(f):
-            update_which_browser.main()
+            with patch.object(sys, 'argv', ['update_which_browser.py']):
+                with self.assertRaises(SystemExit) as cm:
+                    update_which_browser.main()
+                self.assertEqual(cm.exception.code, 1)
 
         output = f.getvalue()
         self.assertNotIn("generated_version", output)
@@ -108,7 +112,8 @@ class TestUpdateWhichBrowser(unittest.TestCase):
         from contextlib import redirect_stdout
         f = io.StringIO()
         with redirect_stdout(f):
-            update_which_browser.main()
+            with patch.object(sys, 'argv', ['update_which_browser.py']):
+                update_which_browser.main()
 
         output = f.getvalue()
         self.assertNotIn("generated_version", output)
@@ -135,7 +140,8 @@ class TestUpdateWhichBrowser(unittest.TestCase):
         from contextlib import redirect_stdout
         f = io.StringIO()
         with redirect_stdout(f):
-            update_which_browser.main()
+            with patch.object(sys, 'argv', ['update_which_browser.py']):
+                update_which_browser.main()
 
         output = f.getvalue()
         self.assertNotIn("generated_version", output)

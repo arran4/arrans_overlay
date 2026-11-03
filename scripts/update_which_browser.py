@@ -153,10 +153,22 @@ pkg_postrm() {{
     ebuild_path.write_text(ebuild_content)
     logging.info(f"Generated ebuild at {ebuild_path}")
 
-    # Upsert manifest
+    # Upsert manifest inside a staging directory to prevent mutation failures
+    import tempfile
+    import shutil
     try:
-        run_cmd(["g2", "manifest", "upsert-from-url", f"{base_url}/{deb_archive}", deb_archive, str(work_dir)])
-        logging.info("Manifest upserted successfully.")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_manifest = os.path.join(tmpdir, "Manifest")
+            manifest_path = work_dir / "Manifest"
+            if manifest_path.exists():
+                shutil.copy2(manifest_path, tmp_manifest)
+            else:
+                Path(tmp_manifest).touch()
+
+            run_cmd(["g2", "manifest", "upsert-from-url", f"{base_url}/{deb_archive}", deb_archive, tmpdir])
+
+            shutil.copy2(tmp_manifest, manifest_path)
+            logging.info("Manifest upserted successfully.")
     except Exception as e:
         logging.error(f"Failed to upsert manifest: {e}")
         # Clean up the generated ebuild if manifest generation fails
@@ -176,7 +188,13 @@ def main():
     generated_version = ""
     generated_tag = ""
 
-    for release in releases:
+
+    # Sort releases properly: ensure stable tags without draft/prerelease
+    valid_releases = [r for r in releases if not r.get("draft") and not r.get("prerelease")]
+    # Simple semantic sorting heuristic based on tag name
+    valid_releases.sort(key=lambda r: r.get("tag_name", ""), reverse=True)
+
+    for release in valid_releases:
         assets = release.get("assets", [])
         deb_asset = next((a for a in assets if a["name"].endswith("-linux.deb")), None)
 
@@ -185,7 +203,7 @@ def main():
 
         filename = deb_asset["name"]
         # Extract version: which_browser-0.2.6+44-linux.deb -> 0.2.6, 44
-        match = re.match(r"^which_browser-(.+?)\+([0-9]+)-linux\.deb$", filename)
+        match = re.match(r"^which_browser-([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]+)-linux\.deb$", filename)
         if not match:
             logging.info(f"Skipping unexpected filename format: {filename}")
             continue
@@ -212,7 +230,8 @@ def main():
 
         if not validate_url(target_url):
             logging.error(f"Unauthenticated download validation failed for {target_url}. Skipping version {version}.")
-            continue
+            # The issue explicitly requires: "return an actionable failed/blocked status when no publicly fetchable candidate exists"
+            sys.exit(1)
 
         try:
             generate_ebuild(work_dir, base_version, build_suffix, version, filename, base_url)
