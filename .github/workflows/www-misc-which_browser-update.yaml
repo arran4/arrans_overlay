@@ -9,6 +9,8 @@ on:
     - cron: '15 12 * * *'
   workflow_dispatch:
   push:
+    branches:
+      - main
     paths:
       - '.github/workflows/www-misc-which_browser-update.yaml'
       - 'scripts/update_which_browser.py'
