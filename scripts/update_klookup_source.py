@@ -80,16 +80,42 @@ def create_release(tag, version):
     return True
 
 
+def prune_old_stable_releases(keep_version):
+    """Keep only the newest published stable grade and its distfile/cache."""
+    removed_versions = []
+    for ebuild in PACKAGE_DIR.glob('klookup-*.ebuild'):
+        match = re.fullmatch(r'klookup-(\d+\.\d+\.\d+)\.ebuild', ebuild.name)
+        if match and match.group(1) != keep_version:
+            removed_versions.append(match.group(1))
+            ebuild.unlink()
+            (Path('metadata/md5-cache/app-misc') / ebuild.stem).unlink(missing_ok=True)
+    manifest = PACKAGE_DIR / 'Manifest'
+    if removed_versions and manifest.exists():
+        obsolete_distfiles = {f'klookup-{version}.tar.gz' for version in removed_versions}
+        original = manifest.read_text(encoding='utf-8')
+        kept = [line for line in original.splitlines(keepends=True)
+                if not (line.startswith('DIST ') and
+                        line.split()[1] in obsolete_distfiles)]
+        manifest.write_text(''.join(kept), encoding='utf-8')
+    return bool(removed_versions)
+
+
 def main():
     if not LIVE_EBUILD.is_file():
         raise FileNotFoundError(f'Run from overlay root: missing {LIVE_EBUILD}')
-    updated = False
-    for tag, version in eligible_releases(get_releases()):
-        updated = create_release(tag, version) or updated
+    releases = list(eligible_releases(get_releases()))
+    if not releases:
+        print('No published stable KLookup releases')
+        return
+    # GitHub's API order is not a reliable semantic-version comparison.
+    tag, version = max(releases,
+                       key=lambda item: tuple(int(part) for part in item[1].split('.')))
+    updated = create_release(tag, version)
+    updated = prune_old_stable_releases(version) or updated
     if updated:
         subprocess.run(['g2', 'cache', 'generate', 'app-misc/klookup'], check=True)
     else:
-        print('No new eligible KLookup releases')
+        print('Latest stable KLookup release already packaged')
 
 
 if __name__ == '__main__':

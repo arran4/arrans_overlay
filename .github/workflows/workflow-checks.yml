@@ -61,22 +61,3 @@ jobs:
           bash scripts/test_workflow_kgithub_notify.sh
       - name: Test Manifest restoration logic
         run: ./scripts/test_manifest_restore.sh
-
-  klookup-v0-0-1-archive-digest:
-    # Temporary, minimal verification job for the first stable source archive.
-    # Its output is used to record the genuine distfile Manifest hash.
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download immutable tag archive and show Gentoo digest
-        shell: bash
-        run: |
-          set -euo pipefail
-          url='https://github.com/arran4/klookup/archive/refs/tags/v0.0.1.tar.gz'
-          curl --fail --location --retry 3 --silent --show-error "$url" --output klookup-0.0.1.tar.gz
-          test -s klookup-0.0.1.tar.gz
-          printf 'DIST klookup-0.0.1.tar.gz %s BLAKE2B %s SHA512 %s\n' \
-            "$(wc -c < klookup-0.0.1.tar.gz | tr -d ' ')" \
-            "$(b2sum -l 512 klookup-0.0.1.tar.gz | cut -d ' ' -f 1)" \
-            "$(sha512sum klookup-0.0.1.tar.gz | cut -d ' ' -f 1)"
-          printf 'Archive root: '
-          tar -tzf klookup-0.0.1.tar.gz | head -n 1

@@ -82,7 +82,7 @@ class TestUpdater(unittest.TestCase):
     def test_existing_does_not_hide_newer_and_unprefixed_tags(self, get_releases, run):
         (updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').write_text('existing')
         updater.main()
-        self.assertEqual((updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').read_text(), 'existing')
+        self.assertFalse((updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').exists())
         self.assertTrue((updater.PACKAGE_DIR / 'klookup-1.1.0.ebuild').is_file())
         self.assertIn('refs/tags/v1.1.0.tar.gz', (updater.PACKAGE_DIR / 'klookup-1.1.0.ebuild').read_text())
         self.assertEqual(run.call_count, 2)
@@ -98,6 +98,36 @@ class TestUpdater(unittest.TestCase):
     def test_api_failure_is_not_silent(self, urlopen):
         with self.assertRaises(OSError):
             updater.get_releases()
+
+
+    @patch('update_klookup_source.subprocess.run')
+    @patch.object(updater, 'get_releases', return_value=[
+        {'tag_name': 'v1.9.0'}, {'tag_name': 'v1.2.0'},
+        {'tag_name': 'v1.10.0'}])
+    def test_only_newest_semver_release_is_packaged(self, get_releases, run):
+        updater.main()
+        self.assertTrue((updater.PACKAGE_DIR / 'klookup-1.10.0.ebuild').exists())
+        self.assertFalse((updater.PACKAGE_DIR / 'klookup-1.9.0.ebuild').exists())
+        self.assertFalse((updater.PACKAGE_DIR / 'klookup-1.2.0.ebuild').exists())
+        self.assertEqual(run.call_count, 2)
+
+    @patch('update_klookup_source.subprocess.run')
+    @patch.object(updater, 'get_releases', return_value=[
+        {'tag_name': 'v1.1.0'}])
+    def test_removes_obsolete_release_ebuild_cache_and_manifest(self, get_releases, run):
+        (updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').write_text('obsolete')
+        cache = Path('metadata/md5-cache/app-misc/klookup-1.0.0')
+        cache.parent.mkdir(parents=True)
+        cache.write_text('obsolete cache')
+        manifest = updater.PACKAGE_DIR / 'Manifest'
+        manifest.write_text('DIST klookup-1.0.0.tar.gz 10 BLAKE2B old SHA512 old\n'
+                            'DIST other-source.tar.gz 10 BLAKE2B keep SHA512 keep\n')
+        updater.main()
+        self.assertFalse((updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').exists())
+        self.assertFalse(cache.exists())
+        self.assertNotIn('klookup-1.0.0', manifest.read_text())
+        self.assertIn('other-source.tar.gz', manifest.read_text())
+        self.assertEqual(run.call_count, 2)
 
 
 if __name__ == '__main__':
