@@ -234,6 +234,26 @@ for atom, expected_keyword in (
     assert output == expected_keyword, (atom, output, expected_keyword)
 assert '("dev-lang/perl", "5.44")' in workflow
 assert '("dev-libs/wayland", "1.26")' in workflow
+# KLookup's KF6 Wayland graph needs scanner 1.26, but unrelated stage3 jobs
+# retain the protective mask. Also keep required USE consistent.
+assert 'if cp == "dev-libs/wayland" and "app-misc/klookup-" in os.environ.get("PKG", ""):' in workflow
+assert '"app-text/xmlto text"' in workflow
+# QtTools built without OpenGL encodes qtbase[-opengl] and cannot be used
+# with Qt Wayland. Set the compatible flag before resolving binpkg choices.
+assert '"dev-qt/qttools opengl"' in workflow
+# A restored git3-src clone must be writable by git-r3's portage user.
+# Restrict ownership changes to KLookup, not the entire distfiles cache.
+assert 'install -d -o portage -g portage -m 0755 /var/cache/distfiles/git3-src' in workflow
+assert 'klookup_git_cache=/var/cache/distfiles/git3-src/arran4_klookup.git' in workflow
+assert 'chown -R portage:portage "$klookup_git_cache"' in workflow
+assert 'TARGET_BINARY_OPTIONS+=(--binpkg-respect-use=y)' in workflow
+import hashlib
+from pathlib import Path
+klookup_ebuild = Path('app-misc/klookup/klookup-9999.ebuild').read_bytes()
+klookup_cache = Path('metadata/md5-cache/app-misc/klookup-9999').read_text()
+assert b'\tsys-libs/zlib\n' in klookup_ebuild
+assert ' sys-libs/zlib\n' in klookup_cache
+assert '_md5_=' + hashlib.md5(klookup_ebuild).hexdigest() in klookup_cache
 assert '=dev-libs/wayland-1.25.0 ~amd64' in workflow
 assert '<dev-libs/wayland-1.25.0' in workflow
 assert "> /etc/portage/package.mask/ci-stage3-compat" in workflow

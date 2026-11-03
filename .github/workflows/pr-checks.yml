@@ -102,7 +102,13 @@ jobs:
           fi
 
           echo "Comparing $BASE to $HEAD"
-          CHANGED_FILES=$(git diff --name-only "$BASE" "$HEAD")
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # Select PR-authored changes from the merge base, not unrelated
+            # newer main-branch changes when the PR branch falls behind.
+            CHANGED_FILES=$(git diff --name-only "$BASE...$HEAD")
+          else
+            CHANGED_FILES=$(git diff --name-only "$BASE" "$HEAD")
+          fi
 
           # Extract unique package directories (e.g., category/package)
           DIRS=$(echo "$CHANGED_FILES" | grep -E "^[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+/" | cut -d/ -f1,2 | sort -u | tr '\n' ' ' || true)

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<name>Arran Ubels</name>
+		<email>gentoo@arran4.com</email>
+	</maintainer>
+	<use>
+		<flag name="test">Enable tests</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">arran4/klookup</remote-id>
+	</upstream>
+</pkgmetadata>
