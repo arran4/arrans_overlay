@@ -1,0 +1,19 @@
+--- a/src/org.kde.klookup.desktop
++++ b/src/org.kde.klookup.desktop
+@@ -12,13 +12,13 @@
+ X-DBus-ServiceName=org.kde.klookup
+ 
+-Actions=show_search;search_clipboard;
++Actions=show-search;search-clipboard;
+ 
+-[Desktop Action show_search]
++[Desktop Action show-search]
+ Name=Show/focus KLookup search
+ Exec=klookup --show-search
+ Icon=edit-find
+ 
+-[Desktop Action search_clipboard]
++[Desktop Action search-clipboard]
+ Name=Search clipboard now
+ Exec=klookup --search-clipboard
+ Icon=edit-paste

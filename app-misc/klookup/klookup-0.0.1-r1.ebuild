@@ -20,6 +20,9 @@ KEYWORDS="~amd64"
 IUSE="test"
 RESTRICT="!test? ( test )"
 
+# Backport KLookup #132 into the immutable v0.0.1 source archive.
+PATCHES=( "${FILESDIR}/${PN}-0.0.1-desktop-actions.patch" )
+
 BDEPEND="
 	kde-frameworks/extra-cmake-modules:0
 	virtual/pkgconfig

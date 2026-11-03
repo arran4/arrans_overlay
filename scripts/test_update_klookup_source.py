@@ -82,6 +82,33 @@ class TestUpdater(unittest.TestCase):
         run.assert_not_called()
 
     @patch('update_klookup_source.subprocess.run')
+    @patch.object(updater, 'get_releases', return_value=[{'tag_name': 'v1.0.0'}])
+    def test_revisioned_stable_ebuild_is_idempotent(self, get_releases, run):
+        revision = updater.PACKAGE_DIR / 'klookup-1.0.0-r1.ebuild'
+        revision.write_text('locally reviewed source backport')
+        updater.main()
+        run.assert_not_called()
+        self.assertTrue(revision.exists())
+        self.assertFalse((updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').exists())
+
+    @patch('update_klookup_source.subprocess.run')
+    @patch.object(updater, 'get_releases', return_value=[{'tag_name': 'v1.1.0'}])
+    def test_new_stable_removes_obsolete_revisions_and_cache(self, get_releases, run):
+        obsolete = updater.PACKAGE_DIR / 'klookup-1.0.0-r1.ebuild'
+        obsolete.write_text('obsolete stable revision')
+        cache = Path('metadata/md5-cache/app-misc/klookup-1.0.0-r1')
+        cache.parent.mkdir(parents=True)
+        cache.write_text('obsolete cache')
+        manifest = updater.PACKAGE_DIR / 'Manifest'
+        manifest.write_text('DIST klookup-1.0.0.tar.gz 10 BLAKE2B old SHA512 old\\n')
+        updater.main()
+        self.assertFalse(obsolete.exists())
+        self.assertFalse(cache.exists())
+        self.assertNotIn('klookup-1.0.0.tar.gz', manifest.read_text())
+        self.assertTrue((updater.PACKAGE_DIR / 'klookup-1.1.0.ebuild').exists())
+        self.assertEqual(run.call_count, 2)
+
+    @patch('update_klookup_source.subprocess.run')
     @patch.object(updater, 'get_releases', return_value=[{'tag_name': '1.0.0'}, {'tag_name': 'v1.1.0'}])
     def test_existing_does_not_hide_newer_and_unprefixed_tags(self, get_releases, run):
         (updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').write_text('existing')

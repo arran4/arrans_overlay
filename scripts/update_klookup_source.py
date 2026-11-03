@@ -70,7 +70,13 @@ def release_ebuild(tag, version):
 
 def create_release(tag, version):
     dest = PACKAGE_DIR / f'klookup-{version}.ebuild'
-    if dest.exists():
+    # A stable ebuild may already exist under a Gentoo revision (-r1, -r2, ...).
+    # Do not regenerate an unrevisioned ebuild that would take precedence
+    # incorrectly or undo a reviewer-approved fix.
+    existing = (path for path in PACKAGE_DIR.glob(f'klookup-{version}-r*.ebuild')
+                if re.fullmatch(rf'klookup-{re.escape(version)}-r[1-9][0-9]*\.ebuild',
+                                path.name))
+    if dest.exists() or any(existing):
         return False
     content = release_ebuild(tag, version)
     dest.write_text(content, encoding='utf-8')
@@ -85,11 +91,16 @@ def create_release(tag, version):
 
 def prune_old_stable_releases(keep_version):
     """Keep only the newest published stable grade and its distfile/cache."""
-    removed_versions = []
+    removed_versions = set()
     for ebuild in PACKAGE_DIR.glob('klookup-*.ebuild'):
-        match = re.fullmatch(r'klookup-(\d+\.\d+\.\d+)\.ebuild', ebuild.name)
+        # Clean up old stable releases including their Gentoo revisions, but
+        # never touch the current stable version, live or prerelease ebuilds.
+        match = re.fullmatch(
+            r'klookup-(\d+\.\d+\.\d+)(?:-r[1-9][0-9]*)?\.ebuild',
+            ebuild.name,
+        )
         if match and match.group(1) != keep_version:
-            removed_versions.append(match.group(1))
+            removed_versions.add(match.group(1))
             ebuild.unlink()
             (Path('metadata/md5-cache/app-misc') / ebuild.stem).unlink(missing_ok=True)
     manifest = PACKAGE_DIR / 'Manifest'
