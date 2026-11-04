@@ -1,6 +1,6 @@
 # Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-10-30 03:15:07.810720053 +0000 UTC m=+0.007303948
 
-name: www-misc/header-bin update
+name: app-text/header-bin update
 
 permissions:
   contents: write
@@ -11,17 +11,17 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/www-misc-header-bin-update.yaml'
+      - '.github/workflows/app-text-header-bin-update.yaml'
 
 env:
-  ecn: www-misc
+  ecn: app-text
   epn: header-bin
   description: "Go CLI and library for extracting, validating, editing and visualizing website metadata"
   homepage: "https://github.com/arran4/header"
   github_owner: arran4
   github_repo: header
   keywords: ~amd64 ~arm64 ~x86
-  workflow_filename: www-misc-header-bin-update.yaml
+  workflow_filename: app-text-header-bin-update.yaml
   header_binary_installed_name: 'header'
   header_binary_archived_name_amd64: 'header'
   header_release_name_amd64: 'header_${version}_linux_amd64.tar.gz'
