@@ -77,10 +77,16 @@ class DartUpdaterTest(unittest.TestCase):
             virtual = root / "virtual/dart"
             virtual.mkdir(parents=True)
             existing = virtual / "dart-3.13.0.ebuild"
-            existing.write_text("RDEPEND=\"|| ( =dev-lang/dart-bin-3.13.0 )\"\n")
+            existing.write_text('RDEPEND="|| ( =dev-lang/dart-bin-3.13.0 )"\n')
+            source = root / "dev-lang/dart"
+            source.mkdir(parents=True)
+            (source / "dart-3.14.0.ebuild").write_text('EAPI=8\nKEYWORDS="~amd64"\n')
             updater.create_virtual_dart("3.14.0", root)
-            self.assertEqual(existing.read_text(), "RDEPEND=\"|| ( =dev-lang/dart-bin-3.13.0 )\"\n")
-            self.assertFalse((virtual / "dart-3.14.0.ebuild").exists())
+            self.assertIn("dart-bin-3.13.0", existing.read_text())
+            generated = (virtual / "dart-3.14.0.ebuild").read_text()
+            self.assertIn("~dev-lang/dart-3.14.0", generated)
+            self.assertNotIn("dart-bin-3.13.0", generated)
+            self.assertNotIn("dart-bin-3.14.0", generated)
 
     @patch.object(updater, "close_superseding_releases")
     @patch.object(updater, "run_cmd")
@@ -118,7 +124,7 @@ class DartUpdaterTest(unittest.TestCase):
         for directory, filename in (("dev-lang/dart", "dart-3.13.3.ebuild"), ("virtual/dart", "dart-3.13.3.ebuild")):
             path = root / directory
             path.mkdir(parents=True, exist_ok=True)
-            (path / filename).write_text('EAPI=8\nSRC_URI="https://example.invalid/source.tar.xz"\n')
+            (path / filename).write_text('EAPI=8\nKEYWORDS="~amd64"\nSRC_URI="https://example.invalid/source.tar.xz"\n')
         subprocess.run(["git", "init", "-q"], cwd=root, check=True)
         subprocess.run(["git", "add", "."], cwd=root, check=True)
         subprocess.run(["git", "-c", "commit.gpgsign=false", "-c", "user.email=t@example", "-c", "user.name=t", "commit", "-qm", "base"], cwd=root, check=True)

@@ -12,7 +12,7 @@ on:
       - '.github/workflows/www-misc-which_browser-update.yaml'
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:

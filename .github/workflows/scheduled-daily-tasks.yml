@@ -47,10 +47,20 @@ jobs:
           emerge --quiet app-portage/portage-utils dev-vcs/git net-misc/curl app-misc/jq dev-util/github-cli app-admin/sudo
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: main
           fetch-depth: 0
+
+      # checkout's safe.directory setting is made for the runner's temporary HOME;
+      # the Gentoo container steps run under a different HOME and UID.
+      - name: Trust checked-out workspace for container Git
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse --is-inside-work-tree)" = true
+          test "$(realpath "$(git rev-parse --show-toplevel)")" = "$(realpath "$GITHUB_WORKSPACE")"
 
       - name: Install g2
         uses: arran4/g2-action@v1.2
@@ -64,6 +74,29 @@ jobs:
           [arrans-overlay]
           location = $(pwd)
           INNER_EOF
+
+      # Bring virtuals forward before pruning providers; do not invent version
+      # compatibility for a source or binary SDK that has not been packaged.
+      - name: Prepare exact-version Dart and Flutter virtuals
+        if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
+        run: python3 scripts/maintain_virtuals.py prepare .
+
+      # g2 treats older virtual SDK ebuilds as duplicate versions and may
+      # delete the only copy before reconciliation can bump its -rN revision.
+      # Save the published bytes so a changed provider list results in a new
+      # revision rather than a different ebuild under the same filename.
+      - name: Snapshot managed SDK virtual ebuilds
+        if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot_dir=$(mktemp -d "${RUNNER_TEMP:-/tmp}/sdk-virtuals.XXXXXX")
+          echo "SDK_VIRTUAL_SNAPSHOT=$snapshot_dir" >> "$GITHUB_ENV"
+          for package in dart flutter; do
+            mkdir -p "$snapshot_dir/$package"
+            find "virtual/$package" -maxdepth 1 -type f -name '*.ebuild' \
+              -exec cp -p -t "$snapshot_dir/$package" -- {} +
+          done
 
       # Temporary safety guard while https://github.com/arran4/g2/issues/483
       # / https://github.com/arran4/g2/pull/540 is unresolved. DeduplicateEbuilds
@@ -126,6 +159,29 @@ jobs:
         run: |
           bash scripts/restore_manifests.sh /tmp/manifest-snapshot "${{ steps.dedupe.outputs.dedupe_failed }}"
 
+      # Restore the pre-dedup virtual ebuilds before cleanup. The reconciler
+      # then writes a -rN revision when its RDEPEND alternatives change and
+      # retires the outdated revision in the same transaction.
+      - name: Restore managed SDK virtual ebuilds
+        if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${SDK_VIRTUAL_SNAPSHOT:?missing pre-dedup virtual snapshot}"
+          for package in dart flutter; do
+            test -d "$SDK_VIRTUAL_SNAPSHOT/$package"
+            find "$SDK_VIRTUAL_SNAPSHOT/$package" -maxdepth 1 -type f -name '*.ebuild' \
+              -exec cp -p -t "virtual/$package" -- {} +
+          done
+
+      - name: Reconcile virtuals and prune stale distfile entries
+        if: ${{ github.event_name == 'schedule' || inputs.run_dedupe == true }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/maintain_virtuals.py cleanup .
+          python3 scripts/prune_dedup_manifests.py .
+
       # Repository-wide `g2 manifest clean .` is intentionally disabled while
       # g2#483 / PR #540 is pending. Use the package-scoped manual
       # `Repair package Manifest` workflow for repairs in the meantime.
@@ -186,7 +242,7 @@ jobs:
     outputs:
       has_changes: ${{ steps.check.outputs.has_changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Check for commits in last 24 hours
@@ -224,7 +280,7 @@ jobs:
              emerge --quiet dev-vcs/git app-admin/sudo
            fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -291,7 +347,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install g2
         uses: arran4/g2-action@v1.2

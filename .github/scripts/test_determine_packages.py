@@ -141,8 +141,17 @@ assert "--useoldpkg-atoms" not in workflow
 assert "--ignore-world" not in workflow
 assert "--onlydeps" not in workflow
 assert "\n            etc-update " not in workflow
-package_emerge = re.search(r"if ! emerge -v \\\n(?P<options>.*?)\"\$PKG\"; then", workflow, re.DOTALL)
+package_emerge = re.search(r'if ! emerge -v "\$\{EMERGE_MODE\[@\]\}" \\\n(?P<options>.*?)"\$PKG"; then', workflow, re.DOTALL)
 assert package_emerge is not None
+assert 'flutter_pvr=${PKG#=virtual/flutter-}' in workflow
+assert 'flutter_version=${flutter_pvr%-r[0-9]*}' in workflow
+assert 'compgen -G "${flutter_bin_dir}/flutter-bin-${flutter_version}-r[0-9]*.ebuild"' in workflow
+assert 'CI_GRAPH_PREREQUISITES+=("~dev-lang/flutter-bin-${flutter_version}")' in workflow
+assert "VIRTUAL_FLUTTER_SOURCE_ONLY=true" in workflow
+assert "EMERGE_MODE+=(--pretend)" in workflow
+assert "--autounmask-only=y --backtrack=50" in workflow
+assert "--autounmask-write=y --autounmask-continue=y" in workflow
+assert "~dev-lang/flutter-bin-3.47.2" not in workflow
 package_emerge_options = package_emerge.group("options")
 for option in (
     "--usepkg",
@@ -194,7 +203,35 @@ assert "TARGET_BINARY_OPTIONS+=(--usepkg-exclude \"$PKG\")" not in workflow
 assert '"$PACKAGE" "$SOURCE_TARGET"' in workflow
 assert "binary_excludes" not in workflow
 assert 'CONFIG_PROTECT_MASK="${CONFIG_PROTECT_MASK} /etc/portage/package.accept_keywords /etc/portage/package.use /etc/portage/package.unmask"' in workflow
-assert 'printf "%s ~amd64\\n" "$PKG"' in workflow
+assert 'target_keywords="~amd64"' in workflow
+assert 'target_keywords="**"' in workflow
+assert 'printf "%s %s\\n" "$PKG" "$target_keywords"' in workflow
+assert 'printf "%s ~amd64\\n" "$PKG"' not in workflow
+assert 'if [[ "$PKG" == *"kmagmux-9999"* ]]; then' not in workflow
+
+# Execute the Bash version matcher embedded in the workflow: exact live
+# versions and their revisions are allowed; releases and lookalikes are not.
+live_keyword_rule = re.search(r'^          if \[\[ "\$PKG" =~ (.+?) \]\]; then$', workflow, re.MULTILINE)
+assert live_keyword_rule is not None
+live_keyword_pattern = live_keyword_rule.group(1)
+for atom, expected_keyword in (
+    ("=net-im/msm-9999", "**"),
+    ("=net-misc/kmagmux-9999", "**"),
+    ("=net-im/msm-9999-r1", "**"),
+    ("=net-im/msm-9999::arrans-overlay", "**"),
+    ("=net-im/msm-0.1.0", "~amd64"),
+    ("=net-im/msm-19999", "~amd64"),
+    ("=net-im/msm-9999-extra", "~amd64"),
+):
+    output = subprocess.run(
+        [
+            "bash", "-c",
+            f'if [[ "$1" =~ {live_keyword_pattern} ]]; then printf "**"; else printf "~amd64"; fi',
+            "--", atom,
+        ],
+        check=True, text=True, capture_output=True,
+    ).stdout
+    assert output == expected_keyword, (atom, output, expected_keyword)
 assert '("dev-lang/perl", "5.44")' in workflow
 assert '("dev-libs/wayland", "1.26")' in workflow
 assert '=dev-libs/wayland-1.25.0 ~amd64' in workflow
@@ -204,14 +241,66 @@ assert "--autounmask-keep-masks=y" in package_emerge_options
 assert "CI_GRAPH_PREREQUISITES=(dev-util/vulkan-headers)" in workflow
 assert 'ACCEPT_KEYWORDS="~amd64"' not in workflow
 assert "*/* ~amd64" not in workflow
-assert "=net-misc/kmagmux-9999" in workflow
+assert "=net-misc/kmagmux-9999" not in workflow
 assert "dev-qt/qtbase icu test" in workflow
 assert "dev-qt/qt5compat icu" in workflow
 assert 'echo "=dev-util/wayland-scanner-1.25.0 ~amd64" >> /etc/portage/package.accept_keywords/ci' in workflow
 assert "CI_GRAPH_PREREQUISITES+=('=dev-util/wayland-scanner-1.25.0' '=dev-cpp/glaze-7.0.2::hyproverlay')" in workflow
 assert 'echo ">=dev-util/wayland-scanner-1.26.0" >> /etc/portage/package.unmask/ci' not in workflow
-assert "CI_GRAPH_PREREQUISITES+=('~dev-lang/flutter-bin-3.47.2')" in workflow
+# A retained source-only virtual must not require a deduped-away binary SDK.
+assert "CI_GRAPH_PREREQUISITES+=('~dev-lang/flutter-bin-3.47.2')" not in workflow
+assert "CI_GRAPH_PREREQUISITES+=(\"~dev-lang/flutter-bin-${flutter_version}\")" in workflow
 assert '${PKG} == "=dev-lang/flutter-"*' in workflow
+
+# Extract and test the embedded virtual/flutter binary provider selector
+flutter_virtual_block_match = re.search(
+    r'(          VIRTUAL_FLUTTER_SOURCE_ONLY=false\n'
+    r'          if \[\[ "\$PKG" == "=virtual/flutter-"\* \]\]; then\n'
+    r'.*?\n'
+    r'          fi)',
+    workflow,
+    re.DOTALL,
+)
+assert flutter_virtual_block_match is not None
+flutter_virtual_block = flutter_virtual_block_match.group(1)
+
+def evaluate_virtual_flutter_prereq(pkg_atom, overlay_dir):
+    script = f"""
+    PKG="{pkg_atom}"
+    OVERLAY_DIR="{overlay_dir}"
+    CI_GRAPH_PREREQUISITES=()
+{flutter_virtual_block}
+    echo -n "${{CI_GRAPH_PREREQUISITES[*]}}:${{VIRTUAL_FLUTTER_SOURCE_ONLY}}"
+    """
+    res = subprocess.run(["bash", "-c", script], check=True, text=True, capture_output=True)
+    last_line = res.stdout.strip().splitlines()[-1]
+    prereq, _, source_only = last_line.partition(":")
+    return prereq, (source_only == "true")
+
+# Coverage for 3.47.2, 3.47.8, and variations
+assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.47.2", ".") == ("~dev-lang/flutter-bin-3.47.2", False)
+assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.47.2-r1", ".") == ("~dev-lang/flutter-bin-3.47.2", False)
+assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.47.8", ".") == ("~dev-lang/flutter-bin-3.47.8", False)
+assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.47.8-r1", ".") == ("~dev-lang/flutter-bin-3.47.8", False)
+assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.47.8-r2::arrans-overlay", ".") == ("~dev-lang/flutter-bin-3.47.8", False)
+# Boundary and non-matching tests
+assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.47.80", ".") == ("", True)
+assert evaluate_virtual_flutter_prereq("=dev-lang/flutter-3.47.8", ".") == ("", False)
+
+# Coverage for future versions (with and without matching binary provider)
+import tempfile
+from pathlib import Path
+with tempfile.TemporaryDirectory() as tmp_dir:
+    bin_dir = Path(tmp_dir) / "dev-lang" / "flutter-bin"
+    bin_dir.mkdir(parents=True)
+    (bin_dir / "flutter-bin-3.50.0.ebuild").touch()
+    (bin_dir / "flutter-bin-4.0.0-r1.ebuild").touch()
+    # Future version with unrevisioned binary provider
+    assert evaluate_virtual_flutter_prereq("=virtual/flutter-3.50.0", tmp_dir) == ("~dev-lang/flutter-bin-3.50.0", False)
+    # Future version with revisioned binary provider
+    assert evaluate_virtual_flutter_prereq("=virtual/flutter-4.0.0", tmp_dir) == ("~dev-lang/flutter-bin-4.0.0", False)
+    # Future version without binary provider does not invent compatibility and marks source-only pretend
+    assert evaluate_virtual_flutter_prereq("=virtual/flutter-4.1.0", tmp_dir) == ("", True)
 
 # Regression coverage: Flutter source targets receive extended timeout and
 # share the 'flutter' cache lineage, while virtual/flutter and binary flutter

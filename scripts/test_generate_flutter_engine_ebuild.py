@@ -123,6 +123,89 @@ class ReviewedExclusionTest(unittest.TestCase):
                 "engine/src/flutter/third_party/googletest", dependency
             )
 
+    def test_target_pinned_dart_sdk_revisions_are_exact_and_release_scoped(self):
+        original = generator.DART_REVISION
+        newer = "04bcd1036cdc799ac6564988f159ee454d42c822"
+        reviews = generator.reviewed_exclusions_for_dart_revision(newer)
+        for destination in (
+            "engine/src/flutter/prebuilts/linux-arm64/dart-sdk",
+            "engine/src/flutter/prebuilts/linux-x64/dart-sdk",
+        ):
+            expected, reason = reviews[destination]
+            original_identity, original_reason = generator.REVIEWED_EXCLUSIONS[destination]
+            self.assertEqual(reason, original_reason)
+            self.assertEqual(expected.condition, original_identity.condition)
+            self.assertEqual(expected.packages[0][0], original_identity.packages[0][0])
+            self.assertEqual(
+                expected.packages[0][1], f"git_revision:{newer}"
+            )
+            self.assertEqual(
+                original_identity.packages[0][1], f"git_revision:{original}"
+            )
+            self.assertEqual(
+                generator.validate_reviewed_exclusion(
+                    destination,
+                    {
+                        "dep_type": "cipd",
+                        "packages": [{
+                            "package": expected.packages[0][0],
+                            "version": expected.packages[0][1],
+                        }],
+                        "condition": expected.condition,
+                    },
+                    reviews,
+                ),
+                reason,
+            )
+            with self.assertRaisesRegex(ValueError, "DEPS exclusion changed"):
+                generator.validate_reviewed_exclusion(
+                    destination,
+                    {
+                        "dep_type": "cipd",
+                        "packages": [{
+                            "package": expected.packages[0][0],
+                            "version": f"git_revision:{original}",
+                        }],
+                        "condition": expected.condition,
+                    },
+                    reviews,
+                )
+            with self.assertRaisesRegex(ValueError, "DEPS exclusion changed"):
+                generator.validate_reviewed_exclusion(
+                    destination,
+                    {
+                        "dep_type": "cipd",
+                        "packages": [{
+                            "package": "unexpected/dart-sdk",
+                            "version": expected.packages[0][1],
+                        }],
+                        "condition": expected.condition,
+                    },
+                    reviews,
+                )
+            with self.assertRaisesRegex(ValueError, "DEPS exclusion changed"):
+                generator.validate_reviewed_exclusion(
+                    destination,
+                    {
+                        "dep_type": "cipd",
+                        "packages": [{
+                            "package": expected.packages[0][0],
+                            "version": expected.packages[0][1],
+                        }],
+                        "condition": "changed_condition",
+                    },
+                    reviews,
+                )
+        self.assertEqual(
+            generator.reviewed_exclusions_for_dart_revision(original),
+            generator.REVIEWED_EXCLUSIONS,
+        )
+
+    def test_invalid_dart_pin_rejected(self):
+        for pin in ("", "git_revision:bad", "f" * 39, "g" * 40):
+            with self.assertRaisesRegex(ValueError, "invalid pinned Dart revision"):
+                generator.reviewed_exclusions_for_dart_revision(pin)
+
     def test_unreviewed_exclusion_fails(self):
         dependency = {
             "url": "https://example.com/repo@" + "a" * 40,

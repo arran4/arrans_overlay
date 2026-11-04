@@ -39,6 +39,11 @@ while IFS= read -r -d '' manifest; do
     echo "Refusing to continue: dedupe deleted Manifest file: $relative" >&2
     CHANGED=1
   fi
+  # A repository-root Manifest is not a package Manifest. It has no ebuild
+  # siblings; still check its presence and restore/compare its bytes.
+  if [ "$relative" = "Manifest" ]; then
+    continue
+  fi
   # Check if all ebuilds in this package dir were deleted
   pkg_dir=$(dirname "$relative")
   if [ ! -d "$GITHUB_WORKSPACE/$pkg_dir" ]; then

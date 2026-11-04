@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Regenerate the pinned Flutter Engine DEPS source graph in the ebuild.
 
-To update Flutter Engine, change FLUTTER_VERSION, FLUTTER_ENGINE_REV,
-and review every DEPS identity before regenerating. The exact reviewed
-exclusions intentionally prevent this script from pretending an unreviewed
-version bump is automatic.
+The release updater passes one validated ``--release-spec`` to this generator
+and the Flutter generator. The exact reviewed exclusions intentionally prevent
+this script from pretending an unreviewed version bump is automatic.
 
 Conditions are evaluated for the only supported source build: Linux/amd64 host,
 using the system compiler, GN, Ninja, and C library.
@@ -19,6 +18,9 @@ import re
 import sys
 import tempfile
 import urllib.request
+
+sys.path.insert(0, str(Path(__file__).parent))
+from flutter_release_spec import FlutterReleaseSpec
 
 
 FLUTTER_VERSION = "3.47.2"
@@ -742,9 +744,46 @@ def dependency_identity(
     raise ValueError(f"unsupported DEPS type {dep_type!r} at {destination}")
 
 
-def validate_reviewed_exclusion(destination: str, dependency: object) -> str:
-    """Fail unless an exclusion has the exact reviewed identity."""
-    review = REVIEWED_EXCLUSIONS.get(destination)
+def reviewed_exclusions_for_dart_revision(
+    dart_revision: str,
+) -> dict[str, tuple[DependencyIdentity, str]]:
+    """Bind only the excluded Dart SDK prebuilts to the validated release pin.
+
+    Other reviewed identities must remain exact and independently reviewed.
+    Never mutate module-level reviews: different releases may be generated in
+    the same interpreter.
+    """
+    if not re.fullmatch(r"[0-9a-f]{40}", dart_revision):
+        raise ValueError("invalid pinned Dart revision")
+    reviews = REVIEWED_EXCLUSIONS.copy()
+    for destination in (
+        "engine/src/flutter/prebuilts/linux-arm64/dart-sdk",
+        "engine/src/flutter/prebuilts/linux-x64/dart-sdk",
+    ):
+        identity, reason = reviews[destination]
+        if identity.dep_type != "cipd" or len(identity.packages) != 1:
+            raise ValueError(
+                f"unexpected reviewed Dart SDK identity at {destination}"
+            )
+        package, _previous_version = identity.packages[0]
+        reviews[destination] = (
+            cipd_identity(
+                package, f"git_revision:{dart_revision}", identity.condition
+            ),
+            reason,
+        )
+    return reviews
+
+
+def validate_reviewed_exclusion(
+    destination: str,
+    dependency: object,
+    reviews: dict[str, tuple[DependencyIdentity, str]] | None = None,
+) -> str:
+    """Fail unless an exclusion has the exact selected-release identity."""
+    if reviews is None:
+        reviews = REVIEWED_EXCLUSIONS
+    review = reviews.get(destination)
     if review is None:
         raise ValueError(f"unreviewed DEPS exclusion at {destination}")
     expected, reason = review
@@ -883,6 +922,7 @@ def render(deps_path: Path) -> str:
             "expected "
             f"{DART_REVISION!r}, got {variables.get('dart_revision')!r}"
         )
+    reviewed_exclusions = reviewed_exclusions_for_dart_revision(DART_REVISION)
     git_sources: list[GitSource] = []
     active_reviews: set[str] = set()
 
@@ -893,7 +933,9 @@ def render(deps_path: Path) -> str:
             else "git"
         )
         if dep_type == "cipd":
-            validate_reviewed_exclusion(destination, dependency)
+            validate_reviewed_exclusion(
+                destination, dependency, reviewed_exclusions
+            )
             active_reviews.add(destination)
             devtools_dest = (
                 "engine/src/flutter/third_party/dart/third_party/devtools"
@@ -912,8 +954,10 @@ def render(deps_path: Path) -> str:
                     )
                 )
         elif dep_type == "git":
-            if destination in REVIEWED_EXCLUSIONS:
-                validate_reviewed_exclusion(destination, dependency)
+            if destination in reviewed_exclusions:
+                validate_reviewed_exclusion(
+                    destination, dependency, reviewed_exclusions
+                )
                 active_reviews.add(destination)
                 if destination == "engine/src/flutter/third_party/vulkan-deps":
                     for ident, repo, rev, dest in VULKAN_DEPS_SUBPACKAGES:
@@ -940,7 +984,7 @@ def render(deps_path: Path) -> str:
                 f"unsupported DEPS type {dep_type!r} at {destination}"
             )
 
-    stale_reviews = sorted(set(REVIEWED_EXCLUSIONS) - active_reviews)
+    stale_reviews = sorted(set(reviewed_exclusions) - active_reviews)
     if stale_reviews:
         raise ValueError(
             "DEPS exclusion audit is out of date; "
@@ -1040,7 +1084,33 @@ def obtain_deps(
     return deps_path, temporary
 
 
-def update_ebuild(generated: str, check: bool) -> int:
+def apply_release_identity(text: str, release: FlutterReleaseSpec) -> str:
+    """Synchronize Engine source identity outside the generated DEPS block."""
+    replacement, count = re.subn(
+        r'^FLUTTER_ENGINE_REV="[^"]*"$',
+        f'FLUTTER_ENGINE_REV="{release.engine_revision}"',
+        text,
+        flags=re.MULTILINE,
+    )
+    if count != 1:
+        raise ValueError(
+            "expected one Flutter Engine revision outside generated DEPS, "
+            f"found {count}"
+        )
+    return replacement
+
+
+def update_ebuild(
+    generated: str, check: bool, release: FlutterReleaseSpec | None = None,
+) -> int:
+    if release:
+        ver = re.escape(release.base_version)
+        expected = rf"flutter-engine-{ver}(?:-r\d+)?\.ebuild"
+        if not re.fullmatch(expected, EBUILD.name):
+            raise ValueError(
+                f"release {release.version} must update an ebuild for "
+                f"{release.base_version}, not {EBUILD.name}"
+            )
     existing = EBUILD.read_text()
     pattern = re.compile(
         rf"^{re.escape(BEGIN)}$.*?^{re.escape(END)}$",
@@ -1051,11 +1121,14 @@ def update_ebuild(generated: str, check: bool) -> int:
         raise ValueError(
             f"expected one generated block in {EBUILD}, found {count}"
         )
+    if release is not None:
+        replacement = apply_release_identity(replacement, release)
     if replacement == existing:
         return 0
     if check:
         print(
-            f"{EBUILD} is not synchronized with Flutter {FLUTTER_VERSION} DEPS",
+            f"{EBUILD} is not synchronized with Flutter "
+            f"{release.version if release else FLUTTER_VERSION} DEPS",
             file=sys.stderr,
         )
         return 1
@@ -1077,16 +1150,35 @@ def main() -> int:
         "--dart-revision", type=str, help="Target Dart SDK revision for Engine"
     )
     parser.add_argument("--ebuild", type=Path, help="Path to ebuild to modify")
+    parser.add_argument(
+        "--release-spec", type=Path,
+        help="Validated Flutter release JSON shared with the Flutter generator",
+    )
     args = parser.parse_args()
 
-    if args.version:
+    release = (
+        FlutterReleaseSpec.read(args.release_spec)
+        if args.release_spec else None
+    )
+    if release and any((
+        args.version, args.engine_revision, args.dart_revision,
+    )):
+        parser.error(
+            "--release-spec cannot be combined with release identity flags"
+        )
+
+    if release:
+        FLUTTER_VERSION = release.version
+        FLUTTER_ENGINE_REV = release.engine_revision
+        DART_REVISION = release.dart_revision
+    elif args.version:
         FLUTTER_VERSION = args.version
     if args.engine_revision:
         FLUTTER_ENGINE_REV = args.engine_revision
     if args.dart_revision:
         DART_REVISION = args.dart_revision
 
-    if args.version or args.engine_revision:
+    if release or args.version or args.engine_revision:
         DEPS_URL = (
             f"https://raw.githubusercontent.com/flutter/flutter/"
             f"{FLUTTER_ENGINE_REV}/DEPS"
@@ -1094,7 +1186,7 @@ def main() -> int:
 
     if args.ebuild:
         EBUILD = args.ebuild
-    elif args.version:
+    elif args.version or release:
         EBUILD = (
             Path(__file__).parents[1]
             / "dev-libs"
@@ -1107,7 +1199,7 @@ def main() -> int:
         if not EBUILD.exists():
             print(render(deps_path))
             return 0
-        return update_ebuild(render(deps_path), args.check)
+        return update_ebuild(render(deps_path), args.check, release)
     finally:
         if temporary is not None:
             temporary.cleanup()

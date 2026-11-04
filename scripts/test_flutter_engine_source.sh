@@ -82,6 +82,7 @@ fi
 default_engine_pf=${latest_engine_ebuild%.ebuild}
 source_atom=${FLUTTER_ENGINE_SOURCE_ATOM:-=dev-libs/${default_engine_pf}}
 source_pvr=${source_atom#=dev-libs/flutter-engine-}
+source_pvr=${source_pvr%\*}
 engine_version=${source_pvr%-r[0-9]*}
 virtual_atom=${DART_VIRTUAL_ATOM:-=virtual/dart-3.13.3-r1}
 container_suffix="${UID:-0}-$$"

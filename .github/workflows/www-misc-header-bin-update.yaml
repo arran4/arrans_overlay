@@ -1,0 +1,341 @@
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-10-30 03:15:07.810720053 +0000 UTC m=+0.007303948
+
+name: www-misc/header-bin update
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '17 10 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/www-misc-header-bin-update.yaml'
+
+env:
+  ecn: www-misc
+  epn: header-bin
+  description: "Go CLI and library for extracting, validating, editing and visualizing website metadata"
+  homepage: "https://github.com/arran4/header"
+  github_owner: arran4
+  github_repo: header
+  keywords: ~amd64 ~arm64 ~x86
+  workflow_filename: www-misc-header-bin-update.yaml
+  header_binary_installed_name: 'header'
+  header_binary_archived_name_amd64: 'header'
+  header_release_name_amd64: 'header_${version}_linux_amd64.tar.gz'
+  header_binary_archived_name_arm64: 'header'
+  header_release_name_arm64: 'header_${version}_linux_arm64.tar.gz'
+  header_binary_archived_name_x86: 'header'
+  header_release_name_x86: 'header_${version}_linux_386.tar.gz'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check-and-create-ebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Process each release
+        id: process_releases
+        env:
+          DESCRIPTION: "Go CLI and library for extracting, validating, editing and visualizing website metadata"
+          HOMEPAGE: "https://github.com/arran4/header"
+          LICENSE: "MIT"
+          KEYWORDS: "~amd64 ~arm64 ~x86"
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p "$ebuild_dir"
+          metadata_file="${ebuild_dir}/metadata.xml"
+          g2 metadata -m "gentoo@arran4.com:Arran Ubels:person" -u "github:arran4/header" --use-add "doc:Install documentation" "$metadata_file"
+          declare -A releaseTypes=()
+          tags=$(GH_TOKEN="${{secrets.GITHUB_TOKEN}}" gh api "repos/${{ env.github_owner }}/${{ env.github_repo }}/releases" --jq '.[]? | select(type=="object" and has("tag_name")) | .tag_name')
+          # shellcheck disable=SC2086
+          for tag in $tags; do
+            version="${tag#v}"
+            if [ "${version}" = "${tag}" ]; then
+                echo "$version == $tag so there is no v removed skipping"
+                continue
+            fi
+            # shellcheck disable=SC2034
+            originalVersion="${version}"
+            if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
+                echo "tag / $version doesn't match regexp; skipping"
+                continue
+            fi
+            # shellcheck disable=SC2001
+            releaseType="$(echo "${version}" | sed -n 's/^[^_]\+_\(alpha\|beta\|rc\|p[0-9]*\).*$/\1/p')"
+            if [[ ! -v releaseTypes[${releaseType:=release}] ]]; then
+                if [[ -v releaseTypes[release] ]]; then
+                  echo "Already have a newer main release: ${releaseTypes[release]}"
+                  continue
+                fi
+                releaseTypes[${releaseType:=release}]="${version}"
+            else
+                echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+                continue
+            fi
+            tmp_ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild.tmp"
+
+              # shellcheck disable=SC2016
+              {
+                printf '%s\n' '# SPDX-License-Identifier: MIT'
+                emit_metadata_field() {
+                    local label=$1
+                    local value=$2
+                    local prefix="${label}+=\""
+                    local max_chunk=$((80 - ${#prefix} - 1))
+                    echo "${label}=\"\""
+                    [ -z "$value" ] && return 0
+                    local clean_value="${value//$'\r'/}"
+                    clean_value="${clean_value//$'\n'/ }"
+                    local tokens=()
+                    local len=${#clean_value}
+                    local i=0
+                    while [ $i -lt $len ]; do
+                        if [ "${clean_value:i:4}" = "\${P}" ]; then
+                            tokens+=("\${P}")
+                            i=$((i + 4))
+                        elif [ "${clean_value:i:5}" = "\${PV}" ]; then
+                            tokens+=("\${PV}")
+                            i=$((i + 5))
+                        elif [ "${clean_value:i:5}" = "\${PN}" ]; then
+                            tokens+=("\${PN}")
+                            i=$((i + 5))
+                        elif [ "${clean_value:i:9}" = "\${DEPEND}" ]; then
+                            tokens+=("\${DEPEND}")
+                            i=$((i + 9))
+                        else
+                            local c="${clean_value:i:1}"
+                            case "$c" in
+                                \"|\\|\`|\$)
+                                    tokens+=("\\$c")
+                                    ;;
+                                *)
+                                    tokens+=("$c")
+                                    ;;
+                            esac
+                            i=$((i + 1))
+                        fi
+                    done
+                    local current_line=""
+                    local pending_after_space=""
+                    for tok in "${tokens[@]}"; do
+                        if [ $((${#current_line} + ${#pending_after_space} + ${#tok})) -le $max_chunk ]; then
+                            if [ "$tok" = " " ]; then
+                                current_line="${current_line}${pending_after_space} "
+                                pending_after_space=""
+                            else
+                                pending_after_space="${pending_after_space}${tok}"
+                            fi
+                        else
+                            if [ -n "$current_line" ]; then
+                                printf "%s%s\"\n" "$prefix" "$current_line"
+                                current_line=""
+                                if [ $((${#pending_after_space} + ${#tok})) -le $max_chunk ]; then
+                                    if [ "$tok" = " " ]; then
+                                        current_line="${pending_after_space} "
+                                        pending_after_space=""
+                                    else
+                                        pending_after_space="${pending_after_space}${tok}"
+                                    fi
+                                else
+                                    if [ -n "$pending_after_space" ]; then
+                                        printf "%s%s\"\n" "$prefix" "$pending_after_space"
+                                    fi
+                                    if [ "$tok" = " " ]; then
+                                        current_line=" "
+                                        pending_after_space=""
+                                    else
+                                        pending_after_space="$tok"
+                                    fi
+                                fi
+                            else
+                                if [ -n "$pending_after_space" ]; then
+                                    printf "%s%s\"\n" "$prefix" "$pending_after_space"
+                                fi
+                                if [ "$tok" = " " ]; then
+                                    current_line=" "
+                                    pending_after_space=""
+                                else
+                                    pending_after_space="$tok"
+                                fi
+                            fi
+                        fi
+                    done
+                    local final="${current_line}${pending_after_space}"
+                    if [ -n "$final" ]; then
+                        printf "%s%s\"\n" "$prefix" "$final"
+                    fi
+                }
+                emit_ebuild_assignment() {
+                    emit_metadata_field "$@"
+                }
+                # Shell helper to wrap provenance fields at exactly 80 chars
+                emit_provenance_field() {
+                    local label=$1
+                    local value=$2
+                    local prefix="#   ${label}: "
+                    local continuation
+                    local width
+                    printf -v continuation '%*s' "${#prefix}" ''
+                    continuation="#${continuation:1}"
+                    while :; do
+                        width=$((80 - ${#prefix}))
+                        if ((${#value} <= width)); then
+                            printf '%s%s\n' "$prefix" "$value"
+                            break
+                        fi
+                        printf '%s%s\n' "$prefix" "${value:0:width}"
+                        value=${value:width}
+                        prefix=$continuation
+                    done
+                }
+                echo '# Generated via:'
+                emit_provenance_field "repository" "${{ github.server_url }}/${{ github.repository }}"
+                emit_provenance_field "commit" "${{ github.sha }}"
+                emit_provenance_field "workflow" ".github/workflows/${{ env.workflow_filename }}"
+                echo 'EAPI=8'
+                emit_metadata_field "DESCRIPTION" "$DESCRIPTION"
+                emit_metadata_field "HOMEPAGE" "$HOMEPAGE"
+                src_uri_val=""
+                src_uri_val+=" amd64? (  "
+                src_uri_val+=" https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/header_${version}_linux_amd64.tar.gz "
+                src_uri_val+=" -> \${P}-header_\${PV}_linux_amd64.tar.gz  )  "
+                src_uri_val+=" arm64? (  "
+                src_uri_val+=" https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/header_${version}_linux_arm64.tar.gz "
+                src_uri_val+=" -> \${P}-header_\${PV}_linux_arm64.tar.gz  )  "
+                src_uri_val+=" x86? (  "
+                src_uri_val+=" https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/header_${version}_linux_386.tar.gz "
+                src_uri_val+=" -> \${P}-header_\${PV}_linux_386.tar.gz  )  "
+                emit_metadata_field "SRC_URI" "$src_uri_val"
+                emit_metadata_field "LICENSE" "$LICENSE"
+                echo 'SLOT="0"'
+                emit_metadata_field "KEYWORDS" "$KEYWORDS"
+                                iuse_val=""
+                iuse_val=" doc"
+                emit_metadata_field "IUSE" "$iuse_val"
+                echo ''
+                ruse_val=""
+                emit_metadata_field "REQUIRED_USE" "$ruse_val"
+                echo ''
+                rdepend_val=""
+                emit_metadata_field "RDEPEND" "$rdepend_val"
+                echo ''
+                echo 'S="${WORKDIR}"'
+                echo ''
+                echo 'src_unpack() {'
+                echo '	if use amd64; then'
+                echo "		unpack \"\${DISTDIR}/\${P}-header_\${PV}_linux_amd64.tar.gz\" "\\
+                echo "			|| die \"Failed to unpack archive file\""
+                echo '	fi'
+                echo '	if use arm64; then'
+                echo "		unpack \"\${DISTDIR}/\${P}-header_\${PV}_linux_arm64.tar.gz\" "\\
+                echo "			|| die \"Failed to unpack archive file\""
+                echo '	fi'
+                echo '	if use x86; then'
+                echo "		unpack \"\${DISTDIR}/\${P}-header_\${PV}_linux_386.tar.gz\" "\\
+                echo "			|| die \"Failed to unpack archive file\""
+                echo '	fi'
+                echo '}'
+                echo ''
+                echo 'src_install() {'
+                echo '	exeinto /opt/bin'
+                echo '	if use amd64; then'
+                echo '		newexe '\\
+                echo '			"${{ env.header_binary_archived_name_amd64 }}" '\\
+                echo '			"${{ env.header_binary_installed_name }}" '\\
+                echo '			|| die "Failed to install Binary"'
+                echo '	fi'
+                echo '	if use arm64; then'
+                echo '		newexe '\\
+                echo '			"${{ env.header_binary_archived_name_arm64 }}" '\\
+                echo '			"${{ env.header_binary_installed_name }}" '\\
+                echo '			|| die "Failed to install Binary"'
+                echo '	fi'
+                echo '	if use x86; then'
+                echo '		newexe '\\
+                echo '			"${{ env.header_binary_archived_name_x86 }}" '\\
+                echo '			"${{ env.header_binary_installed_name }}" '\\
+                echo '			|| die "Failed to install Binary"'
+                echo '	fi'
+                echo '	if use doc; then'
+                echo '		dodoc "LICENSE" || die "Failed to install document LICENSE"'
+                echo '		dodoc "README.md" || die "Failed to install document README.md"'
+                echo '	fi'
+                echo '}'
+              } > "$tmp_ebuild_file"
+              if next_version=$(g2 ebuild next-revision --inspect "$tmp_ebuild_file" "${ebuild_dir}" "${version}"); then
+                  next_ebuild_file="${ebuild_dir}/${{ env.epn }}-${next_version}.ebuild"
+                  echo "Content changed or new version for $version. Writing $next_ebuild_file"
+                  mv "$tmp_ebuild_file" "$next_ebuild_file"
+                  ebuild_file="$next_ebuild_file"
+              else
+                  echo "Matches existing ebuild. Skipping."
+                  rm -f "$tmp_ebuild_file"
+                  continue
+              fi
+              failed=0
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/header_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-header_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/header_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-header_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/header_${version}_linux_386.tar.gz" "${{ env.epn }}-${version}-header_${version}_linux_386.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              if [ "$failed" -eq 1 ]; then
+                  echo "Failed to generate manifest for $tag. Skipping..."
+                  rm -f "$ebuild_file"
+                  continue
+              fi
+              echo "generated_tag=${tag}" >> $GITHUB_OUTPUT
+          done
+
+      - name: Deduplicate ebuilds
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          g2 ebuild deduplicate "${ebuild_dir}"
+
+      - name: Lint output
+        if: steps.process_releases.outputs.generated_tag
+        uses: arran4/g2-action@v1.2
+        with:
+          mode: 'run'
+          action: 'lint -disable-rule PG0802 . ${{ env.ecn }}/${{ env.epn }}'
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
+          mkdir -p profiles metadata
+          if [ -f profiles/repo_name ]; then
+            :
+          else
+            echo "::warning title=Missing profiles/repo_name::profiles/repo_name is missing. Skipping creation because explicit upsert is not enabled."
+          fi
+          if [ ! -f profiles/eapi ]; then
+            echo "8" > profiles/eapi
+          fi
+          if [ ! -f metadata/layout.conf ]; then
+            wget -qO - https://raw.githubusercontent.com/gentoo/gentoo/master/metadata/layout.conf > metadata/layout.conf || true
+          fi
+          if ! grep -q "^cache-formats" metadata/layout.conf; then
+            echo "cache-formats = md5-dict" >> metadata/layout.conf
+          else
+            echo "::warning title=Layout.conf check::cache-formats is already defined in layout.conf, skipping generation."
+          fi
+          g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+          git add "./${ebuild_dir}"
+          if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
+            git pull --rebase &&
+            git push
+          fi || true
+        if: steps.process_releases.outputs.generated_tag

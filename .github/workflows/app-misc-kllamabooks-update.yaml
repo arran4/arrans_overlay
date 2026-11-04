@@ -14,7 +14,7 @@ on:
       - 'app-misc/kllamabooks/kllamabooks-9999.ebuild'
 
 concurrency:
-  group: ci-${{ github.ref }}-kllamabooks
+  group: ${{ github.workflow }}-${{ github.ref }}-kllamabooks
   cancel-in-progress: false
 
 env:

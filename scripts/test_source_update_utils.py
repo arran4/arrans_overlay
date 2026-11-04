@@ -215,7 +215,14 @@ class SourceUpdateUtilsTest(unittest.TestCase):
         repo = Path(__file__).parents[1]
         with tempfile.TemporaryDirectory() as td:
             work = Path(td)
-            dart_old = repo / "dev-lang/dart/dart-3.13.3-r3.ebuild"
+            # Use the latest packaged source rather than a version pruned by dedupe.
+            dart_dir = repo / "dev-lang/dart"
+            dart_old = max(
+                dart_dir.glob("dart-*.ebuild"),
+                key=lambda p: tuple(int(n) for n in
+                                    p.name.removeprefix("dart-").split(".ebuild")[0]
+                                    .split("-r")[0].split(".")),
+            )
             dart_new = work / "dev-lang/dart/dart-99.0.0.ebuild"
             dart_new.parent.mkdir(parents=True)
             dart_new.write_text(dart_old.read_text())
