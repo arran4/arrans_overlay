@@ -1,0 +1,94 @@
+# Maintained manually; updates the source-built OpenKingdoms package.
+name: games-strategy/openkingdoms update
+
+on:
+  schedule:
+    - cron: '41 3 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/games-strategy-openkingdoms-update.yaml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: openkingdoms-update-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install g2
+        uses: arran4/g2-action@v1.2
+
+      - name: Check latest upstream release and prepare update
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$(gh api repos/OpenKingdoms/OpenKingdoms/releases/latest --jq '.tag_name')"
+          if [[ ! "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Unsupported upstream release tag: ${tag}" >&2
+            exit 1
+          fi
+          version="${tag#v}"
+          package_dir=games-strategy/openkingdoms
+          filename="openkingdoms-${version}.tar.gz"
+          archive_url="https://github.com/OpenKingdoms/OpenKingdoms/archive/refs/tags/${tag}.tar.gz"
+          mapfile -t ebuilds < <(find "${package_dir}" -maxdepth 1 -name 'openkingdoms-[0-9]*.ebuild' -print | sort -V)
+          if (( ${#ebuilds[@]} == 0 )); then
+            echo 'No existing ebuild to use as the update template' >&2
+            exit 1
+          fi
+          latest_ebuild="${ebuilds[${#ebuilds[@]}-1]}"
+          latest_version="${latest_ebuild##*/openkingdoms-}"
+          latest_version="${latest_version%.ebuild}"
+          if [[ "${GITHUB_REF}" != 'refs/heads/main' ]]; then
+            # A workflow-file change on a PR branch verifies archive availability
+            # and prints the initial Manifest entry for review; it never writes
+            # back to the branch or opens a release-update PR.
+            g2 manifest upsert-from-url "${archive_url}" "${filename}" "${package_dir}/Manifest"
+            cat "${package_dir}/Manifest"
+            exit 0
+          fi
+          if [[ -f "${package_dir}/openkingdoms-${version}.ebuild" ]]; then
+            echo "OpenKingdoms ${version} is already packaged"
+            exit 0
+          fi
+          if [[ "$(printf '%s\n' "${version}" "${latest_version}" | sort -V | tail -n 1)" != "${version}" ]]; then
+            echo "Upstream ${version} is older than packaged ${latest_version}; skipping"
+            exit 0
+          fi
+          cp "${latest_ebuild}" "${package_dir}/openkingdoms-${version}.ebuild"
+          # The overlay retains one stable release. Drop the superseded
+          # distfile entry before generating the new release checksum.
+          sed -i '/^DIST openkingdoms-[0-9].*\.tar\.gz /d' "${package_dir}/Manifest"
+          g2 manifest upsert-from-url "${archive_url}" "${filename}" "${package_dir}/Manifest"
+          g2 ebuild deduplicate "${package_dir}"
+          g2 lint -disable-rule Md5CacheMissing,UnstableOnly "${package_dir}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo 'changed=true' >> "${GITHUB_OUTPUT}"
+
+      - name: Open release update pull request
+        if: github.ref == 'refs/heads/main' && steps.release.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ github.token }}
+          branch: auto/openkingdoms-release
+          delete-branch: true
+          add-paths: games-strategy/openkingdoms/
+          commit-message: 'games-strategy/openkingdoms: update to ${{ steps.release.outputs.version }}'
+          title: 'games-strategy/openkingdoms: update to ${{ steps.release.outputs.version }}'
+          body: |
+            Update OpenKingdoms to upstream release ${{ steps.release.outputs.version }}.
+            The versioned source archive and Manifest are generated together.
+            Validate g2 lint, pkgcheck, Manifest verification and the Gentoo
+            package build before merging.
