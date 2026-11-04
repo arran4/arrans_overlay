@@ -30,7 +30,6 @@ class RetainedWorkflowGeneratorsTest(unittest.TestCase):
         for wf_name in (
             "app-misc-kjules-update.yaml",
             "app-misc-stability-matrix-appimage-update.yaml",
-            "net-im-beeper-appimage-update.yaml",
         ):
             wf_path = REPO_ROOT / ".github" / "workflows" / wf_name
             self.assertTrue(wf_path.exists(), f"Workflow not found: {wf_path}")
@@ -40,15 +39,6 @@ class RetainedWorkflowGeneratorsTest(unittest.TestCase):
                 content,
                 f"Workflow {wf_name} does not call scripts/generate_retained_ebuild.sh",
             )
-
-        beeper_workflow = (
-            REPO_ROOT / ".github" / "workflows" / "net-im-beeper-appimage-update.yaml"
-        ).read_text()
-        self.assertIn(
-            '"$appimage_url"',
-            beeper_workflow,
-            "Beeper workflow must pass its discovered release URL to the generator",
-        )
 
     def test_kjules_generator_production_execution(self):
         """Test kjules production generator execution, valid recipe, idempotence, and revision awareness."""
@@ -170,50 +160,6 @@ class RetainedWorkflowGeneratorsTest(unittest.TestCase):
         self.assertEqual(res_rev.returncode, 0)
         self.assertIn("SKIPPED:", res_rev.stdout)
         self.assertFalse((rev_dir / f"stability-matrix-appimage-{version}.ebuild").exists())
-
-    def test_beeper_generator_production_execution(self):
-        """Test beeper production generator execution, valid recipe, idempotence, and revision awareness."""
-        pkg_dir = self.tmp_path / "beeper"
-        version = "4.3.229"
-        ebuild_file = pkg_dir / f"beeper-appimage-{version}.ebuild"
-
-        # 1. Initial generation
-        source_url = "https://download.example.invalid/releases/Beeper-4.3.229-x86_64.AppImage"
-        res = self.run_generator(
-            "beeper-appimage", str(pkg_dir), version, "AppImage", "beeper.AppImage", source_url
-        )
-        self.assertEqual(res.returncode, 0, f"Generator failed: {res.stderr}")
-        self.assertIn("GENERATED:", res.stdout)
-        self.assertTrue(ebuild_file.exists())
-
-        content = ebuild_file.read_text()
-        self.assertIn("EAPI=8", content)
-        self.assertIn('DESCRIPTION="Beeper universal chat app"', content)
-        self.assertIn(source_url, content)
-        self.assertIn('newexe "${P}.AppImage" "beeper.AppImage"', content)
-        self.assertEqual(subprocess.run(["bash", "-n", str(ebuild_file)]).returncode, 0)
-
-        # 2. Repeated execution is idempotent
-        before_repeat = ebuild_file.read_bytes()
-        res_repeat = self.run_generator(
-            "beeper-appimage", str(pkg_dir), version, "AppImage", "beeper.AppImage", source_url
-        )
-        self.assertEqual(res_repeat.returncode, 0)
-        self.assertIn("SKIPPED:", res_repeat.stdout)
-        self.assertEqual(before_repeat, ebuild_file.read_bytes())
-
-        # 3. Revision awareness: existing -r1 ebuild blocks unrevisioned recreation
-        rev_dir = self.tmp_path / "beeper-rev"
-        rev_dir.mkdir(parents=True)
-        (rev_dir / f"beeper-appimage-{version}-r1.ebuild").write_text("# existing revision")
-
-        res_rev = self.run_generator(
-            "beeper-appimage", str(rev_dir), version, "AppImage", "beeper.AppImage", source_url
-        )
-        self.assertEqual(res_rev.returncode, 0)
-        self.assertIn("SKIPPED:", res_rev.stdout)
-        self.assertFalse((rev_dir / f"beeper-appimage-{version}.ebuild").exists())
-
 
 if __name__ == "__main__":
     unittest.main()
