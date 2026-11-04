@@ -1,0 +1,43 @@
+Title: Beeper AppImage removed; FlatPark Flatpak recommended
+Author: Arran <gentoo@arran4.com>
+Posted: 2026-11-05
+Revision: 1
+News-Item-Format: 2.0
+Display-If-Installed: net-im/beeper-appimage
+
+I am removing net-im/beeper-appimage from this overlay, including its
+automatic update workflow. I recommend installing Beeper as a per-user
+Flatpak from FlatPark instead.
+
+FlatPark's Beeper package is community-maintained, not an official
+Automattic Flatpak. Its application ID is com.automattic.Beeper:
+https://flatpark.org/apps/com.automattic.Beeper/
+
+Add FlatPark explicitly with the following settings so it is not
+enumerated in ordinary app listings or used for dependency resolution:
+
+    flatpak --user remote-add \
+      --if-not-exists \
+      --no-enumerate \
+      --no-use-for-deps \
+      flatpark \
+      https://dl.flatpark.org/flatpark.flatpakrepo
+
+Install Beeper by explicitly naming the remote:
+
+    flatpak --user install flatpark com.automattic.Beeper
+
+If you do not already have Flathub available for per-user runtime
+dependencies, add it with:
+
+    flatpak --user remote-add --if-not-exists flathub \
+      https://dl.flathub.org/repo/flathub.flatpakrepo
+
+To remove the old ebuild installation after migrating, run:
+
+    emerge --deselect net-im/beeper-appimage
+    emerge --ask --depclean net-im/beeper-appimage
+
+The FlatPark remote flags do not prevent explicitly installing or
+updating applications from FlatPark. This notice was drafted for Arran
+with AI assistance.

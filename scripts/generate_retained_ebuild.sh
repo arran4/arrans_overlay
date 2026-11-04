@@ -2,7 +2,6 @@
 # Shared ebuild generator for retained workflow recipes:
 #   - app-misc/kjules
 #   - app-misc/stability-matrix-appimage
-#   - net-im/beeper-appimage
 #
 # Called by workflow update jobs and regression unit tests.
 
@@ -15,7 +14,6 @@ Usage: generate_retained_ebuild.sh <package> <ebuild_dir> <version> [args...]
 Packages:
   kjules                     <ebuild_dir> <version>
   stability-matrix-appimage  <ebuild_dir> <version> [archived_name] [installed_name]
-  beeper-appimage            <ebuild_dir> <version> [extension] [installed_name] [source_url]
 EOF
   exit 1
 }
@@ -210,55 +208,6 @@ pkg_postinst() {
 }
 EOF
     } > "$ebuild_file"
-    echo "GENERATED: ${ebuild_file}"
-    ;;
-
-  beeper-appimage|net-im/beeper-appimage)
-    ebuild_name="beeper-appimage"
-    ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
-
-    # Revision guard: do not recreate if unrevisioned or -rN exists
-    if [ -f "$ebuild_file" ] || compgen -G "${ebuild_dir}/${ebuild_name}-${version}-r[0-9]*.ebuild" > /dev/null; then
-      echo "SKIPPED: ${ebuild_name}-${version} already exists in ${ebuild_dir}"
-      exit 0
-    fi
-
-    appimage_extension="${1:-${appimage_extension:-AppImage}}"
-    installed_name="${2:-${beeper_appimage_installed_name:-beeper.AppImage}}"
-    source_url="${3:-${BEEPER_APPIMAGE_URL:-https://beeper-desktop.download.beeper.com/builds/Beeper-${version}-x86_64.${appimage_extension}}}"
-    description="${DESCRIPTION:-Beeper universal chat app}"
-    homepage="${HOMEPAGE:-https://www.beeper.com/}"
-    keywords="${KEYWORDS:-~amd64}"
-
-    cat << EOF > "$ebuild_file"
-# Copyright 2026 Gentoo Authors
-# Distributed under the terms of the GNU General Public License v2
-
-# Generated via:
-# .github/workflows/net-im-beeper-appimage-update.yaml
-EAPI=8
-DESCRIPTION="${description}"
-HOMEPAGE="${homepage}"
-SRC_URI="
-	${source_url} ->
-		\${P}.${appimage_extension}
-"
-S="\${WORKDIR}"
-
-LICENSE="MIT"
-SLOT="0"
-KEYWORDS="${keywords}"
-RESTRICT="strip"
-
-src_install() {
-	cp "\${DISTDIR}/\${P}.${appimage_extension}" "\${P}.${appimage_extension}" \\
-		|| die "Failed to copy AppImage"
-	chmod a+x "\${P}.${appimage_extension}" || die "Cannot chmod archive file"
-	exeinto /opt/bin
-	newexe "\${P}.${appimage_extension}" "${installed_name}" \\
-		|| die "Failed to install AppImage"
-}
-EOF
     echo "GENERATED: ${ebuild_file}"
     ;;
 
