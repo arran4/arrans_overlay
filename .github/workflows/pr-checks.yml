@@ -127,3 +127,14 @@ jobs:
             # intentionally remain ~arch indefinitely; it must not block PRs.
             g2 lint -disable-rule Md5CacheMissing,UnstableOnly $DIRS
           fi
+
+          # The published g2 binary must continue to accept Cargo-generated
+          # distfiles from net-im/msm (g2 #584). Package changes already lint
+          # their directory above; recheck this regression when the action's
+          # installation path or lint workflow changes, without adding CI cost
+          # to unrelated package PRs.
+          if printf '%s\n' "$CHANGED_FILES" | grep -Fxq '.github/workflows/pr-checks.yml' &&
+              ! printf ' %s ' "$DIRS" | grep -Fq ' net-im/msm '; then
+            echo "Regression: released g2 lint of net-im/msm"
+            g2 lint -disable-rule Md5CacheMissing,UnstableOnly net-im/msm
+          fi
