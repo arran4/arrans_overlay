@@ -59,7 +59,7 @@ class TestUpdater(unittest.TestCase):
 
     @patch('update_klookup_source.subprocess.run')
     @patch.object(updater, 'get_releases', return_value=[{'tag_name': 'v1.0.0'}])
-    def test_generates_source_ebuild_manifest_and_cache(self, get_releases, run):
+    def test_generates_source_ebuild_manifest_without_masters(self, get_releases, run):
         updater.main()
         generated = (updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').read_text()
         self.assertIn('inherit cmake\n', generated)
@@ -69,14 +69,13 @@ class TestUpdater(unittest.TestCase):
         self.assertIn('S="${WORKDIR}/klookup-${PV}"', generated)
         self.assertIn('KEYWORDS="~amd64"', generated)
         self.assertIn('dev-qt/qtbase:6[dbus,gui,network,widgets]', generated)
-        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_count, 1)
         self.assertEqual(run.call_args_list[0].args[0],
                          ['g2', 'manifest', 'upsert-from-url',
                           'https://github.com/arran4/klookup/archive/refs/tags/v1.0.0.tar.gz',
                           'klookup-1.0.0.tar.gz', 'app-misc/klookup/Manifest'])
-        self.assertEqual(run.call_args_list[1].args[0],
-                         ['g2', 'cache', 'generate', 'app-misc/klookup'])
         self.assertTrue(all(call.kwargs['check'] for call in run.call_args_list))
+        self.assertFalse(any('cache' in call.args[0] for call in run.call_args_list))
         run.reset_mock()
         updater.main()
         run.assert_not_called()
@@ -89,7 +88,7 @@ class TestUpdater(unittest.TestCase):
         self.assertFalse((updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').exists())
         self.assertTrue((updater.PACKAGE_DIR / 'klookup-1.1.0.ebuild').is_file())
         self.assertIn('refs/tags/v1.1.0.tar.gz', (updater.PACKAGE_DIR / 'klookup-1.1.0.ebuild').read_text())
-        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_count, 1)
 
     @patch('update_klookup_source.subprocess.run', side_effect=subprocess.CalledProcessError(1, 'g2'))
     @patch.object(updater, 'get_releases', return_value=[{'tag_name': 'v1.0.0'}])
@@ -113,7 +112,7 @@ class TestUpdater(unittest.TestCase):
         self.assertTrue((updater.PACKAGE_DIR / 'klookup-1.10.0.ebuild').exists())
         self.assertFalse((updater.PACKAGE_DIR / 'klookup-1.9.0.ebuild').exists())
         self.assertFalse((updater.PACKAGE_DIR / 'klookup-1.2.0.ebuild').exists())
-        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_count, 1)
 
     @patch('update_klookup_source.subprocess.run')
     @patch.object(updater, 'get_releases', return_value=[
@@ -131,7 +130,7 @@ class TestUpdater(unittest.TestCase):
         self.assertFalse(cache.exists())
         self.assertNotIn('klookup-1.0.0', manifest.read_text())
         self.assertIn('other-source.tar.gz', manifest.read_text())
-        self.assertEqual(run.call_count, 2)
+        self.assertEqual(run.call_count, 1)
 
 
 if __name__ == '__main__':
