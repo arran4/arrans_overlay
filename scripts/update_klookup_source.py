@@ -116,7 +116,11 @@ def main():
     updated = create_release(tag, version)
     updated = prune_old_stable_releases(version) or updated
     if updated:
-        subprocess.run(['g2', 'cache', 'generate', 'app-misc/klookup'], check=True)
+        # This lightweight Ubuntu job does not have the Gentoo/GURU/hyproverlay
+        # masters required to generate an authoritative Portage metadata cache.
+        # Defer cache reconciliation to the separate full-master workflow (#862);
+        # a missing cache must not prevent a reviewable source ebuild/Manifest PR.
+        print('Updated KLookup ebuild and Manifest; metadata cache deferred')
     else:
         print('Latest stable KLookup release already packaged')
 
