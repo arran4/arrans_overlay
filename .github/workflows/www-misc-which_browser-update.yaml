@@ -2,6 +2,7 @@ name: www-misc/which_browser update
 
 permissions:
   contents: write
+  pull-requests: write
 
 on:
   schedule:
@@ -18,12 +19,6 @@ concurrency:
 env:
   ebuild_category: www-misc
   ebuild_name: which_browser
-  description: "Which Browser? A browser selecting tool with rules to automate."
-  homepage: "https://which-browser-site.pages.dev"
-  license: "All-rights-reserved"
-  keywords: "~amd64"
-  base_url: https://which-browser-site.pages.dev/releases
-  workflow_filename: www-misc-which_browser-update.yaml
 
 jobs:
   check-and-create-ebuild:
@@ -31,6 +26,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Install g2
         uses: arran4/g2-action@v1.2
@@ -43,142 +40,22 @@ jobs:
       - name: Install required tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget jq coreutils
+          sudo apt-get install -y wget jq coreutils python3
+
       - name: Process releases
         id: process_releases
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
-          mkdir -p "$ebuild_dir"
-          # Scrape the XML for .deb filenames to capture full version including build suffix
-          # This looks for patterns like which_browser-0.2.6+44-linux.deb
-          # And handles HTML entity &#43; for +
-          filenames=$(curl -s "${{ env.base_url }}/index.xml" | grep -o 'which_browser-[0-9.]\+\(&amp;#43;\|&#43;\|+\)[0-9]\+-linux.deb' | sed 's/&amp;#43;/+/g;s/&#43;/+/g' | sort -Vr | uniq)
+          python3 scripts/update_which_browser.py
 
-          for filename in $filenames; do
-            # Extract version from filename: which_browser-0.2.6+44-linux.deb -> 0.2.6+44
-            full_version_str=$(echo "$filename" | sed -E 's/^which_browser-(.+)-linux\.deb$/\1/')
-
-            # Split into base version and build suffix
-            base_version="${full_version_str%+*}"
-            build_suffix="${full_version_str#*+}"
-
-            if [ -z "$base_version" ] || [ -z "$build_suffix" ]; then
-              echo "Skipping unexpected version format in filename: $filename"
-              continue
-            fi
-
-            # Construct Gentoo PV: 0.2.6+44 -> 0.2.6.44
-            version="${base_version}.${build_suffix}"
-
-            archive_name="$filename"
-            ebuild_file="${ebuild_dir}/${{ env.ebuild_name }}-${version}.ebuild"
-
-            ebuild_exists=0
-            for f in "${ebuild_dir}/${{ env.ebuild_name }}-${version}".ebuild "${ebuild_dir}/${{ env.ebuild_name }}-${version}"-r*.ebuild; do
-              if [ -f "$f" ]; then
-                ebuild_exists=1
-                break
-              fi
-            done
-            if [ "$ebuild_exists" -eq 0 ]; then
-              cat <<EOT > "$ebuild_file"
-            # Generated via: https://github.com/arran4/arrans_overlay/blob/main/.github/workflows/${{ env.workflow_filename }}
-            EAPI=8
-
-            # Upstream changed their download host from arran4.sdf.org to
-            # https://which-browser-site.pages.dev, update SRC_URI accordingly.
-
-            DESCRIPTION="${{ env.description }}"
-            HOMEPAGE="${{ env.homepage }}"
-
-            MY_BASE_PV=\${PV%.*}
-            MY_BUILD_SUFFIX=\${PV##*.}
-
-            if [[ \${MY_BASE_PV} == \${PV} ]] || [[ -z \${MY_BUILD_SUFFIX} ]]; then
-                    die "Unexpected PV format: \${PV}"
-            fi
-
-            MY_DEB_ARCHIVE="\${PN}-\${MY_BASE_PV}+\${MY_BUILD_SUFFIX}-linux.deb"
-
-            # Updated SRC_URI for new host structure: downloads/vBase/file
-            SRC_URI="https://which-browser-site.pages.dev/downloads/v\${MY_BASE_PV}/\${MY_DEB_ARCHIVE}"
-            LICENSE="${{ env.license }}"
-            SLOT="0"
-            KEYWORDS="${{ env.keywords }}"
-            IUSE=""
-
-            BDEPEND="dev-util/patchelf"
-            RDEPEND="|| ( dev-libs/libayatana-appindicator )"
-            RESTRICT="mirror"
-
-            S="\${WORKDIR}"
-
-            inherit unpacker xdg
-
-            QA_PREBUILT="usr/share/which_browser/*"
-
-            src_prepare() {
-                    default
-                    chmod +w usr/share/which_browser/lib/libtray_manager_plugin.so || die
-                    patchelf --replace-needed libappindicator3.so.1 libayatana-appindicator3.so.1 usr/share/which_browser/lib/libtray_manager_plugin.so || die
-            }
-
-            src_unpack() {
-                    unpack_deb "\${MY_DEB_ARCHIVE}"
-            }
-
-            src_install() {
-                    # Install the contents of the deb package
-                    # find .
-                    cp -vr "\${S}"/usr/ "\${D}"/usr/
-
-                    # Ensure the executable has the correct permissions
-                    fperms 0755 /usr/share/which_browser/which_browser
-
-                    # Create a symlink in /usr/bin for easy access
-                    dosym /usr/share/which_browser/which_browser /usr/bin/which_browser
-
-                    # Ensure the desktop file has the correct permissions
-                    if [[ -f "\${D}/usr/share/applications/which_browser.desktop" ]]; then
-                            fperms 0644 /usr/share/applications/which_browser.desktop
-                            sed -i -e '/^Version=/d' "\${D}/usr/share/applications/which_browser.desktop" || die
-                    fi
-
-                    # Ensure the icon file has the correct permissions
-                    if [[ -f "\${D}/usr/share/icons/hicolor/256x256/apps/which_browser.png" ]]; then
-                            fperms 0644 /usr/share/icons/hicolor/256x256/apps/which_browser.png
-                    fi
-            }
-
-            pkg_postinst() {
-                    xdg_pkg_postinst
-                    einfo "Which Browser? has been installed."
-                    einfo "Please set Which Browser? as the default HTTP and HTTPS handler."
-            }
-
-            pkg_postrm() {
-                    xdg_pkg_postrm
-            }
-          EOT
-              sed -i 's/^            //' "$ebuild_file"
-              # SRC_URI logic: https://which-browser-site.pages.dev/downloads/v${MY_BASE_PV}/${MY_DEB_ARCHIVE}
-              # g2 manifest upsert-from-url "https://which-browser-site.pages.dev/downloads/v${base_version}/${archive_name}" "${archive_name}" "${ebuild_dir}/Manifest"
-              # Need to be explicit with URL here for g2
-
-              BASE_URL="https://which-browser-site.pages.dev/downloads" g2 manifest upsert-from-url "https://which-browser-site.pages.dev/downloads/v${base_version}/${archive_name}" "${archive_name}" "${ebuild_dir}"
-              echo "generated_version=${version}" >> $GITHUB_OUTPUT
-            fi
-            break
-          done
-
-      - name: Commit and push changes
-        run: |
-          ebuild_dir="./${{ env.ebuild_category }}/${{ env.ebuild_name }}"
-          generated_version="${{ steps.process_releases.outputs.generated_version }}"
-          if [ -n "$generated_version" ]; then
-            git add "$ebuild_dir"
-            git commit -m "Add ebuild for which_browser ${generated_version}" &&
-            git pull --rebase &&
-            git push || true
-          fi
+      - name: Create Pull Request
         if: steps.process_releases.outputs.generated_version
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Add ebuilds for new which_browser releases tag ${{ steps.process_releases.outputs.generated_tag }}"
+          title: "Update which_browser to ${{ steps.process_releases.outputs.generated_tag }}"
+          body: "This PR updates which_browser to the latest release ${{ steps.process_releases.outputs.generated_tag }}."
+          branch: "update-which_browser-${{ steps.process_releases.outputs.generated_tag }}"
+          base: main
