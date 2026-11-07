@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>gentoo@arran4.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
+	<longdescription lang="en">
+		A native Linux client for the 1998 PlayStation game Serial Experiments Lain,
+		maintained by the original Y0oshi project.
+		This package builds the desktop client, not the Android APK. It does not
+		include copyrighted disc content; players must import their own disc dumps.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">Y0oshi/lain-psx-decompiled</remote-id>
+	</upstream>
+</pkgmetadata>
