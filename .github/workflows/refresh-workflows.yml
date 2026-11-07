@@ -31,11 +31,13 @@ jobs:
 
       - name: Discard non-substantive changes
         run: |
+          # Use --ignore-blank-lines, not a second -I regex matching the empty
+          # string: the latter suppresses real code changes as well as blanks.
           git add .github/workflows/
           for file in $(git diff --cached --name-only); do
             # Check if file existed before
             if git ls-tree -r HEAD --name-only | grep -q "^${file}$"; then
-              if [ -z "$(git diff --cached -w -I '^[[:space:]]*#' -I '^[[:space:]]*$' "$file")" ]; then
+              if [ -z "$(git diff --cached -w --ignore-blank-lines -I '^[[:space:]]*#' -- "$file")" ]; then
                 echo "Reverting $file because only comments/whitespace changed"
                 git reset HEAD "$file"
                 git checkout -- "$file"
