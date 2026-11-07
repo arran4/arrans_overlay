@@ -14,7 +14,7 @@ LICENSE="MIT ZLIB Apache-2.0 CC0-1.0 WTFPL-2 public-domain"
 SLOT="0"
 KEYWORDS="~amd64"
 
-BDEPEND="dev-lang/python:3"
+BDEPEND="dev-lang/python"
 RDEPEND="
 	media-libs/libsdl2[opengl,video]
 	media-libs/openal
