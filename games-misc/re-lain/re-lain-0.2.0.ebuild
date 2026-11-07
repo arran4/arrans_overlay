@@ -49,7 +49,7 @@ src_install() {
 pkg_postinst() {
 	xdg_pkg_postinst
 	elog "This client does not contain game data."
-	elog "Import your own raw 2352-byte/sector BIN/IMG PlayStation disc dumps"
+	elog "Import your own raw 2352-byte/sector BIN/IMG disc dumps"
 	elog "through the launcher (both discs are needed for the full game)."
 	elog "See man lain(6) and README for controls and disc formats."
 }
