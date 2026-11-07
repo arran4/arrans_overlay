@@ -4,7 +4,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from maintain_virtuals import prepare, cleanup, available_providers, all_versions
+from maintain_virtuals import (
+    prepare, cleanup, available_providers, all_versions,
+    matching_ebuilds, virtual_content,
+)
 from prune_dedup_manifests import prune_package
 from verify_manifest import extract_uris, parse_ebuild_variables
 
@@ -16,6 +19,7 @@ class ScheduledDedupeIntegrationTest(unittest.TestCase):
         packages = (
             "dev-lang/dart", "dev-lang/dart-bin",
             "dev-lang/flutter", "dev-lang/flutter-bin",
+            "dev-libs/flutter-engine",
             "virtual/dart", "virtual/flutter",
         )
         with tempfile.TemporaryDirectory() as tmp:
@@ -29,8 +33,11 @@ class ScheduledDedupeIntegrationTest(unittest.TestCase):
                 "dev-lang/dart": ("3.13.3-r3", "3.13.5"),
                 "dev-lang/dart-bin": ("3.13.3-r2", "3.13.4", "3.13.5", "3.13.6"),
                 "dev-lang/flutter-bin": (
-                    "3.47.2-r1", "3.47.3-r1", "3.47.4-r1", "3.47.5-r1", "3.47.6",
+                    "3.47.2-r1", "3.47.3-r1", "3.47.4-r1", "3.47.5-r1",
+                    "3.47.6", "3.47.7", "3.47.8",
                 ),
+                "dev-lang/flutter": ("3.47.2-r1",),
+                "dev-libs/flutter-engine": ("3.47.2-r1",),
             }
             for package, versions in old_versions.items():
                 dirname = package.rsplit("/", 1)[-1]
@@ -42,24 +49,37 @@ class ScheduledDedupeIntegrationTest(unittest.TestCase):
                 removed_packages.add(package)
 
             cleanup(sandbox)
-            newest_dart = all_versions(sandbox, "dart")[-1]
-            self.assertTrue(available_providers(sandbox, "dart", newest_dart))
-            # Reconcile every version actually present in the checkout.
-            # A successful daily dedupe may already have removed 3.47.7.
-            for version in all_versions(sandbox, "flutter"):
-                self.assertTrue(available_providers(sandbox, "flutter", version))
-                self.assertTrue(list(
-                    (sandbox / "virtual/flutter").glob(f"flutter-{version}*.ebuild")
-                ))
-            newest_flutter = all_versions(sandbox, "flutter")[-1]
-            self.assertTrue(available_providers(sandbox, "flutter", newest_flutter))
-            self.assertFalse((sandbox / "virtual/dart/dart-3.13.3-r1.ebuild").exists())
-            old_flutter = list((sandbox / "virtual/flutter").glob("flutter-3.47.2*.ebuild"))
-            self.assertEqual(len(old_flutter), 1)
-            self.assertIn("~dev-lang/flutter-3.47.2", old_flutter[0].read_text())
-            self.assertNotIn("~dev-lang/flutter-bin-3.47.2", old_flutter[0].read_text())
-            self.assertTrue(list((sandbox / "virtual/dart").glob(f"dart-{newest_dart}*.ebuild")))
-            self.assertTrue(list((sandbox / "virtual/flutter").glob(f"flutter-{newest_flutter}*.ebuild")))
+            # Check the complete provider/virtual contract in both a pre-
+            # deduped and an already-deduped working tree, without relying on
+            # a retired historical Flutter or Dart version.
+            for package in ("dart", "flutter"):
+                versions = all_versions(sandbox, package)
+                self.assertTrue(versions, package)
+                virtual_directory = sandbox / "virtual" / package
+                virtual_files = list(virtual_directory.glob("*.ebuild"))
+                self.assertEqual(len(virtual_files), len(versions), package)
+                for version in versions:
+                    self.assertTrue(
+                        available_providers(sandbox, package, version),
+                        f"{package}-{version}",
+                    )
+                    matched = matching_ebuilds(
+                        sandbox, f"virtual/{package}", version
+                    )
+                    self.assertEqual(len(matched), 1, f"{package}-{version}")
+                    self.assertEqual(
+                        matched[0].read_text(),
+                        virtual_content(sandbox, package, version),
+                    )
+
+            self.assertFalse(matching_ebuilds(
+                sandbox, "virtual/dart", "3.13.3"
+            ))
+            # Both Flutter 3.47.2 providers are removed by this simulation.
+            # A virtual with no remaining exact-version provider must retire.
+            self.assertFalse(matching_ebuilds(
+                sandbox, "virtual/flutter", "3.47.2"
+            ))
 
             for package in removed_packages:
                 directory = sandbox / package
