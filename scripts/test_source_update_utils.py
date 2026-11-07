@@ -2,6 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from ebuild_test_support import latest_versioned_ebuild
+
 from source_update_utils import (
     _patch_references,
     carry_forward_versioned_files,
@@ -211,18 +213,44 @@ class SourceUpdateUtilsTest(unittest.TestCase):
             self.assertNotIn("dart-foo-r2.patch", new.read_text())
             self.assertIn("dart-foo-r1.patch", old.read_text())
 
+    def test_latest_ebuild_selection_before_and_after_dedupe(self):
+        with tempfile.TemporaryDirectory() as td:
+            directory = Path(td) / "flutter-engine"
+            directory.mkdir()
+            with self.assertRaises(FileNotFoundError):
+                latest_versioned_ebuild(directory)
+
+            for filename in (
+                "flutter-engine-3.47.2-r1.ebuild",
+                "flutter-engine-3.47.8.ebuild",
+                "flutter-engine-3.47.8-r2.ebuild",
+                "flutter-engine-3.47.10.ebuild",
+            ):
+                (directory / filename).write_text("EAPI=8\n")
+            (directory / "flutter-engine-9999.ebuild").write_text("EAPI=8\n")
+
+            self.assertEqual(
+                latest_versioned_ebuild(directory).name,
+                "flutter-engine-3.47.10.ebuild",
+            )
+            (directory / "flutter-engine-3.47.10.ebuild").unlink()
+            self.assertEqual(
+                latest_versioned_ebuild(directory).name,
+                "flutter-engine-3.47.8-r2.ebuild",
+            )
+            (directory / "flutter-engine-3.47.8-r2.ebuild").unlink()
+            self.assertEqual(
+                latest_versioned_ebuild(directory).name,
+                "flutter-engine-3.47.8.ebuild",
+            )
+
     def test_real_future_version_reuses_patches_and_copies_only_engine_helper(self):
         repo = Path(__file__).parents[1]
         with tempfile.TemporaryDirectory() as td:
             work = Path(td)
             # Use the latest packaged source rather than a version pruned by dedupe.
             dart_dir = repo / "dev-lang/dart"
-            dart_old = max(
-                dart_dir.glob("dart-*.ebuild"),
-                key=lambda p: tuple(int(n) for n in
-                                    p.name.removeprefix("dart-").split(".ebuild")[0]
-                                    .split("-r")[0].split(".")),
-            )
+            dart_old = latest_versioned_ebuild(dart_dir)
             dart_new = work / "dev-lang/dart/dart-99.0.0.ebuild"
             dart_new.parent.mkdir(parents=True)
             dart_new.write_text(dart_old.read_text())
@@ -235,7 +263,7 @@ class SourceUpdateUtilsTest(unittest.TestCase):
                 (repo / "dev-lang/dart/files/dart-99.0.0-binaryen-assert-unused.patch").exists()
             )
 
-            engine_old = repo / "dev-libs/flutter-engine/flutter-engine-3.47.2-r1.ebuild"
+            engine_old = latest_versioned_ebuild(repo / "dev-libs/flutter-engine")
             engine_new = work / "dev-libs/flutter-engine/flutter-engine-99.0.0.ebuild"
             engine_new.parent.mkdir(parents=True)
             engine_new.write_text(engine_old.read_text())
@@ -245,7 +273,8 @@ class SourceUpdateUtilsTest(unittest.TestCase):
             carried = carry_forward_versioned_files(
                 engine_old, "99.0.0", repo, work, "dev-libs/flutter-engine"
             )
-            self.assertEqual(len(engine_patches), 24)
+            self.assertTrue(engine_patches)
+            self.assertEqual(len(engine_patches), len(_patch_references(engine_old)))
             self.assertEqual(
                 carried,
                 ["dev-libs/flutter-engine/files/flutter-engine-99.0.0-package-config.py"],
