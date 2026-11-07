@@ -7,8 +7,9 @@ inherit cmake desktop xdg
 
 DESCRIPTION="Native Serial Experiments Lain PlayStation client"
 HOMEPAGE="https://github.com/VandalsEmpire/lain-psx-decompiled-android"
+MY_SOURCE_URI="https://github.com/VandalsEmpire/lain-psx-decompiled-android"
 SRC_URI="
-	${HOMEPAGE}/archive/refs/tags/android-v${PV}.tar.gz -> ${P}.tar.gz
+	${MY_SOURCE_URI}/archive/refs/tags/android-v${PV}.tar.gz -> ${P}.tar.gz
 "
 S="${WORKDIR}/lain-psx-decompiled-android-android-v${PV}"
 
