@@ -1,14 +1,13 @@
 import importlib.util
 from pathlib import Path
+
+from ebuild_test_support import latest_versioned_ebuild
 import sys
 import unittest
 
 GENERATOR = Path(__file__).with_name("generate_flutter_engine_ebuild.py")
-EBUILD = (
-    Path(__file__).parents[1]
-    / "dev-libs"
-    / "flutter-engine"
-    / "flutter-engine-3.47.2-r1.ebuild"
+EBUILD = latest_versioned_ebuild(
+    Path(__file__).parents[1] / "dev-libs" / "flutter-engine"
 )
 SPEC = importlib.util.spec_from_file_location(
     "flutter_engine_ebuild_generator", GENERATOR
