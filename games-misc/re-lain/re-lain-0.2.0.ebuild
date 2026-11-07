@@ -5,9 +5,11 @@ EAPI=8
 
 inherit cmake desktop xdg
 
-DESCRIPTION="Native Serial Experiments Lain PlayStation client, without bundled game data"
+DESCRIPTION="Native Serial Experiments Lain PlayStation client"
 HOMEPAGE="https://github.com/VandalsEmpire/lain-psx-decompiled-android"
-SRC_URI="https://github.com/VandalsEmpire/lain-psx-decompiled-android/archive/refs/tags/android-v${PV}.tar.gz -> ${P}.tar.gz"
+SRC_URI="
+	${HOMEPAGE}/archive/refs/tags/android-v${PV}.tar.gz -> ${P}.tar.gz
+"
 S="${WORKDIR}/lain-psx-decompiled-android-android-v${PV}"
 
 LICENSE="MIT ZLIB Apache-2.0 CC0-1.0 WTFPL-2 public-domain"
@@ -36,7 +38,8 @@ src_install() {
 	dobin "${BUILD_DIR}/lain"
 
 	newicon -s scalable "${S}/docs/assets/save-icon.svg" "${PN}.svg"
-	make_desktop_entry "lain" "Serial Experiments Lain" "${PN}" "Game;AdventureGame;"
+	make_desktop_entry "lain" "Serial Experiments Lain" \
+		"${PN}" "Game;AdventureGame;"
 
 	doman "${FILESDIR}/lain.6"
 	dodoc README.md port/PORTING.md port/MODDING.md
@@ -47,6 +50,6 @@ pkg_postinst() {
 	xdg_pkg_postinst
 	elog "This client does not contain game data."
 	elog "Import your own raw 2352-byte/sector BIN/IMG PlayStation disc dumps"
-	elog "through the launcher (both discs are required to play the full game)."
-	elog "See man lain(6) and the installed README for controls and disc formats."
+	elog "through the launcher (both discs are needed for the full game)."
+	elog "See man lain(6) and README for controls and disc formats."
 }
