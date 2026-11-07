@@ -1,0 +1,60 @@
+.TH LAIN 6 "November 2026" "re:Lain 0.2.0" "Games Manual"
+.SH NAME
+lain \- native client for the Serial Experiments Lain PlayStation game
+.SH SYNOPSIS
+.B lain
+.SH DESCRIPTION
+.B lain
+is a native Linux client built from the PlayStation game decompilation.
+It runs the ported game code directly and does not use a PlayStation emulator.
+The program includes a graphical launcher for importing game discs,
+configuring the display, and managing optional subtitles and mods.
+.PP
+No copyrighted game data is installed by this package. A personal dump of
+the original PlayStation discs is required.
+.SH GETTING STARTED
+Obtain raw Redump-format disc images of the two original PlayStation discs,
+in CUE/BIN format. Launch
+.B lain
+and import Disc 1 and Disc 2 from the graphical launcher's disc picker.
+Then select
+.B Play
+to start the game.
+.PP
+The importer requires raw 2352-byte-per-sector BIN/IMG data tracks.
+CHD and 2048-byte/sector ISO images are not supported.
+.SH CONTROLS
+The default desktop controls include:
+.TP
+.B Arrow keys
+Move the cursor or select a node (PlayStation D-pad).
+.TP
+.B V
+Confirm/open a node (circle).
+.TP
+.B C
+Go back (cross).
+.TP
+.B Z
+Open the in-game menu (triangle).
+.TP
+.B Return
+Continue or skip (Start).
+.TP
+.B F1
+Open the in-game client options menu.
+.PP
+Physical gamepads are supported. Bindings can be adjusted in the application.
+.SH REQUIREMENTS
+A desktop with OpenGL 3.2, SDL2, and OpenAL is required. Game data must be
+supplied separately from personally obtained original disc dumps.
+.SH FILES
+The launcher manages imported disc data, saves, settings, and modifications
+within the user's account. See the installed PORTING.md and MODDING.md
+documentation for further details.
+.SH COPYRIGHT
+The native client source is distributed under the MIT license, with
+additional third-party licenses. Serial Experiments Lain and its original
+game data remain the property of their respective rights holders.
+.SH SEE ALSO
+.BR https://github.com/VandalsEmpire/lain-psx-decompiled-android
