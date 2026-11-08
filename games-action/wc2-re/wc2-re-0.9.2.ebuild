@@ -39,7 +39,7 @@ src_compile() {
 		MODERN_RELEASE=1 \
 		MODERN_CC="$(tc-getCC)" \
 		MODERN_CXX="$(tc-getCXX)" \
-		MODERN_CFLAGS="${CFLAGS} -std=c11 -fno-common -Wno-return-type -Wno-return-mismatch -Wno-error=incompatible-pointer-types -Wno-int-conversion" \
+		MODERN_CFLAGS="${modern_cflags}" \
 		MODERN_CXXFLAGS="${CXXFLAGS} -std=c++11" \
 		modern
 }
