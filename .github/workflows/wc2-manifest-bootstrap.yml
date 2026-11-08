@@ -19,5 +19,5 @@ jobs:
           curl --fail --location --retry 3 \
             --output "$file" \
             https://github.com/neuromancer/wc2-re/archive/refs/tags/v0.9.2.tar.gz
-          tar -tzf "$file" | grep -q '^wc2-re-0.9.2/third_party/ymfm/LICENSE$'
+          tar -tzf "$file" | grep -Fx 'wc2-re-0.9.2/third_party/ymfm/LICENSE'
           echo "DIST $file $(stat -c '%s' "$file") BLAKE2B $(b2sum "$file" | cut -d ' ' -f1) SHA512 $(sha512sum "$file" | cut -d ' ' -f1)"
