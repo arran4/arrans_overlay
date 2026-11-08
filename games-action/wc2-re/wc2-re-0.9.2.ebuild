@@ -27,6 +27,11 @@ DEPEND="
 RDEPEND="${DEPEND}"
 
 src_compile() {
+	local modern_cflags="${CFLAGS} -std=c11 -fno-common"
+	modern_cflags+=" -Wno-return-type -Wno-return-mismatch"
+	modern_cflags+=" -Wno-error=incompatible-pointer-types"
+	modern_cflags+=" -Wno-int-conversion"
+
 	# Upstream defaults to a sanitizer-instrumented development build.
 	# Only build the native SDL2 target: the MSVC reference build fetches
 	# proprietary toolchains, and the Slint GUI needs a separate Rust build.
@@ -54,5 +59,5 @@ pkg_postinst() {
 	einfo "Original Wing Commander II game data is not included."
 	einfo "Run from the directory containing your WC2 game data, for example:"
 	einfo "  cd /path/to/WC2 && wc2-modern --enhanced"
-	einfo "This source package builds the SDL2 command-line port, not the Slint GUI."
+	einfo "This package builds the SDL2 CLI port, not the Slint GUI."
 }
