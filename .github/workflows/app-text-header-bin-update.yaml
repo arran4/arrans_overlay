@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder dev Github Binary Release current.config 2026-10-30 03:15:07.810720053 +0000 UTC m=+0.007303948
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.47 Github Binary Release current.config 2026-11-06 10:51:06 +0000 UTC
 
 name: app-text/header-bin update
 
@@ -31,8 +31,9 @@ env:
   header_release_name_x86: 'header_${version}_linux_386.tar.gz'
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow_ref }}
   cancel-in-progress: false
+  queue: max
 
 jobs:
   check-and-create-ebuild:
@@ -96,10 +97,6 @@ jobs:
                 emit_metadata_field() {
                     local label=$1
                     local value=$2
-                    local prefix="${label}+=\""
-                    local max_chunk=$((80 - ${#prefix} - 1))
-                    echo "${label}=\"\""
-                    [ -z "$value" ] && return 0
                     local clean_value="${value//$'\r'/}"
                     clean_value="${clean_value//$'\n'/ }"
                     local tokens=()
@@ -131,6 +128,20 @@ jobs:
                             i=$((i + 1))
                         fi
                     done
+                    # KEYWORDS is strictly required by Gentoo QA policy (PG0101/PG0106)
+                    # to be defined at most once and never appended to.
+                    if [ "$label" = "KEYWORDS" ]; then
+                        local full_kw=""
+                        for tok in "${tokens[@]}"; do
+                            full_kw="${full_kw}${tok}"
+                        done
+                        printf '%s="%s"\n' "$label" "$full_kw"
+                        return 0
+                    fi
+                    local prefix="${label}+=\""
+                    local max_chunk=$((80 - ${#prefix} - 1))
+                    echo "${label}=\"\""
+                    [ -z "$value" ] && return 0
                     local current_line=""
                     local pending_after_space=""
                     for tok in "${tokens[@]}"; do
@@ -153,6 +164,36 @@ jobs:
                                         pending_after_space="${pending_after_space}${tok}"
                                     fi
                                 else
+                                    if [ "$label" = "SRC_URI" ]; then
+                                        if [ "$tok" = " " ]; then
+                                            printf "%s%s \"\n" "$prefix" "$pending_after_space"
+                                            pending_after_space=""
+                                            current_line=""
+                                        else
+                                            pending_after_space="${pending_after_space}${tok}"
+                                        fi
+                                    else
+                                        if [ -n "$pending_after_space" ]; then
+                                            printf "%s%s\"\n" "$prefix" "$pending_after_space"
+                                        fi
+                                        if [ "$tok" = " " ]; then
+                                            current_line=" "
+                                            pending_after_space=""
+                                        else
+                                            pending_after_space="$tok"
+                                        fi
+                                    fi
+                                fi
+                            else
+                                if [ "$label" = "SRC_URI" ]; then
+                                    if [ "$tok" = " " ]; then
+                                        printf "%s%s \"\n" "$prefix" "$pending_after_space"
+                                        pending_after_space=""
+                                        current_line=""
+                                    else
+                                        pending_after_space="${pending_after_space}${tok}"
+                                    fi
+                                else
                                     if [ -n "$pending_after_space" ]; then
                                         printf "%s%s\"\n" "$prefix" "$pending_after_space"
                                     fi
@@ -162,16 +203,6 @@ jobs:
                                     else
                                         pending_after_space="$tok"
                                     fi
-                                fi
-                            else
-                                if [ -n "$pending_after_space" ]; then
-                                    printf "%s%s\"\n" "$prefix" "$pending_after_space"
-                                fi
-                                if [ "$tok" = " " ]; then
-                                    current_line=" "
-                                    pending_after_space=""
-                                else
-                                    pending_after_space="$tok"
                                 fi
                             fi
                         fi
