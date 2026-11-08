@@ -7,6 +7,7 @@ inherit toolchain-funcs
 
 DESCRIPTION="Native SDL2 port of the reconstructed Wing Commander II game"
 HOMEPAGE="https://github.com/neuromancer/wc2-re"
+# The release archive contains the SDL2 port; wibo is not needed.
 SRC_URI="
 	https://github.com/neuromancer/wc2-re/archive/refs/tags/v${PV}.tar.gz
 		-> ${P}.tar.gz
