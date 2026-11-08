@@ -3,15 +3,14 @@
 
 EAPI=8
 
-inherit git-r3 toolchain-funcs
+inherit toolchain-funcs
 
 DESCRIPTION="Native SDL2 port of the reconstructed Wing Commander II game"
 HOMEPAGE="https://github.com/neuromancer/wc2-re"
-EGIT_REPO_URI="https://github.com/neuromancer/wc2-re.git"
-# Release tag v0.9.2 (do not follow a moving branch).
-EGIT_COMMIT="7eb3f36bc24bf7dc29709bb3d1b2617cca32852e"
-# The wibo submodule is needed for the separate MSVC reference build only.
-EGIT_SUBMODULES=()
+SRC_URI="
+	https://github.com/neuromancer/wc2-re/archive/refs/tags/v${PV}.tar.gz
+		-> ${P}.tar.gz
+"
 
 LICENSE="GPL-3 BSD"
 SLOT="0"
