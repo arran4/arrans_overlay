@@ -1,0 +1,8 @@
+# External Gentoo repositories required by the pkgcheck CI job.
+# Format: <repository-name> <HTTPS git clone URL> [# optional comment]
+# Blank lines, whole-line comments, and end-of-line comments are ignored.
+
+gentoo https://github.com/gentoo-mirror/gentoo.git  # Default amd64 profile
+# Additional masters for this overlay:
+guru https://github.com/gentoo-mirror/guru.git
+hyproverlay https://codeberg.org/hyproverlay/hyproverlay.git  # Hyprland packages
