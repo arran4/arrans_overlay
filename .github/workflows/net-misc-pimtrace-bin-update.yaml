@@ -1,4 +1,4 @@
-# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.47 Github Binary Release current.config 2026-11-06 10:51:06 +0000 UTC
+# Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.48 Github Binary Release current.config 2026-11-06 10:51:06 +0000 UTC
 
 name: net-misc/pimtrace-bin update
 
@@ -324,16 +324,9 @@ jobs:
           ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           g2 ebuild deduplicate "${ebuild_dir}"
 
-      - name: Lint output
+      - name: Generate md5-cache
         if: steps.process_releases.outputs.generated_tag
-        uses: arran4/g2-action@v1.2
-        with:
-          mode: 'run'
-          action: 'lint -disable-rule PG0802 . ${{ env.ecn }}/${{ env.epn }}'
-
-      - name: Commit and push changes
         run: |
-          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           mkdir -p profiles metadata
           if [ -f profiles/repo_name ]; then
             :
@@ -352,6 +345,17 @@ jobs:
             echo "::warning title=Layout.conf check::cache-formats is already defined in layout.conf, skipping generation."
           fi
           g2 cache generate "${{ env.ecn }}/${{ env.epn }}"
+
+      - name: Lint output
+        if: steps.process_releases.outputs.generated_tag
+        uses: arran4/g2-action@v1.2
+        with:
+          mode: 'run'
+          action: 'lint -fail-severity error . ${{ env.ecn }}/${{ env.epn }}'
+
+      - name: Commit and push changes
+        run: |
+          ebuild_dir="./${{ env.ecn }}/${{ env.epn }}"
           git add "./${ebuild_dir}"
           if git commit -m "Add ebuilds for new ${{ env.epn }} releases tag ${generated_tag}"; then
             git pull --rebase &&
