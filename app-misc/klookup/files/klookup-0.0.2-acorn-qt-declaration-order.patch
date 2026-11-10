@@ -1,0 +1,28 @@
+From: KLookup upstream PR #160 <https://github.com/arran4/klookup/pull/160>
+Subject: [PATCH] Fix Acorn declaration order warnings on Qt 6.11
+
+The Acorn import validator is evaluated for each JS provider. Qt 6.11 warns
+about function-parsing flags being referenced before their var declaration.
+Move the declarations earlier, matching the already-merged upstream fix.
+No parser behaviour or provider policy is changed.
+
+--- a/third_party/acorn/acorn.js
++++ b/third_party/acorn/acorn.js
+@@ -817,6 +817,8 @@
+     return expr.type === "Identifier" || expr.type === "MemberExpression"
+   };
+ 
++  var FUNC_STATEMENT = 1, FUNC_HANGING_STATEMENT = 2, FUNC_NULLABLE_ID = 4;
++
+   var pp$8 = Parser.prototype;
+ 
+   // ### Statement parsing
+@@ -1427,8 +1429,6 @@
+     this.checkLValPattern(decl.id, kind === "var" ? BIND_VAR : BIND_LEXICAL, false);
+   };
+ 
+-  var FUNC_STATEMENT = 1, FUNC_HANGING_STATEMENT = 2, FUNC_NULLABLE_ID = 4;
+-
+   // Parse a function declaration or literal (depending on the
+   // `statement & FUNC_STATEMENT`).
+
