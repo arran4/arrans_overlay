@@ -16,6 +16,7 @@ inherit cmake git-r3
 DESCRIPTION="KDE Plasma 6 lookup tool with search providers"
 HOMEPAGE="https://github.com/arran4/klookup"
 EGIT_REPO_URI="https://github.com/arran4/klookup.git"
+LICENSE="GPL-3+ BSD-2 CC-BY-SA-4.0 CC0-1.0 MIT"
 KEYWORDS=""
 DEPEND="dev-qt/qtbase:6[dbus,gui,network,widgets]"
 '''
@@ -68,6 +69,7 @@ class TestUpdater(unittest.TestCase):
         self.assertIn('SRC_URI="\n\thttps://github.com/arran4/klookup/archive/refs/tags/v1.0.0.tar.gz\n\t\t-> ${P}.tar.gz\n"', generated)
         self.assertIn('S="${WORKDIR}/klookup-${PV}"', generated)
         self.assertIn('KEYWORDS="~amd64"', generated)
+        self.assertIn('LICENSE="GPL-3+ BSD-2 CC-BY-SA-4.0 CC0-1.0 MIT"', generated)
         self.assertIn('dev-qt/qtbase:6[dbus,gui,network,widgets]', generated)
         self.assertEqual(run.call_count, 1)
         self.assertEqual(run.call_args_list[0].args[0],
@@ -88,6 +90,43 @@ class TestUpdater(unittest.TestCase):
         self.assertFalse((updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').exists())
         self.assertTrue((updater.PACKAGE_DIR / 'klookup-1.1.0.ebuild').is_file())
         self.assertIn('refs/tags/v1.1.0.tar.gz', (updater.PACKAGE_DIR / 'klookup-1.1.0.ebuild').read_text())
+        self.assertEqual(run.call_count, 1)
+
+
+    def test_rejects_missing_acorn_license(self):
+        updater.LIVE_EBUILD.write_text(LIVE_FIXTURE.replace(' CC0-1.0 MIT', ' CC0-1.0'))
+        with self.assertRaisesRegex(ValueError, 'declare MIT'):
+            updater.release_ebuild('v1.0.0', '1.0.0')
+
+    @patch('update_klookup_source.subprocess.run')
+    @patch.object(updater, 'get_releases', return_value=[{'tag_name': 'v1.0.0'}])
+    def test_revisioned_release_is_already_packaged(self, get_releases, run):
+        revised = updater.PACKAGE_DIR / 'klookup-1.0.0-r1.ebuild'
+        revised.write_text('patched')
+        updater.main()
+        self.assertEqual(revised.read_text(), 'patched')
+        self.assertFalse((updater.PACKAGE_DIR / 'klookup-1.0.0.ebuild').exists())
+        run.assert_not_called()
+
+    @patch('update_klookup_source.subprocess.run')
+    @patch.object(updater, 'get_releases', return_value=[{'tag_name': 'v1.1.0'}])
+    def test_new_release_prunes_older_revisions_cache_and_distfile(self, get_releases, run):
+        for name in ('klookup-1.0.0.ebuild', 'klookup-1.0.0-r1.ebuild'):
+            (updater.PACKAGE_DIR / name).write_text('obsolete')
+            cache = Path('metadata/md5-cache/app-misc') / name.removesuffix('.ebuild')
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            cache.write_text('obsolete cache')
+        manifest = updater.PACKAGE_DIR / 'Manifest'
+        manifest.write_text('DIST klookup-1.0.0.tar.gz 10 BLAKE2B old SHA512 old\n'
+                            'DIST other-source.tar.gz 10 BLAKE2B keep SHA512 keep\n')
+        updater.main()
+        for name in ('klookup-1.0.0.ebuild', 'klookup-1.0.0-r1.ebuild'):
+            self.assertFalse((updater.PACKAGE_DIR / name).exists())
+            self.assertFalse((Path('metadata/md5-cache/app-misc') /
+                              name.removesuffix('.ebuild')).exists())
+        self.assertTrue((updater.PACKAGE_DIR / 'klookup-1.1.0.ebuild').exists())
+        self.assertNotIn('klookup-1.0.0.tar.gz', manifest.read_text())
+        self.assertIn('other-source.tar.gz', manifest.read_text())
         self.assertEqual(run.call_count, 1)
 
     @patch('update_klookup_source.subprocess.run', side_effect=subprocess.CalledProcessError(1, 'g2'))

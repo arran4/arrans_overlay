@@ -9,7 +9,7 @@ DESCRIPTION="KDE Plasma 6 lookup tool with search providers"
 HOMEPAGE="https://github.com/arran4/klookup"
 EGIT_REPO_URI="https://github.com/arran4/klookup.git"
 
-LICENSE="GPL-3+ BSD-2 CC-BY-SA-4.0 CC0-1.0"
+LICENSE="GPL-3+ BSD-2 CC-BY-SA-4.0 CC0-1.0 MIT"
 SLOT="0"
 KEYWORDS=""
 IUSE="test"

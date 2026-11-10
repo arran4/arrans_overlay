@@ -16,6 +16,7 @@ PACKAGE_DIR = Path('app-misc/klookup')
 LIVE_EBUILD = PACKAGE_DIR / 'klookup-9999.ebuild'
 RELEASES_URL = 'https://api.github.com/repos/arran4/klookup/releases?per_page=100'
 STABLE_TAG = re.compile(r'^v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)$')
+RELEASE_EBUILD = re.compile(r'^klookup-(?P<version>\d+\.\d+\.\d+)(?:-r[1-9]\d*)?\.ebuild$')
 
 
 def get_releases():
@@ -50,6 +51,10 @@ def eligible_releases(releases):
 def release_ebuild(tag, version):
     """Reuse the live ebuild's tested dependency list rather than drifting."""
     source = LIVE_EBUILD.read_text(encoding='utf-8')
+    # Acorn is MIT licensed: do not generate incorrect license metadata.
+    license_match = re.search(r'^LICENSE="([^"]+)"$', source, re.MULTILINE)
+    if not license_match or 'MIT' not in license_match.group(1).split():
+        raise ValueError('Live KLookup ebuild must declare MIT for bundled Acorn')
     if 'inherit cmake git-r3' not in source:
         raise ValueError('Live ebuild layout changed: review source template')
     if 'EGIT_REPO_URI="https://github.com/arran4/klookup.git"' not in source:
@@ -69,9 +74,13 @@ def release_ebuild(tag, version):
 
 
 def create_release(tag, version):
-    dest = PACKAGE_DIR / f'klookup-{version}.ebuild'
-    if dest.exists():
+    # A -rN revision packages the same upstream release; never regenerate an
+    # unpatched -r0 if a downstream bugfix revision already exists.
+    if any((match := RELEASE_EBUILD.fullmatch(ebuild.name)) and
+           match.group('version') == version
+           for ebuild in PACKAGE_DIR.glob('klookup-*.ebuild')):
         return False
+    dest = PACKAGE_DIR / f'klookup-{version}.ebuild'
     content = release_ebuild(tag, version)
     dest.write_text(content, encoding='utf-8')
     url = f'https://github.com/arran4/klookup/archive/refs/tags/{tag}.tar.gz'
@@ -84,12 +93,12 @@ def create_release(tag, version):
 
 
 def prune_old_stable_releases(keep_version):
-    """Keep only the newest published stable grade and its distfile/cache."""
+    """Keep only the newest stable version, including any -rN revisions."""
     removed_versions = []
     for ebuild in PACKAGE_DIR.glob('klookup-*.ebuild'):
-        match = re.fullmatch(r'klookup-(\d+\.\d+\.\d+)\.ebuild', ebuild.name)
-        if match and match.group(1) != keep_version:
-            removed_versions.append(match.group(1))
+        match = RELEASE_EBUILD.fullmatch(ebuild.name)
+        if match and match.group('version') != keep_version:
+            removed_versions.append(match.group('version'))
             ebuild.unlink()
             (Path('metadata/md5-cache/app-misc') / ebuild.stem).unlink(missing_ok=True)
     manifest = PACKAGE_DIR / 'Manifest'
