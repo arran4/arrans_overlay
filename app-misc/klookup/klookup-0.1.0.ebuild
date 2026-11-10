@@ -9,13 +9,10 @@ inherit cmake
 DESCRIPTION="KDE Plasma 6 lookup tool with search providers"
 HOMEPAGE="https://github.com/arran4/klookup"
 SRC_URI="
-	https://github.com/arran4/klookup/archive/refs/tags/v0.0.2.tar.gz
+	https://github.com/arran4/klookup/archive/refs/tags/v0.1.0.tar.gz
 		-> ${P}.tar.gz
 "
 S="${WORKDIR}/klookup-${PV}"
-
-# Backport upstream KLookup #160 to the v0.0.2 source archive.
-PATCHES=( "${FILESDIR}/${P}-acorn-qt-declaration-order.patch" )
 
 LICENSE="GPL-3+ BSD-2 CC-BY-SA-4.0 CC0-1.0 MIT"
 SLOT="0"
