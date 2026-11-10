@@ -14,7 +14,7 @@ SRC_URI="
 "
 S="${WORKDIR}/klookup-${PV}"
 
-# Backport KLookup #160; the unchanged v0.0.2 source tarball needs this Qt 6.11 fix.
+# Backport upstream KLookup #160 to the v0.0.2 source archive.
 PATCHES=( "${FILESDIR}/${P}-acorn-qt-declaration-order.patch" )
 
 LICENSE="GPL-3+ BSD-2 CC-BY-SA-4.0 CC0-1.0 MIT"
