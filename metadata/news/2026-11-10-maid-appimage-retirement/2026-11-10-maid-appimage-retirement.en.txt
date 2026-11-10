@@ -13,9 +13,13 @@ been maintained or independently checked for some time. To avoid presenting
 an unverified package as maintained, new Maid AppImage updates will no longer
 be supplied from this overlay.
 
-Existing installed versions are not automatically removed. If you still
-use Maid, consider obtaining a current release from its upstream project
-or maintaining a separate ebuild. No replacement package is provided.
+Existing installed versions are not automatically removed. The upstream
+project's current 3.x release line focuses on Android rather than Linux.
+No verified Maid Flatpak replacement was found at the time of retirement.
+Older upstream Linux AppImages may remain available in its historical
+releases, but they are not maintained or updated by this overlay.
+Users retaining Maid should review upstream's available platforms and
+releases or maintain a separate ebuild.
 
 To remove the installed package if it is no longer needed:
 
