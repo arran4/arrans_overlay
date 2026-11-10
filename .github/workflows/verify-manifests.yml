@@ -54,7 +54,8 @@ jobs:
           fi
 
           echo "Comparing $BASE to $HEAD"
-          CHANGED_FILES=$(git diff --name-only $BASE $HEAD -- '**/Manifest' || true)
+          # Deleted package directories have no Manifest left to verify.
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR "$BASE" "$HEAD" -- '**/Manifest' || true)
 
           if [ -z "$CHANGED_FILES" ]; then
             echo "No Manifest files changed."

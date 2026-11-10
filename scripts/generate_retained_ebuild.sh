@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # Shared ebuild generator for retained workflow recipes:
-#   - app-misc/kjules
 #   - app-misc/stability-matrix-appimage
 #
 # Called by workflow update jobs and regression unit tests.
@@ -12,7 +11,6 @@ usage() {
 Usage: generate_retained_ebuild.sh <package> <ebuild_dir> <version> [args...]
 
 Packages:
-  kjules                     <ebuild_dir> <version>
   stability-matrix-appimage  <ebuild_dir> <version> [archived_name] [installed_name]
 EOF
   exit 1
@@ -30,80 +28,6 @@ shift 3
 mkdir -p "$ebuild_dir"
 
 case "$package" in
-  kjules|app-misc/kjules)
-    ebuild_name="kjules"
-    ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"
-
-    # Revision guard: do not recreate if unrevisioned or -rN exists
-    if [ -f "$ebuild_file" ] || compgen -G "${ebuild_dir}/${ebuild_name}-${version}-r[0-9]*.ebuild" > /dev/null; then
-      echo "SKIPPED: ${ebuild_name}-${version} already exists in ${ebuild_dir}"
-      exit 0
-    fi
-
-    description="${DESCRIPTION:-kjules KDE application}"
-    homepage="${HOMEPAGE:-https://github.com/arran4/kjules}"
-    github_owner="${GITHUB_OWNER:-arran4}"
-    github_repo="${GITHUB_REPO:-kjules}"
-
-    cat << EOF > "$ebuild_file"
-# Copyright 2026 Gentoo Authors
-# Distributed under the terms of the GNU General Public License v2
-
-# Generated via:
-# .github/workflows/app-misc-kjules-update.yaml
-EAPI=8
-
-ECM_TEST="forceoptional"
-inherit xdg ecm
-
-DESCRIPTION="${description}"
-HOMEPAGE="${homepage}"
-SRC_URI="
-	https://github.com/${github_owner}/${github_repo}/archive/refs/tags/v\${PV}.tar.gz
-		-> \${P}.tar.gz
-"
-
-LICENSE="MIT"
-SLOT="0"
-KEYWORDS="~amd64"
-IUSE="debug"
-
-DEPEND="
-	dev-qt/qtbase:6[gui,network,widgets]
-	kde-frameworks/karchive:6
-	kde-frameworks/kconfig:6
-	kde-frameworks/kcoreaddons:6
-	kde-frameworks/kdbusaddons:6
-	kde-frameworks/kglobalaccel:6
-	kde-frameworks/ki18n:6
-	kde-frameworks/knotifications:6
-	kde-frameworks/kwallet:6
-	kde-frameworks/kwidgetsaddons:6
-	kde-frameworks/kwindowsystem:6
-	kde-frameworks/kxmlgui:6
-	test? (
-		kde-frameworks/kcolorscheme:6
-		kde-frameworks/kconfigwidgets:6
-		kde-frameworks/kguiaddons:6
-	)
-"
-RDEPEND="\${DEPEND}"
-
-src_prepare() {
-	ecm_src_prepare
-	sed -i -e \\
-		's/KDE_INSTALL_KXMLGUI6DIR/KDE_INSTALL_KXMLGUIDIR/g' \\
-		CMakeLists.txt || die
-	cmake_comment_add_subdirectory bench
-}
-
-src_configure() {
-	ecm_src_configure
-}
-EOF
-    echo "GENERATED: ${ebuild_file}"
-    ;;
-
   stability-matrix-appimage|app-misc/stability-matrix-appimage)
     ebuild_name="stability-matrix-appimage"
     ebuild_file="${ebuild_dir}/${ebuild_name}-${version}.ebuild"

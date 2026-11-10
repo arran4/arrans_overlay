@@ -28,7 +28,6 @@ class RetainedWorkflowGeneratorsTest(unittest.TestCase):
     def test_workflow_files_call_production_generator(self):
         """Verify workflow YAMLs invoke the shared production generator rather than inline recipes."""
         for wf_name in (
-            "app-misc-kjules-update.yaml",
             "app-misc-stability-matrix-appimage-update.yaml",
         ):
             wf_path = REPO_ROOT / ".github" / "workflows" / wf_name
@@ -39,53 +38,6 @@ class RetainedWorkflowGeneratorsTest(unittest.TestCase):
                 content,
                 f"Workflow {wf_name} does not call scripts/generate_retained_ebuild.sh",
             )
-
-    def test_kjules_generator_production_execution(self):
-        """Test kjules production generator execution, valid recipe, idempotence, and revision awareness."""
-        pkg_dir = self.tmp_path / "kjules"
-        version = "0.0.86"
-        ebuild_file = pkg_dir / f"kjules-{version}.ebuild"
-
-        # 1. Initial generation
-        res = self.run_generator("kjules", str(pkg_dir), version)
-        self.assertEqual(res.returncode, 0, f"Generator failed: {res.stderr}")
-        self.assertIn("GENERATED:", res.stdout)
-        self.assertTrue(ebuild_file.exists())
-
-        content = ebuild_file.read_text()
-        self.assertIn("EAPI=8", content)
-        self.assertIn('ECM_TEST="forceoptional"', content)
-        self.assertIn("inherit xdg ecm", content)
-        self.assertIn("dev-qt/qtbase:6[gui,network,widgets]", content)
-        self.assertIn("kde-frameworks/karchive:6", content)
-        self.assertIn("kde-frameworks/kconfig:6", content)
-        self.assertIn("kde-frameworks/kcoreaddons:6", content)
-        self.assertIn("kde-frameworks/kdbusaddons:6", content)
-        self.assertIn("kde-frameworks/kglobalaccel:6", content)
-        self.assertIn("kde-frameworks/ki18n:6", content)
-        self.assertIn("kde-frameworks/knotifications:6", content)
-        self.assertIn("kde-frameworks/kwallet:6", content)
-        self.assertIn("kde-frameworks/kwidgetsaddons:6", content)
-        self.assertIn("kde-frameworks/kwindowsystem:6", content)
-        self.assertIn("kde-frameworks/kxmlgui:6", content)
-        self.assertEqual(subprocess.run(["bash", "-n", str(ebuild_file)]).returncode, 0)
-
-        # 2. Repeated execution is idempotent
-        before_repeat = ebuild_file.read_bytes()
-        res_repeat = self.run_generator("kjules", str(pkg_dir), version)
-        self.assertEqual(res_repeat.returncode, 0)
-        self.assertIn("SKIPPED:", res_repeat.stdout)
-        self.assertEqual(before_repeat, ebuild_file.read_bytes())
-
-        # 3. Revision awareness: existing -r1 ebuild blocks unrevisioned recreation
-        rev_dir = self.tmp_path / "kjules-rev"
-        rev_dir.mkdir(parents=True)
-        (rev_dir / f"kjules-{version}-r1.ebuild").write_text("# existing revision")
-
-        res_rev = self.run_generator("kjules", str(rev_dir), version)
-        self.assertEqual(res_rev.returncode, 0)
-        self.assertIn("SKIPPED:", res_rev.stdout)
-        self.assertFalse((rev_dir / f"kjules-{version}.ebuild").exists())
 
     def test_stability_matrix_generator_production_execution(self):
         """Test stability-matrix production generator, glibc handling, rename guard, and revision awareness."""
