@@ -15,7 +15,8 @@ import urllib.request
 PACKAGE_DIR = Path('app-misc/klookup')
 LIVE_EBUILD = PACKAGE_DIR / 'klookup-9999.ebuild'
 RELEASES_URL = 'https://api.github.com/repos/arran4/klookup/releases?per_page=100'
-STABLE_TAG = re.compile(r'^v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)
+STABLE_TAG = re.compile(r'^v?(?P<version>[0-9]+\.[0-9]+\.[0-9]+)$')
+RELEASE_EBUILD = re.compile(r'^klookup-(?P<version>\d+\.\d+\.\d+)(?:-r[1-9]\d*)?\.ebuild$')
 
 def get_releases():
     headers = {'Accept': 'application/vnd.github+json',
