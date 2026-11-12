@@ -1,11 +1,12 @@
-Title: Jules retirement: KDE and Flutter clients removed
+Title: Jules retirement: clients and CLI removed
 Author: Arran <gentoo@arran4.com>
 Posted: 2026-11-10
-Revision: 1
+Revision: 2
 News-Item-Format: 2.0
 Display-If-Installed: app-misc/kjules
 Display-If-Installed: app-misc/flutter-jules
 Display-If-Installed: app-misc/flutter-jules-bin
+Display-If-Installed: dev-util/jules-bin
 
 Google announced on 29 October 2026 that its Jules asynchronous coding
 service will wind down on 31 December 2026. Users can finish Jules
@@ -18,6 +19,7 @@ automatic update workflows:
     app-misc/kjules
     app-misc/flutter-jules
     app-misc/flutter-jules-bin
+    dev-util/jules-bin
 
 Before shutdown, export any Jules settings, scheduled tasks, environment
 variables, setup scripts, memories, and session history you wish to keep.
@@ -27,7 +29,7 @@ Keep exports containing environment variables or other secrets secure.
 If you installed these packages, remove them from the world set and
 uninstall them when no longer needed:
 
-    emerge --deselect app-misc/kjules app-misc/flutter-jules app-misc/flutter-jules-bin
+    emerge --deselect app-misc/kjules app-misc/flutter-jules app-misc/flutter-jules-bin dev-util/jules-bin
     emerge --ask --depclean
 
 Google mentions Antigravity as part of its ongoing agentic development
