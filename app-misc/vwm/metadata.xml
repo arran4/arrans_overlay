@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>maintainer@example.invalid</email>
+		<name>Overlay maintainer</name>
+	</maintainer>
+	<use>
+		<flag name="dtach">Install app-misc/dtach for the bundled vwm-start and vwm-resume helpers</flag>
+		<flag name="gpm">Enable mouse support through sys-libs/gpm</flag>
+		<flag name="xclip">Install x11-misc/xclip for X11 clipboard integration</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">TragicWarrior/vwm</remote-id>
+		<bugs-to>https://github.com/TragicWarrior/vwm/issues</bugs-to>
+	</upstream>
+</pkgmetadata>
