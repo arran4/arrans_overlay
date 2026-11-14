@@ -1,15 +1,34 @@
-Title: Removal of dev-util/antigravity-bin and dev-util/antigravity-cli-bin in favor of GURU packages
-Author: Arran <gentoo@arran4.com>
+Title: Antigravity packages migrated to GURU
+Author: Arran Ubels <gentoo@arran4.com>
 Posted: 2026-08-13
-Revision: 1
+Revision: 2
 News-Item-Format: 2.0
 Display-If-Installed: dev-util/antigravity-bin
 Display-If-Installed: dev-util/antigravity-cli-bin
 
-The `dev-util/antigravity-bin` and `dev-util/antigravity-cli-bin` packages have been removed from this overlay because equivalent packages, `dev-util/google-antigravity`, `dev-util/google-antigravity-cli`, and `dev-util/google-antigravity-ide` are now available in the GURU repository.
+The dev-util/antigravity-bin and dev-util/antigravity-cli-bin
+packages have been removed from this overlay. GURU now provides
+separate packages for the Antigravity platform, command-line
+client and editor:
 
-Please migrate your installation to the GURU packages:
+  dev-util/google-antigravity
+  dev-util/google-antigravity-cli
+  dev-util/google-antigravity-ide
 
-emerge --deselect dev-util/antigravity-bin dev-util/antigravity-cli-bin
-emerge --ask dev-util/google-antigravity dev-util/google-antigravity-cli dev-util/google-antigravity-ide
-emerge --depclean dev-util/antigravity-bin dev-util/antigravity-cli-bin
+Enable and sync the GURU repository if necessary. Choose only the
+replacement package(s) you need; installing all three is optional.
+For example, install the CLI and editor with:
+
+  emerge --ask dev-util/google-antigravity-cli
+  emerge --ask dev-util/google-antigravity-ide
+
+The platform package is available separately:
+
+  emerge --ask dev-util/google-antigravity
+
+Check that the replacement applications work before removing the
+old packages from the world set:
+
+  emerge --deselect dev-util/antigravity-bin
+  emerge --deselect dev-util/antigravity-cli-bin
+  emerge --ask --depclean
