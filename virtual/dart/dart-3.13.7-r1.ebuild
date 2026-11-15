@@ -6,9 +6,8 @@ EAPI=8
 DESCRIPTION="Virtual for the Dart SDK"
 
 SLOT="0"
-KEYWORDS="~amd64 ~arm ~arm64 ~riscv"
+KEYWORDS="~amd64"
 
 RDEPEND="|| (
-	~dev-lang/dart-3.13.3
-	~dev-lang/dart-bin-3.13.3
+	~dev-lang/dart-3.13.7
 )"
