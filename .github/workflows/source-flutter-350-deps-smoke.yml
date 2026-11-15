@@ -18,6 +18,13 @@ jobs:
           curl -fLsS --retry 1 --max-time 40 "${url}" -o /tmp/flutter-shaderc.tar.gz
           gzip -t /tmp/flutter-shaderc.tar.gz
           tar -tzf /tmp/flutter-shaderc.tar.gz | sed -n '1,5p'
+      - name: Verify exact Flutter glslang fork archive
+        run: |
+          set -euo pipefail
+          url="https://flutter.googlesource.com/third_party/glslang/+archive/fdbdca9263a4c09dbfb4a51c76e3e9d9f52bc504.tar.gz"
+          curl -fLsS --retry 1 --max-time 90 "${url}" -o /tmp/flutter-glslang.tar.gz
+          gzip -t /tmp/flutter-glslang.tar.gz
+          tar -tzf /tmp/flutter-glslang.tar.gz | sed -n '1,5p'
       - name: Audit authoritative source DEPS without publishing
         run: |
           python3 - <<'PY'
