@@ -71,6 +71,29 @@ class ReviewedExclusionTest(unittest.TestCase):
                 "3.51.0", generator.REVIEWED_EXCLUSIONS
             )
 
+    def test_flutter_350_reviews_do_not_mutate_347_source_graph(self):
+        original = generator.REVIEWED_EXCLUSIONS.copy()
+        baseline = generator.reviewed_exclusions_for_flutter_version(
+            "3.47.8", generator.REVIEWED_EXCLUSIONS
+        )
+        changed = generator.reviewed_exclusions_for_flutter_version(
+            "3.50.0", generator.REVIEWED_EXCLUSIONS
+        )
+        self.assertEqual(original, generator.REVIEWED_EXCLUSIONS)
+        self.assertEqual(original, baseline)
+        self.assertEqual(set(original), set(changed))
+        for destination, (identity, reason) in changed.items():
+            with self.subTest(destination=destination):
+                self.assertEqual(reason, original[destination][1])
+                old = original[destination][0]
+                self.assertEqual(identity.dep_type, old.dep_type)
+                self.assertEqual(identity.repository, old.repository)
+                self.assertEqual(identity.condition, old.condition)
+                if destination in generator.REVIEWED_FLUTTER_350_REVISIONS:
+                    self.assertNotEqual(identity, old)
+                else:
+                    self.assertEqual(identity, old)
+
     def test_unchanged_reviewed_git_exclusion_succeeds(self):
         dependency = {
             "url": (
