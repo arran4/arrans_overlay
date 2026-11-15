@@ -46,6 +46,31 @@ class ReviewedExclusionTest(unittest.TestCase):
 
         self.assertEqual(reason, "provided by dev-lang/dart-bootstrap-bin")
 
+    def test_reviewed_3_14_bootstrap_accepts_only_selected_seed(self):
+        tag, pv, upstream, channel = generator.bootstrap_for_version("3.14.0")
+        self.assertEqual(tag, "version:3.14.0-226.0.dev")
+        self.assertEqual(pv, "3.14.0_alpha226")
+        self.assertEqual(upstream, "3.14.0-226.0.dev")
+        self.assertEqual(channel, "dev")
+        reviews = generator.reviewed_exclusions_for_bootstrap("3.14.0")
+        destination = "sdk/tools/sdks/dart-sdk"
+        dependency = {
+            "packages": [{
+                "package": "dart/dart-sdk/${{platform}}",
+                "version": tag,
+            }],
+            "dep_type": "cipd",
+        }
+        self.assertEqual(
+            generator.validate_reviewed_exclusion(destination, dependency, reviews),
+            "provided by dev-lang/dart-bootstrap-bin",
+        )
+        dependency["packages"][0]["version"] = "version:3.13.0-103.1.beta"
+        with self.assertRaisesRegex(ValueError, "DEPS exclusion changed"):
+            generator.validate_reviewed_exclusion(destination, dependency, reviews)
+        with self.assertRaisesRegex(ValueError, "unreviewed Dart bootstrap"):
+            generator.bootstrap_for_version("3.15.0")
+
     def test_reduced_source_closure_exclusions_succeed(self):
         cases = [
             (
@@ -306,6 +331,37 @@ class GeneratedRepresentationTest(unittest.TestCase):
                 after_first = ebuild.read_bytes()
                 self.assertEqual(generator.update_ebuild(first, check=False), 0)
                 self.assertEqual(ebuild.read_bytes(), after_first)
+
+    def test_updating_3_14_source_rewrites_bootstrap_atom_and_symlink(self):
+        seed = generator.bootstrap_for_version("3.14.0")[0]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "dart-3.14.0.ebuild"
+            old = (
+                f"{generator.BEGIN}\nold\n{generator.END}\n"
+                'BDEPEND="\n\t=dev-lang/dart-bootstrap-bin-'
+                '3.13.0_beta103_p1-r0:3.13\n"\n'
+                'src_prepare() {\n\tln -s '
+                '"/opt/dart-bootstrap-3.13.0-103.1.beta" \\\n'
+                '\t\ttools/sdks/dart-sdk || die\n}\n'
+            )
+            path.write_text(old)
+            generated = f"{generator.BEGIN}\nnew\n{generator.END}"
+            with (
+                mock.patch.object(generator, "EBUILD", path),
+                mock.patch.object(generator, "DART_VERSION", "3.14.0"),
+                mock.patch.object(generator, "BOOTSTRAP_SDK_TAG", seed),
+            ):
+                self.assertEqual(generator.update_ebuild(generated, False), 0)
+                content = path.read_text()
+                self.assertIn(
+                    "=dev-lang/dart-bootstrap-bin-3.14.0_alpha226-r0:3.14",
+                    content,
+                )
+                self.assertIn(
+                    '"/opt/dart-bootstrap-3.14.0-226.0.dev"',
+                    content,
+                )
+                self.assertEqual(generator.update_ebuild(generated, True), 0)
 
     def test_ebuild_uses_normal_unpacking(self):
         ebuild = EBUILD.read_text()
