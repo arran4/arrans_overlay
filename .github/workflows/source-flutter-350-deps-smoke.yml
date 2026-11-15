@@ -1,0 +1,35 @@
+name: Temporary Flutter 3.50 DEPS review
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/source-flutter-350-deps-smoke.yml'
+      - 'scripts/generate_flutter_engine_ebuild.py'
+      - 'scripts/test_generate_flutter_engine_ebuild.py'
+jobs:
+  reviewed-source-graph:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Render authoritative Flutter 3.50 engine DEPS without publishing
+        run: |
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0, "scripts")
+          import generate_flutter_engine_ebuild as generator
+          generator.FLUTTER_VERSION = "3.50.0"
+          generator.FLUTTER_ENGINE_REV = "371f77202a73e8dff57a8b3bff75bca55c090aee"
+          generator.DART_REVISION = "fa8c1270c374c1346931583a17c3b7f278d3822d"
+          generator.DEPS_URL = "https://raw.githubusercontent.com/flutter/flutter/" + generator.FLUTTER_ENGINE_REV + "/DEPS"
+          path, temporary = generator.obtain_deps(None)
+          try:
+              output = generator.render(path)
+              assert "BEGIN GENERATED FLUTTER ENGINE DEPS" in output
+              print("Flutter 3.50.0 full reviewed DEPS graph rendered")
+          finally:
+              if temporary is not None:
+                  temporary.cleanup()
+          PY
