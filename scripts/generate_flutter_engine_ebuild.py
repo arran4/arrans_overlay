@@ -105,7 +105,7 @@ REVIEWED_EXCLUSIONS: dict[str, tuple[DependencyIdentity, str]] = {
     "engine/src/flutter/buildtools/linux-x64/clang": (
         cipd_identity(
             "fuchsia/third_party/clang/linux-amd64",
-            "git_revision:07d67299a15ce03b053736e2d31a668ee0576987",
+            "git_revision:80743bd43fd5b38fedc503308e7a652e23d3ec93",
             'host_os == "linux" or host_os == "mac"',
         ),
         "system GCC selected by --no-clang",
@@ -775,6 +775,37 @@ def reviewed_exclusions_for_dart_revision(
     return reviews
 
 
+# Flutter's reviewed GCC build excludes an upstream Clang CIPD seed, but
+# that seed is versioned independently from Dart. Preserve old release renders.
+REVIEWED_CLANG_BY_FLUTTER_MINOR = {
+    "3.47": "git_revision:80743bd43fd5b38fedc503308e7a652e23d3ec93",
+    "3.50": "git_revision:07d67299a15ce03b053736e2d31a668ee0576987",
+}
+
+
+def reviewed_exclusions_for_flutter_version(
+    version: str,
+    reviews: dict[str, tuple[DependencyIdentity, str]],
+) -> dict[str, tuple[DependencyIdentity, str]]:
+    """Bind the reviewed Clang exclusion to this Flutter release."""
+    minor = ".".join(version.split(".")[:2])
+    if minor not in REVIEWED_CLANG_BY_FLUTTER_MINOR:
+        raise ValueError(f"unreviewed Clang seed for Flutter {version}")
+    destination = "engine/src/flutter/buildtools/linux-x64/clang"
+    identity, reason = reviews[destination]
+    if identity.dep_type != "cipd" or len(identity.packages) != 1:
+        raise ValueError("unexpected reviewed Flutter Clang identity")
+    package, _ = identity.packages[0]
+    updated = reviews.copy()
+    updated[destination] = (
+        cipd_identity(
+            package, REVIEWED_CLANG_BY_FLUTTER_MINOR[minor], identity.condition
+        ),
+        reason,
+    )
+    return updated
+
+
 def validate_reviewed_exclusion(
     destination: str,
     dependency: object,
@@ -922,7 +953,9 @@ def render(deps_path: Path) -> str:
             "expected "
             f"{DART_REVISION!r}, got {variables.get('dart_revision')!r}"
         )
-    reviewed_exclusions = reviewed_exclusions_for_dart_revision(DART_REVISION)
+    reviewed_exclusions = reviewed_exclusions_for_flutter_version(
+        FLUTTER_VERSION, reviewed_exclusions_for_dart_revision(DART_REVISION)
+    )
     git_sources: list[GitSource] = []
     active_reviews: set[str] = set()
 
