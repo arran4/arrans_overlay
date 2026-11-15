@@ -809,7 +809,9 @@ def reviewed_exclusions_for_flutter_version(
     if minor != "3.50":
         raise ValueError(f"unreviewed Clang seed for Flutter {version}")
     updated = reviews.copy()
-    for destination, selected_revision in REVIEWED_FLUTTER_350_REVISIONS.items():
+    for destination, selected_revision in (
+        REVIEWED_FLUTTER_350_REVISIONS.items()
+    ):
         identity, reason = updated[destination]
         if identity.dep_type == "cipd" and len(identity.packages) == 1:
             package, _ = identity.packages[0]
