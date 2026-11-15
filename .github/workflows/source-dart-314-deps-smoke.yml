@@ -25,7 +25,28 @@ jobs:
           generator.SDK_DEPS_URL = "https://raw.githubusercontent.com/dart-lang/sdk/3.14.0/DEPS"
           path, temporary = generator.obtain_deps(None)
           try:
+              original = generator.validate_reviewed_exclusion
+          outstanding = []
+          def audit(*args, **kwargs):
+              try:
+                  return original(*args, **kwargs)
+              except ValueError as exc:
+                  outstanding.append(str(exc))
+                  return "pending explicit review"
+          generator.validate_reviewed_exclusion = audit
+          output = None
+          try:
               output = generator.render(path)
+          except Exception as exc:
+              outstanding.append(f"other generator failure: {exc}")
+          finally:
+              generator.validate_reviewed_exclusion = original
+          print("DEPS audit issues:", len(outstanding))
+          for issue in outstanding:
+              print("UNREVIEWED:", issue)
+          if outstanding:
+              raise RuntimeError("review all changed exclusions before release")
+
               assert "BEGIN GENERATED DART DEPS" in output
               print("Dart 3.14.0 full reviewed DEPS graph rendered")
           finally:
