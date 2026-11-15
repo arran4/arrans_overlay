@@ -105,7 +105,7 @@ REVIEWED_EXCLUSIONS: dict[str, tuple[DependencyIdentity, str]] = {
     "engine/src/flutter/buildtools/linux-x64/clang": (
         cipd_identity(
             "fuchsia/third_party/clang/linux-amd64",
-            "git_revision:80743bd43fd5b38fedc503308e7a652e23d3ec93",
+            "git_revision:07d67299a15ce03b053736e2d31a668ee0576987",
             'host_os == "linux" or host_os == "mac"',
         ),
         "system GCC selected by --no-clang",
