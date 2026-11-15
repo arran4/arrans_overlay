@@ -468,10 +468,25 @@ def dependency_identity(
     raise ValueError(f"unsupported DEPS type {dep_type!r} at {destination}")
 
 
+# Dart 3.14 source graph review. These are version changes to already
+# excluded tooling/tests, with identical package identity and condition.
+DART_314_REVIEWED_EXCLUSION_VERSIONS = {
+    "sdk/buildtools": "git_revision:510ec7992c30f172205792f190e96111a896ba8f",
+    "sdk/buildtools/linux-x64/clang": "git_revision:3493720eca95cf844a8d7e58fdd12e0e5644e7d0",
+    "sdk/tests/co19/src": "git_revision:cc7dba79dcc0d4fd08b18def0bbb43c7de7f6003",
+    "sdk/third_party/d8/linux/arm64": "version:15.5.28",
+    "sdk/third_party/d8/linux/x64": "version:15.5.28",
+    "sdk/third_party/d8/macos/arm64": "version:15.5.28",
+    "sdk/third_party/d8/macos/x64": "version:15.5.28",
+    "sdk/third_party/d8/windows/x64": "version:15.5.28",
+    "sdk/third_party/devtools": "git_revision:85f945ac99379d64d4df6f67d9b011e4cc418e7e",
+}
+
+
 def reviewed_exclusions_for_bootstrap(
     version: str,
 ) -> dict[str, tuple[DependencyIdentity, str]]:
-    """Bind only the reviewed bootstrap exclusion to the selected SDK release."""
+    """Bind exact excluded source identities to a reviewed SDK minor release."""
     tag, _, _, _ = bootstrap_for_version(version)
     reviews = REVIEWED_EXCLUSIONS.copy()
     destination = "sdk/tools/sdks/dart-sdk"
@@ -482,6 +497,35 @@ def reviewed_exclusions_for_bootstrap(
     reviews[destination] = (
         cipd_identity(package, tag, identity.condition), reason,
     )
+    if ".".join(version.split(".")[:2]) == "3.14":
+        for destination, revision in DART_314_REVIEWED_EXCLUSION_VERSIONS.items():
+            identity, reason = reviews[destination]
+            if identity.dep_type != "cipd" or len(identity.packages) != 1:
+                raise ValueError(f"unexpected reviewed CIPD identity at {destination}")
+            package, _ = identity.packages[0]
+            reviews[destination] = (
+                cipd_identity(package, revision, identity.condition), reason,
+            )
+        # The old Focal seed was used only for non-amd64 toolchains; upstream
+        # dropped it and introduced this Jammy package for the same purpose.
+        old_focal, _ = reviews.pop("sdk/buildtools/sysroot/focal")
+        if old_focal.dep_type != "cipd":
+            raise ValueError("unexpected old Focal sysroot identity")
+        reviews["sdk/buildtools/sysroot/jammy"] = (
+            cipd_identity(
+                "fuchsia/third_party/sysroot/jammy",
+                "git_revision:1d35e3be9be587ed0de81ea4208be7cc01a7748c",
+                "host_os == linux",
+            ),
+            "downloaded cross-toolchain sysroot; native amd64 uses system GCC",
+        )
+        reviews["sdk/third_party/gcloud"] = (
+            cipd_identity(
+                "infra/3pp/tools/gcloud/" + "$" + "{{platform}}",
+                "version:3@584.0.0.chromium.4",
+            ),
+            "cloud CI tooling only; not required for source SDK build",
+        )
     return reviews
 
 
