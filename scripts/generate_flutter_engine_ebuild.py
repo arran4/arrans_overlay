@@ -817,7 +817,9 @@ def reviewed_exclusions_for_flutter_version(
         identity, reason = updated[destination]
         if identity.dep_type == "cipd" and len(identity.packages) == 1:
             package, _ = identity.packages[0]
-            revised = cipd_identity(package, selected_revision, identity.condition)
+            revised = cipd_identity(
+                package, selected_revision, identity.condition
+            )
         elif identity.dep_type == "git" and identity.repository:
             revised = git_identity(
                 identity.repository, selected_revision, identity.condition
@@ -1182,7 +1184,7 @@ def apply_release_identity(text: str, release: FlutterReleaseSpec) -> str:
 
 
 def install_gitiles_shaderc_unpack(ebuild: str, generated: str) -> str:
-    """Unpack the rootless Gitiles shaderc archive separately from GitHub ones."""
+    """Unpack the rootless shaderc Gitiles archive separately."""
     if "+archive/${SHADERC_REV}.tar.gz" not in generated:
         return ebuild
     original = "src_unpack() {\n\tdefault\n"
@@ -1191,7 +1193,9 @@ def install_gitiles_shaderc_unpack(ebuild: str, generated: str) -> str:
 \t# directory; standard GitHub distfiles still unpack normally.
 \tlocal archive
 \tfor archive in ${A}; do
-\t\t[[ ${archive} == flutter-dep-shaderc-${SHADERC_REV:0:8}.tar.gz ]] && continue
+\t\tif [[ ${archive} == flutter-dep-shaderc-${SHADERC_REV:0:8}.tar.gz ]]; then
+\t\t\tcontinue
+\t\tfi
 \t\tunpack "${archive}" || die
 \tdone
 \tmkdir -p "${WORKDIR}/shaderc-${SHADERC_REV}" || die
