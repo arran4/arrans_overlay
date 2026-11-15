@@ -554,6 +554,9 @@ REPOSITORY_VARIABLES = {
     "https://flutter.googlesource.com/third_party/swiftshader": (
         "SWIFTSHADER_GIT"
     ),
+    "https://flutter.googlesource.com/third_party/glslang": (
+        "FLUTTER_GLSLANG_GIT"
+    ),
     (
         "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator"
     ): "VK_VMA_GIT",
@@ -800,6 +803,9 @@ REVIEWED_FLUTTER_350_REVISIONS = {
     "engine/src/flutter/third_party/icu": 
         "5aa526207171ecadf31597f0980a7b7ad8872f33",
     "engine/src/flutter/third_party/java/openjdk": "version:25.0.2",
+    "engine/src/flutter/third_party/vulkan-deps": (
+        "0582f446e54aa4ea389c89cd027067ee0f5459aa"
+    ),
 }
 
 
@@ -897,6 +903,23 @@ def git_source(
         return GitSource(
             "SWIFTSHADER", repository.removesuffix(".git"), revision,
             f"flutter-dep-swiftshader-{revision[:8]}.tar.gz",
+            destination.removeprefix("engine/src/"),
+            archive_kind="gitiles",
+        )
+    if (
+        destination == "engine/src/flutter/third_party/vulkan-deps/glslang/src"
+        and FLUTTER_VERSION == "3.50.0"
+    ):
+        # Flutter's forked glslang revision differs from Khronos on GitHub.
+        # Use the exact pinned Gitiles archive instead of a substitute SHA.
+        if (
+            repository != "https://flutter.googlesource.com/third_party/glslang"
+            or revision != "fdbdca9263a4c09dbfb4a51c76e3e9d9f52bc504"
+        ):
+            raise ValueError("unreviewed Flutter glslang source revision")
+        return GitSource(
+            "VK_GLSLANG", repository, revision,
+            f"flutter-dep-vk-glslang-{revision[:8]}.tar.gz",
             destination.removeprefix("engine/src/"),
             archive_kind="gitiles",
         )
@@ -1056,12 +1079,15 @@ def render(deps_path: Path) -> str:
                 )
                 active_reviews.add(destination)
                 if destination == "engine/src/flutter/third_party/vulkan-deps":
-                    for ident, repo, rev, dest in VULKAN_DEPS_SUBPACKAGES:
-                        tag = ident.lower().replace("_", "-")
-                        filename = f"flutter-dep-{tag}-{rev[:8]}.tar.gz"
-                        git_sources.append(
-                            GitSource(ident, repo, rev, filename, dest)
-                        )
+                    if FLUTTER_VERSION != "3.50.0":
+                        # Older versions provide Vulkan children through
+                        # the parent; 3.50 pins them directly in DEPS.
+                        for ident, repo, rev, dest in VULKAN_DEPS_SUBPACKAGES:
+                            tag = ident.lower().replace("_", "-")
+                            filename = f"flutter-dep-{tag}-{rev[:8]}.tar.gz"
+                            git_sources.append(
+                                GitSource(ident, repo, rev, filename, dest)
+                            )
                 elif destination == "engine/src/flutter/third_party/icu":
                     icu_rev = "a86a32e67b8d1384b33f8fa48c83a6079b86f8cd"
                     git_sources.append(
@@ -1205,7 +1231,7 @@ def apply_release_identity(text: str, release: FlutterReleaseSpec) -> str:
 
 def install_gitiles_shaderc_unpack(ebuild: str, generated: str) -> str:
     """Isolate rootless Gitiles fork archives before source-tree moves."""
-    names = ("SHADERC", "SWIFTSHADER")
+    names = ("SHADERC", "SWIFTSHADER", "VK_GLSLANG")
     active = [
         name for name in names
         if "+archive/${" + name + "_REV}.tar.gz" in generated
@@ -1222,9 +1248,10 @@ def install_gitiles_shaderc_unpack(ebuild: str, generated: str) -> str:
     skip = []
     unpack = []
     for name in active:
-        lower = name.lower()
-        dist = "flutter-dep-" + lower + "-${" + name + "_REV:0:8}.tar.gz"
-        root = lower + "-${" + name + "_REV}"
+        label = name.lower().replace("_", "-")
+        root_name = "glslang" if name == "VK_GLSLANG" else label
+        dist = "flutter-dep-" + label + "-${" + name + "_REV:0:8}.tar.gz"
+        root = root_name + "-${" + name + "_REV}"
         skip.append("\t\t\t" + dist + ") continue ;;\n")
         unpack.append(
             "\tmkdir -p \"${WORKDIR}/" + root + "\" || die\n"
