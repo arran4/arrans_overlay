@@ -26,7 +26,28 @@ jobs:
           generator.DEPS_URL = "https://raw.githubusercontent.com/flutter/flutter/" + generator.FLUTTER_ENGINE_REV + "/DEPS"
           path, temporary = generator.obtain_deps(None)
           try:
+              original = generator.validate_reviewed_exclusion
+          outstanding = []
+          def audit(*args, **kwargs):
+              try:
+                  return original(*args, **kwargs)
+              except ValueError as exc:
+                  outstanding.append(str(exc))
+                  return "pending explicit review"
+          generator.validate_reviewed_exclusion = audit
+          output = None
+          try:
               output = generator.render(path)
+          except Exception as exc:
+              outstanding.append(f"other generator failure: {exc}")
+          finally:
+              generator.validate_reviewed_exclusion = original
+          print("DEPS audit issues:", len(outstanding))
+          for issue in outstanding:
+              print("UNREVIEWED:", issue)
+          if outstanding:
+              raise RuntimeError("review all changed exclusions before release")
+
               assert "BEGIN GENERATED FLUTTER ENGINE DEPS" in output
               print("Flutter 3.50.0 full reviewed DEPS graph rendered")
           finally:
