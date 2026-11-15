@@ -94,6 +94,50 @@ class ReviewedExclusionTest(unittest.TestCase):
                 else:
                     self.assertEqual(identity, old)
 
+    def test_flutter_350_uses_exact_gitiles_shaderc_fork(self):
+        url = (
+            "https://flutter.googlesource.com/third_party/shaderc"
+            "@70b1130380fcbf1d1e9719ee78ba7202a5161424"
+        )
+        from unittest import mock
+        with mock.patch.object(generator, "FLUTTER_VERSION", "3.50.0"):
+            source = generator.git_source(
+                "engine/src/flutter/third_party/shaderc", url
+            )
+            self.assertEqual(source.archive_kind, "gitiles")
+            self.assertEqual(source.identifier, "SHADERC")
+            self.assertEqual(
+                source.unpacked_source(), "shaderc-${SHADERC_REV}"
+            )
+            self.assertEqual(
+                source.repository,
+                "https://flutter.googlesource.com/third_party/shaderc",
+            )
+            with self.assertRaisesRegex(ValueError, "unreviewed"):
+                generator.git_source(
+                    "engine/src/flutter/third_party/shaderc",
+                    url.replace("70b11303", "00000000"),
+                )
+
+    def test_gitiles_source_unpack_isolated_and_idempotent(self):
+        basic = "src_unpack() {\n\tdefault\n\n\t# existing moves\n}\n"
+        block = "SRC_URI=\"\n\t+archive/${SHADERC_REV}.tar.gz\n\""
+        modified = generator.install_gitiles_shaderc_unpack(basic, block)
+        self.assertIn("for archive in ${A}; do", modified)
+        self.assertIn("unpack \"${archive}\"", modified)
+        self.assertIn("shaderc-${SHADERC_REV}", modified)
+        self.assertIn(
+            "flutter-dep-shaderc-${SHADERC_REV:0:8}", modified
+        )
+        self.assertEqual(
+            generator.install_gitiles_shaderc_unpack(modified, block),
+            modified,
+        )
+        self.assertEqual(
+            generator.install_gitiles_shaderc_unpack(basic, ""),
+            basic,
+        )
+
     def test_unchanged_reviewed_git_exclusion_succeeds(self):
         dependency = {
             "url": (
