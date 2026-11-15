@@ -10,6 +10,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Probe exact Flutter shaderc archive
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          url="https://flutter.googlesource.com/third_party/shaderc/+archive/70b1130380fcbf1d1e9719ee78ba7202a5161424.tar.gz"
+          curl -fLsS --retry 1 --max-time 40 "${url}" -o /tmp/flutter-shaderc.tar.gz
+          gzip -t /tmp/flutter-shaderc.tar.gz
+          tar -tzf /tmp/flutter-shaderc.tar.gz | sed -n '1,5p'
       - name: Audit authoritative source DEPS without publishing
         run: |
           python3 - <<'PY'
