@@ -780,13 +780,20 @@ def reviewed_exclusions_for_dart_revision(
 # The repository/package, dependency type, condition, and reason are inherited
 # from the audited baseline; only these exact revisions are changed.
 REVIEWED_FLUTTER_350_REVISIONS = {
-    "engine/src/flutter/buildtools/linux-x64/clang": "git_revision:07d67299a15ce03b053736e2d31a668ee0576987",
-    "engine/src/flutter/third_party/angle": "a8d74ca3e5e9e4ffa241330ceedcbe302443e472",
-    "engine/src/flutter/third_party/dart/third_party/devtools": "git_revision:85f945ac99379d64d4df6f67d9b011e4cc418e7e",
-    "engine/src/flutter/third_party/dart/tools/sdks/dart-sdk": "version:3.14.0-226.0.dev",
-    "engine/src/flutter/third_party/freetype2": "db7276fd53cda30c7f0fcd6b11e2e8f43b4b5e82",
-    "engine/src/flutter/third_party/google_fonts_for_unit_tests": "eafae0f49fbf9af7858049ad666b7223bdd7588162d8a687ec7870eb5952055d",
-    "engine/src/flutter/third_party/icu": "5aa526207171ecadf31597f0980a7b7ad8872f33",
+    "engine/src/flutter/buildtools/linux-x64/clang": 
+        "git_revision:07d67299a15ce03b053736e2d31a668ee0576987",
+    "engine/src/flutter/third_party/angle": 
+        "a8d74ca3e5e9e4ffa241330ceedcbe302443e472",
+    "engine/src/flutter/third_party/dart/third_party/devtools": 
+        "git_revision:85f945ac99379d64d4df6f67d9b011e4cc418e7e",
+    "engine/src/flutter/third_party/dart/tools/sdks/dart-sdk": 
+        "version:3.14.0-226.0.dev",
+    "engine/src/flutter/third_party/freetype2": 
+        "db7276fd53cda30c7f0fcd6b11e2e8f43b4b5e82",
+    "engine/src/flutter/third_party/google_fonts_for_unit_tests": 
+        "eafae0f49fbf9af7858049ad666b7223bdd7588162d8a687ec7870eb5952055d",
+    "engine/src/flutter/third_party/icu": 
+        "5aa526207171ecadf31597f0980a7b7ad8872f33",
     "engine/src/flutter/third_party/java/openjdk": "version:25.0.2",
 }
 
