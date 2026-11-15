@@ -1,11 +1,7 @@
-name: Temporary Dart 3.14 DEPS review
+name: Temporary Dart 3.14.0 DEPS review
 on:
   pull_request:
     branches: [main]
-    paths:
-      - '.github/workflows/source-dart-314-deps-smoke.yml'
-      - 'scripts/generate_dart_ebuild.py'
-      - 'scripts/test_generate_dart_ebuild.py'
 jobs:
   reviewed-source-graph:
     runs-on: ubuntu-latest
@@ -14,7 +10,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Render authoritative Dart 3.14 source DEPS without publishing
+      - name: Audit authoritative source DEPS without publishing
         run: |
           python3 - <<'PY'
           import sys
@@ -26,28 +22,27 @@ jobs:
           path, temporary = generator.obtain_deps(None)
           try:
               original = generator.validate_reviewed_exclusion
-          outstanding = []
-          def audit(*args, **kwargs):
+              outstanding = []
+              def audit(*args, **kwargs):
+                  try:
+                      return original(*args, **kwargs)
+                  except ValueError as exc:
+                      outstanding.append(str(exc))
+                      return "pending explicit review"
+              generator.validate_reviewed_exclusion = audit
+              output = None
               try:
-                  return original(*args, **kwargs)
-              except ValueError as exc:
-                  outstanding.append(str(exc))
-                  return "pending explicit review"
-          generator.validate_reviewed_exclusion = audit
-          output = None
-          try:
-              output = generator.render(path)
-          except Exception as exc:
-              outstanding.append(f"other generator failure: {exc}")
-          finally:
-              generator.validate_reviewed_exclusion = original
-          print("DEPS audit issues:", len(outstanding))
-          for issue in outstanding:
-              print("UNREVIEWED:", issue)
-          if outstanding:
-              raise RuntimeError("review all changed exclusions before release")
-
-              assert "BEGIN GENERATED DART DEPS" in output
+                  output = generator.render(path)
+              except Exception as exc:
+                  outstanding.append(f"other generator failure: {exc}")
+              finally:
+                  generator.validate_reviewed_exclusion = original
+              print("DEPS audit issues:", len(outstanding))
+              for issue in outstanding:
+                  print("UNREVIEWED:", issue)
+              if outstanding:
+                  raise RuntimeError("review all changed exclusions before release")
+              assert "BEGIN GENERATED DART" in output
               print("Dart 3.14.0 full reviewed DEPS graph rendered")
           finally:
               if temporary is not None:
