@@ -49,13 +49,27 @@ class ReviewedExclusionTest(unittest.TestCase):
             "dep_type": "cipd",
         }
         destination = "engine/src/flutter/buildtools/linux-x64/clang"
+        reviews = generator.reviewed_exclusions_for_flutter_version(
+            "3.50.0", generator.REVIEWED_EXCLUSIONS
+        )
         self.assertEqual(
-            generator.validate_reviewed_exclusion(destination, dependency),
+            generator.validate_reviewed_exclusion(destination, dependency, reviews),
             "system GCC selected by --no-clang",
         )
         dependency["packages"][0]["version"] = "git_revision:80743bd43fd5b38fedc503308e7a652e23d3ec93"
         with self.assertRaisesRegex(ValueError, "DEPS exclusion changed"):
-            generator.validate_reviewed_exclusion(destination, dependency)
+            generator.validate_reviewed_exclusion(destination, dependency, reviews)
+        baseline = generator.reviewed_exclusions_for_flutter_version(
+            "3.47.8", generator.REVIEWED_EXCLUSIONS
+        )
+        self.assertEqual(
+            generator.validate_reviewed_exclusion(destination, dependency, baseline),
+            "system GCC selected by --no-clang",
+        )
+        with self.assertRaisesRegex(ValueError, "unreviewed Clang seed"):
+            generator.reviewed_exclusions_for_flutter_version(
+                "3.51.0", generator.REVIEWED_EXCLUSIONS
+            )
 
     def test_unchanged_reviewed_git_exclusion_succeeds(self):
         dependency = {
