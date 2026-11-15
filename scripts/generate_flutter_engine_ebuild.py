@@ -775,11 +775,19 @@ def reviewed_exclusions_for_dart_revision(
     return reviews
 
 
-# Flutter's reviewed GCC build excludes an upstream Clang CIPD seed, but
-# that seed is versioned independently from Dart. Preserve old release renders.
-REVIEWED_CLANG_BY_FLUTTER_MINOR = {
-    "3.47": "git_revision:80743bd43fd5b38fedc503308e7a652e23d3ec93",
-    "3.50": "git_revision:07d67299a15ce03b053736e2d31a668ee0576987",
+# Version-specific reviewed exclusion revisions preserve the pinned 3.47
+# source closure while allowing explicit review of Flutter 3.50 upstream DEPS.
+# The repository/package, dependency type, condition, and reason are inherited
+# from the audited baseline; only these exact revisions are changed.
+REVIEWED_FLUTTER_350_REVISIONS = {
+    "engine/src/flutter/buildtools/linux-x64/clang": "git_revision:07d67299a15ce03b053736e2d31a668ee0576987",
+    "engine/src/flutter/third_party/angle": "a8d74ca3e5e9e4ffa241330ceedcbe302443e472",
+    "engine/src/flutter/third_party/dart/third_party/devtools": "git_revision:85f945ac99379d64d4df6f67d9b011e4cc418e7e",
+    "engine/src/flutter/third_party/dart/tools/sdks/dart-sdk": "version:3.14.0-226.0.dev",
+    "engine/src/flutter/third_party/freetype2": "db7276fd53cda30c7f0fcd6b11e2e8f43b4b5e82",
+    "engine/src/flutter/third_party/google_fonts_for_unit_tests": "eafae0f49fbf9af7858049ad666b7223bdd7588162d8a687ec7870eb5952055d",
+    "engine/src/flutter/third_party/icu": "5aa526207171ecadf31597f0980a7b7ad8872f33",
+    "engine/src/flutter/third_party/java/openjdk": "version:25.0.2",
 }
 
 
@@ -787,22 +795,27 @@ def reviewed_exclusions_for_flutter_version(
     version: str,
     reviews: dict[str, tuple[DependencyIdentity, str]],
 ) -> dict[str, tuple[DependencyIdentity, str]]:
-    """Bind the reviewed Clang exclusion to this Flutter release."""
+    """Return precisely reviewed identities without mutating older releases."""
     minor = ".".join(version.split(".")[:2])
-    if minor not in REVIEWED_CLANG_BY_FLUTTER_MINOR:
+    if minor == "3.47":
+        return reviews.copy()
+    if minor != "3.50":
         raise ValueError(f"unreviewed Clang seed for Flutter {version}")
-    destination = "engine/src/flutter/buildtools/linux-x64/clang"
-    identity, reason = reviews[destination]
-    if identity.dep_type != "cipd" or len(identity.packages) != 1:
-        raise ValueError("unexpected reviewed Flutter Clang identity")
-    package, _ = identity.packages[0]
     updated = reviews.copy()
-    updated[destination] = (
-        cipd_identity(
-            package, REVIEWED_CLANG_BY_FLUTTER_MINOR[minor], identity.condition
-        ),
-        reason,
-    )
+    for destination, selected_revision in REVIEWED_FLUTTER_350_REVISIONS.items():
+        identity, reason = updated[destination]
+        if identity.dep_type == "cipd" and len(identity.packages) == 1:
+            package, _ = identity.packages[0]
+            revised = cipd_identity(package, selected_revision, identity.condition)
+        elif identity.dep_type == "git" and identity.repository:
+            revised = git_identity(
+                identity.repository, selected_revision, identity.condition
+            )
+        else:
+            raise ValueError(
+                f"unexpected reviewed dependency identity at {destination}"
+            )
+        updated[destination] = (revised, reason)
     return updated
 
 
