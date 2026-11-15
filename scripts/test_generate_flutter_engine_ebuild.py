@@ -124,6 +124,26 @@ class ReviewedExclusionTest(unittest.TestCase):
                 swiftshader.unpacked_source(),
                 "swiftshader-${SWIFTSHADER_REV}",
             )
+            glslang = generator.git_source(
+                "engine/src/flutter/third_party/vulkan-deps/glslang/src",
+                "https://flutter.googlesource.com/third_party/glslang"
+                "@fdbdca9263a4c09dbfb4a51c76e3e9d9f52bc504",
+            )
+            self.assertEqual(glslang.archive_kind, "gitiles")
+            self.assertEqual(glslang.identifier, "VK_GLSLANG")
+            self.assertEqual(
+                glslang.unpacked_source(), "glslang-${VK_GLSLANG_REV}"
+            )
+            self.assertEqual(
+                glslang.repository,
+                "https://flutter.googlesource.com/third_party/glslang",
+            )
+            with self.assertRaisesRegex(ValueError, "unreviewed"):
+                generator.git_source(
+                    "engine/src/flutter/third_party/vulkan-deps/glslang/src",
+                    "https://flutter.googlesource.com/third_party/glslang"
+                    "@0000000000000000000000000000000000000000",
+                )
             with self.assertRaisesRegex(ValueError, "unreviewed"):
                 generator.git_source(
                     "engine/src/flutter/third_party/shaderc",
@@ -135,13 +155,16 @@ class ReviewedExclusionTest(unittest.TestCase):
         block = (
             "SRC_URI=\"\n"
             "\t+archive/${SHADERC_REV}.tar.gz\n"
-            "\t+archive/${SWIFTSHADER_REV}.tar.gz\n\""
+            "\t+archive/${SWIFTSHADER_REV}.tar.gz\n"
+            "\t+archive/${VK_GLSLANG_REV}.tar.gz\n\""
         )
         modified = generator.install_gitiles_shaderc_unpack(basic, block)
         self.assertIn("for archive in ${A}; do", modified)
         self.assertIn("unpack \"${archive}\"", modified)
         self.assertIn("shaderc-${SHADERC_REV}", modified)
         self.assertIn("swiftshader-${SWIFTSHADER_REV}", modified)
+        self.assertIn("glslang-${VK_GLSLANG_REV}", modified)
+        self.assertIn("flutter-dep-vk-glslang-", modified)
         self.assertIn(
             "flutter-dep-shaderc-${SHADERC_REV:0:8}", modified
         )
