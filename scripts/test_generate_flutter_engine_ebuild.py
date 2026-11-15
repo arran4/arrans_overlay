@@ -39,6 +39,24 @@ class ReviewedExclusionTest(unittest.TestCase):
 
         self.assertEqual(reason, "provided by dev-build/gn")
 
+    def test_flutter_3_50_clang_is_still_excluded_with_system_gcc(self):
+        dependency = {
+            "packages": [{
+                "package": "fuchsia/third_party/clang/linux-amd64",
+                "version": "git_revision:07d67299a15ce03b053736e2d31a668ee0576987",
+            }],
+            "condition": 'host_os == "linux" or host_os == "mac"',
+            "dep_type": "cipd",
+        }
+        destination = "engine/src/flutter/buildtools/linux-x64/clang"
+        self.assertEqual(
+            generator.validate_reviewed_exclusion(destination, dependency),
+            "system GCC selected by --no-clang",
+        )
+        dependency["packages"][0]["version"] = "git_revision:80743bd43fd5b38fedc503308e7a652e23d3ec93"
+        with self.assertRaisesRegex(ValueError, "DEPS exclusion changed"):
+            generator.validate_reviewed_exclusion(destination, dependency)
+
     def test_unchanged_reviewed_git_exclusion_succeeds(self):
         dependency = {
             "url": (
