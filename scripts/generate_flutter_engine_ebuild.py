@@ -61,6 +61,7 @@ class GitSource:
     filename: str
     destination: str
     subdirectory: str | None = None
+    archive_kind: str = "github"
 
     @property
     def repository_name(self) -> str:
@@ -549,6 +550,7 @@ SHORT_NAMES = {
 # Named repository variables for upstream repository URLs to ensure SRC_URI
 # entries remain readable and within Gentoo's 80-column limit.
 REPOSITORY_VARIABLES = {
+    "https://flutter.googlesource.com/third_party/shaderc": "SHADERC_GIT",
     (
         "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator"
     ): "VK_VMA_GIT",
@@ -859,6 +861,23 @@ def git_source(
             f"unsupported Git DEPS entry at {destination}: {dependency!r}"
         )
     repository, revision = url.rsplit("@", 1)
+    if (
+        destination == "engine/src/flutter/third_party/shaderc"
+        and FLUTTER_VERSION == "3.50.0"
+    ):
+        # Flutter 3.50 pins its own shaderc fork, not google/shaderc.
+        # Gitiles publishes the exact commit as a rootless tar archive.
+        if (
+            repository != "https://flutter.googlesource.com/third_party/shaderc"
+            or revision != "70b1130380fcbf1d1e9719ee78ba7202a5161424"
+        ):
+            raise ValueError("unreviewed Flutter shaderc source revision")
+        return GitSource(
+            "SHADERC", repository, revision,
+            f"flutter-dep-shaderc-{revision[:8]}.tar.gz",
+            destination.removeprefix("engine/src/"),
+            archive_kind="gitiles",
+        )
     repository = stable_github_repository(repository.removesuffix(".git"))
     relative = destination.removeprefix("engine/src/")
     repository_name = repository.rstrip("/").rsplit("/", 1)[-1]
@@ -1114,7 +1133,14 @@ def render(deps_path: Path) -> str:
             if source.repository in REPOSITORY_VARIABLES
             else source.repository
         )
-        lines.append(f"\t{repo_expr}/archive/${{{identifier}_REV}}.tar.gz")
+        if source.archive_kind == "gitiles":
+            lines.append(
+                f"\t{repo_expr}/+archive/${{{identifier}_REV}}.tar.gz"
+            )
+        else:
+            lines.append(
+                f"\t{repo_expr}/archive/${{{identifier}_REV}}.tar.gz"
+            )
         lines.append(f"\t\t-> {source.filename}")
     lines.extend(['"', END])
     too_long = [
@@ -1155,6 +1181,33 @@ def apply_release_identity(text: str, release: FlutterReleaseSpec) -> str:
     return replacement
 
 
+def install_gitiles_shaderc_unpack(ebuild: str, generated: str) -> str:
+    """Unpack the rootless Gitiles shaderc archive separately from GitHub ones."""
+    if "+archive/${SHADERC_REV}.tar.gz" not in generated:
+        return ebuild
+    original = "src_unpack() {\n\tdefault\n"
+    replacement = """src_unpack() {
+\t# Gitiles +archive is rootless. Keep its files in the expected source
+\t# directory; standard GitHub distfiles still unpack normally.
+\tlocal archive
+\tfor archive in ${A}; do
+\t\t[[ ${archive} == flutter-dep-shaderc-${SHADERC_REV:0:8}.tar.gz ]] && continue
+\t\tunpack "${archive}" || die
+\tdone
+\tmkdir -p "${WORKDIR}/shaderc-${SHADERC_REV}" || die
+\t(
+\t\tcd "${WORKDIR}/shaderc-${SHADERC_REV}" || exit 1
+\t\tunpack "flutter-dep-shaderc-${SHADERC_REV:0:8}.tar.gz"
+\t) || die
+
+"""
+    if original in ebuild:
+        return ebuild.replace(original, replacement, 1)
+    if replacement in ebuild:
+        return ebuild
+    raise ValueError("unexpected Flutter Engine src_unpack template")
+
+
 def update_ebuild(
     generated: str, check: bool, release: FlutterReleaseSpec | None = None,
 ) -> int:
@@ -1178,6 +1231,7 @@ def update_ebuild(
         )
     if release is not None:
         replacement = apply_release_identity(replacement, release)
+    replacement = install_gitiles_shaderc_unpack(replacement, generated)
     if replacement == existing:
         return 0
     if check:
