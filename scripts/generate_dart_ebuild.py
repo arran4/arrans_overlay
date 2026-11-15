@@ -718,7 +718,16 @@ def update_ebuild(generated: str, check: bool) -> int:
             raise ValueError("expected one Dart bootstrap BDEPEND atom")
     if "/opt/dart-bootstrap-" in replacement:
         replacement, symlink_count = re.subn(
-            r'(?m)^(\s*)ln -s "/opt/dart-bootstrap-[^"]+" \\
+            r'(?m)^(\s*)ln -s "/opt/dart-bootstrap-[^"]+"',
+            lambda m: (
+                m.group(1) + 'ln -s "/opt/dart-bootstrap-'
+                + upstream_version + '"'
+            ),
+            replacement,
+        )
+        if symlink_count != 1:
+            raise ValueError("expected one Dart bootstrap src_prepare symlink")
+    if count != 1:
         raise ValueError(f"expected one generated block in {EBUILD}, found {count}")
     if replacement == existing:
         return 0
