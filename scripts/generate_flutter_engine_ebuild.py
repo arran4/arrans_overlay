@@ -551,6 +551,9 @@ SHORT_NAMES = {
 # entries remain readable and within Gentoo's 80-column limit.
 REPOSITORY_VARIABLES = {
     "https://flutter.googlesource.com/third_party/shaderc": "SHADERC_GIT",
+    "https://flutter.googlesource.com/third_party/swiftshader": (
+        "SWIFTSHADER_GIT"
+    ),
     (
         "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator"
     ): "VK_VMA_GIT",
@@ -880,6 +883,23 @@ def git_source(
             destination.removeprefix("engine/src/"),
             archive_kind="gitiles",
         )
+    if (
+        destination == "engine/src/flutter/third_party/swiftshader"
+        and FLUTTER_VERSION == "3.50.0"
+    ):
+        # Flutter's patched SwiftShader fork has no matching GitHub SHA.
+        if (
+            repository.removesuffix(".git")
+            != "https://flutter.googlesource.com/third_party/swiftshader"
+            or revision != "1be9f83618f8ba258431c0c13d7a083eb193df11"
+        ):
+            raise ValueError("unreviewed Flutter swiftshader source revision")
+        return GitSource(
+            "SWIFTSHADER", repository.removesuffix(".git"), revision,
+            f"flutter-dep-swiftshader-{revision[:8]}.tar.gz",
+            destination.removeprefix("engine/src/"),
+            archive_kind="gitiles",
+        )
     repository = stable_github_repository(repository.removesuffix(".git"))
     relative = destination.removeprefix("engine/src/")
     repository_name = repository.rstrip("/").rsplit("/", 1)[-1]
@@ -1184,32 +1204,49 @@ def apply_release_identity(text: str, release: FlutterReleaseSpec) -> str:
 
 
 def install_gitiles_shaderc_unpack(ebuild: str, generated: str) -> str:
-    """Unpack the rootless shaderc Gitiles archive separately."""
-    if "+archive/${SHADERC_REV}.tar.gz" not in generated:
+    """Isolate rootless Gitiles fork archives before source-tree moves."""
+    names = ("SHADERC", "SWIFTSHADER")
+    active = [
+        name for name in names
+        if "+archive/${" + name + "_REV}.tar.gz" in generated
+    ]
+    if not active:
         return ebuild
     original = "src_unpack() {\n\tdefault\n"
-    replacement = """src_unpack() {
-\t# Gitiles +archive is rootless. Keep its files in the expected source
-\t# directory; standard GitHub distfiles still unpack normally.
+    header = """src_unpack() {
+\t# Gitiles archives are rootless, unlike the other GitHub distfiles.
 \tlocal archive
 \tfor archive in ${A}; do
-\t\tif [[ ${archive} == flutter-dep-shaderc-${SHADERC_REV:0:8}.tar.gz ]]; then
-\t\t\tcontinue
-\t\tfi
+\t\tcase ${archive} in
+"""
+    skip = []
+    unpack = []
+    for name in active:
+        lower = name.lower()
+        dist = "flutter-dep-" + lower + "-${" + name + "_REV:0:8}.tar.gz"
+        root = lower + "-${" + name + "_REV}"
+        skip.append("\t\t\t" + dist + ") continue ;;\n")
+        unpack.append(
+            "\tmkdir -p \"${WORKDIR}/" + root + "\" || die\n"
+            "\t(\n"
+            "\t\tcd \"${WORKDIR}/" + root + "\" || exit 1\n"
+            "\t\tunpack \"" + dist + "\"\n"
+            "\t) || die\n"
+        )
+    replacement = (
+        header + "".join(skip)
+        + """\t\tesac
 \t\tunpack "${archive}" || die
 \tdone
-\tmkdir -p "${WORKDIR}/shaderc-${SHADERC_REV}" || die
-\t(
-\t\tcd "${WORKDIR}/shaderc-${SHADERC_REV}" || exit 1
-\t\tunpack "flutter-dep-shaderc-${SHADERC_REV:0:8}.tar.gz"
-\t) || die
-
 """
+        + "".join(unpack) + "\n"
+    )
     if original in ebuild:
         return ebuild.replace(original, replacement, 1)
     if replacement in ebuild:
         return ebuild
     raise ValueError("unexpected Flutter Engine src_unpack template")
+
 
 
 def update_ebuild(
