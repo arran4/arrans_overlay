@@ -21,6 +21,8 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
+from generate_dart_ebuild import bootstrap_for_version
+
 from source_update_utils import (
     carry_forward_versioned_files,
     inherit_previous_patch_files,
@@ -206,12 +208,46 @@ def create_dart_ebuild(version: str, work_root):
 
     return existing_ebuild, new_ebuild_path
 
+def ensure_bootstrap_ebuild(version: str, work_root: Path) -> Path:
+    """Package the exact upstream bootstrap seed reviewed for this Dart SDK.
+
+    A new stable minor release requires an explicit reviewed bootstrap mapping;
+    never silently substitute an older SDK or invent a compatible compiler.
+    """
+    tag, gentoo_pv, upstream_version, channel = bootstrap_for_version(version)
+    slot = ".".join(version.split(".")[:2])
+    directory = work_root / "dev-lang" / "dart-bootstrap-bin"
+    original = directory / "dart-bootstrap-bin-3.13.0_beta103_p1.ebuild"
+    target = directory / f"dart-bootstrap-bin-{gentoo_pv}.ebuild"
+    if not original.is_file():
+        raise FileNotFoundError(f"missing audited bootstrap packaging template: {original}")
+    text = original.read_text()
+    expected = (
+        ('BOOTSTRAP_VERSION="3.13.0-103.1.beta"', f'BOOTSTRAP_VERSION="{upstream_version}"'),
+        ('/channels/beta/release/', f'/channels/{channel}/release/'),
+        ('SLOT="3.13"', f'SLOT="{slot}"'),
+    )
+    for before, after in expected:
+        if text.count(before) != 1:
+            raise ValueError(f"unexpected bootstrap template structure: {before}")
+        text = text.replace(before, after)
+    if f'version:{upstream_version}' != tag:
+        raise ValueError("bootstrap version and reviewed CIPD seed differ")
+    if target.exists():
+        if target.read_text() != text:
+            raise ValueError(f"existing bootstrap package differs from reviewed template: {target}")
+        return target
+    target.write_text(text)
+    logging.info("Prepared reviewed bootstrap package %s", target.name)
+    return target
+
+
 def commit_and_push(branch_name: str, old_version: str, version: str, ref: str, dry_run: bool, carried_files: list[str] | None = None, inherited_patches: list[str] | None = None):
     if dry_run:
         logging.info("Dry run: Skipping git add, commit, branch checkout, push, and PR creation.")
         return
 
-    run_cmd(["git", "add", "dev-lang/dart", "virtual/dart"])
+    run_cmd(["git", "add", "dev-lang/dart", "dev-lang/dart-bootstrap-bin", "virtual/dart"])
     # If no changes, exit
     res = run_cmd(["git", "status", "--porcelain"], capture_output=True)
     if not res.stdout.strip():
@@ -240,6 +276,7 @@ def commit_and_push(branch_name: str, old_version: str, version: str, ref: str, 
         f"**Authoritative Revision:** {ref}\n"
         f"**Host-Dart compatibility/prerequisite:** Independent Dart stable update; no Flutter prerequisite.\n"
         f"**Virtual-provider decision:** Exact-version virtual is generated using only packaged, matching source/binary providers; compatibility is never invented.\n"
+        f"**Reviewed bootstrap seed:** {bootstrap_for_version(version)[2]} (build-only compiler).\n"
         f"**Manifest Generation:** Completed successfully.\n"
         f"**Dependency review result:** Needs human review.\n"
         f"**Version-qualified non-patch FILESDIR carry-forward:** {carried_summary}\n"
@@ -304,6 +341,13 @@ def main() -> int:
                 shutil.copy2(file, work_root / "dev-lang" / "dart")
             for file in (orig_root / "virtual" / "dart").glob("*.ebuild"):
                 shutil.copy2(file, work_root / "virtual" / "dart")
+            bootstrap_dir = orig_root / "dev-lang" / "dart-bootstrap-bin"
+            if bootstrap_dir.exists():
+                shutil.copytree(
+                    bootstrap_dir,
+                    work_root / "dev-lang" / "dart-bootstrap-bin",
+                    dirs_exist_ok=True,
+                )
 
         # Check if version is a prerelease
         if not re.match(r"^\d+\.\d+\.\d+$", version):
@@ -335,6 +379,9 @@ def main() -> int:
 
         if not args.dry_run:
             run_cmd(["git", "checkout", "-b", branch_name])
+
+        # Prepare the exact reviewed build-only bootstrap before source generation.
+        ensure_bootstrap_ebuild(version, work_root)
 
         # Create main ebuild
         previous_ebuild, new_ebuild_path = create_dart_ebuild(version, work_root)
@@ -386,6 +433,7 @@ def main() -> int:
                 sys.executable,
                 str(orig_root / "scripts" / "verify_manifest.py"),
                 str(work_root / "dev-lang" / "dart"),
+                str(work_root / "dev-lang" / "dart-bootstrap-bin"),
             ]
             run_cmd(verify_manifest_cmd, cwd=str(work_root))
         except subprocess.CalledProcessError:

@@ -24,6 +24,22 @@ import urllib.request
 DART_VERSION = "3.13.3"
 DART_EBUILD_REVISION = 2
 BOOTSTRAP_SDK_TAG = "version:3.13.0-103.1.beta"
+
+# Exact, manually reviewed seeds for source SDK minor versions.
+# Dart's dev prerelease maps to Gentoo's earliest _alpha suffix.
+REVIEWED_BOOTSTRAPS: dict[str, tuple[str, str, str, str]] = {
+    "3.13": ("version:3.13.0-103.1.beta", "3.13.0_beta103_p1", "3.13.0-103.1.beta", "beta"),
+    "3.14": ("version:3.14.0-226.0.dev", "3.14.0_alpha226", "3.14.0-226.0.dev", "dev"),
+}
+
+
+def bootstrap_for_version(version: str) -> tuple[str, str, str, str]:
+    """Return reviewed DEPS tag, Gentoo PV, upstream seed version and channel."""
+    minor = ".".join(version.split(".")[:2])
+    if minor not in REVIEWED_BOOTSTRAPS:
+        raise ValueError(f"unreviewed Dart bootstrap for {version}")
+    return REVIEWED_BOOTSTRAPS[minor]
+
 SDK_DEPS_URL = (
     "https://raw.githubusercontent.com/dart-lang/sdk/"
     f"{DART_VERSION}/DEPS"
@@ -452,9 +468,74 @@ def dependency_identity(
     raise ValueError(f"unsupported DEPS type {dep_type!r} at {destination}")
 
 
-def validate_reviewed_exclusion(destination: str, dependency: object) -> str:
+# Dart 3.14 source graph review. These are version changes to already
+# excluded tooling/tests, with identical package identity and condition.
+DART_314_REVIEWED_EXCLUSION_VERSIONS = {
+    "sdk/buildtools": "git_revision:510ec7992c30f172205792f190e96111a896ba8f",
+    "sdk/buildtools/linux-x64/clang": "git_revision:3493720eca95cf844a8d7e58fdd12e0e5644e7d0",
+    "sdk/tests/co19/src": "git_revision:cc7dba79dcc0d4fd08b18def0bbb43c7de7f6003",
+    "sdk/third_party/d8/linux/arm64": "version:15.5.28",
+    "sdk/third_party/d8/linux/x64": "version:15.5.28",
+    "sdk/third_party/d8/macos/arm64": "version:15.5.28",
+    "sdk/third_party/d8/macos/x64": "version:15.5.28",
+    "sdk/third_party/d8/windows/x64": "version:15.5.28",
+    "sdk/third_party/devtools": "git_revision:85f945ac99379d64d4df6f67d9b011e4cc418e7e",
+}
+
+
+def reviewed_exclusions_for_bootstrap(
+    version: str,
+) -> dict[str, tuple[DependencyIdentity, str]]:
+    """Bind exact excluded source identities to a reviewed SDK minor release."""
+    tag, _, _, _ = bootstrap_for_version(version)
+    reviews = REVIEWED_EXCLUSIONS.copy()
+    destination = "sdk/tools/sdks/dart-sdk"
+    identity, reason = reviews[destination]
+    if identity.dep_type != "cipd" or len(identity.packages) != 1:
+        raise ValueError("unexpected reviewed Dart bootstrap identity")
+    package, _ = identity.packages[0]
+    reviews[destination] = (
+        cipd_identity(package, tag, identity.condition), reason,
+    )
+    if ".".join(version.split(".")[:2]) == "3.14":
+        for destination, revision in DART_314_REVIEWED_EXCLUSION_VERSIONS.items():
+            identity, reason = reviews[destination]
+            if identity.dep_type != "cipd" or len(identity.packages) != 1:
+                raise ValueError(f"unexpected reviewed CIPD identity at {destination}")
+            package, _ = identity.packages[0]
+            reviews[destination] = (
+                cipd_identity(package, revision, identity.condition), reason,
+            )
+        # The old Focal seed was used only for non-amd64 toolchains; upstream
+        # dropped it and introduced this Jammy package for the same purpose.
+        old_focal, _ = reviews.pop("sdk/buildtools/sysroot/focal")
+        if old_focal.dep_type != "cipd":
+            raise ValueError("unexpected old Focal sysroot identity")
+        reviews["sdk/buildtools/sysroot/jammy"] = (
+            cipd_identity(
+                "fuchsia/third_party/sysroot/jammy",
+                "git_revision:1d35e3be9be587ed0de81ea4208be7cc01a7748c",
+                "host_os == linux",
+            ),
+            "downloaded cross-toolchain sysroot; native amd64 uses system GCC",
+        )
+        reviews["sdk/third_party/gcloud"] = (
+            cipd_identity(
+                "infra/3pp/tools/gcloud/" + "$" + "{{platform}}",
+                "version:3@584.0.0.chromium.4",
+            ),
+            "cloud CI tooling only; not required for source SDK build",
+        )
+    return reviews
+
+
+def validate_reviewed_exclusion(
+    destination: str,
+    dependency: object,
+    reviews: dict[str, tuple[DependencyIdentity, str]] | None = None,
+) -> str:
     """Fail unless an exclusion still has the exact identity that was reviewed."""
-    review = REVIEWED_EXCLUSIONS.get(destination)
+    review = (REVIEWED_EXCLUSIONS if reviews is None else reviews).get(destination)
     if review is None:
         raise ValueError(f"unreviewed DEPS exclusion at {destination}")
     expected, reason = review
@@ -531,11 +612,18 @@ def render(deps_path: Path) -> str:
     namespace = load_deps(deps_path)
     variables = namespace["vars"]
     assert isinstance(variables, dict)
+    expected_tag = bootstrap_for_version(DART_VERSION)[0]
+    if BOOTSTRAP_SDK_TAG != expected_tag:
+        raise ValueError(f"generator bootstrap review mismatch for {DART_VERSION}")
     if variables.get("sdk_tag") != BOOTSTRAP_SDK_TAG:
         raise ValueError(
             "Dart bootstrap changed: "
             f"expected {BOOTSTRAP_SDK_TAG!r}, got {variables.get('sdk_tag')!r}"
         )
+    reviews = (
+        REVIEWED_EXCLUSIONS if BOOTSTRAP_SDK_TAG == REVIEWED_BOOTSTRAPS["3.13"][0]
+        else reviewed_exclusions_for_bootstrap(DART_VERSION)
+    )
     git_sources: list[GitSource] = []
     active_reviews: set[str] = set()
 
@@ -546,7 +634,7 @@ def render(deps_path: Path) -> str:
             else "git"
         )
         if dep_type == "cipd":
-            validate_reviewed_exclusion(destination, dependency)
+            validate_reviewed_exclusion(destination, dependency, reviews)
             active_reviews.add(destination)
             if destination == "sdk/third_party/devtools":
                 revision = str(variables["devtools_rev"])
@@ -561,15 +649,15 @@ def render(deps_path: Path) -> str:
                     )
                 )
         elif dep_type == "git":
-            if destination in REVIEWED_EXCLUSIONS:
-                validate_reviewed_exclusion(destination, dependency)
+            if destination in reviews:
+                validate_reviewed_exclusion(destination, dependency, reviews)
                 active_reviews.add(destination)
             else:
                 git_sources.append(git_source(destination, dependency))
         else:
             raise ValueError(f"unsupported DEPS type {dep_type!r} at {destination}")
 
-    stale_reviews = sorted(set(REVIEWED_EXCLUSIONS) - active_reviews)
+    stale_reviews = sorted(set(reviews) - active_reviews)
     if stale_reviews:
         raise ValueError(
             "DEPS exclusion audit is out of date; "
@@ -658,6 +746,31 @@ def update_ebuild(generated: str, check: bool) -> int:
         re.MULTILINE | re.DOTALL,
     )
     replacement, count = pattern.subn(generated, existing)
+    # The source ebuild must use the SDK seed reviewed for the target DEPS.
+    _, bootstrap_pv, upstream_version, _ = bootstrap_for_version(DART_VERSION)
+    bootstrap_slot = ".".join(DART_VERSION.split(".")[:2])
+    if "dev-lang/dart-bootstrap-bin" in replacement:
+        replacement, atom_count = re.subn(
+            r"(?m)^(\s*)=dev-lang/dart-bootstrap-bin-[^\s]+$",
+            lambda m: (
+                m.group(1) + "=dev-lang/dart-bootstrap-bin-"
+                + bootstrap_pv + "-r0:" + bootstrap_slot
+            ),
+            replacement,
+        )
+        if atom_count != 1:
+            raise ValueError("expected one Dart bootstrap BDEPEND atom")
+    if "/opt/dart-bootstrap-" in replacement:
+        replacement, symlink_count = re.subn(
+            r'(?m)^(\s*)ln -s "/opt/dart-bootstrap-[^"]+"',
+            lambda m: (
+                m.group(1) + 'ln -s "/opt/dart-bootstrap-'
+                + upstream_version + '"'
+            ),
+            replacement,
+        )
+        if symlink_count != 1:
+            raise ValueError("expected one Dart bootstrap src_prepare symlink")
     if count != 1:
         raise ValueError(f"expected one generated block in {EBUILD}, found {count}")
     if replacement == existing:
@@ -688,8 +801,10 @@ def main() -> int:
         DART_VERSION = args.version
     if args.ebuild_revision is not None:
         DART_EBUILD_REVISION = args.ebuild_revision
-    if args.bootstrap_sdk_tag:
-        BOOTSTRAP_SDK_TAG = args.bootstrap_sdk_tag
+    reviewed_tag = bootstrap_for_version(DART_VERSION)[0]
+    if args.bootstrap_sdk_tag and args.bootstrap_sdk_tag != reviewed_tag:
+        parser.error("bootstrap SDK tag differs from reviewed stable-release pin")
+    BOOTSTRAP_SDK_TAG = reviewed_tag
 
     if args.version:
         SDK_DEPS_URL = (

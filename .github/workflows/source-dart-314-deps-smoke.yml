@@ -1,0 +1,50 @@
+name: Temporary Dart 3.14.0 DEPS review
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  reviewed-source-graph:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Audit authoritative source DEPS without publishing
+        run: |
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0, "scripts")
+          import generate_dart_ebuild as generator
+          generator.DART_VERSION = "3.14.0"
+          generator.BOOTSTRAP_SDK_TAG = generator.bootstrap_for_version("3.14.0")[0]
+          generator.SDK_DEPS_URL = "https://raw.githubusercontent.com/dart-lang/sdk/3.14.0/DEPS"
+          path, temporary = generator.obtain_deps(None)
+          try:
+              original = generator.validate_reviewed_exclusion
+              outstanding = []
+              def audit(*args, **kwargs):
+                  try:
+                      return original(*args, **kwargs)
+                  except ValueError as exc:
+                      outstanding.append(str(exc) + " actual=" + repr(generator.dependency_identity(args[0], args[1])))
+                      return "pending explicit review"
+              generator.validate_reviewed_exclusion = audit
+              output = None
+              try:
+                  output = generator.render(path)
+              except Exception as exc:
+                  outstanding.append(f"other generator failure: {exc}")
+              finally:
+                  generator.validate_reviewed_exclusion = original
+              print("DEPS audit issues:", len(outstanding))
+              for issue in outstanding:
+                  print("UNREVIEWED:", issue)
+              if outstanding:
+                  raise RuntimeError("review all changed exclusions before release")
+              assert "BEGIN GENERATED DART" in output
+              print("Dart 3.14.0 full reviewed DEPS graph rendered")
+          finally:
+              if temporary is not None:
+                  temporary.cleanup()
+          PY

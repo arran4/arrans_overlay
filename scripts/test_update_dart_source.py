@@ -17,6 +17,26 @@ class DartUpdaterTest(unittest.TestCase):
             open_url.return_value.__enter__.return_value = response
             return updater.get_dart_release(requested)
 
+    def test_prepare_reviewed_3_14_bootstrap_ebuild_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package = root / "dev-lang" / "dart-bootstrap-bin"
+            package.mkdir(parents=True)
+            (package / "dart-bootstrap-bin-3.13.0_beta103_p1.ebuild").write_text(
+                'BOOTSTRAP_VERSION="3.13.0-103.1.beta"\n'
+                'SDK_URI="/channels/beta/release/"\n'
+                'SLOT="3.13"\n'
+            )
+            target = updater.ensure_bootstrap_ebuild("3.14.0", root)
+            self.assertEqual(target.name, "dart-bootstrap-bin-3.14.0_alpha226.ebuild")
+            self.assertIn("3.14.0-226.0.dev", target.read_text())
+            self.assertIn("/channels/dev/release/", target.read_text())
+            self.assertIn('SLOT="3.14"', target.read_text())
+            self.assertEqual(updater.ensure_bootstrap_ebuild("3.14.1", root), target)
+            target.write_text("different content")
+            with self.assertRaisesRegex(ValueError, "differs from reviewed"):
+                updater.ensure_bootstrap_ebuild("3.14.0", root)
+
     def test_release_metadata_valid_requested_and_latest(self):
         self.assertEqual(self.metadata({"version": "3.14.0", "revision": "abc"}, "3.14.0")["revision"], "abc")
         self.assertEqual(self.metadata({"version": "3.14.1", "revision": "def"})["version"], "3.14.1")
@@ -125,12 +145,19 @@ class DartUpdaterTest(unittest.TestCase):
             path = root / directory
             path.mkdir(parents=True, exist_ok=True)
             (path / filename).write_text('EAPI=8\nKEYWORDS="~amd64"\nSRC_URI="https://example.invalid/source.tar.xz"\n')
+        bootstrap_dir = root / "dev-lang/dart-bootstrap-bin"
+        bootstrap_dir.mkdir(parents=True)
+        (bootstrap_dir / "dart-bootstrap-bin-3.13.0_beta103_p1.ebuild").write_text(
+            'BOOTSTRAP_VERSION="3.13.0-103.1.beta"\n'
+            'SDK_URI="/channels/beta/release/"\n'
+            'SLOT="3.13"\n'
+        )
         subprocess.run(["git", "init", "-q"], cwd=root, check=True)
         subprocess.run(["git", "add", "."], cwd=root, check=True)
         subprocess.run(["git", "-c", "commit.gpgsign=false", "-c", "user.email=t@example", "-c", "user.name=t", "commit", "-qm", "base"], cwd=root, check=True)
 
     def test_dry_run_real_git_repo_is_immutable_and_generates_isolated_tree(self):
-        checkout_target = Path(updater.REPO_ROOT) / "dev-lang/dart/dart-3.5.4.ebuild"
+        checkout_target = Path(updater.REPO_ROOT) / "dev-lang/dart/dart-3.14.0.ebuild"
         self.assertFalse(checkout_target.exists())
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -147,7 +174,7 @@ class DartUpdaterTest(unittest.TestCase):
                 if "verify_manifest.py" in " ".join(cmd):
                     target = Path(cmd[-1]); (target / "Manifest").write_text("DIST fixture 1 BLAKE2B dead SHA512 beef\n"); generated.append(target / "Manifest")
                 return subprocess.CompletedProcess(cmd, 0, "")
-            with patch.object(updater, "REPO_ROOT", root), patch.object(updater, "get_dart_release", return_value={"version": "3.5.4", "revision": "r"}), patch.object(updater, "check_branch_exists", return_value=False), patch.object(updater, "check_pr_exists", return_value=False), patch.object(updater, "check_superseding_release", return_value=False), patch.object(updater, "run_cmd", side_effect=command), patch.object(sys, "argv", ["updater", "--dry-run"]):
+            with patch.object(updater, "REPO_ROOT", root), patch.object(updater, "get_dart_release", return_value={"version": "3.14.0", "revision": "r"}), patch.object(updater, "check_branch_exists", return_value=False), patch.object(updater, "check_pr_exists", return_value=False), patch.object(updater, "check_superseding_release", return_value=False), patch.object(updater, "run_cmd", side_effect=command), patch.object(sys, "argv", ["updater", "--dry-run"]):
                 self.assertEqual(updater.main(), 0)
             self.assertTrue(generated)
             self.assertEqual(subprocess.check_output(["git", "status", "--porcelain=v1"], cwd=root), before_status)
