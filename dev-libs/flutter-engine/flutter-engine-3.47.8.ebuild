@@ -310,6 +310,7 @@ PATCHES=(
 	"${FILESDIR}/flutter-engine-gcc-skia-reinitializes-r1.patch"
 	"${FILESDIR}/flutter-engine-gcc-skia-unused-createproc-r1.patch"
 	"${FILESDIR}/flutter-engine-gcc-string-conversion-r1.patch"
+	"${FILESDIR}/flutter-engine-pango-context-autoptr-r1.patch"
 	"${FILESDIR}/flutter-engine-gtk-wayland-r1.patch"
 	"${FILESDIR}/flutter-engine-skia-skcms-cxx-r1.patch"
 	"${FILESDIR}/flutter-engine-system-gcc-prefix-r1.patch"
