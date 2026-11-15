@@ -27,7 +27,7 @@ jobs:
                   try:
                       return original(*args, **kwargs)
                   except ValueError as exc:
-                      outstanding.append(str(exc))
+                      outstanding.append(str(exc) + " actual=" + repr(generator.dependency_identity(args[0], args[1])))
                       return "pending explicit review"
               generator.validate_reviewed_exclusion = audit
               output = None
