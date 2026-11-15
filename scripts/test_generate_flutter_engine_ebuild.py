@@ -113,6 +113,17 @@ class ReviewedExclusionTest(unittest.TestCase):
                 source.repository,
                 "https://flutter.googlesource.com/third_party/shaderc",
             )
+            swiftshader = generator.git_source(
+                "engine/src/flutter/third_party/swiftshader",
+                "https://flutter.googlesource.com/third_party/"
+                "swiftshader.git@1be9f83618f8ba258431c0c13d7a083eb193df11",
+            )
+            self.assertEqual(swiftshader.archive_kind, "gitiles")
+            self.assertEqual(swiftshader.identifier, "SWIFTSHADER")
+            self.assertEqual(
+                swiftshader.unpacked_source(),
+                "swiftshader-${SWIFTSHADER_REV}",
+            )
             with self.assertRaisesRegex(ValueError, "unreviewed"):
                 generator.git_source(
                     "engine/src/flutter/third_party/shaderc",
@@ -121,11 +132,16 @@ class ReviewedExclusionTest(unittest.TestCase):
 
     def test_gitiles_source_unpack_isolated_and_idempotent(self):
         basic = "src_unpack() {\n\tdefault\n\n\t# existing moves\n}\n"
-        block = "SRC_URI=\"\n\t+archive/${SHADERC_REV}.tar.gz\n\""
+        block = (
+            "SRC_URI=\"\n"
+            "\t+archive/${SHADERC_REV}.tar.gz\n"
+            "\t+archive/${SWIFTSHADER_REV}.tar.gz\n\""
+        )
         modified = generator.install_gitiles_shaderc_unpack(basic, block)
         self.assertIn("for archive in ${A}; do", modified)
         self.assertIn("unpack \"${archive}\"", modified)
         self.assertIn("shaderc-${SHADERC_REV}", modified)
+        self.assertIn("swiftshader-${SWIFTSHADER_REV}", modified)
         self.assertIn(
             "flutter-dep-shaderc-${SHADERC_REV:0:8}", modified
         )
