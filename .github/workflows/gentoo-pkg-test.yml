@@ -132,26 +132,31 @@ jobs:
           #!/bin/bash
           set -euo pipefail
 
-          # Archive full emerge output; keep a concise console heartbeat.
+          # Full output stays in the runner-mounted log directory. A monitor
+          # inside stage3 reports Portage package milestones and a heartbeat.
           mkdir -p /ci-logs/emerge
           emerge_log_index=0
           run_emerge() {
             local label="$1"
             shift
             emerge_log_index=$((emerge_log_index + 1))
-            local log_file
+            local log_file done_file
             printf -v log_file '/ci-logs/emerge/%02d-%s.log' "$emerge_log_index" "$label"
-            printf 'Starting emerge (%s); full output: %s\n' "$label" "$log_file"
-            (
-              while sleep 120; do
-                printf 'emerge (%s) still running; output is being archived\n' "$label"
-              done
-            ) &
-            local heartbeat_pid=$!
+            done_file="$log_file.done"
+            rm -f "$done_file"
+            : >"$log_file"
+            printf 'Starting emerge (%s); full output archived as emerge/%02d-%s.log\n' \
+              "$label" "$emerge_log_index" "$label"
+            python3 -u /var/db/repos/arrans-overlay/.github/scripts/gentoo_emerge_progress.py \
+              --label "$label" --log "$log_file" --done "$done_file" &
+            local progress_pid=$!
             local rc=0
             emerge "$@" >"$log_file" 2>&1 || rc=$?
-            kill "$heartbeat_pid" 2>/dev/null || true
-            wait "$heartbeat_pid" 2>/dev/null || true
+            : >"$done_file"
+            if ! wait "$progress_pid"; then
+              printf '::warning::emerge (%s) progress monitor failed; full log preserved\n' "$label"
+            fi
+            rm -f "$done_file"
             if (( rc != 0 )); then
               printf '::error title=emerge failed::%s exited with status %d; showing last 80 lines\n' "$label" "$rc"
               tail -n 80 "$log_file"
