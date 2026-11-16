@@ -5,8 +5,7 @@
 		<email>gentoo@arran4.com</email>
 		<name>Arran Ubels</name>
 	</maintainer>
-	<use lang="en">
-	</use>
+	<use lang="en"></use>
 	<upstream>
 		<remote-id type="github">yorukot/superfile</remote-id>
 	</upstream>
