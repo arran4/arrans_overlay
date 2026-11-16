@@ -61,6 +61,7 @@ class GitSource:
     filename: str
     destination: str
     subdirectory: str | None = None
+    archive_kind: str = "github"
 
     @property
     def repository_name(self) -> str:
@@ -549,6 +550,13 @@ SHORT_NAMES = {
 # Named repository variables for upstream repository URLs to ensure SRC_URI
 # entries remain readable and within Gentoo's 80-column limit.
 REPOSITORY_VARIABLES = {
+    "https://flutter.googlesource.com/third_party/shaderc": "SHADERC_GIT",
+    "https://flutter.googlesource.com/third_party/swiftshader": (
+        "SWIFTSHADER_GIT"
+    ),
+    "https://flutter.googlesource.com/third_party/glslang": (
+        "FLUTTER_GLSLANG_GIT"
+    ),
     (
         "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator"
     ): "VK_VMA_GIT",
@@ -589,6 +597,8 @@ UNPACK_SOURCE_VARIABLES = {
     "VK_LUNARG_VULKANTOOLS": "VK_LUNARG_SRC",
     "VK_UTILITY_LIBRARIES": "VK_UTIL_SRC",
     "VK_VALIDATION_LAYERS": "VK_VALIDATION_SRC",
+    "VULKAN_UTILITY_LIBRARIES": "VK_UTIL_SRC",
+    "VULKAN_VALIDATIONLAYERS": "VK_VALIDATION_SRC",
     "VULKAN_MEMORY_ALLOCATOR": "VK_VMA_SRC",
 }
 
@@ -775,6 +785,64 @@ def reviewed_exclusions_for_dart_revision(
     return reviews
 
 
+# Version-specific reviewed exclusion revisions preserve the pinned 3.47
+# source closure while allowing explicit review of Flutter 3.50 upstream DEPS.
+# The repository/package, dependency type, condition, and reason are inherited
+# from the audited baseline; only these exact revisions are changed.
+REVIEWED_FLUTTER_350_REVISIONS = {
+    "engine/src/flutter/buildtools/linux-x64/clang": 
+        "git_revision:07d67299a15ce03b053736e2d31a668ee0576987",
+    "engine/src/flutter/third_party/angle": 
+        "a8d74ca3e5e9e4ffa241330ceedcbe302443e472",
+    "engine/src/flutter/third_party/dart/third_party/devtools": 
+        "git_revision:85f945ac99379d64d4df6f67d9b011e4cc418e7e",
+    "engine/src/flutter/third_party/dart/tools/sdks/dart-sdk": 
+        "version:3.14.0-226.0.dev",
+    "engine/src/flutter/third_party/freetype2": 
+        "db7276fd53cda30c7f0fcd6b11e2e8f43b4b5e82",
+    "engine/src/flutter/third_party/google_fonts_for_unit_tests": 
+        "eafae0f49fbf9af7858049ad666b7223bdd7588162d8a687ec7870eb5952055d",
+    "engine/src/flutter/third_party/icu": 
+        "5aa526207171ecadf31597f0980a7b7ad8872f33",
+    "engine/src/flutter/third_party/java/openjdk": "version:25.0.2",
+    "engine/src/flutter/third_party/vulkan-deps": (
+        "0582f446e54aa4ea389c89cd027067ee0f5459aa"
+    ),
+}
+
+
+def reviewed_exclusions_for_flutter_version(
+    version: str,
+    reviews: dict[str, tuple[DependencyIdentity, str]],
+) -> dict[str, tuple[DependencyIdentity, str]]:
+    """Return precisely reviewed identities without mutating older releases."""
+    minor = ".".join(version.split(".")[:2])
+    if minor == "3.47":
+        return reviews.copy()
+    if minor != "3.50":
+        raise ValueError(f"unreviewed Clang seed for Flutter {version}")
+    updated = reviews.copy()
+    for destination, selected_revision in (
+        REVIEWED_FLUTTER_350_REVISIONS.items()
+    ):
+        identity, reason = updated[destination]
+        if identity.dep_type == "cipd" and len(identity.packages) == 1:
+            package, _ = identity.packages[0]
+            revised = cipd_identity(
+                package, selected_revision, identity.condition
+            )
+        elif identity.dep_type == "git" and identity.repository:
+            revised = git_identity(
+                identity.repository, selected_revision, identity.condition
+            )
+        else:
+            raise ValueError(
+                f"unexpected reviewed dependency identity at {destination}"
+            )
+        updated[destination] = (revised, reason)
+    return updated
+
+
 def validate_reviewed_exclusion(
     destination: str,
     dependency: object,
@@ -806,6 +874,57 @@ def git_source(
             f"unsupported Git DEPS entry at {destination}: {dependency!r}"
         )
     repository, revision = url.rsplit("@", 1)
+    if (
+        destination == "engine/src/flutter/third_party/shaderc"
+        and FLUTTER_VERSION == "3.50.0"
+    ):
+        # Flutter 3.50 pins its own shaderc fork, not google/shaderc.
+        # Gitiles publishes the exact commit as a rootless tar archive.
+        if (
+            repository != "https://flutter.googlesource.com/third_party/shaderc"
+            or revision != "70b1130380fcbf1d1e9719ee78ba7202a5161424"
+        ):
+            raise ValueError("unreviewed Flutter shaderc source revision")
+        return GitSource(
+            "SHADERC", repository, revision,
+            f"flutter-dep-shaderc-{revision[:8]}.tar.gz",
+            destination.removeprefix("engine/src/"),
+            archive_kind="gitiles",
+        )
+    if (
+        destination == "engine/src/flutter/third_party/swiftshader"
+        and FLUTTER_VERSION == "3.50.0"
+    ):
+        # Flutter's patched SwiftShader fork has no matching GitHub SHA.
+        if (
+            repository.removesuffix(".git")
+            != "https://flutter.googlesource.com/third_party/swiftshader"
+            or revision != "1be9f83618f8ba258431c0c13d7a083eb193df11"
+        ):
+            raise ValueError("unreviewed Flutter swiftshader source revision")
+        return GitSource(
+            "SWIFTSHADER", repository.removesuffix(".git"), revision,
+            f"flutter-dep-swiftshader-{revision[:8]}.tar.gz",
+            destination.removeprefix("engine/src/"),
+            archive_kind="gitiles",
+        )
+    if (
+        destination == "engine/src/flutter/third_party/vulkan-deps/glslang/src"
+        and FLUTTER_VERSION == "3.50.0"
+    ):
+        # Flutter's forked glslang revision differs from Khronos on GitHub.
+        # Use the exact pinned Gitiles archive instead of a substitute SHA.
+        if (
+            repository != "https://flutter.googlesource.com/third_party/glslang"
+            or revision != "fdbdca9263a4c09dbfb4a51c76e3e9d9f52bc504"
+        ):
+            raise ValueError("unreviewed Flutter glslang source revision")
+        return GitSource(
+            "VK_GLSLANG", repository, revision,
+            f"flutter-dep-vk-glslang-{revision[:8]}.tar.gz",
+            destination.removeprefix("engine/src/"),
+            archive_kind="gitiles",
+        )
     repository = stable_github_repository(repository.removesuffix(".git"))
     relative = destination.removeprefix("engine/src/")
     repository_name = repository.rstrip("/").rsplit("/", 1)[-1]
@@ -922,7 +1041,9 @@ def render(deps_path: Path) -> str:
             "expected "
             f"{DART_REVISION!r}, got {variables.get('dart_revision')!r}"
         )
-    reviewed_exclusions = reviewed_exclusions_for_dart_revision(DART_REVISION)
+    reviewed_exclusions = reviewed_exclusions_for_flutter_version(
+        FLUTTER_VERSION, reviewed_exclusions_for_dart_revision(DART_REVISION)
+    )
     git_sources: list[GitSource] = []
     active_reviews: set[str] = set()
 
@@ -960,12 +1081,15 @@ def render(deps_path: Path) -> str:
                 )
                 active_reviews.add(destination)
                 if destination == "engine/src/flutter/third_party/vulkan-deps":
-                    for ident, repo, rev, dest in VULKAN_DEPS_SUBPACKAGES:
-                        tag = ident.lower().replace("_", "-")
-                        filename = f"flutter-dep-{tag}-{rev[:8]}.tar.gz"
-                        git_sources.append(
-                            GitSource(ident, repo, rev, filename, dest)
-                        )
+                    if FLUTTER_VERSION != "3.50.0":
+                        # Older versions provide Vulkan children through
+                        # the parent; 3.50 pins them directly in DEPS.
+                        for ident, repo, rev, dest in VULKAN_DEPS_SUBPACKAGES:
+                            tag = ident.lower().replace("_", "-")
+                            filename = f"flutter-dep-{tag}-{rev[:8]}.tar.gz"
+                            git_sources.append(
+                                GitSource(ident, repo, rev, filename, dest)
+                            )
                 elif destination == "engine/src/flutter/third_party/icu":
                     icu_rev = "a86a32e67b8d1384b33f8fa48c83a6079b86f8cd"
                     git_sources.append(
@@ -1059,7 +1183,14 @@ def render(deps_path: Path) -> str:
             if source.repository in REPOSITORY_VARIABLES
             else source.repository
         )
-        lines.append(f"\t{repo_expr}/archive/${{{identifier}_REV}}.tar.gz")
+        if source.archive_kind == "gitiles":
+            lines.append(
+                f"\t{repo_expr}/+archive/${{{identifier}_REV}}.tar.gz"
+            )
+        else:
+            lines.append(
+                f"\t{repo_expr}/archive/${{{identifier}_REV}}.tar.gz"
+            )
         lines.append(f"\t\t-> {source.filename}")
     lines.extend(['"', END])
     too_long = [
@@ -1100,6 +1231,53 @@ def apply_release_identity(text: str, release: FlutterReleaseSpec) -> str:
     return replacement
 
 
+def install_gitiles_shaderc_unpack(ebuild: str, generated: str) -> str:
+    """Isolate rootless Gitiles fork archives before source-tree moves."""
+    names = ("SHADERC", "SWIFTSHADER", "VK_GLSLANG")
+    active = [
+        name for name in names
+        if "+archive/${" + name + "_REV}.tar.gz" in generated
+    ]
+    if not active:
+        return ebuild
+    original = "src_unpack() {\n\tdefault\n"
+    header = """src_unpack() {
+\t# Gitiles archives are rootless, unlike the other GitHub distfiles.
+\tlocal archive
+\tfor archive in ${A}; do
+\t\tcase ${archive} in
+"""
+    skip = []
+    unpack = []
+    for name in active:
+        label = name.lower().replace("_", "-")
+        root_name = "glslang" if name == "VK_GLSLANG" else label
+        dist = "flutter-dep-" + label + "-${" + name + "_REV:0:8}.tar.gz"
+        root = root_name + "-${" + name + "_REV}"
+        skip.append("\t\t\t" + dist + ") continue ;;\n")
+        unpack.append(
+            "\tmkdir -p \"${WORKDIR}/" + root + "\" || die\n"
+            "\t(\n"
+            "\t\tcd \"${WORKDIR}/" + root + "\" || exit 1\n"
+            "\t\tunpack \"" + dist + "\"\n"
+            "\t) || die\n"
+        )
+    replacement = (
+        header + "".join(skip)
+        + """\t\tesac
+\t\tunpack "${archive}" || die
+\tdone
+"""
+        + "".join(unpack) + "\n"
+    )
+    if original in ebuild:
+        return ebuild.replace(original, replacement, 1)
+    if replacement in ebuild:
+        return ebuild
+    raise ValueError("unexpected Flutter Engine src_unpack template")
+
+
+
 def update_ebuild(
     generated: str, check: bool, release: FlutterReleaseSpec | None = None,
 ) -> int:
@@ -1123,6 +1301,7 @@ def update_ebuild(
         )
     if release is not None:
         replacement = apply_release_identity(replacement, release)
+    replacement = install_gitiles_shaderc_unpack(replacement, generated)
     if replacement == existing:
         return 0
     if check:

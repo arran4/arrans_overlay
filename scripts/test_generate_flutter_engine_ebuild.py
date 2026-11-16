@@ -39,6 +39,144 @@ class ReviewedExclusionTest(unittest.TestCase):
 
         self.assertEqual(reason, "provided by dev-build/gn")
 
+    def test_flutter_3_50_clang_is_still_excluded_with_system_gcc(self):
+        dependency = {
+            "packages": [{
+                "package": "fuchsia/third_party/clang/linux-amd64",
+                "version": "git_revision:07d67299a15ce03b053736e2d31a668ee0576987",
+            }],
+            "condition": 'host_os == "linux" or host_os == "mac"',
+            "dep_type": "cipd",
+        }
+        destination = "engine/src/flutter/buildtools/linux-x64/clang"
+        reviews = generator.reviewed_exclusions_for_flutter_version(
+            "3.50.0", generator.REVIEWED_EXCLUSIONS
+        )
+        self.assertEqual(
+            generator.validate_reviewed_exclusion(destination, dependency, reviews),
+            "system GCC selected by --no-clang",
+        )
+        dependency["packages"][0]["version"] = "git_revision:80743bd43fd5b38fedc503308e7a652e23d3ec93"
+        with self.assertRaisesRegex(ValueError, "DEPS exclusion changed"):
+            generator.validate_reviewed_exclusion(destination, dependency, reviews)
+        baseline = generator.reviewed_exclusions_for_flutter_version(
+            "3.47.8", generator.REVIEWED_EXCLUSIONS
+        )
+        self.assertEqual(
+            generator.validate_reviewed_exclusion(destination, dependency, baseline),
+            "system GCC selected by --no-clang",
+        )
+        with self.assertRaisesRegex(ValueError, "unreviewed Clang seed"):
+            generator.reviewed_exclusions_for_flutter_version(
+                "3.51.0", generator.REVIEWED_EXCLUSIONS
+            )
+
+    def test_flutter_350_reviews_do_not_mutate_347_source_graph(self):
+        original = generator.REVIEWED_EXCLUSIONS.copy()
+        baseline = generator.reviewed_exclusions_for_flutter_version(
+            "3.47.8", generator.REVIEWED_EXCLUSIONS
+        )
+        changed = generator.reviewed_exclusions_for_flutter_version(
+            "3.50.0", generator.REVIEWED_EXCLUSIONS
+        )
+        self.assertEqual(original, generator.REVIEWED_EXCLUSIONS)
+        self.assertEqual(original, baseline)
+        self.assertEqual(set(original), set(changed))
+        for destination, (identity, reason) in changed.items():
+            with self.subTest(destination=destination):
+                self.assertEqual(reason, original[destination][1])
+                old = original[destination][0]
+                self.assertEqual(identity.dep_type, old.dep_type)
+                self.assertEqual(identity.repository, old.repository)
+                self.assertEqual(identity.condition, old.condition)
+                if destination in generator.REVIEWED_FLUTTER_350_REVISIONS:
+                    self.assertNotEqual(identity, old)
+                else:
+                    self.assertEqual(identity, old)
+
+    def test_flutter_350_uses_exact_gitiles_shaderc_fork(self):
+        url = (
+            "https://flutter.googlesource.com/third_party/shaderc"
+            "@70b1130380fcbf1d1e9719ee78ba7202a5161424"
+        )
+        from unittest import mock
+        with mock.patch.object(generator, "FLUTTER_VERSION", "3.50.0"):
+            source = generator.git_source(
+                "engine/src/flutter/third_party/shaderc", url
+            )
+            self.assertEqual(source.archive_kind, "gitiles")
+            self.assertEqual(source.identifier, "SHADERC")
+            self.assertEqual(
+                source.unpacked_source(), "shaderc-${SHADERC_REV}"
+            )
+            self.assertEqual(
+                source.repository,
+                "https://flutter.googlesource.com/third_party/shaderc",
+            )
+            swiftshader = generator.git_source(
+                "engine/src/flutter/third_party/swiftshader",
+                "https://flutter.googlesource.com/third_party/"
+                "swiftshader.git@1be9f83618f8ba258431c0c13d7a083eb193df11",
+            )
+            self.assertEqual(swiftshader.archive_kind, "gitiles")
+            self.assertEqual(swiftshader.identifier, "SWIFTSHADER")
+            self.assertEqual(
+                swiftshader.unpacked_source(),
+                "swiftshader-${SWIFTSHADER_REV}",
+            )
+            glslang = generator.git_source(
+                "engine/src/flutter/third_party/vulkan-deps/glslang/src",
+                "https://flutter.googlesource.com/third_party/glslang"
+                "@fdbdca9263a4c09dbfb4a51c76e3e9d9f52bc504",
+            )
+            self.assertEqual(glslang.archive_kind, "gitiles")
+            self.assertEqual(glslang.identifier, "VK_GLSLANG")
+            self.assertEqual(
+                glslang.unpacked_source(), "glslang-${VK_GLSLANG_REV}"
+            )
+            self.assertEqual(
+                glslang.repository,
+                "https://flutter.googlesource.com/third_party/glslang",
+            )
+            with self.assertRaisesRegex(ValueError, "unreviewed"):
+                generator.git_source(
+                    "engine/src/flutter/third_party/vulkan-deps/glslang/src",
+                    "https://flutter.googlesource.com/third_party/glslang"
+                    "@0000000000000000000000000000000000000000",
+                )
+            with self.assertRaisesRegex(ValueError, "unreviewed"):
+                generator.git_source(
+                    "engine/src/flutter/third_party/shaderc",
+                    url.replace("70b11303", "00000000"),
+                )
+
+    def test_gitiles_source_unpack_isolated_and_idempotent(self):
+        basic = "src_unpack() {\n\tdefault\n\n\t# existing moves\n}\n"
+        block = (
+            "SRC_URI=\"\n"
+            "\t+archive/${SHADERC_REV}.tar.gz\n"
+            "\t+archive/${SWIFTSHADER_REV}.tar.gz\n"
+            "\t+archive/${VK_GLSLANG_REV}.tar.gz\n\""
+        )
+        modified = generator.install_gitiles_shaderc_unpack(basic, block)
+        self.assertIn("for archive in ${A}; do", modified)
+        self.assertIn("unpack \"${archive}\"", modified)
+        self.assertIn("shaderc-${SHADERC_REV}", modified)
+        self.assertIn("swiftshader-${SWIFTSHADER_REV}", modified)
+        self.assertIn("glslang-${VK_GLSLANG_REV}", modified)
+        self.assertIn("flutter-dep-vk-glslang-", modified)
+        self.assertIn(
+            "flutter-dep-shaderc-${SHADERC_REV:0:8}", modified
+        )
+        self.assertEqual(
+            generator.install_gitiles_shaderc_unpack(modified, block),
+            modified,
+        )
+        self.assertEqual(
+            generator.install_gitiles_shaderc_unpack(basic, ""),
+            basic,
+        )
+
     def test_unchanged_reviewed_git_exclusion_succeeds(self):
         dependency = {
             "url": (
