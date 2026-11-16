@@ -148,7 +148,9 @@ assert "set -euxo pipefail" not in workflow
 assert "set -euo pipefail" in workflow
 assert 'emerge "$@" >"$log_file" 2>&1 || rc=$?' in workflow
 assert workflow.count("run_emerge ") == 10
-assert "while sleep 120; do" in workflow
+assert "gentoo_emerge_progress.py" in workflow
+assert '--label "$label" --log "$log_file" --done "$done_file"' in workflow
+assert 'wait "$progress_pid"' in workflow
 assert 'tail -n 80 "$log_file"' in workflow
 assert '--volume "$RUNNER_TEMP/gentoo-build-logs:/ci-logs:rw"' in workflow
 assert "docker cp gentoo:/var/log/portage" in workflow
