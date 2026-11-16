@@ -109,6 +109,7 @@ jobs:
 
       - name: Start Gentoo stage3
         run: |
+          mkdir -p "$RUNNER_TEMP/gentoo-build-logs"
           docker create --name portage gentoo/portage:latest
           docker run --detach \
             --name gentoo \
@@ -116,6 +117,7 @@ jobs:
             --volume "${GITHUB_WORKSPACE}:/var/db/repos/arrans-overlay:ro" \
             --volume "/var/cache/distfiles:/var/cache/distfiles:rw" \
             --volume "/var/cache/binpkgs:/var/cache/binpkgs:rw" \
+            --volume "$RUNNER_TEMP/gentoo-build-logs:/ci-logs:rw" \
             gentoo/stage3:latest \
             sleep infinity
 
@@ -128,7 +130,36 @@ jobs:
           # Create a script to run inside the docker container
           cat << 'INNEREOF' > test_packages.sh
           #!/bin/bash
-          set -euxo pipefail
+          set -euo pipefail
+
+          # Archive full emerge output; keep a concise console heartbeat.
+          mkdir -p /ci-logs/emerge
+          emerge_log_index=0
+          run_emerge() {
+            local label="$1"
+            shift
+            emerge_log_index=$((emerge_log_index + 1))
+            local log_file
+            printf -v log_file '/ci-logs/emerge/%02d-%s.log' "$emerge_log_index" "$label"
+            printf 'Starting emerge (%s); full output: %s\n' "$label" "$log_file"
+            (
+              while sleep 120; do
+                printf 'emerge (%s) still running; output is being archived\n' "$label"
+              done
+            ) &
+            local heartbeat_pid=$!
+            local rc=0
+            emerge "$@" >"$log_file" 2>&1 || rc=$?
+            kill "$heartbeat_pid" 2>/dev/null || true
+            wait "$heartbeat_pid" 2>/dev/null || true
+            if (( rc != 0 )); then
+              printf '::error title=emerge failed::%s exited with status %d; showing last 80 lines\n' "$label" "$rc"
+              tail -n 80 "$log_file"
+            else
+              printf 'emerge (%s) completed successfully\n' "$label"
+            fi
+            return "$rc"
+          }
 
           chmod 777 /var/cache/distfiles /var/cache/binpkgs
 
@@ -195,12 +226,12 @@ jobs:
             "media-sound/pulseaudio-daemon -webrtc-aec" \
             > /etc/portage/package.use/zz-ci-required-use
 
-          emerge -v dev-vcs/git
-          emerge --sync guru
-          emerge --sync hyproverlay
+          run_emerge bootstrap-git -v dev-vcs/git
+          run_emerge sync-guru --sync guru
+          run_emerge sync-hyproverlay --sync hyproverlay
 
           # Install pkgcheck
-          emerge -v dev-util/pkgcheck
+          run_emerge bootstrap-pkgcheck -v dev-util/pkgcheck
 
           PKG="$1"
           SOURCE_TARGET="$2"
@@ -212,7 +243,7 @@ jobs:
             # cc1plus payload. Dart and Flutter Engine are C++ source builds,
             # so restore the complete compiler from Gentoo's binhost before
             # testing them.
-            emerge -v --oneshot --usepkg --getbinpkg sys-devel/gcc
+            run_emerge bootstrap-gcc -v --oneshot --usepkg --getbinpkg sys-devel/gcc
             gcc-config latest
             eval "$(gcc-config -E)"
             hash -r
@@ -364,7 +395,7 @@ jobs:
             # with binpkg-enabled emerge rather than inspecting a mutated
             # configuration after the first failed attempt.
             echo "KLookup CI preflight: source-only Qt dependency graph"
-            emerge -pv --usepkg=n --getbinpkg=n --autounmask=y \
+            run_emerge klookup-source-preflight -pv --usepkg=n --getbinpkg=n --autounmask=y \
               --autounmask-use=n --backtrack=50 \
               "${CI_GRAPH_PREREQUISITES[@]}" "$PKG" || true
           fi
@@ -373,7 +404,7 @@ jobs:
             # cannot apply them before exiting. First perform a config-only
             # autounmask pass in this disposable stage3, without building any
             # source package. The second pass then verifies real resolution.
-            emerge -v \
+            run_emerge flutter-autounmask -v \
               --autounmask=y --autounmask-keep-masks=y \
               --autounmask-write=y --autounmask-continue=y \
               --autounmask-only=y --backtrack=50 \
@@ -386,7 +417,7 @@ jobs:
           # incompatible binpkgs. Extra backtracking helps Portage reject a
           # stale binary whose recorded dependency subslots conflict with
           # the installed graph and select a compatible source build.
-          if ! emerge -v "${EMERGE_MODE[@]}" \
+          if ! run_emerge build-first -v "${EMERGE_MODE[@]}" \
             --usepkg --getbinpkg --binpkg-changed-deps=y \
             --autounmask=y --autounmask-keep-masks=y \
             --autounmask-write=y --autounmask-continue=y \
@@ -402,12 +433,12 @@ jobs:
                 fi
               done
               echo "KLookup CI diagnostic: source-only pretend dependency resolution"
-              emerge -pv --usepkg=n --getbinpkg=n --autounmask=y \
+              run_emerge klookup-failure-diagnostic -pv --usepkg=n --getbinpkg=n --autounmask=y \
                 --autounmask-use=n --backtrack=50 \
                 "${CI_GRAPH_PREREQUISITES[@]}" "$PKG" || true
             fi
             echo "First emerge attempt exited. Retrying emerge to pick up any autounmask changes..."
-            if ! emerge -v "${EMERGE_MODE[@]}" \
+            if ! run_emerge build-retry -v "${EMERGE_MODE[@]}" \
               --usepkg --getbinpkg --binpkg-changed-deps=y \
               --autounmask=y --autounmask-keep-masks=y \
               --autounmask-write=y --autounmask-continue=y \
@@ -431,6 +462,32 @@ jobs:
           docker exec gentoo /tmp/test_packages.sh \
             "$PACKAGE" "$SOURCE_TARGET"
 
+      - name: Collect Gentoo build logs
+        if: always()
+        run: |
+          log_root="$RUNNER_TEMP/gentoo-build-logs"
+          mkdir -p "$log_root"
+          if docker container inspect gentoo >/dev/null 2>&1; then
+            # Preserve native Portage logs in addition to per-command captures.
+            if ! docker cp gentoo:/var/log/portage "$log_root/" 2>/dev/null; then
+              echo 'No /var/log/portage directory found in Gentoo container'
+            fi
+            if ! docker cp gentoo:/var/log/emerge.log "$log_root/emerge.log" 2>/dev/null; then
+              echo 'No /var/log/emerge.log found in Gentoo container'
+            fi
+          else
+            echo 'Gentoo container was not created; nothing to collect'
+          fi
+          printf 'Collected %s log files\n' "$(find "$log_root" -type f | wc -l)"
+
+      - name: Upload Gentoo build logs (2 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gentoo-build-logs-${{ matrix.cache_id }}
+          path: ${{ runner.temp }}/gentoo-build-logs/
+          if-no-files-found: warn
+          retention-days: 2
       - name: Stop active Gentoo build
         if: always()
         run: docker stop gentoo || true
