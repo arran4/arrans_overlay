@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Generated via:
 #   repository: https://github.com/arran4/arrans_overlay
-#   commit: 1b69dd1b21f52e1cc34ebb763f82a3a6a8bef4c9
+#   commit: dc0841aad6a8d7ee6b6e6238be14cd329c86ed14
 #   workflow: .github/workflows/app-misc-tuios-bin-update.yaml
 EAPI=8
 DESCRIPTION=""
@@ -10,13 +10,13 @@ HOMEPAGE=""
 HOMEPAGE+="https://github.com/Gaurav-Gosain/tuios"
 SRC_URI=""
 SRC_URI+=" amd64? (   "
-SRC_URI+="https://github.com/Gaurav-Gosain/tuios/releases/download/v0.13.2/tuios_0.13.2_Linux_x86_64.tar.gz "
+SRC_URI+="https://github.com/Gaurav-Gosain/tuios/releases/download/v0.13.3/tuios_0.13.3_Linux_x86_64.tar.gz "
 SRC_URI+=" -> ${P}-tuios_${PV}_Linux_x86_64.tar.gz  )   arm? (   "
-SRC_URI+="https://github.com/Gaurav-Gosain/tuios/releases/download/v0.13.2/tuios_0.13.2_Linux_armv7.tar.gz "
+SRC_URI+="https://github.com/Gaurav-Gosain/tuios/releases/download/v0.13.3/tuios_0.13.3_Linux_armv7.tar.gz "
 SRC_URI+=" -> ${P}-tuios_${PV}_Linux_armv7.tar.gz  )   arm64? (   "
-SRC_URI+="https://github.com/Gaurav-Gosain/tuios/releases/download/v0.13.2/tuios_0.13.2_Linux_arm64.tar.gz "
+SRC_URI+="https://github.com/Gaurav-Gosain/tuios/releases/download/v0.13.3/tuios_0.13.3_Linux_arm64.tar.gz "
 SRC_URI+=" -> ${P}-tuios_${PV}_Linux_arm64.tar.gz  )   x86? (   "
-SRC_URI+="https://github.com/Gaurav-Gosain/tuios/releases/download/v0.13.2/tuios_0.13.2_Linux_i386.tar.gz "
+SRC_URI+="https://github.com/Gaurav-Gosain/tuios/releases/download/v0.13.3/tuios_0.13.3_Linux_i386.tar.gz "
 SRC_URI+=" -> ${P}-tuios_${PV}_Linux_i386.tar.gz  )  "
 LICENSE=""
 LICENSE+="MIT License"
