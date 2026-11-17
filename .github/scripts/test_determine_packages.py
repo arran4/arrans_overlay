@@ -141,8 +141,23 @@ assert "--useoldpkg-atoms" not in workflow
 assert "--ignore-world" not in workflow
 assert "--onlydeps" not in workflow
 assert "\n            etc-update " not in workflow
-package_emerge = re.search(r'if ! emerge -v "\$\{EMERGE_MODE\[@\]\}" \\\n(?P<options>.*?)"\$PKG"; then', workflow, re.DOTALL)
+package_emerge = re.search(r'if ! run_emerge build-first -v "\$\{EMERGE_MODE\[@\]\}" \\\n(?P<options>.*?)"\$PKG"; then', workflow, re.DOTALL)
 assert package_emerge is not None
+# Keep all Portage diagnostics without flooding Actions console output.
+assert "set -euxo pipefail" not in workflow
+assert "set -euo pipefail" in workflow
+assert 'emerge "$@" >"$log_file" 2>&1 || rc=$?' in workflow
+assert workflow.count("run_emerge ") == 10
+assert "gentoo_emerge_progress.py" in workflow
+assert '--label "$label" --log "$log_file" --done "$done_file"' in workflow
+assert 'wait "$progress_pid"' in workflow
+assert 'tail -n 80 "$log_file"' in workflow
+assert '--volume "$RUNNER_TEMP/gentoo-build-logs:/ci-logs:rw"' in workflow
+assert "docker cp gentoo:/var/log/portage" in workflow
+assert "docker cp gentoo:/var/log/emerge.log" in workflow
+assert "name: gentoo-build-logs-${{ matrix.cache_id }}" in workflow
+assert "retention-days: 2" in workflow
+assert "actions/upload-artifact@v4" in workflow
 assert 'flutter_pvr=${PKG#=virtual/flutter-}' in workflow
 assert 'flutter_version=${flutter_pvr%-r[0-9]*}' in workflow
 assert 'compgen -G "${flutter_bin_dir}/flutter-bin-${flutter_version}-r[0-9]*.ebuild"' in workflow
