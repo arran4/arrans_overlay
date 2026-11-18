@@ -10,8 +10,9 @@ S="${WORKDIR}"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
-IUSE="+mount-guard +recovery"
+IUSE="+mount-guard +recovery test"
 REQUIRED_USE="|| ( mount-guard recovery )"
+RESTRICT="!test? ( test )"
 
 RDEPEND="
 	sys-kernel/installkernel[systemd,systemd-boot]
@@ -21,7 +22,9 @@ RDEPEND="
 	sys-apps/gawk
 	sys-apps/grep
 "
-BDEPEND="${RDEPEND}"
+BDEPEND="
+	test? ( app-shells/bash sys-apps/coreutils sys-apps/gawk sys-apps/grep )
+"
 
 src_test() {
 	bash "${FILESDIR}/test-hooks.sh" "${FILESDIR}" || die
