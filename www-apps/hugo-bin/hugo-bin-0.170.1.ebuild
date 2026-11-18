@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Generated via:
 #   repository: https://github.com/arran4/arrans_overlay
-#   commit: 3877f94f0bd390f060784eb2d01998fac5ca1109
+#   commit: e4ec0a914df2a76eb51e623afc9065916fb30cdb
 #   workflow: .github/workflows/www-apps-hugo-bin-update.yaml
 EAPI=8
 DESCRIPTION=""
@@ -10,17 +10,17 @@ HOMEPAGE=""
 HOMEPAGE+="https://gohugo.io"
 SRC_URI=""
 SRC_URI+=" amd64? ( !extended? (   "
-SRC_URI+="https://github.com/gohugoio/hugo/releases/download/v0.170.0/hugo_0.170.0_linux-amd64.tar.gz "
+SRC_URI+="https://github.com/gohugoio/hugo/releases/download/v0.170.1/hugo_0.170.1_linux-amd64.tar.gz "
 SRC_URI+=" -> ${P}-hugo_${PV}_linux-amd64.tar.gz  )  )   amd64? ( extended? (  "
 SRC_URI+=" "
-SRC_URI+="https://github.com/gohugoio/hugo/releases/download/v0.170.0/hugo_extended_0.170.0_Linux-64bit.tar.gz "
+SRC_URI+="https://github.com/gohugoio/hugo/releases/download/v0.170.1/hugo_extended_0.170.1_Linux-64bit.tar.gz "
 SRC_URI+=" -> ${P}-hugo_extended_${PV}_Linux-64bit.tar.gz  )  )   arm? (   "
-SRC_URI+="https://github.com/gohugoio/hugo/releases/download/v0.170.0/hugo_0.170.0_linux-arm.tar.gz "
+SRC_URI+="https://github.com/gohugoio/hugo/releases/download/v0.170.1/hugo_0.170.1_linux-arm.tar.gz "
 SRC_URI+=" -> ${P}-hugo_${PV}_linux-arm.tar.gz  )   arm64? ( !extended? (   "
-SRC_URI+="https://github.com/gohugoio/hugo/releases/download/v0.170.0/hugo_0.170.0_linux-arm64.tar.gz "
+SRC_URI+="https://github.com/gohugoio/hugo/releases/download/v0.170.1/hugo_0.170.1_linux-arm64.tar.gz "
 SRC_URI+=" -> ${P}-hugo_${PV}_linux-arm64.tar.gz  )  )   arm64? ( extended? (  "
 SRC_URI+=" "
-SRC_URI+="https://github.com/gohugoio/hugo/releases/download/v0.170.0/hugo_extended_0.170.0_linux-arm64.tar.gz "
+SRC_URI+="https://github.com/gohugoio/hugo/releases/download/v0.170.1/hugo_extended_0.170.1_linux-arm64.tar.gz "
 SRC_URI+=" -> ${P}-hugo_extended_${PV}_linux-arm64.tar.gz  )  )  "
 LICENSE=""
 LICENSE+="Apache-2.0"
