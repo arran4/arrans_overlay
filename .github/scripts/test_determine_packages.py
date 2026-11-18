@@ -358,4 +358,17 @@ flutter_bin = next(item for item in flutter_entries if item["package"] == "=dev-
 assert flutter_bin["cache_lineage"] == f"generic-{flutter_bin['cache_id']}"
 assert "step_timeout" not in flutter_bin
 
+# SOS uses the generic stage3 job, including explicit package tests.
+sos = run_helper(["app-admin/sos/sos-4.12.1-r1.ebuild"])
+assert sos[0]["group"] == "generic"
+assert sos[0]["package"] == "=app-admin/sos-4.12.1-r1"
+assert sos[0]["source_target"] is True
+assert workflow.count("- 'app-admin/sos/**'") == 2
+assert "SOS_EBUILDS=$(find app-admin/sos" in workflow
+assert "app-admin/sos ci-sos-test" in workflow
+assert "app-admin/sos test" in workflow
+assert "Test installed SOS and collected archives" in workflow
+assert "docker exec gentoo bash /var/db/repos/arrans-overlay/app-admin/sos/files/test-installed.sh" in workflow
+assert workflow.index("Install and test packages") < workflow.index("Test installed SOS and collected archives") < workflow.index("Collect Gentoo build logs")
+
 print("determine_packages tests passed")
