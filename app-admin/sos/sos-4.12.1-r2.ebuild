@@ -22,6 +22,7 @@ RDEPEND="
 	app-portage/portage-utils
 	dev-python/packaging[${PYTHON_USEDEP}]
 	dev-python/pexpect[${PYTHON_USEDEP}]
+	>=dev-python/python-magic-0.4.20[${PYTHON_USEDEP}]
 	dev-python/pyyaml[${PYTHON_USEDEP}]
 	sys-apps/kmod
 	sys-apps/portage

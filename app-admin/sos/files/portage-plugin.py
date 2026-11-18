@@ -12,12 +12,13 @@ class Portage(Plugin, IndependentPlugin):
     commands = ("emerge",)
 
     def setup(self):
-        self.add_cmd_output([
-            "emerge --info",
-            "qlist -ICv",
-            "qlist -ICvU",
-            "eselect profile show",
-        ])
+        for command, filename in (
+            ("emerge --info", "emerge-info"),
+            ("qlist -ICv", "installed-packages"),
+            ("qlist -ICvU", "installed-use-flags"),
+            ("eselect profile show", "profile"),
+        ):
+            self.add_cmd_output(command, suggest_filename=filename)
         self.add_copy_spec([
             "/var/lib/portage/world",
             "/var/lib/portage/world_sets",

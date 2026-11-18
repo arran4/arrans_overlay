@@ -7,10 +7,10 @@ from sos.policies.package_managers import PackageManager
 class PortagePackageManager(PackageManager):
     """Use portage-utils to identify packages for generic sos plugins."""
 
-    query_command = "qlist -ICc"
+    query_command = "qlist -IC -F '%{CATEGORY}/%{PN} %{PVR}'"
 
     def _parse_pkg_list(self, pkg_list):
-        # qlist -c gives two columns: category/package and version.
+        # Explicit qlist format provides category/package and version.
         # Preserve the unqualified package names used by independent plugins.
         for line in pkg_list.splitlines():
             fields = line.split()

@@ -6,7 +6,20 @@ work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 mkdir "$work/raw" "$work/clean"
 
+echo 'Checking installed CLI and policy'
 sos --version
+python3 - <<'PY'
+from sos.policies import load
+from sos.policies.distros.gentoo import GentooPolicy
+
+policy = load(probe_runtime=False)
+assert isinstance(policy, GentooPolicy), type(policy)
+for package in ('portage', 'sos'):
+    info = policy.package_manager.pkg_by_name(package)
+    assert info and info['version'], (package, info)
+print('PASS: Gentoo policy and real installed-package lookup')
+PY
+echo 'Checking installed configuration and plugin discovery'
 test -f /etc/sos/sos.conf
 test -d /etc/sos/cleaner
 test "$(stat -c '%a' /etc/sos/cleaner)" = 700
@@ -36,6 +49,7 @@ trap cleanup EXIT
 marker=sosciprivatemarker8675309
 printf 'app-misc/%s\n' "$marker" >> "$world"
 
+echo 'Collecting raw and cleaned reports'
 # Limit the collection to the plugin under test; do not upload or retain
 # reports or cleaner mapping files as workflow artifacts.
 timeout 180 sos report --batch -o portage --tmp-dir "$work/raw" \
@@ -73,10 +87,10 @@ for mode in ('raw', 'clean'):
             assert contents, (mode, 'empty archive member', name)
             return contents
 
-        info = read('sos_commands/portage/emerge_--info')
-        installed = read('sos_commands/portage/qlist_-ICv')
-        useflags = read('sos_commands/portage/qlist_-ICvU')
-        profile = read('sos_commands/portage/eselect_profile_show')
+        info = read('sos_commands/portage/emerge-info')
+        installed = read('sos_commands/portage/installed-packages')
+        useflags = read('sos_commands/portage/installed-use-flags')
+        profile = read('sos_commands/portage/profile')
         world = read('var/lib/portage/world')
         read('sos_reports/manifest.json')
         assert b'Portage' in info, (mode, 'emerge --info did not work')
