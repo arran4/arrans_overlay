@@ -9,7 +9,7 @@ inherit cmake
 DESCRIPTION="KDE Plasma 6 lookup tool with search providers"
 HOMEPAGE="https://github.com/arran4/klookup"
 SRC_URI="
-	https://github.com/arran4/klookup/archive/refs/tags/v0.1.0.tar.gz
+	https://github.com/arran4/klookup/archive/refs/tags/v0.1.1.tar.gz
 		-> ${P}.tar.gz
 "
 S="${WORKDIR}/klookup-${PV}"
