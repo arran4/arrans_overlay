@@ -7,9 +7,11 @@ on:
       - main
     paths:
       - '**/*.ebuild'
+      - 'app-admin/sos/**'
   pull_request:
     paths:
       - '**/*.ebuild'
+      - 'app-admin/sos/**'
 
 concurrency:
   group: gentoo-pkg-test-${{ github.ref }}
@@ -39,6 +41,14 @@ jobs:
           else
             CHANGED_FILES=$(find . -name '*.ebuild')
             SOURCE_FILES=""
+          fi
+
+          # A change to SOS's installed-test or downstream Python modules
+          # must retest the package even when the ebuild itself is unchanged.
+          if printf '%s\n' "$CHANGED_FILES" | grep -q '^app-admin/sos/'; then
+            SOS_EBUILDS=$(find app-admin/sos -maxdepth 1 -name '*.ebuild' 2>/dev/null || true)
+            CHANGED_FILES="$CHANGED_FILES $SOS_EBUILDS"
+            SOURCE_FILES="$SOURCE_FILES $SOS_EBUILDS"
           fi
 
           export CHANGED_FILES
@@ -268,6 +278,13 @@ jobs:
             target_keywords="**"
           fi
           printf "%s %s\n" "$PKG" "$target_keywords" > /etc/portage/package.accept_keywords/ci
+          if [[ "$PKG" == "=app-admin/sos-"* ]]; then
+            # Run the ebuild's unit tests, without enabling tests for all dependencies.
+            mkdir -p /etc/portage/env /etc/portage/package.env /etc/portage/package.use
+            printf '%s\n' 'FEATURES="$FEATURES test"' > /etc/portage/env/ci-sos-test
+            printf '%s\n' 'app-admin/sos ci-sos-test' > /etc/portage/package.env/ci-sos
+            printf '%s\n' 'app-admin/sos test' > /etc/portage/package.use/ci-sos
+          fi
           if [[ "$PKG" == *"kmagmux"* ]]; then
             mkdir -p /etc/portage/package.use
             printf "%s\n" \
@@ -466,6 +483,12 @@ jobs:
           docker cp test_packages.sh gentoo:/tmp/test_packages.sh
           docker exec gentoo /tmp/test_packages.sh \
             "$PACKAGE" "$SOURCE_TARGET"
+
+      - name: Test installed SOS and collected archives
+        if: startsWith(matrix.package, '=app-admin/sos-')
+        timeout-minutes: 10
+        run: |
+          docker exec gentoo bash /var/db/repos/arrans-overlay/app-admin/sos/files/test-installed.sh
 
       - name: Collect Gentoo build logs
         if: always()
