@@ -8,14 +8,14 @@ class Portage(Plugin, IndependentPlugin):
 
     plugin_name = "portage"
     short_desc = "Gentoo Portage configuration and installed packages"
-    profiles = ("system", "package")
+    profiles = ("system", "packagemanager")
     commands = ("emerge",)
 
     def setup(self):
         self.add_cmd_output([
             "emerge --info",
             "qlist -ICv",
-            "qlist -ICU",
+            "qlist -ICvU",
             "eselect profile show",
         ])
         self.add_copy_spec([
