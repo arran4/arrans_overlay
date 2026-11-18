@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
+	<maintainer type="person">
+		<email>gentoo@arran4.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
 	<use>
 		<flag name="android">Install android binary</flag>
 		<flag name="glibc">Install glibc binary</flag>
@@ -10,8 +14,4 @@
 	<upstream>
 		<remote-id type="github">twpayne/chezmoi</remote-id>
 	</upstream>
-    <maintainer type="person">
-        <email>gentoo@arran4.com</email>
-        <name>Arran Ubels</name>
-    </maintainer>
 </pkgmetadata>
