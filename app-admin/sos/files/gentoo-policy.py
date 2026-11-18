@@ -1,7 +1,5 @@
 # Distributed under the terms of the GNU General Public License v2
 
-import re
-
 from sos.policies.distros import LinuxPolicy
 from sos.policies.package_managers import PackageManager
 
@@ -9,13 +7,19 @@ from sos.policies.package_managers import PackageManager
 class PortagePackageManager(PackageManager):
     """Use portage-utils to identify packages for generic sos plugins."""
 
-    query_command = "qlist -ICv"
+    query_command = "qlist -ICc"
 
     def _parse_pkg_list(self, pkg_list):
+        # qlist -c gives two columns: category/package and version.
+        # Preserve the unqualified package names used by independent plugins.
         for line in pkg_list.splitlines():
-            match = re.fullmatch(r"[^/]+/(.+?)-([0-9].*)", line.strip())
-            if match:
-                yield match.group(1), match.group(2), None
+            fields = line.split()
+            if len(fields) != 2 or fields[0].count("/") != 1:
+                continue
+            category, name = fields[0].split("/")
+            version = fields[1]
+            if category and name and version[0].isdigit():
+                yield name, version, None
 
 
 class GentooPolicy(LinuxPolicy):
