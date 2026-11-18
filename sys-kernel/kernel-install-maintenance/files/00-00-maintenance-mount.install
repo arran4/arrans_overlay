@@ -1,0 +1,19 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
+set -eu
+case "${1:-}" in add|remove) ;; *) exit 0 ;; esac
+[[ ${KERNEL_INSTALL_LAYOUT:-} == bls ]] || exit 0
+root=${KERNEL_INSTALL_BOOT_ROOT:-}
+if [[ $root != /* || $root == / ]] || ! mountpoint -q -- "$root"; then
+	echo "kernel-install-maintenance: BLS boot root must be mounted: $root" >&2
+	exit 1
+fi
+# Optional machine-specific UUID pin. Never mount a partition implicitly.
+if [[ -e /etc/kernel/maintenance-boot-uuid ]]; then
+	read -r expected < /etc/kernel/maintenance-boot-uuid
+	actual=$(findmnt -n -f -o UUID --mountpoint "$root")
+	if [[ -z $expected || $actual != "$expected" ]]; then
+		echo "kernel-install-maintenance: boot filesystem UUID mismatch" >&2
+		exit 1
+	fi
+fi

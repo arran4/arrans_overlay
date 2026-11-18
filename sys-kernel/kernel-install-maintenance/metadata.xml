@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>gentoo@arran4.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
+	<use>
+		<flag name="mount-guard">Require the configured BLS boot root to be a mounted filesystem before kernel installation or removal.</flag>
+		<flag name="recovery">Generate read-only emergency and Bash recovery entries for each installed BLS kernel.</flag>
+	</use>
+</pkgmetadata>
