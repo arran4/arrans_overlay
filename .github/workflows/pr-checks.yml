@@ -7,6 +7,25 @@ on:
     branches: [ "main" ]
 
 jobs:
+  ebuild-revision-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Enforce new ebuild revision for packaging changes
+        env:
+          CHECK_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CHECK_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          CHECK_EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$CHECK_EVENT" = "pull_request" ]; then
+            MODE=pr
+          else
+            MODE=push
+          fi
+          python3 scripts/check_ebuild_revisions.py "$CHECK_BASE" "$CHECK_HEAD" "$MODE"
+
   # Job to run static analysis (fast)
   pkgcheck:
     runs-on: ubuntu-latest
