@@ -20,9 +20,9 @@ jobs:
           CHECK_EVENT: ${{ github.event_name }}
         run: |
           if [ "$CHECK_EVENT" = "pull_request" ]; then
-            MODE=pr
+            MODE="pr"
           else
-            MODE=push
+            MODE="push"
           fi
           python3 scripts/check_ebuild_revisions.py "$CHECK_BASE" "$CHECK_HEAD" "$MODE"
 
