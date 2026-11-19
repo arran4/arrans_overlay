@@ -27,8 +27,3 @@ src_install() {
 			"/etc/portage/${hook}/portage-notifier"
 	done
 }
-
-pkg_postinst() {
-	elog "This package relies on non-standard Portage hooks provided by"
-	elog "arran4's fork of Portage (PR #2). Ensure you are using a compatible version."
-}
