@@ -52,8 +52,6 @@ jobs:
     if: needs.prepare.outputs.matrix != '{"include":[]}'
     runs-on: ubuntu-latest
     timeout-minutes: 360
-    env:
-      STAGE3_IMAGE: ${{ startsWith(matrix.package, '=sys-kernel/kernel-install-maintenance-') && 'gentoo/stage3:systemd' || 'gentoo/stage3:latest' }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
@@ -67,9 +65,9 @@ jobs:
       - name: Resolve Gentoo build environment
         id: gentoo-environment
         run: |
-          docker pull "$STAGE3_IMAGE"
+          docker pull gentoo/stage3:latest
           docker pull gentoo/portage:latest
-          STAGE3_ID=$(docker image inspect --format='{{.Id}}' "$STAGE3_IMAGE")
+          STAGE3_ID=$(docker image inspect --format='{{.Id}}' gentoo/stage3:latest)
           PORTAGE_ID=$(docker image inspect --format='{{.Id}}' gentoo/portage:latest)
           ENVIRONMENT_ID=$(printf '%s\n%s\n' "$STAGE3_ID" "$PORTAGE_ID" | sha256sum | cut -c1-16)
           echo "cache_id=$ENVIRONMENT_ID" >> "$GITHUB_OUTPUT"
@@ -120,7 +118,7 @@ jobs:
             --volume "/var/cache/distfiles:/var/cache/distfiles:rw" \
             --volume "/var/cache/binpkgs:/var/cache/binpkgs:rw" \
             --volume "$RUNNER_TEMP/gentoo-build-logs:/ci-logs:rw" \
-            "$STAGE3_IMAGE" \
+            gentoo/stage3:latest \
             sleep infinity
 
       - name: Install and test packages
@@ -270,10 +268,6 @@ jobs:
             target_keywords="**"
           fi
           printf "%s %s\n" "$PKG" "$target_keywords" > /etc/portage/package.accept_keywords/ci
-          if [[ "$PKG" == "=sys-kernel/kernel-install-maintenance-"* ]]; then
-            printf '%s\n' 'sys-kernel/installkernel systemd systemd-boot dracut -grub' \
-              > /etc/portage/package.use/ci-kernel-maintenance
-          fi
           if [[ "$PKG" == *"kmagmux"* ]]; then
             mkdir -p /etc/portage/package.use
             printf "%s\n" \
@@ -472,13 +466,6 @@ jobs:
           docker cp test_packages.sh gentoo:/tmp/test_packages.sh
           docker exec gentoo /tmp/test_packages.sh \
             "$PACKAGE" "$SOURCE_TARGET"
-
-      - name: Exercise installed kernel maintenance hooks
-        if: startsWith(matrix.package, '=sys-kernel/kernel-install-maintenance-')
-        run: |
-          docker exec gentoo test -x /usr/lib/kernel/install.d/00-00-maintenance-mount.install
-          docker exec gentoo test -x /usr/lib/kernel/install.d/95-maintenance-recovery.install
-          docker exec gentoo bash /var/db/repos/arrans-overlay/sys-kernel/kernel-install-maintenance/files/test-hooks.sh /usr/lib/kernel/install.d
 
       - name: Collect Gentoo build logs
         if: always()

@@ -32,5 +32,21 @@ opt-in feature should compute required space after initramfs staging, protect
 the booted kernel and retained fallback versions, and fail without deleting
 anything when there is no eligible candidate. Manual ESP mounting is supported.
 
-Tests: bash files/test-hooks.sh files (uses a temporary directory and mocked
-mountpoint). Portage FEATURES=test also runs these tests during the build.
+## Verification and release gate
+
+The optional `test` USE flag runs `files/test-hooks.sh` as a **small synthetic
+regression only**. It checks BLS text transformations, file references, managed
+entry cleanup and collision handling using a mocked mount probe. It does not
+test real mounts, dracut, signing, firmware bootability, the kernel's root
+mount state or a functioning recovery shell. There is intentionally no
+dedicated GitHub Actions workflow for these mock tests.
+
+Ordinary overlay CI checks ebuild packaging and dependencies, **not whether
+these recovery choices boot**. Before enabling this package on production
+boot media or considering it verified, perform and record on-hardware
+verification as tracked in:
+https://github.com/arran4/arrans_overlay/issues/1056
+
+Preserve a known-working default and independent recovery path until both
+new entries are tested. The ESP remains explicitly mounted by the operator
+for maintenance; this package does not change fstab or mount it for you.
