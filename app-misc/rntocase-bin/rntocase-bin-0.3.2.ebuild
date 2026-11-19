@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Generated via:
 #   repository: https://github.com/arran4/arrans_overlay
-#   commit: 133ab94dd78670b49e3e0396bb11fa5633c40dc2
+#   commit: b2ed4d31c73e6874f27f646c573a627d34700c3d
 #   workflow: .github/workflows/app-misc-rntocase-bin-update.yaml
 EAPI=8
 DESCRIPTION=""
@@ -10,9 +10,9 @@ DESCRIPTION+="kebab, darwin case and many more"
 HOMEPAGE=""
 SRC_URI=""
 SRC_URI+=" amd64? (   "
-SRC_URI+="https://github.com/arran4/rntocase/releases/download/v0.3.1/rntocase_0.3.1_linux_amd64.tar.gz "
+SRC_URI+="https://github.com/arran4/rntocase/releases/download/v0.3.2/rntocase_0.3.2_linux_amd64.tar.gz "
 SRC_URI+=" -> ${P}-rntocase_${PV}_linux_amd64.tar.gz  )   arm64? (   "
-SRC_URI+="https://github.com/arran4/rntocase/releases/download/v0.3.1/rntocase_0.3.1_linux_arm64.tar.gz "
+SRC_URI+="https://github.com/arran4/rntocase/releases/download/v0.3.2/rntocase_0.3.2_linux_arm64.tar.gz "
 SRC_URI+=" -> ${P}-rntocase_${PV}_linux_arm64.tar.gz  )  "
 LICENSE=""
 LICENSE+="GNU General Public License v3.0"
