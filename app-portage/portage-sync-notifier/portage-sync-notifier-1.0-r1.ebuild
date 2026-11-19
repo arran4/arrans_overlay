@@ -20,12 +20,12 @@ S="${WORKDIR}"
 src_install() {
 	dobin "${FILESDIR}/portage-notifier"
 
-	dosym "${EPREFIX}/usr/bin/portage-notifier" /etc/portage/postsync.d/portage-notifier
-	dosym "${EPREFIX}/usr/bin/portage-notifier" /etc/portage/ebuild.postmerge.d/portage-notifier
-	dosym "${EPREFIX}/usr/bin/portage-notifier" /etc/portage/ebuild.postfail.d/portage-notifier
-	dosym "${EPREFIX}/usr/bin/portage-notifier" /etc/portage/ask.d/portage-notifier
-	dosym "${EPREFIX}/usr/bin/portage-notifier" /etc/portage/postdepclean.d/portage-notifier
-	dosym "${EPREFIX}/usr/bin/portage-notifier" /etc/portage/postemerge.d/portage-notifier
+	local hook
+	for hook in postsync.d ebuild.postmerge.d ebuild.postfail.d \
+		ask.d postdepclean.d postemerge.d; do
+		dosym "../../../usr/bin/portage-notifier" \
+			"/etc/portage/${hook}/portage-notifier"
+	done
 }
 
 pkg_postinst() {
