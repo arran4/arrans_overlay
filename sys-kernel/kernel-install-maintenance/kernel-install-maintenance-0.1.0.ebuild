@@ -3,7 +3,7 @@
 
 EAPI=8
 
-DESCRIPTION="Mount guard and per-kernel recovery entries for systemd kernel-install"
+DESCRIPTION="BLS mount protection and per-kernel recovery entries"
 HOMEPAGE="https://github.com/arran4/arrans_overlay"
 S="${WORKDIR}"
 
@@ -15,7 +15,7 @@ REQUIRED_USE="|| ( mount-guard recovery )"
 RESTRICT="!test? ( test )"
 
 RDEPEND="
-	sys-kernel/installkernel[systemd,systemd-boot]
+	sys-kernel/installkernel
 	app-shells/bash
 	sys-apps/coreutils
 	sys-apps/util-linux
