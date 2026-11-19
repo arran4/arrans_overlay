@@ -1,4 +1,9 @@
 # Generated using: https://github.com/arran4/arrans_overlay_workflow_builder 0.1.50 Github Binary Release current.config 2026-11-15 11:29:33 +0000 UTC
+# TEMPORARY: compacted the release-processing shell only to stay below Actions' run-command limit.
+# Preserve the generated ebuild and asset mappings; remove this patch when the generator fix ships.
+# https://github.com/arran4/arrans_overlay_workflow_builder/issues/202
+# https://github.com/arran4/arrans_overlay_workflow_builder/issues/203
+# https://github.com/arran4/arrans_overlay/issues/1044
 
 name: app-misc/rntocase-bin update
 
@@ -132,13 +137,13 @@ jobs:
           for tag in $tags; do
             version="${tag#v}"
             if [ "${version}" = "${tag}" ]; then
-                echo "$version == $tag so there is no v removed skipping"
+            echo "$version == $tag so there is no v removed skipping"
                 continue
             fi
             # shellcheck disable=SC2034
             originalVersion="${version}"
             if ! echo "${version}" | grep -E '^([0-9]+)\.([0-9]+)(\.([0-9]+))?(-r[0-9]+)?((_)(alpha|beta|rc|p)[0-9]*)*$'; then
-                echo "tag / $version doesn't match regexp; skipping"
+            echo "tag / $version doesn't match regexp; skipping"
                 continue
             fi
             # shellcheck disable=SC2001
@@ -150,9 +155,10 @@ jobs:
                 fi
                 releaseTypes[${releaseType:=release}]="${version}"
             else
-                echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
+            echo "Already have a newer ${releaseType:=release} release: ${releaseTypes[${releaseType:=release}]}"
                 continue
             fi
+            release_base="https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}"
             tmp_ebuild_file="${ebuild_dir}/${{ env.epn }}-${version}.ebuild.tmp"
 
               # shellcheck disable=SC2016
@@ -299,224 +305,224 @@ jobs:
                         prefix=$continuation
                     done
                 }
-                echo '# Generated via:'
+            echo '# Generated via:'
                 emit_provenance_field "repository" "${{ github.server_url }}/${{ github.repository }}"
                 emit_provenance_field "commit" "${{ github.sha }}"
                 emit_provenance_field "workflow" ".github/workflows/${{ env.workflow_filename }}"
-                echo 'EAPI=8'
+            echo 'EAPI=8'
                 emit_metadata_field "DESCRIPTION" "$DESCRIPTION"
                 emit_metadata_field "HOMEPAGE" "$HOMEPAGE"
                 src_uri_val=""
                 src_uri_val+=" amd64? (  "
-                src_uri_val+=" https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rntocase_${version}_linux_amd64.tar.gz "
+                src_uri_val+=" ${release_base}/rntocase_${version}_linux_amd64.tar.gz "
                 src_uri_val+=" -> \${P}-rntocase_\${PV}_linux_amd64.tar.gz  )  "
                 src_uri_val+=" arm64? (  "
-                src_uri_val+=" https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rntocase_${version}_linux_arm64.tar.gz "
+                src_uri_val+=" ${release_base}/rntocase_${version}_linux_arm64.tar.gz "
                 src_uri_val+=" -> \${P}-rntocase_\${PV}_linux_arm64.tar.gz  )  "
                 emit_metadata_field "SRC_URI" "$src_uri_val"
                 emit_metadata_field "LICENSE" "$LICENSE"
-                echo 'SLOT="0"'
+            echo 'SLOT="0"'
                 emit_metadata_field "KEYWORDS" "$KEYWORDS"
                                 iuse_val=""
                 iuse_val=" doc"
                 emit_metadata_field "IUSE" "$iuse_val"
-                echo ''
+            echo ''
                 ruse_val=""
                 emit_metadata_field "REQUIRED_USE" "$ruse_val"
-                echo ''
+            echo ''
                 rdepend_val=""
                 emit_metadata_field "RDEPEND" "$rdepend_val"
-                echo ''
-                echo 'S="${WORKDIR}"'
-                echo ''
-                echo 'src_unpack() {'
-                echo '	if use amd64; then'
-                echo "		unpack \"\${DISTDIR}/\${P}-rntocase_\${PV}_linux_amd64.tar.gz\" "\\
-                echo "			|| die \"Failed to unpack archive file\""
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo "		unpack \"\${DISTDIR}/\${P}-rntocase_\${PV}_linux_arm64.tar.gz\" "\\
-                echo "			|| die \"Failed to unpack archive file\""
-                echo '	fi'
-                echo '}'
-                echo ''
-                echo 'src_install() {'
-                echo '	exeinto /opt/bin'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rnacronym_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rnacronym_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rnacronym_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rnacronym_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rnreverse_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rnreverse_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rnreverse_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rnreverse_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntocamel_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rntocamel_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntocamel_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rntocamel_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntodarwin_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rntodarwin_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntodarwin_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rntodarwin_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntodelimited_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rntodelimited_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntodelimited_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rntodelimited_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntokebab_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rntokebab_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntokebab_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rntokebab_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntolower_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rntolower_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntolower_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rntolower_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntolowerleading_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rntolowerleading_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntolowerleading_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rntolowerleading_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntopascal_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rntopascal_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntopascal_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rntopascal_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntosnake_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rntosnake_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntosnake_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rntosnake_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntotitle_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rntotitle_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntotitle_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rntotitle_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntoupper_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rntoupper_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntoupper_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rntoupper_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntoupperleading_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rntoupperleading_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntoupperleading_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rntoupperleading_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use amd64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntrim_binary_archived_name_amd64 }}" '\\
-                echo '			"${{ env.rntrim_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use arm64; then'
-                echo '		newexe '\\
-                echo '			"${{ env.rntrim_binary_archived_name_arm64 }}" '\\
-                echo '			"${{ env.rntrim_binary_installed_name }}" '\\
-                echo '			|| die "Failed to install Binary"'
-                echo '	fi'
-                echo '	if use doc; then'
-                echo '		if use amd64; then'
-                echo '			dodoc "LICENSE" || die "Failed to install document LICENSE"'
-                echo '			dodoc "LICENSE" || die "Failed to install document LICENSE"'
-                echo '		fi'
-                echo '	fi'
-                echo '}'
+            echo ''
+            echo 'S="${WORKDIR}"'
+            echo ''
+            echo 'src_unpack() {'
+            echo '	if use amd64; then'
+            echo "		unpack \"\${DISTDIR}/\${P}-rntocase_\${PV}_linux_amd64.tar.gz\" "\\
+            echo "			|| die \"Failed to unpack archive file\""
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo "		unpack \"\${DISTDIR}/\${P}-rntocase_\${PV}_linux_arm64.tar.gz\" "\\
+            echo "			|| die \"Failed to unpack archive file\""
+            echo '	fi'
+            echo '}'
+            echo ''
+            echo 'src_install() {'
+            echo '	exeinto /opt/bin'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rnacronym_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rnacronym_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rnacronym_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rnacronym_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rnreverse_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rnreverse_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rnreverse_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rnreverse_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntocamel_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rntocamel_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntocamel_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rntocamel_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntodarwin_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rntodarwin_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntodarwin_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rntodarwin_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntodelimited_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rntodelimited_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntodelimited_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rntodelimited_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntokebab_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rntokebab_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntokebab_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rntokebab_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntolower_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rntolower_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntolower_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rntolower_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntolowerleading_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rntolowerleading_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntolowerleading_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rntolowerleading_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntopascal_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rntopascal_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntopascal_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rntopascal_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntosnake_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rntosnake_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntosnake_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rntosnake_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntotitle_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rntotitle_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntotitle_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rntotitle_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntoupper_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rntoupper_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntoupper_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rntoupper_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntoupperleading_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rntoupperleading_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntoupperleading_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rntoupperleading_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use amd64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntrim_binary_archived_name_amd64 }}" '\\
+            echo '			"${{ env.rntrim_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use arm64; then'
+            echo '		newexe '\\
+            echo '			"${{ env.rntrim_binary_archived_name_arm64 }}" '\\
+            echo '			"${{ env.rntrim_binary_installed_name }}" '\\
+            echo '			|| die "Failed to install Binary"'
+            echo '	fi'
+            echo '	if use doc; then'
+            echo '		if use amd64; then'
+            echo '			dodoc "LICENSE" || die "Failed to install document LICENSE"'
+            echo '			dodoc "LICENSE" || die "Failed to install document LICENSE"'
+            echo '		fi'
+            echo '	fi'
+            echo '}'
               } > "$tmp_ebuild_file"
               if next_version=$(g2 ebuild next-revision --inspect "$tmp_ebuild_file" "${ebuild_dir}" "${version}"); then
                   next_ebuild_file="${ebuild_dir}/${{ env.epn }}-${next_version}.ebuild"
@@ -529,8 +535,9 @@ jobs:
                   continue
               fi
               failed=0
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rntocase_${version}_linux_amd64.tar.gz" "${{ env.epn }}-${version}-rntocase_${version}_linux_amd64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
-              if ! g2 manifest upsert-from-url "https://github.com/${{ env.github_owner }}/${{ env.github_repo }}/releases/download/${tag}/rntocase_${version}_linux_arm64.tar.gz" "${{ env.epn }}-${version}-rntocase_${version}_linux_arm64.tar.gz" "${ebuild_dir}/Manifest"; then failed=1; fi
+              for asset in "rntocase_${version}_linux_amd64.tar.gz" "rntocase_${version}_linux_arm64.tar.gz"; do
+                  if ! g2 manifest upsert-from-url "${release_base}/${asset}" "${{ env.epn }}-${version}-${asset}" "${ebuild_dir}/Manifest"; then failed=1; fi
+              done
               if [ "$failed" -eq 1 ]; then
                   echo "Failed to generate manifest for $tag. Skipping..."
                   rm -f "$ebuild_file"
