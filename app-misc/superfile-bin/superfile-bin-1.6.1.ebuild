@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Generated via:
 #   repository: https://github.com/arran4/arrans_overlay
-#   commit: 7f5b5fd80ee7cb68c708d909427188209af8cceb
+#   commit: 860539d9466c895864f3a4827cdf572f8c318551
 #   workflow: .github/workflows/app-misc-superfile-bin-update.yaml
 EAPI=8
 DESCRIPTION=""
@@ -10,10 +10,10 @@ HOMEPAGE=""
 HOMEPAGE+="https://superfile.netlify.app"
 SRC_URI=""
 SRC_URI+=" amd64? (   "
-SRC_URI+="https://github.com/yorukot/superfile/releases/download/v1.6.0/superfile-linux-v1.6.0-amd64.tar.gz "
-SRC_URI+=" -> ${P}-superfile-linux-v1.6.0-amd64.tar.gz  )   arm64? (   "
-SRC_URI+="https://github.com/yorukot/superfile/releases/download/v1.6.0/superfile-linux-v1.6.0-arm64.tar.gz "
-SRC_URI+=" -> ${P}-superfile-linux-v1.6.0-arm64.tar.gz  )  "
+SRC_URI+="https://github.com/yorukot/superfile/releases/download/v1.6.1/superfile-linux-v1.6.1-amd64.tar.gz "
+SRC_URI+=" -> ${P}-superfile-linux-v1.6.1-amd64.tar.gz  )   arm64? (   "
+SRC_URI+="https://github.com/yorukot/superfile/releases/download/v1.6.1/superfile-linux-v1.6.1-arm64.tar.gz "
+SRC_URI+=" -> ${P}-superfile-linux-v1.6.1-arm64.tar.gz  )  "
 LICENSE=""
 LICENSE+="MIT"
 SLOT="0"
@@ -28,11 +28,11 @@ S="${WORKDIR}"
 
 src_unpack() {
 	if use amd64; then
-		unpack "${DISTDIR}/${P}-superfile-linux-v1.6.0-amd64.tar.gz" \
+		unpack "${DISTDIR}/${P}-superfile-linux-v1.6.1-amd64.tar.gz" \
 			|| die "Failed to unpack archive file"
 	fi
 	if use arm64; then
-		unpack "${DISTDIR}/${P}-superfile-linux-v1.6.0-arm64.tar.gz" \
+		unpack "${DISTDIR}/${P}-superfile-linux-v1.6.1-arm64.tar.gz" \
 			|| die "Failed to unpack archive file"
 	fi
 }
