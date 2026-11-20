@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>gentoo@arran4.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
+	<longdescription>
+		An opt-in systemd automount unit for /efi. The matching mount must
+		already be defined in /etc/fstab. The ebuild checks this requirement
+		before installing, never edits fstab, and does not activate the unit.
+	</longdescription>
+</pkgmetadata>
