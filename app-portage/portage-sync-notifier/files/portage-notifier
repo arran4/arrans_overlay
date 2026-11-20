@@ -8,7 +8,7 @@ TITLE="Portage Event"
 MESSAGE="An unknown portage event occurred."
 
 case "$HOOK_DIR" in
-    postsync.d|portage-sync-notifier|portage-notifier|bin)
+    postsync.d)
         TITLE="Portage Sync Complete"
         MESSAGE="The Portage tree has been successfully synchronized."
         ;;
@@ -24,7 +24,7 @@ case "$HOOK_DIR" in
         TITLE="Portage Requires Input"
         # $1 is a temp file containing the packages
         if [ -r "$1" ]; then
-            PKGS=$(awk '{print $1}' "$1" | paste -sd, -)
+            PKGS=$(awk 'NR <= 8 { printf "%s%s", (NR > 1 ? ", " : ""), $1 } END { if (NR > 8) printf ", ..." }' "$1")
             MESSAGE="Emerge is asking for confirmation to merge: $PKGS"
         else
             MESSAGE="Emerge is asking for confirmation."
@@ -62,11 +62,18 @@ if [ ${#NOTIFY_CMD[@]} -gt 0 ]; then
     for bus in /run/user/*/bus; do
         if [ -S "$bus" ]; then
             user_id=$(basename "$(dirname "$bus")")
-            user_name=$(id -nu "$user_id")
+            user_name=$(id -nu "$user_id" 2>/dev/null) || continue
 
-            # Use runuser as it is the preferred tool for root to run commands as another user without PAM/sudo overhead.
+            # Run in the target user's session; failure to deliver a desktop
+            # notification must not turn a successful Portage event into an
+            # unsuccessful hook.
             if command -v runuser > /dev/null 2>&1; then
-                runuser -u "$user_name" -- env DBUS_SESSION_BUS_ADDRESS=unix:path="$bus" "${NOTIFY_CMD[@]}"
+                if ! runuser -u "$user_name" -- env \
+                    XDG_RUNTIME_DIR="$(dirname "$bus")" \
+                    DBUS_SESSION_BUS_ADDRESS="unix:path=$bus" \
+                    "${NOTIFY_CMD[@]}"; then
+                    printf 'portage-notifier: delivery to %s failed\n' "$user_name" >&2
+                fi
             fi
         fi
     done
