@@ -65,7 +65,7 @@ jobs:
                   assert output.count(
                       f'{name}_REV="{revision}"'
                   ) == 1, f"missing or duplicated {name}"
-                  assert f"+archive/${{{name}_REV}}.tar.gz" in output
+                  assert ("+archive/${" + name + "_REV}.tar.gz") in output
               assert "flutter-dep-vk-glslang-a57276bf" not in output
               assert "BEGIN GENERATED FLUTTER ENGINE DEPS" in output
               print(
