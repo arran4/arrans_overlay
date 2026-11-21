@@ -864,6 +864,41 @@ def validate_reviewed_exclusion(
     return reason
 
 
+def reviewed_flutter_350_release(version: str) -> bool:
+    """Accept reviewed 3.50 patch updates only with their exact source pins."""
+    return ".".join(version.split(".")[:2]) == "3.50"
+
+
+def uses_explicit_vulkan_subpackages(
+    active: list[tuple[str, object]],
+) -> bool:
+    """Distinguish explicit DEPS children from the legacy umbrella package.
+
+    Require all reviewed Vulkan destinations when they are explicit. A
+    partial or changed closure must be reviewed instead of being silently
+    combined with the old hard-coded fallback.
+    """
+    parent = "engine/src/flutter/third_party/vulkan-deps/"
+    actual = {
+        destination.removeprefix("engine/src/")
+        for destination, _dependency in active
+        if destination.startswith(parent)
+    }
+    if not actual:
+        return False
+    expected = {
+        destination for _name, _repo, _rev, destination
+        in VULKAN_DEPS_SUBPACKAGES
+    }
+    if actual != expected:
+        raise ValueError(
+            "unreviewed explicit Vulkan subpackage destinations: "
+            f"missing={sorted(expected - actual)}, "
+            f"unexpected={sorted(actual - expected)}"
+        )
+    return True
+
+
 def git_source(
     destination: str,
     dependency: object,
@@ -876,9 +911,9 @@ def git_source(
     repository, revision = url.rsplit("@", 1)
     if (
         destination == "engine/src/flutter/third_party/shaderc"
-        and FLUTTER_VERSION == "3.50.0"
+        and reviewed_flutter_350_release(FLUTTER_VERSION)
     ):
-        # Flutter 3.50 pins its own shaderc fork, not google/shaderc.
+        # The reviewed 3.50 line pins its own fork, not google/shaderc.
         # Gitiles publishes the exact commit as a rootless tar archive.
         if (
             repository != "https://flutter.googlesource.com/third_party/shaderc"
@@ -893,7 +928,7 @@ def git_source(
         )
     if (
         destination == "engine/src/flutter/third_party/swiftshader"
-        and FLUTTER_VERSION == "3.50.0"
+        and reviewed_flutter_350_release(FLUTTER_VERSION)
     ):
         # Flutter's patched SwiftShader fork has no matching GitHub SHA.
         if (
@@ -910,7 +945,7 @@ def git_source(
         )
     if (
         destination == "engine/src/flutter/third_party/vulkan-deps/glslang/src"
-        and FLUTTER_VERSION == "3.50.0"
+        and reviewed_flutter_350_release(FLUTTER_VERSION)
     ):
         # Flutter's forked glslang revision differs from Khronos on GitHub.
         # Use the exact pinned Gitiles archive instead of a substitute SHA.
@@ -1047,7 +1082,10 @@ def render(deps_path: Path) -> str:
     git_sources: list[GitSource] = []
     active_reviews: set[str] = set()
 
-    for destination, dependency in active_dependencies(namespace):
+    active = active_dependencies(namespace)
+    explicit_vulkan_sources = uses_explicit_vulkan_subpackages(active)
+
+    for destination, dependency in active:
         dep_type = (
             dependency.get("dep_type", "git")
             if isinstance(dependency, dict)
@@ -1081,9 +1119,9 @@ def render(deps_path: Path) -> str:
                 )
                 active_reviews.add(destination)
                 if destination == "engine/src/flutter/third_party/vulkan-deps":
-                    if FLUTTER_VERSION != "3.50.0":
-                        # Older versions provide Vulkan children through
-                        # the parent; 3.50 pins them directly in DEPS.
+                    if not explicit_vulkan_sources:
+                        # Expand only the legacy parent-only source graph.
+                        # Modern DEPS pins reviewed children directly.
                         for ident, repo, rev, dest in VULKAN_DEPS_SUBPACKAGES:
                             tag = ident.lower().replace("_", "-")
                             filename = f"flutter-dep-{tag}-{rev[:8]}.tar.gz"
