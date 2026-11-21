@@ -11,6 +11,8 @@ MY_BUILD="gc4bf6af"
 MY_DISTFILE="${P}-${MY_BUILD}-x86_64.deb"
 SRC_URI="https://content-download-egs.distro.on.epicgames.com/Builds/EGLv2/${PV}%2B${MY_BUILD}/Linux/EpicGamesLauncher-x86_64.deb -> ${MY_DISTFILE}"
 
+S="${WORKDIR}"
+
 LICENSE="all-rights-reserved"
 SLOT="0"
 KEYWORDS="~amd64"
@@ -20,7 +22,7 @@ RDEPEND="
 	dev-libs/libayatana-appindicator
 	media-libs/gst-plugins-good:1.0
 	net-libs/libsoup:3.0
-	|| ( net-libs/webkit-gtk:4.1[wayland] net-libs/webkit-gtk:4.1[X] )
+	|| ( net-libs/webkit-gtk:4.1[X] net-libs/webkit-gtk:4.1[wayland] )
 	sys-apps/dbus
 	elibc_glibc? ( sys-libs/glibc )
 	x11-libs/cairo
@@ -30,7 +32,6 @@ RDEPEND="
 	x11-misc/xdg-utils
 "
 
-S="${WORKDIR}"
 RESTRICT="bindist mirror strip"
 QA_PREBUILT="usr/lib/epic-games-launcher/bin/EpicGamesLauncher usr/lib/epic-games-launcher/libEOSSDK-Linux-Shipping.so"
 
