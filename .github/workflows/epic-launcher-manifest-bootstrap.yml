@@ -1,0 +1,82 @@
+# Temporary workflow to compute verified manifests from real Epic release archives.
+# Remove after successful execution; not part of the finished packaging PR.
+name: Epic Launcher manifest bootstrap (temporary)
+
+on:
+  push:
+    branches:
+      - feat/1057-epic-launcher-deb
+    paths:
+      - .github/workflows/epic-launcher-manifest-bootstrap.yml
+
+permissions:
+  contents: write
+
+jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - name: Download official release artifacts and compute Manifests
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import os
+          from pathlib import Path
+          import urllib.request
+
+          version = "0.120.0"
+          build = "gc4bf6af"
+          root = "https://content-download-egs.distro.on.epicgames.com/Builds/EGLv2/0.120.0%2Bgc4bf6af/Linux/"
+          tmp = Path(os.environ["TMPDIR"])
+          packages = [
+              ("EpicGamesLauncher-x86_64.deb", "epic-games-launcher-0.120.0-gc4bf6af-x86_64.deb", "epic-games-launcher", b"!<arch>\n"),
+              ("EpicGamesLauncher-x86_64.AppImage", "epic-games-launcher-appimage-0.120.0-gc4bf6af-x86_64.AppImage", "epic-games-launcher-appimage", b"\x7fELF"),
+          ]
+          for remote, local, pkg, magic in packages:
+              request = urllib.request.Request(root + remote, headers={"User-Agent": "Mozilla/5.0", "Accept": "*/*"})
+              b2 = hashlib.blake2b()
+              sha = hashlib.sha512()
+              n = 0
+              first = b""
+              with urllib.request.urlopen(request, timeout=180) as response:
+                  with (tmp / local).open("wb") as fp:
+                      while chunk := response.read(4 * 1024 * 1024):
+                          if not n:
+                              first = chunk[:len(magic)]
+                          n += len(chunk)
+                          b2.update(chunk)
+                          sha.update(chunk)
+                          fp.write(chunk)
+              if first != magic or n < 1_000_000:
+                  raise RuntimeError(f"Downloaded artifact invalid for {local}: magic={first!r}, bytes={n}")
+              manifest = f"DIST {local} {n} BLAKE2B {b2.hexdigest()} SHA512 {sha.hexdigest()}\n"
+              manifest_path = tmp / f"{pkg}.Manifest"
+              manifest_path.write_text(manifest)
+              print(f"{pkg}: verified {n} bytes, {b2.hexdigest()[:16]}...")
+          PY
+      - name: Commit the DEB and AppImage manifests to their respective branches
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for package in epic-games-launcher epic-games-launcher-appimage; do
+            branch="feat/1057-epic-launcher-deb"
+            if [[ "$package" == epic-games-launcher-appimage ]]; then
+              branch="feat/1057-epic-launcher-appimage"
+            fi
+            git fetch origin "$branch"
+            git checkout -B "$branch" "origin/$branch"
+            mkdir -p "games-util/$package"
+            cp "$TMPDIR/$package.Manifest" "games-util/$package/Manifest"
+            git add "games-util/$package/Manifest"
+            git commit -m "Record verified Epic Games Launcher 0.120.0 distfile checksums"
+            git push origin "HEAD:$branch"
+          done
