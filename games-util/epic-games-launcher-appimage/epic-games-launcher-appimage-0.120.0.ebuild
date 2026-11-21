@@ -15,49 +15,51 @@ SRC_URI="https://content-download-egs.distro.on.epicgames.com/Builds/EGLv2/${PV}
 LICENSE="all-rights-reserved"
 SLOT="0"
 KEYWORDS="~amd64"
-RESTRICT="bindist mirror strip"
 
 RDEPEND="
-  !games-util/epic-games-launcher
-  sys-fs/fuse:0
-  sys-libs/glibc
-  x11-misc/xdg-utils
+	sys-fs/fuse:0
+	elibc_glibc? ( sys-libs/glibc )
+	x11-misc/xdg-utils
 "
 
 S="${WORKDIR}"
+RESTRICT="bindist mirror strip"
+
+pkg_pretend() {
+	use elibc_glibc || die "Epic's prebuilt launcher requires glibc"
+}
 
 src_unpack() {
-  cp "${DISTDIR}/${MY_DISTFILE}" "${S}/${MY_APPIMAGE}" ||
-    die "Failed to copy AppImage"
-  chmod +x "${S}/${MY_APPIMAGE}" || die
+	cp "${DISTDIR}/${MY_DISTFILE}" "${S}/${MY_APPIMAGE}" ||
+		die "Failed to copy AppImage"
+	chmod +x "${S}/${MY_APPIMAGE}" || die
 
-  # Extract only at build time to find bundled icons; keep the original
-  # AppImage intact for execution and upstream package detection.
-  "${S}/${MY_APPIMAGE}" --appimage-extract ||
-    die "Failed to inspect AppImage"
+	# Extract only at build time to find bundled icons; keep the original
+	# AppImage intact for execution and upstream package detection.
+	"${S}/${MY_APPIMAGE}" --appimage-extract ||
+		die "Failed to inspect AppImage"
 }
 
 src_install() {
-  exeinto /opt/epic-games-launcher
-  doexe "${MY_APPIMAGE}"
-  newbin "${FILESDIR}/EpicGamesLauncher.sh" EpicGamesLauncher
-  dosym EpicGamesLauncher /usr/bin/epic-games-launcher
+	exeinto /opt/epic-games-launcher
+	doexe "${MY_APPIMAGE}"
+	newbin "${FILESDIR}/EpicGamesLauncher.sh" EpicGamesLauncher-appimage
 
-  local icon="applications-games"
-  if [[ -d "${S}/squashfs-root/usr/share/icons/hicolor" ]]; then
-    insinto /usr/share/icons
-    doins -r "${S}/squashfs-root/usr/share/icons/hicolor"
-    icon="EpicGamesLauncher"
-  fi
-  make_desktop_entry EpicGamesLauncher "Epic Games Launcher (AppImage)" "${icon}" "Game;"
+	local icon="applications-games"
+	if [[ -d "${S}/squashfs-root/usr/share/icons/hicolor" ]]; then
+		insinto /usr/share/icons
+		doins -r "${S}/squashfs-root/usr/share/icons/hicolor"
+		icon="EpicGamesLauncher"
+	fi
+	make_desktop_entry EpicGamesLauncher-appimage "Epic Games Launcher (AppImage)" "${icon}" "Game;"
 }
 
 pkg_postinst() {
-  xdg_pkg_postinst
-  elog "This is an upstream Preview on an untested Gentoo distribution."
-  elog "If browser sign-in fails on Plasma, inspect the AppImage's xdg-open handling."
+	xdg_pkg_postinst
+	elog "This is an upstream Preview on an untested Gentoo distribution."
+	elog "If browser sign-in fails on Plasma, inspect the AppImage's xdg-open handling."
 }
 
 pkg_postrm() {
-  xdg_pkg_postrm
+	xdg_pkg_postrm
 }
