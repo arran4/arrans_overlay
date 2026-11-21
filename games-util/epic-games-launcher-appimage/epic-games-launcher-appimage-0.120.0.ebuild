@@ -24,6 +24,7 @@ RDEPEND="
 
 S="${WORKDIR}"
 RESTRICT="bindist mirror strip"
+QA_PREBUILT="opt/epic-games-launcher/EpicGamesLauncher.AppImage"
 
 pkg_pretend() {
 	use elibc_glibc || die "Epic's prebuilt launcher requires glibc"
