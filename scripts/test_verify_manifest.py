@@ -136,6 +136,45 @@ SRC_URI="https://example.com/esp-${MY_PV}/toolchain-${MY_PV}.tar.xz"
             )],
         )
 
+    def test_generated_appimage_src_uri_append_fragments(self):
+        content = (
+            'SRC_URI=""\n'
+            'SRC_URI+=" amd64? ( "\n'
+            'SRC_URI+="https://example.com/releases/v${PV}/app-${PV}.AppImage "\n'
+            'SRC_URI+=" -> ${P}-app-${PV}.AppImage ) "\n'
+        )
+        variables = parse_ebuild_variables("demo-appimage-0.1.47.ebuild", content)
+        self.assertEqual(
+            extract_uris(content, variables),
+            [(
+                "https://example.com/releases/v0.1.47/app-0.1.47.AppImage",
+                "demo-appimage-0.1.47-app-0.1.47.AppImage",
+            )],
+        )
+
+    def test_src_uri_assignments_replace_then_append(self):
+        content = (
+            'SRC_URI="https://example.com/retired.tar.gz"\n'
+            'SRC_URI="https://example.com/current.tar.gz "\n'
+            'SRC_URI+="https://example.com/extra.tar.gz"\n'
+        )
+        variables = parse_ebuild_variables("example-1.0.ebuild", content)
+        self.assertEqual(
+            extract_uris(content, variables),
+            [
+                ("https://example.com/current.tar.gz", "current.tar.gz"),
+                ("https://example.com/extra.tar.gz", "extra.tar.gz"),
+            ],
+        )
+
+    def test_src_uri_unquoted_append_fails_closed(self):
+        content = (
+            'SRC_URI="https://example.com/current.tar.gz"\n'
+            'SRC_URI+=${UNKNOWN}\n'
+        )
+        with self.assertRaisesRegex(ValueError, "Unsupported SRC_URI assignment"):
+            extract_uris(content, {})
+
     def test_src_uri_regression_revision_independent_naming(self):
         # When an ebuild is revised (e.g. rubik-1.0-r1.ebuild or foo-1.0-r1.ebuild),
         # SRC_URI using ${P} or ${PN}-${PV} MUST resolve to the base version (1.0),

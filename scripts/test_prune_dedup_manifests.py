@@ -33,6 +33,38 @@ class ManifestAfterDedupeTest(unittest.TestCase):
         )
         self.assertFalse(prune_package(self.directory))
 
+    def test_generated_appimage_append_keeps_current_dist(self):
+        self.write_ebuild(
+            "3.13.7",
+            'EAPI=8\n'
+            'SRC_URI=""\n'
+            'SRC_URI+=" amd64? ( "\n'
+            'SRC_URI+="https://example.com/dart-3.13.7.AppImage "\n'
+            'SRC_URI+=" -> ${P}-linux.AppImage ) "\n',
+        )
+        manifest = self.directory / "Manifest"
+        current = "DIST dart-3.13.7-linux.AppImage 42 BLAKE2B abc SHA512 def\n"
+        manifest.write_text(
+            "DIST dart-3.13.6-linux.AppImage 30 BLAKE2B old SHA512 old\n"
+            + current
+        )
+        self.assertTrue(prune_package(self.directory))
+        self.assertEqual(manifest.read_text(), current)
+        self.assertFalse(prune_package(self.directory))
+
+    def test_unsupported_src_uri_append_preserves_manifest(self):
+        self.write_ebuild(
+            "3.13.7",
+            'SRC_URI="https://example.com/current.tar.gz"\n'
+            'SRC_URI+=${UNKNOWN}\n',
+        )
+        manifest = self.directory / "Manifest"
+        original = "DIST current.tar.gz 42 BLAKE2B abc SHA512 def\n"
+        manifest.write_text(original)
+        with self.assertRaisesRegex(ValueError, "Unsupported SRC_URI assignment"):
+            prune_package(self.directory)
+        self.assertEqual(manifest.read_text(), original)
+
     def test_refuses_missing_dist_without_touching_manifest(self):
         self.write_ebuild("3.13.7", 'EAPI=8\nSRC_URI="https://example.com/new.tar.gz"\n')
         manifest = self.directory / "Manifest"
