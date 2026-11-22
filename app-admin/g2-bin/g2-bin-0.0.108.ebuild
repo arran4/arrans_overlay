@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Generated via:
 #   repository: https://github.com/arran4/arrans_overlay
-#   commit: ffc773d30734dab7e6e763349f4b4f6317c741d9
+#   commit: e7109c9f4c4e5edddd5c44101b99c8459bcb825e
 #   workflow: .github/workflows/app-admin-g2-bin-update.yaml
 EAPI=8
 DESCRIPTION=""
@@ -10,11 +10,11 @@ HOMEPAGE=""
 HOMEPAGE+="https://wiki.gentoo.org/wiki/User:Arran4"
 SRC_URI=""
 SRC_URI+=" amd64? (   "
-SRC_URI+="https://github.com/arran4/g2/releases/download/v0.0.107/g2_0.0.107_linux_amd64.tar.gz "
+SRC_URI+="https://github.com/arran4/g2/releases/download/v0.0.108/g2_0.0.108_linux_amd64.tar.gz "
 SRC_URI+=" -> ${P}-g2_${PV}_linux_amd64.tar.gz  )   arm? (   "
-SRC_URI+="https://github.com/arran4/g2/releases/download/v0.0.107/g2_0.0.107_linux_armv6.tar.gz "
+SRC_URI+="https://github.com/arran4/g2/releases/download/v0.0.108/g2_0.0.108_linux_armv6.tar.gz "
 SRC_URI+=" -> ${P}-g2_${PV}_linux_armv6.tar.gz  )   arm64? (   "
-SRC_URI+="https://github.com/arran4/g2/releases/download/v0.0.107/g2_0.0.107_linux_arm64.tar.gz "
+SRC_URI+="https://github.com/arran4/g2/releases/download/v0.0.108/g2_0.0.108_linux_arm64.tar.gz "
 SRC_URI+=" -> ${P}-g2_${PV}_linux_arm64.tar.gz  )  "
 LICENSE=""
 LICENSE+="unknown"
