@@ -871,6 +871,8 @@ def reviewed_flutter_350_release(version: str) -> bool:
 
 def uses_explicit_vulkan_subpackages(
     active: list[tuple[str, object]],
+    *,
+    require_explicit: bool = False,
 ) -> bool:
     """Distinguish explicit DEPS children from the legacy umbrella package.
 
@@ -885,6 +887,11 @@ def uses_explicit_vulkan_subpackages(
         if destination.startswith(parent)
     }
     if not actual:
+        if require_explicit:
+            raise ValueError(
+                "reviewed Flutter source graph requires explicit "
+                "Vulkan subpackage destinations"
+            )
         return False
     expected = {
         destination for _name, _repo, _rev, destination
@@ -1083,7 +1090,10 @@ def render(deps_path: Path) -> str:
     active_reviews: set[str] = set()
 
     active = active_dependencies(namespace)
-    explicit_vulkan_sources = uses_explicit_vulkan_subpackages(active)
+    explicit_vulkan_sources = uses_explicit_vulkan_subpackages(
+        active,
+        require_explicit=reviewed_flutter_350_release(FLUTTER_VERSION),
+    )
 
     for destination, dependency in active:
         dep_type = (
