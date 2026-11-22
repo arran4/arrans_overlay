@@ -224,6 +224,10 @@ class ReviewedExclusionTest(unittest.TestCase):
         self.assertFalse(
             generator.uses_explicit_vulkan_subpackages(legacy)
         )
+        with self.assertRaisesRegex(ValueError, "requires explicit Vulkan"):
+            generator.uses_explicit_vulkan_subpackages(
+                legacy, require_explicit=True
+            )
         self.assertTrue(
             generator.uses_explicit_vulkan_subpackages(legacy + explicit)
         )
