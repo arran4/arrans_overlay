@@ -459,6 +459,92 @@ jobs:
             echo "The following packages failed to build, install, or pass pkgcheck: $FAILED_PACKAGES"
             exit 1
           fi
+
+          # Epic's DEB uses a relocated ELF and a RUNPATH-compatible
+          # symlink. Successful emerge alone does not exercise either.
+          # Keep this test scoped to the DEB so other packages are unaffected.
+          if [[ "$CP" == "games-util/epic-games-launcher" ]]; then
+            echo "Epic Games Launcher DEB: verifying installed wrapper, ELF and library links"
+            launcher=/usr/bin/EpicGamesLauncher-deb
+            binary=/usr/lib/epic-games-launcher/bin/EpicGamesLauncher
+            library=/usr/lib/epic-games-launcher/libEOSSDK-Linux-Shipping.so
+            link=/usr/lib/epic-games-launcher/lib/epic-games-launcher
+            [[ -x "$launcher" && -x "$binary" && -f "$library" ]] || {
+              echo "::error::Epic launcher installed files are missing or not executable"
+              exit 1
+            }
+            [[ -L "$link" && "$(readlink -e "$link")" == "/usr/lib/epic-games-launcher" ]] || {
+              echo "::error::Epic launcher RUNPATH symlink is missing or points to the wrong location"
+              exit 1
+            }
+            if ! ldd "$binary" > /tmp/epic-launcher-ldd.log 2>&1; then
+              cat /tmp/epic-launcher-ldd.log
+              echo "::error::Epic launcher ELF loader inspection failed"
+              exit 1
+            fi
+            if grep -Eq '=>[[:space:]]*not found|error while loading shared libraries' /tmp/epic-launcher-ldd.log; then
+              cat /tmp/epic-launcher-ldd.log
+              echo "::error::Epic launcher has unresolved shared libraries"
+              exit 1
+            fi
+
+            # Exercise the installed wrapper -> exec -> ELF chain without
+            # requiring a real display, account or interactive sign-in.
+            # Non-GUI startup failures are fatal; a normal missing-display
+            # exit or a bounded running GUI are informational.
+            python3 - <<'PYEPIC'
+          import os
+          import pwd
+          import re
+          import signal
+          import subprocess
+          import tempfile
+
+          user = pwd.getpwnam("nobody")
+          home = tempfile.mkdtemp(prefix="epic-launcher-smoke-")
+          os.chown(home, user.pw_uid, user.pw_gid)
+          env = dict(os.environ)
+          env.update({
+              "HOME": home, "XDG_CACHE_HOME": home,
+              "EGL_DISABLE_SELF_UPDATE": "1",
+              "DISPLAY": "", "WAYLAND_DISPLAY": "",
+          })
+          command = ["/usr/bin/EpicGamesLauncher-deb", "--version"]
+          try:
+              process = subprocess.Popen(
+                  command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                  env=env, cwd=home, user=user.pw_uid, group=user.pw_gid,
+                  start_new_session=True,
+              )
+          except OSError as exc:
+              raise SystemExit(f"FAIL: could not exec installed Epic launcher: {exc}")
+          try:
+              output, _ = process.communicate(timeout=12)
+              status = process.returncode
+          except subprocess.TimeoutExpired:
+              os.killpg(process.pid, signal.SIGTERM)
+              try:
+                  output, _ = process.communicate(timeout=3)
+              except subprocess.TimeoutExpired:
+                  os.killpg(process.pid, signal.SIGKILL)
+                  output, _ = process.communicate()
+              status = 124
+          log = output.decode("utf-8", errors="replace")
+          print("Launcher startup exit status:", status)
+          print("Launcher output (last 3000 chars):", log[-3000:])
+          fatal = (
+              status in (126, 127, -signal.SIGSEGV)
+              or bool(re.search(
+                  r"error while loading shared libraries|symbol lookup error|"
+                  r"cannot execute|No such file or directory|"
+                  r"undefined symbol|libEOSSDK.*not found", log, re.I
+              ))
+          )
+          if fatal:
+              raise SystemExit("FAIL: launcher could not resolve executable or runtime libraries")
+          print("Headless startup smoke attempted; desktop rendering and OAuth remain untested")
+          PYEPIC
+          fi
           INNEREOF
           sed -i 's/exit/exit/g' test_packages.sh
 
