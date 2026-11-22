@@ -2,6 +2,12 @@ name: Reviewed Flutter 3.50 source DEPS smoke
 on:
   pull_request:
     branches: [main]
+    paths:
+      - '.github/workflows/source-flutter-350-deps-smoke.yml'
+      - 'scripts/generate_flutter_engine_ebuild.py'
+      - 'scripts/test_generate_flutter_engine_ebuild.py'
+      - 'scripts/update_flutter_source.py'
+      - 'dev-libs/flutter-engine/**'
 jobs:
   reviewed-source-graph:
     runs-on: ubuntu-latest
@@ -18,14 +24,20 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Probe exact Flutter shaderc archive
-        continue-on-error: true
+      - name: Verify exact Flutter shaderc archive
         run: |
           set -euo pipefail
           url="https://flutter.googlesource.com/third_party/shaderc/+archive/70b1130380fcbf1d1e9719ee78ba7202a5161424.tar.gz"
           curl -fLsS --retry 1 --max-time 40 "${url}" -o /tmp/flutter-shaderc.tar.gz
           gzip -t /tmp/flutter-shaderc.tar.gz
           tar -tzf /tmp/flutter-shaderc.tar.gz | sed -n '1,5p'
+      - name: Verify exact Flutter swiftshader fork archive
+        run: |
+          set -euo pipefail
+          url="https://flutter.googlesource.com/third_party/swiftshader/+archive/1be9f83618f8ba258431c0c13d7a083eb193df11.tar.gz"
+          curl -fLsS --retry 1 --max-time 90 "${url}" -o /tmp/flutter-swiftshader.tar.gz
+          gzip -t /tmp/flutter-swiftshader.tar.gz
+          tar -tzf /tmp/flutter-swiftshader.tar.gz | sed -n '1,5p'
       - name: Verify exact Flutter glslang fork archive
         run: |
           set -euo pipefail
