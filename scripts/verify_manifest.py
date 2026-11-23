@@ -100,14 +100,30 @@ def extract_uris(content, variables):
     lines = [line.split('#', 1)[0] for line in content.splitlines()]
     clean_content = '\n'.join(lines)
 
-    match = re.search(r'SRC_URI\s*=\s*"([^"]*)"', clean_content, re.DOTALL)
-    if not match:
-        match = re.search(r"SRC_URI\s*=\s*'([^']*)'", clean_content, re.DOTALL)
-
-    if not match:
+    # Generated ebuilds may assemble SRC_URI with quoted += fragments.
+    # Fold only literal assignments in order; never evaluate shell commands.
+    assignments = list(re.finditer(
+        r"^[ \t]*SRC_URI[ \t]*(\+?=)[ \t]*([\"'])(.*?)\2",
+        clean_content, re.MULTILINE | re.DOTALL,
+    ))
+    starts = list(re.finditer(
+        r"^[ \t]*SRC_URI[ \t]*\+?=",
+        clean_content, re.MULTILINE,
+    ))
+    if len(assignments) != len(starts):
+        raise ValueError("Unsupported SRC_URI assignment syntax")
+    if not assignments:
         return []
 
-    src_uri_body = match.group(1)
+    src_uri_body = ""
+    for assignment in assignments:
+        # Reject a partial match (e.g. embedded quotes or shell expressions).
+        if clean_content[assignment.end():].split("\n", 1)[0].strip():
+            raise ValueError("Unsupported SRC_URI assignment suffix")
+        if assignment.group(1) == "=":
+            src_uri_body = assignment.group(3)
+        else:
+            src_uri_body += assignment.group(3)
     src_uri_body = resolve_variables(src_uri_body, variables)
 
     tokens = src_uri_body.split()
