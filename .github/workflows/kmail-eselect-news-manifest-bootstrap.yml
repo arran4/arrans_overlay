@@ -17,4 +17,4 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/kmail-eselect-news-manifest
           g2 manifest upsert-from-url https://github.com/arran4/kmail-eselect-news/archive/refs/tags/v0.1.3.tar.gz kmail-eselect-news-0.1.3.tar.gz /tmp/kmail-eselect-news-manifest
-          cat /tmp/kmail-eselect-news.Manifest
+          cat /tmp/kmail-eselect-news-manifest/Manifest
