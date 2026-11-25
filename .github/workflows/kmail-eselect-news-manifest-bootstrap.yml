@@ -1,0 +1,19 @@
+name: Generate kmail-eselect-news Manifest
+on:
+  push:
+    branches: [package/kmail-eselect-news-manifest-0.1.3]
+    paths: ['.github/workflows/kmail-eselect-news-manifest-bootstrap.yml']
+permissions:
+  contents: read
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arran4/g2-action@v1.2
+      - name: Generate and print Manifest from release archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          g2 manifest upsert-from-url https://github.com/arran4/kmail-eselect-news/archive/refs/tags/v0.1.3.tar.gz kmail-eselect-news-0.1.3.tar.gz /tmp/kmail-eselect-news.Manifest
+          cat /tmp/kmail-eselect-news.Manifest
