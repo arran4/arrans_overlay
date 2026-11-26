@@ -20,7 +20,7 @@ BDEPEND="kde-frameworks/extra-cmake-modules:0"
 DEPEND="
 	dev-qt/qtbase:6[dbus]
 	kde-apps/akonadi:6=
-	|| ( kde-frameworks/kmime:6= kde-apps/kmime:6= )
+	|| ( kde-frameworks/kmime:6 kde-apps/kmime:6 )
 "
 RDEPEND="
 	${DEPEND}
