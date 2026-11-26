@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>gentoo@arran4.com</email>
+		<name>Arran Ubels</name>
+	</maintainer>
+	<longdescription lang="en">
+		A native KDE PIM 6 Akonadi resource for reading Gentoo and overlay
+		GLEP 42 news in KMail. Each configured Portage repository has a
+		mail folder for relevant and previously queued articles and a
+		Skipped subfolder for other notices. The resource reflects Portage
+		read/unread state without modifying it, and requires no mail server.
+	</longdescription>
+	<upstream>
+		<remote-id type="github">arran4/kmail-eselect-news</remote-id>
+		<bugs-to>https://github.com/arran4/kmail-eselect-news/issues</bugs-to>
+	</upstream>
+</pkgmetadata>
