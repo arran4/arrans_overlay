@@ -65,10 +65,24 @@ jobs:
       - name: Resolve Gentoo build environment
         id: gentoo-environment
         run: |
-          docker pull gentoo/stage3:latest
-          docker pull gentoo/portage:latest
-          STAGE3_ID=$(docker image inspect --format='{{.Id}}' gentoo/stage3:latest)
-          PORTAGE_ID=$(docker image inspect --format='{{.Id}}' gentoo/portage:latest)
+          # Keep the Epic DEB smoke-test environment on the same verified
+          # image pair as the last successful Gentoo install. Floating
+          # latest images changed the binpkg cache key on the previous run,
+          # rebuilding LLVM, Mesa and WebKitGTK until its 240-minute timeout.
+          # Other packages continue testing against the latest stage3.
+          if [[ '${{ matrix.package }}' == '=games-util/epic-games-launcher-0.120.0' ]]; then
+            stage3_image='gentoo/stage3@sha256:9b89859fb715f2f6a186ab6eea2b4b2518115ac9c0c25038003594c68f718ef2'
+            portage_image='gentoo/portage@sha256:f5711dda09641adaf17da103d99bbef12f1ee4cc67b325a00376886a3a1430d3'
+          else
+            stage3_image='gentoo/stage3:latest'
+            portage_image='gentoo/portage:latest'
+          fi
+          docker pull "$stage3_image"
+          docker pull "$portage_image"
+          docker tag "$stage3_image" gentoo/stage3:ci
+          docker tag "$portage_image" gentoo/portage:ci
+          STAGE3_ID=$(docker image inspect --format='{{.Id}}' gentoo/stage3:ci)
+          PORTAGE_ID=$(docker image inspect --format='{{.Id}}' gentoo/portage:ci)
           ENVIRONMENT_ID=$(printf '%s\n%s\n' "$STAGE3_ID" "$PORTAGE_ID" | sha256sum | cut -c1-16)
           echo "cache_id=$ENVIRONMENT_ID" >> "$GITHUB_OUTPUT"
 
@@ -110,7 +124,7 @@ jobs:
       - name: Start Gentoo stage3
         run: |
           mkdir -p "$RUNNER_TEMP/gentoo-build-logs"
-          docker create --name portage gentoo/portage:latest
+          docker create --name portage gentoo/portage:ci
           docker run --detach \
             --name gentoo \
             --volumes-from portage \
@@ -118,7 +132,7 @@ jobs:
             --volume "/var/cache/distfiles:/var/cache/distfiles:rw" \
             --volume "/var/cache/binpkgs:/var/cache/binpkgs:rw" \
             --volume "$RUNNER_TEMP/gentoo-build-logs:/ci-logs:rw" \
-            gentoo/stage3:latest \
+            gentoo/stage3:ci \
             sleep infinity
 
       - name: Install and test packages
