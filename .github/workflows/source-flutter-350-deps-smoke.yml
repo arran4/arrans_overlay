@@ -1,23 +1,43 @@
-name: Temporary Flutter 3.50.0 DEPS review
+name: Reviewed Flutter 3.50 source DEPS smoke
 on:
   pull_request:
     branches: [main]
+    paths:
+      - '.github/workflows/source-flutter-350-deps-smoke.yml'
+      - 'scripts/generate_flutter_engine_ebuild.py'
+      - 'scripts/test_generate_flutter_engine_ebuild.py'
+      - 'scripts/update_flutter_source.py'
+      - 'dev-libs/flutter-engine/**'
 jobs:
   reviewed-source-graph:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flutter_version: '3.50.0'
+            engine_revision: '371f77202a73e8dff57a8b3bff75bca55c090aee'
+          - flutter_version: '3.50.1'
+            engine_revision: '4d35714800b9266b6693a58e1225ecd7e9e45ed7'
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Probe exact Flutter shaderc archive
-        continue-on-error: true
+      - name: Verify exact Flutter shaderc archive
         run: |
           set -euo pipefail
           url="https://flutter.googlesource.com/third_party/shaderc/+archive/70b1130380fcbf1d1e9719ee78ba7202a5161424.tar.gz"
           curl -fLsS --retry 1 --max-time 40 "${url}" -o /tmp/flutter-shaderc.tar.gz
           gzip -t /tmp/flutter-shaderc.tar.gz
           tar -tzf /tmp/flutter-shaderc.tar.gz | sed -n '1,5p'
+      - name: Verify exact Flutter swiftshader fork archive
+        run: |
+          set -euo pipefail
+          url="https://flutter.googlesource.com/third_party/swiftshader/+archive/1be9f83618f8ba258431c0c13d7a083eb193df11.tar.gz"
+          curl -fLsS --retry 1 --max-time 90 "${url}" -o /tmp/flutter-swiftshader.tar.gz
+          gzip -t /tmp/flutter-swiftshader.tar.gz
+          tar -tzf /tmp/flutter-swiftshader.tar.gz | sed -n '1,5p'
       - name: Verify exact Flutter glslang fork archive
         run: |
           set -euo pipefail
@@ -25,41 +45,45 @@ jobs:
           curl -fLsS --retry 1 --max-time 90 "${url}" -o /tmp/flutter-glslang.tar.gz
           gzip -t /tmp/flutter-glslang.tar.gz
           tar -tzf /tmp/flutter-glslang.tar.gz | sed -n '1,5p'
-      - name: Audit authoritative source DEPS without publishing
+      - name: Render complete authoritative Engine DEPS without publishing
+        env:
+          FLUTTER_VERSION: ${{ matrix.flutter_version }}
+          FLUTTER_ENGINE_REV: ${{ matrix.engine_revision }}
+          DART_REVISION: 'fa8c1270c374c1346931583a17c3b7f278d3822d'
         run: |
           python3 - <<'PY'
+          import os
           import sys
+
           sys.path.insert(0, "scripts")
           import generate_flutter_engine_ebuild as generator
-          generator.FLUTTER_VERSION = "3.50.0"
-          generator.FLUTTER_ENGINE_REV = "371f77202a73e8dff57a8b3bff75bca55c090aee"
-          generator.DART_REVISION = "fa8c1270c374c1346931583a17c3b7f278d3822d"
-          generator.DEPS_URL = "https://raw.githubusercontent.com/flutter/flutter/" + generator.FLUTTER_ENGINE_REV + "/DEPS"
+
+          generator.FLUTTER_VERSION = os.environ["FLUTTER_VERSION"]
+          generator.FLUTTER_ENGINE_REV = os.environ["FLUTTER_ENGINE_REV"]
+          generator.DART_REVISION = os.environ["DART_REVISION"]
+          generator.DEPS_URL = (
+              "https://raw.githubusercontent.com/flutter/flutter/"
+              + generator.FLUTTER_ENGINE_REV + "/DEPS"
+          )
           path, temporary = generator.obtain_deps(None)
           try:
-              original = generator.validate_reviewed_exclusion
-              outstanding = []
-              def audit(*args, **kwargs):
-                  try:
-                      return original(*args, **kwargs)
-                  except ValueError as exc:
-                      outstanding.append(str(exc))
-                      return "pending explicit review"
-              generator.validate_reviewed_exclusion = audit
-              output = None
-              try:
-                  output = generator.render(path)
-              except Exception as exc:
-                  outstanding.append(f"other generator failure: {exc}")
-              finally:
-                  generator.validate_reviewed_exclusion = original
-              print("DEPS audit issues:", len(outstanding))
-              for issue in outstanding:
-                  print("UNREVIEWED:", issue)
-              if outstanding:
-                  raise RuntimeError("review all changed exclusions before release")
-              assert "BEGIN GENERATED FLUTTER ENGINE" in output
-              print("Flutter 3.50.0 full reviewed DEPS graph rendered")
+              output = generator.render(path)
+              expected = {
+                  "SHADERC": "70b1130380fcbf1d1e9719ee78ba7202a5161424",
+                  "SWIFTSHADER": "1be9f83618f8ba258431c0c13d7a083eb193df11",
+                  "VK_GLSLANG": "fdbdca9263a4c09dbfb4a51c76e3e9d9f52bc504",
+              }
+              for name, revision in expected.items():
+                  assert output.count(
+                      f'{name}_REV="{revision}"'
+                  ) == 1, f"missing or duplicated {name}"
+                  assert ("+archive/${" + name + "_REV}.tar.gz") in output
+              assert "flutter-dep-vk-glslang-a57276bf" not in output
+              assert "BEGIN GENERATED FLUTTER ENGINE DEPS" in output
+              print(
+                  generator.FLUTTER_VERSION,
+                  "strict reviewed Engine DEPS graph rendered",
+              )
           finally:
               if temporary is not None:
                   temporary.cleanup()

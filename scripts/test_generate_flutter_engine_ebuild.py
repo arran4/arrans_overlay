@@ -100,55 +100,145 @@ class ReviewedExclusionTest(unittest.TestCase):
             "@70b1130380fcbf1d1e9719ee78ba7202a5161424"
         )
         from unittest import mock
-        with mock.patch.object(generator, "FLUTTER_VERSION", "3.50.0"):
-            source = generator.git_source(
-                "engine/src/flutter/third_party/shaderc", url
-            )
-            self.assertEqual(source.archive_kind, "gitiles")
-            self.assertEqual(source.identifier, "SHADERC")
-            self.assertEqual(
-                source.unpacked_source(), "shaderc-${SHADERC_REV}"
-            )
-            self.assertEqual(
-                source.repository,
-                "https://flutter.googlesource.com/third_party/shaderc",
-            )
-            swiftshader = generator.git_source(
-                "engine/src/flutter/third_party/swiftshader",
-                "https://flutter.googlesource.com/third_party/"
-                "swiftshader.git@1be9f83618f8ba258431c0c13d7a083eb193df11",
-            )
-            self.assertEqual(swiftshader.archive_kind, "gitiles")
-            self.assertEqual(swiftshader.identifier, "SWIFTSHADER")
-            self.assertEqual(
-                swiftshader.unpacked_source(),
-                "swiftshader-${SWIFTSHADER_REV}",
-            )
-            glslang = generator.git_source(
-                "engine/src/flutter/third_party/vulkan-deps/glslang/src",
-                "https://flutter.googlesource.com/third_party/glslang"
-                "@fdbdca9263a4c09dbfb4a51c76e3e9d9f52bc504",
-            )
-            self.assertEqual(glslang.archive_kind, "gitiles")
-            self.assertEqual(glslang.identifier, "VK_GLSLANG")
-            self.assertEqual(
-                glslang.unpacked_source(), "glslang-${VK_GLSLANG_REV}"
-            )
-            self.assertEqual(
-                glslang.repository,
-                "https://flutter.googlesource.com/third_party/glslang",
-            )
-            with self.assertRaisesRegex(ValueError, "unreviewed"):
-                generator.git_source(
+        for version in ("3.50.0", "3.50.1", "3.50.2"):
+            with mock.patch.object(generator, "FLUTTER_VERSION", version):
+                source = generator.git_source(
+                    "engine/src/flutter/third_party/shaderc", url
+                )
+                self.assertEqual(source.archive_kind, "gitiles")
+                self.assertEqual(source.identifier, "SHADERC")
+                self.assertEqual(
+                    source.unpacked_source(), "shaderc-${SHADERC_REV}"
+                )
+                self.assertEqual(
+                    source.repository,
+                    "https://flutter.googlesource.com/third_party/shaderc",
+                )
+                swiftshader = generator.git_source(
+                    "engine/src/flutter/third_party/swiftshader",
+                    "https://flutter.googlesource.com/third_party/"
+                    "swiftshader.git@1be9f83618f8ba258431c0c13d7a083eb193df11",
+                )
+                self.assertEqual(swiftshader.archive_kind, "gitiles")
+                self.assertEqual(swiftshader.identifier, "SWIFTSHADER")
+                self.assertEqual(
+                    swiftshader.unpacked_source(),
+                    "swiftshader-${SWIFTSHADER_REV}",
+                )
+                glslang = generator.git_source(
                     "engine/src/flutter/third_party/vulkan-deps/glslang/src",
                     "https://flutter.googlesource.com/third_party/glslang"
-                    "@0000000000000000000000000000000000000000",
+                    "@fdbdca9263a4c09dbfb4a51c76e3e9d9f52bc504",
                 )
-            with self.assertRaisesRegex(ValueError, "unreviewed"):
-                generator.git_source(
-                    "engine/src/flutter/third_party/shaderc",
-                    url.replace("70b11303", "00000000"),
+                self.assertEqual(glslang.archive_kind, "gitiles")
+                self.assertEqual(glslang.identifier, "VK_GLSLANG")
+                self.assertEqual(
+                    glslang.unpacked_source(), "glslang-${VK_GLSLANG_REV}"
                 )
+                self.assertEqual(
+                    glslang.repository,
+                    "https://flutter.googlesource.com/third_party/glslang",
+                )
+                with self.assertRaisesRegex(ValueError, "unreviewed"):
+                    generator.git_source(
+                        "engine/src/flutter/third_party/vulkan-deps/glslang/src",
+                        "https://flutter.googlesource.com/third_party/glslang"
+                        "@0000000000000000000000000000000000000000",
+                    )
+                with self.assertRaisesRegex(ValueError, "unreviewed"):
+                    generator.git_source(
+                        "engine/src/flutter/third_party/shaderc",
+                        url.replace("70b11303", "00000000"),
+                    )
+
+    def test_flutter_350_patch_exclusions_are_still_exact(self):
+        expected = generator.reviewed_exclusions_for_flutter_version(
+            "3.50.0", generator.REVIEWED_EXCLUSIONS
+        )
+        for version in ("3.50.1", "3.50.2"):
+            with self.subTest(version=version):
+                self.assertEqual(
+                    generator.reviewed_exclusions_for_flutter_version(
+                        version, generator.REVIEWED_EXCLUSIONS
+                    ), expected,
+                )
+
+    def test_flutter_347_git_sources_remain_generic(self):
+        from unittest import mock
+
+        destination = "engine/src/flutter/third_party/shaderc"
+        upstream = (
+            "https://chromium.googlesource.com/external/"
+            "github.com/google/shaderc@" + "a" * 40
+        )
+        with mock.patch.object(generator, "FLUTTER_VERSION", "3.47.8"):
+            source = generator.git_source(destination, upstream)
+        self.assertEqual(source.archive_kind, "github")
+        self.assertEqual(source.repository, "https://github.com/google/shaderc")
+        self.assertEqual(source.identifier, "SHADERC")
+
+    def test_flutter_350_fork_identity_changes_fail_closed(self):
+        from unittest import mock
+
+        cases = (
+            (
+                "engine/src/flutter/third_party/shaderc",
+                "https://flutter.googlesource.com/third_party/shaderc",
+                "70b1130380fcbf1d1e9719ee78ba7202a5161424",
+            ),
+            (
+                "engine/src/flutter/third_party/swiftshader",
+                "https://flutter.googlesource.com/third_party/swiftshader.git",
+                "1be9f83618f8ba258431c0c13d7a083eb193df11",
+            ),
+            (
+                "engine/src/flutter/third_party/vulkan-deps/glslang/src",
+                "https://flutter.googlesource.com/third_party/glslang",
+                "fdbdca9263a4c09dbfb4a51c76e3e9d9f52bc504",
+            ),
+        )
+        for version in ("3.50.0", "3.50.1", "3.50.2"):
+            with mock.patch.object(generator, "FLUTTER_VERSION", version):
+                for destination, repository, revision in cases:
+                    with self.subTest(version=version, destination=destination):
+                        with self.assertRaisesRegex(ValueError, "unreviewed"):
+                            generator.git_source(
+                                destination, repository + "@" + "0" * 40
+                            )
+                        with self.assertRaisesRegex(ValueError, "unreviewed"):
+                            generator.git_source(
+                                destination,
+                                repository.replace("flutter.googlesource.com",
+                                                   "other.googlesource.com")
+                                + "@" + revision,
+                            )
+
+    def test_vulkan_children_derived_from_active_deps(self):
+        parent = "engine/src/flutter/third_party/vulkan-deps"
+        legacy = [(parent, "legacy parent")]
+        explicit = [
+            ("engine/src/" + destination, revision)
+            for _ident, _repo, revision, destination
+            in generator.VULKAN_DEPS_SUBPACKAGES
+        ]
+        self.assertFalse(
+            generator.uses_explicit_vulkan_subpackages(legacy)
+        )
+        with self.assertRaisesRegex(ValueError, "requires explicit Vulkan"):
+            generator.uses_explicit_vulkan_subpackages(
+                legacy, require_explicit=True
+            )
+        self.assertTrue(
+            generator.uses_explicit_vulkan_subpackages(legacy + explicit)
+        )
+        with self.assertRaisesRegex(ValueError, "unreviewed explicit Vulkan"):
+            generator.uses_explicit_vulkan_subpackages(
+                legacy + explicit[:-1]
+            )
+        with self.assertRaisesRegex(ValueError, "unreviewed explicit Vulkan"):
+            generator.uses_explicit_vulkan_subpackages(
+                legacy + explicit + [(parent + "/unexpected/src", "x")]
+            )
 
     def test_gitiles_source_unpack_isolated_and_idempotent(self):
         basic = "src_unpack() {\n\tdefault\n\n\t# existing moves\n}\n"
