@@ -1,0 +1,96 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-only
+set -euo pipefail
+shopt -s nullglob
+case "${1:-}" in add|remove) ;; *) exit 0 ;; esac
+[[ ${KERNEL_INSTALL_LAYOUT:-} == bls ]] || exit 0
+root=${KERNEL_INSTALL_BOOT_ROOT:-}
+token=${KERNEL_INSTALL_ENTRY_TOKEN:-}
+version=${2:-}
+# Reject ambiguous or unsafe identifiers and never operate on an unmounted root.
+if [[ $root != /* || $root == / ||
+      ! $token =~ ^[a-zA-Z0-9_.-]+$ || ! $version =~ ^[a-zA-Z0-9_.-]+$ ||
+      $token == . || $token == .. || $version == . || $version == .. ]] ||
+   ! mountpoint -q -- "$root"; then
+	echo "kernel-install-maintenance: invalid or unmounted BLS boot root" >&2
+	exit 1
+fi
+root=$(realpath -e -- "$root")
+entries="$root/loader/entries"
+stem="$entries/$token-$version"
+prefix="$entries/maintenance-recovery-$token-$version"
+marker="# Managed by kernel-install-maintenance"
+owned() {
+	[[ -f $1 && ! -L $1 ]] && grep -Fxq -- "$marker" "$1"
+}
+if [[ $1 == remove ]]; then
+	for mode in ro bash; do
+		target="$prefix-$mode.conf"
+		if owned "$target"; then rm -- "$target"; fi
+	done
+	exit 0
+fi
+# Support the normal BLS name and the boot-counting form.
+normal=("$stem.conf" "$stem"+*.conf)
+sources=()
+for candidate in "${normal[@]}"; do
+	if [[ -f $candidate && ! -L $candidate ]]; then
+		sources+=("$candidate")
+	fi
+done
+if (( ${#sources[@]} != 1 )); then
+	echo "kernel-install-maintenance: expected exactly one normal BLS entry for $version" >&2
+	exit 1
+fi
+source=${sources[0]}
+# Validate all referenced images before writing either recovery entry.
+mapfile -t images < <(awk '$1 == "linux" || $1 == "initrd" {print $2}' "$source")
+(( ${#images[@]} > 0 ))
+for image in "${images[@]}"; do
+	[[ $image == /* ]]
+	path=$(realpath -e -- "$root$image")
+	[[ $path == "$root/"* && -f $path && -s $path ]]
+done
+for mode in ro bash; do
+	target="$prefix-$mode.conf"
+	if [[ -e $target || -L $target ]] && ! owned "$target"; then
+		echo "kernel-install-maintenance: refusing to overwrite unmanaged $target" >&2
+		exit 1
+	fi
+done
+temps=()
+trap 'for tmp in "${temps[@]}"; do rm -f -- "$tmp"; done' EXIT
+for mode in ro bash; do
+	case "$mode" in
+		ro) label="Recovery RO"; args="systemd.unit=emergency.target systemd.mask=systemd-remount-fs.service" ;;
+		bash) label="Recovery Bash"; args="init=/bin/bash" ;;
+	esac
+	tmp=$(mktemp "$entries/.maintenance-recovery.XXXXXXXX")
+	temps+=("$tmp")
+	{
+		printf '%s\n' "$marker"
+		awk -v label="$label" -v args="$args" '
+			$1 == "title" { titles++; print $0 " - " label; next }
+			$1 == "sort-key" { next }
+			$1 == "linux" { kernels++ }
+			$1 == "options" {
+				options++
+				printf "options ro noresume"
+				for (i=2; i<=NF; i++)
+					if ($i != "rw" && $i != "ro" && $i != "noresume" &&
+					    $i !~ /^(resume|resume_offset|init|systemd.unit)=/)
+						printf " %s", $i
+				print " " args
+				next
+			}
+			{ print }
+			END {
+				print "sort-key maintenance-recovery"
+				if (titles != 1 || options != 1 || kernels != 1) exit 1
+			}
+		' "$source"
+	} > "$tmp"
+done
+mv -T -- "${temps[0]}" "$prefix-ro.conf"
+mv -T -- "${temps[1]}" "$prefix-bash.conf"
+echo "kernel-install-maintenance: recovery entries created for $version"
